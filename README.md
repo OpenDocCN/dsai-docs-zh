@@ -1,4 +1,4 @@
-# ApacheCN 数据科学 &amp; 人工智能中文文档汇总
+# 飞龙的数据科学 &amp; 人工智能中文文档汇总
 
 > 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 > 
