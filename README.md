@@ -4,22 +4,22 @@
 > 
 > 欢迎任何人参与和完善：一个人可以走的很快，但是一群人却可以走的更远。
 
-* [在线阅读](https://dsaidoc.apachecn.org)
+* [在线阅读](https://dsaidoc.flygon.net)
 ## 下载
 
 ### Docker
 
 ```
-docker pull apachecn0/apachecn-dsai-docs-zh
-docker run -tid -p <port>:80 apachecn0/apachecn-dsai-docs-zh
+docker pull apachecn0/flygon-dsai-docs-zh
+docker run -tid -p <port>:80 apachecn0/flygon-dsai-docs-zh
 # 访问 http://localhost:{port} 查看文档
 ```
 
 ### NPM
 
 ```
-npm install -g apachecn-dsai-docs-zh
-apachecn-dsai-docs-zh <port>
+npm install -g flygon-dsai-docs-zh
+flygon-dsai-docs-zh <port>
 # 访问 http://localhost:{port} 查看文档
 ```
 
