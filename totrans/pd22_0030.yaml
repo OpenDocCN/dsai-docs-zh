@@ -1,308 +1,452 @@
 - en: Copy-on-Write (CoW)
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 写时复制（CoW）
 - en: 原文：[https://pandas.pydata.org/docs/user_guide/copy_on_write.html](https://pandas.pydata.org/docs/user_guide/copy_on_write.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://pandas.pydata.org/docs/user_guide/copy_on_write.html](https://pandas.pydata.org/docs/user_guide/copy_on_write.html)
 - en: Note
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Copy-on-Write will become the default in pandas 3.0\. We recommend [turning
     it on now](#copy-on-write-enabling) to benefit from all improvements.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 写时复制将成为 pandas 3.0 的默认设置。我们建议[现在就启用它](#copy-on-write-enabling)以从所有改进中受益。
 - en: Copy-on-Write was first introduced in version 1.5.0\. Starting from version
     2.0 most of the optimizations that become possible through CoW are implemented
     and supported. All possible optimizations are supported starting from pandas 2.1.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 写时复制首次引入于版本 1.5.0。从版本 2.0 开始，大部分通过 CoW 可能实现和支持的优化已经实现。从 pandas 2.1 开始，所有可能的优化都得到支持。
 - en: CoW will be enabled by default in version 3.0.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 写时复制将在版本 3.0 中默认启用。
 - en: CoW will lead to more predictable behavior since it is not possible to update
     more than one object with one statement, e.g. indexing operations or methods won’t
     have side-effects. Additionally, through delaying copies as long as possible,
     the average performance and memory usage will improve.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: CoW 将导致更可预测的行为，因为不可能用一个语句更新多个对象，例如索引操作或方法不会产生副作用。此外，通过尽可能延迟复制，平均性能和内存使用将得到改善。
 - en: Previous behavior
+  id: totrans-7
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 先前的行为
 - en: 'pandas indexing behavior is tricky to understand. Some operations return views
     while other return copies. Depending on the result of the operation, mutating
     one object might accidentally mutate another:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas 的索引行为很难理解。一些操作返回视图，而其他操作返回副本。根据操作的结果，改变一个对象可能会意外地改变另一个对象：
 - en: '[PRE0]'
+  id: totrans-9
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Mutating `subset`, e.g. updating its values, also updates `df`. The exact behavior
     is hard to predict. Copy-on-Write solves accidentally modifying more than one
     object, it explicitly disallows this. With CoW enabled, `df` is unchanged:'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 改变`subset`，例如更新其值，也会更新`df`。确切的行为很难预测。写时复制解决了意外修改多个对象的问题，它明确禁止这种情况。启用写时复制后，`df`保持不变：
 - en: '[PRE1]'
+  id: totrans-11
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: The following sections will explain what this means and how it impacts existing
     applications.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来的部分将解释这意味着什么，以及它如何影响现有应用程序。
 - en: '## Migrating to Copy-on-Write'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 迁移到写时复制'
 - en: Copy-on-Write will be the default and only mode in pandas 3.0\. This means that
     users need to migrate their code to be compliant with CoW rules.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 写时复制将成为 pandas 3.0 的默认和唯一模式。这意味着用户需要迁移他们的代码以符合 CoW 规则。
 - en: The default mode in pandas will raise warnings for certain cases that will actively
     change behavior and thus change user intended behavior.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas 的默认模式将对某些情况发出警告，这些情况将积极改变行为，从而改变用户预期的行为。
 - en: We added another mode, e.g.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们添加了另一种模式，例如
 - en: '[PRE2]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: that will warn for every operation that will change behavior with CoW. We expect
     this mode to be very noisy, since many cases that we don’t expect that they will
     influence users will also emit a warning. We recommend checking this mode and
     analyzing the warnings, but it is not necessary to address all of these warning.
     The first two items of the following lists are the only cases that need to be
     addressed to make existing code work with CoW.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 将会对每个会改变 CoW 行为的操作发出警告。我们预计这种模式会非常嘈杂，因为许多我们不认为会影响用户的情况也会发出警告。我们建议检查这种模式并分析警告，但不需要解决所有这些警告。以下列表的前两项是需要解决的唯一情况，以使现有代码与
+    CoW 兼容。
 - en: 'The following few items describe the user visible changes:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来的几个项目描述了用户可见的变化：
 - en: '**Chained assignment will never work**'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: '**链接赋值永远不会起作用**'
 - en: '`loc` should be used as an alternative. Check the [chained assignment section](#copy-on-write-chained-assignment)
     for more details.'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 应该使用`loc`作为替代。查看[链接赋值部分](#copy-on-write-chained-assignment)获取更多细节。
 - en: '**Accessing the underlying array of a pandas object will return a read-only
     view**'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: '**访问 pandas 对象的底层数组将返回一个只读视图**'
 - en: '[PRE3]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: This example returns a NumPy array that is a view of the Series object. This
     view can be modified and thus also modify the pandas object. This is not compliant
     with CoW rules. The returned array is set to non-writeable to protect against
     this behavior. Creating a copy of this array allows modification. You can also
     make the array writeable again if you don’t care about the pandas object anymore.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个示例返回一个 NumPy 数组，它是 Series 对象的一个视图。这个视图可以被修改，从而也会修改 pandas 对象。这不符合 CoW 规则。返回的数组被设置为不可写，以防止这种行为。创建这个数组的副本允许修改。如果你不再关心
+    pandas 对象，你也可以再次使数组可写。
 - en: See the section about [read-only NumPy arrays](#copy-on-write-read-only-na)
     for more details.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关[只读NumPy数组](#copy-on-write-read-only-na)的更多详细信息，请参阅相关部分。
 - en: '**Only one pandas object is updated at once**'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: '**一次只更新一个pandas对象**'
 - en: 'The following code snippet updates both `df` and `subset` without CoW:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下代码片段在没有CoW的情况下同时更新`df`和`subset`：
 - en: '[PRE4]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: This won’t be possible anymore with CoW, since the CoW rules explicitly forbid
     this. This includes updating a single column as a [`Series`](../reference/api/pandas.Series.html#pandas.Series
     "pandas.Series") and relying on the change propagating back to the parent [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame"). This statement can be rewritten into a single statement with
     `loc` or `iloc` if this behavior is necessary. [`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
     "pandas.DataFrame.where") is another suitable alternative for this case.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 这在CoW中将不再可能，因为CoW规则明确禁止这样做。这包括将单个列更新为[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")并依赖于更改传播回父[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")。如果需要此行为，可以使用`loc`或`iloc`将此语句重写为单个语句。[`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where")是此情况的另一个合适的替代方案。
 - en: Updating a column selected from a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with an inplace method will also not work anymore.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用就地方法从[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")中选择的列更新也将不再起作用。
 - en: '[PRE5]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'This is another form of chained assignment. This can generally be rewritten
     in 2 different forms:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是另一种链式赋值的形式。通常可以以2种不同形式重写：
 - en: '[PRE6]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'A different alternative would be to not use `inplace`:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种选择是不使用`inplace`：
 - en: '[PRE7]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: '**Constructors now copy NumPy arrays by default**'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: '**构造函数现在默认复制NumPy数组**'
 - en: The Series and DataFrame constructors will now copy NumPy array by default when
     not otherwise specified. This was changed to avoid mutating a pandas object when
     the NumPy array is changed inplace outside of pandas. You can set `copy=False`
     to avoid this copy.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: Series和DataFrame构造函数现在默认情况下将复制NumPy数组。这一变化是为了避免在pandas之外就地更改NumPy数组时改变pandas对象。您可以设置`copy=False`以避免此复制。
 - en: Description
+  id: totrans-38
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 描述
 - en: CoW means that any DataFrame or Series derived from another in any way always
     behaves as a copy. As a consequence, we can only change the values of an object
     through modifying the object itself. CoW disallows updating a DataFrame or a Series
     that shares data with another DataFrame or Series object inplace.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: CoW意味着以任何方式从另一个DataFrame或Series派生的任何DataFrame或Series始终表现为副本。因此，我们只能通过修改对象本身来更改对象的值。CoW不允许就地更新与另一个DataFrame或Series对象共享数据的DataFrame或Series。
 - en: This avoids side-effects when modifying values and hence, most methods can avoid
     actually copying the data and only trigger a copy when necessary.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 这样可以避免在修改值时产生副作用，因此大多数方法可以避免实际复制数据，只在必要时触发复制。
 - en: 'The following example will operate inplace with CoW:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下示例将在CoW下就地操作：
 - en: '[PRE8]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'The object `df` does not share any data with any other object and hence no
     copy is triggered when updating the values. In contrast, the following operation
     triggers a copy of the data under CoW:'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 对象`df`不与任何其他对象共享数据，因此在更新值时不会触发复制。相比之下，以下操作在CoW下触发数据的复制：
 - en: '[PRE9]'
+  id: totrans-44
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: '`reset_index` returns a lazy copy with CoW while it copies the data without
     CoW. Since both objects, `df` and `df2` share the same data, a copy is triggered
     when modifying `df2`. The object `df` still has the same values as initially while
     `df2` was modified.'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: '`reset_index`返回一个带有CoW的延迟复制，而不带CoW的复制数据。由于`df`和`df2`两个对象共享相同的数据，当修改`df2`时会触发复制。对象`df`仍然具有最初的值，而`df2`已被修改。'
 - en: 'If the object `df` isn’t needed anymore after performing the `reset_index`
     operation, you can emulate an inplace-like operation through assigning the output
     of `reset_index` to the same variable:'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果在执行`reset_index`操作后不再需要对象`df`，您可以通过将`reset_index`的输出分配给同一变量来模拟类似就地操作：
 - en: '[PRE10]'
+  id: totrans-47
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: The initial object gets out of scope as soon as the result of `reset_index`
     is reassigned and hence `df` does not share data with any other object. No copy
     is necessary when modifying the object. This is generally true for all methods
     listed in [Copy-on-Write optimizations](#copy-on-write-optimizations).
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 当`reset_index`的结果被重新分配时，初始对象立即超出范围，因此`df`不与任何其他对象共享数据。在修改对象时不需要复制。这通常适用于[写时复制优化](#copy-on-write-optimizations)中列出的所有方法。
 - en: 'Previously, when operating on views, the view and the parent object was modified:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'CoW triggers a copy when `df` is changed to avoid mutating `view` as well:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE12]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '## Chained Assignment'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
 - en: Chained assignment references a technique where an object is updated through
     two subsequent indexing operations, e.g.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'The column `foo` is updated where the column `bar` is greater than 5. This
     violates the CoW principles though, because it would have to modify the view `df["foo"]`
     and `df` in one step. Hence, chained assignment will consistently never work and
     raise a `ChainedAssignmentError` warning with CoW enabled:'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE14]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: With copy on write this can be done by using `loc`.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]  ## Read-only NumPy arrays'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
 - en: 'Accessing the underlying NumPy array of a DataFrame will return a read-only
     array if the array shares data with the initial DataFrame:'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
 - en: 'The array is a copy if the initial DataFrame consists of more than one array:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-62
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'The array shares data with the DataFrame if the DataFrame consists of only
     one NumPy array:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-64
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'This array is read-only, which means that it can’t be modified inplace:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: The same holds true for a Series, since a Series always consists of a single
     array.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
 - en: 'There are two potential solution to this:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
 - en: Trigger a copy manually if you want to avoid updating DataFrames that share
     memory with your array.
+  id: totrans-69
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Make the array writeable. This is a more performant solution but circumvents
     Copy-on-Write rules, so it should be used with caution.
+  id: totrans-70
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Patterns to avoid
+  id: totrans-72
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: No defensive copy will be performed if two objects share the same data while
     you are modifying one object inplace.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-74
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: This creates two objects that share data and thus the setitem operation will
     trigger a copy. This is not necessary if the initial object `df` isn’t needed
     anymore. Simply reassigning to the same variable will invalidate the reference
     that is held by the object.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-76
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: No copy is necessary in this example. Creating multiple references keeps unnecessary
     references alive and thus will hurt performance with Copy-on-Write.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
 - en: '## Copy-on-Write optimizations'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
 - en: A new lazy copy mechanism that defers the copy until the object in question
@@ -311,144 +455,209 @@
     examples are [`DataFrame.drop()`](../reference/api/pandas.DataFrame.drop.html#pandas.DataFrame.drop
     "pandas.DataFrame.drop") for `axis=1` and [`DataFrame.rename()`](../reference/api/pandas.DataFrame.rename.html#pandas.DataFrame.rename
     "pandas.DataFrame.rename").
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
 - en: 'These methods return views when Copy-on-Write is enabled, which provides a
     significant performance improvement compared to the regular execution.  ## How
     to enable CoW'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
 - en: 'Copy-on-Write can be enabled through the configuration option `copy_on_write`.
     The option can be turned on __globally__ through either of the following:'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-82
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Previous behavior
+  id: totrans-83
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'pandas indexing behavior is tricky to understand. Some operations return views
     while other return copies. Depending on the result of the operation, mutating
     one object might accidentally mutate another:'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas的索引行为很难理解。一些操作返回视图，而另一些操作返回副本。根据操作的结果，改变一个对象可能会意外地改变另一个对象：
 - en: '[PRE23]'
+  id: totrans-85
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Mutating `subset`, e.g. updating its values, also updates `df`. The exact behavior
     is hard to predict. Copy-on-Write solves accidentally modifying more than one
     object, it explicitly disallows this. With CoW enabled, `df` is unchanged:'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 改变`subset`，例如更新其值，也会更新`df`。确切的行为很难预测。Copy-on-Write解决了意外修改多个对象的问题，它明确禁止这种情况发生。启用CoW后，`df`保持不变：
 - en: '[PRE24]'
+  id: totrans-87
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: The following sections will explain what this means and how it impacts existing
     applications.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来的部分将解释这意味着什么以及它如何影响现有应用程序。
 - en: '## Migrating to Copy-on-Write'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 迁移至Copy-on-Write'
 - en: Copy-on-Write will be the default and only mode in pandas 3.0\. This means that
     users need to migrate their code to be compliant with CoW rules.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 在pandas 3.0中，Copy-on-Write将成为默认且唯一模式。这意味着用户需要迁移其代码以符合CoW规则。
 - en: The default mode in pandas will raise warnings for certain cases that will actively
     change behavior and thus change user intended behavior.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas的默认模式将对某些情况发出警告，这些情况将积极改变行为，从而改变用户预期的行为。
 - en: We added another mode, e.g.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们添加了另一种模式，例如。
 - en: '[PRE25]'
+  id: totrans-93
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: that will warn for every operation that will change behavior with CoW. We expect
     this mode to be very noisy, since many cases that we don’t expect that they will
     influence users will also emit a warning. We recommend checking this mode and
     analyzing the warnings, but it is not necessary to address all of these warning.
     The first two items of the following lists are the only cases that need to be
     addressed to make existing code work with CoW.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于每个会改变行为的操作都会发出CoW警告。我们预计这种模式会非常嘈杂，因为许多我们不希望影响用户的情况也会发出警告。我们建议检查此模式并分析警告，但不需要解决所有这些警告。以下列表的前两项是需要解决的唯一情况，以使现有代码与CoW一起正常工作。
 - en: 'The following few items describe the user visible changes:'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来的几个项目描述了用户可见的更改：
 - en: '**Chained assignment will never work**'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '**链式赋值永远不会起作用**'
 - en: '`loc` should be used as an alternative. Check the [chained assignment section](#copy-on-write-chained-assignment)
     for more details.'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 应该使用`loc`作为替代方法。查看[链式赋值部分](#copy-on-write-chained-assignment)以获取更多详细信息。
 - en: '**Accessing the underlying array of a pandas object will return a read-only
     view**'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: '**访问pandas对象的底层数组将返回一个只读视图**'
 - en: '[PRE26]'
+  id: totrans-99
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: This example returns a NumPy array that is a view of the Series object. This
     view can be modified and thus also modify the pandas object. This is not compliant
     with CoW rules. The returned array is set to non-writeable to protect against
     this behavior. Creating a copy of this array allows modification. You can also
     make the array writeable again if you don’t care about the pandas object anymore.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 此示例返回一个Series对象的视图的NumPy数组。此视图可以被修改，从而也修改pandas对象。这不符合CoW规则。返回的数组设置为不可写，以防止这种行为。创建此数组的副本允许修改。如果不再关心pandas对象，也可以再次使数组可写。
 - en: See the section about [read-only NumPy arrays](#copy-on-write-read-only-na)
     for more details.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看关于[只读NumPy数组](#copy-on-write-read-only-na)的部分以获取更多详细信息。
 - en: '**Only one pandas object is updated at once**'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: '**一次只更新一个pandas对象**'
 - en: 'The following code snippet updates both `df` and `subset` without CoW:'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下代码片段在没有CoW的情况下同时更新`df`和`subset`：
 - en: '[PRE27]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: This won’t be possible anymore with CoW, since the CoW rules explicitly forbid
     this. This includes updating a single column as a [`Series`](../reference/api/pandas.Series.html#pandas.Series
     "pandas.Series") and relying on the change propagating back to the parent [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame"). This statement can be rewritten into a single statement with
     `loc` or `iloc` if this behavior is necessary. [`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
     "pandas.DataFrame.where") is another suitable alternative for this case.
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 这在CoW下将不再可能，因为CoW规则明确禁止这样做。这包括更新单个列作为[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")并依赖于更改传播回父[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")。如果需要此行为，可以将此语句重写为使用`loc`或`iloc`的单个语句。[`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where")是此情况的另一个合适的替代方法。
 - en: Updating a column selected from a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with an inplace method will also not work anymore.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE28]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'This is another form of chained assignment. This can generally be rewritten
     in 2 different forms:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE29]'
+  id: totrans-109
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'A different alternative would be to not use `inplace`:'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE30]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: '**Constructors now copy NumPy arrays by default**'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
 - en: The Series and DataFrame constructors will now copy NumPy array by default when
     not otherwise specified. This was changed to avoid mutating a pandas object when
     the NumPy array is changed inplace outside of pandas. You can set `copy=False`
     to avoid this copy.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
 - en: Description
+  id: totrans-114
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -456,175 +665,254 @@
     behaves as a copy. As a consequence, we can only change the values of an object
     through modifying the object itself. CoW disallows updating a DataFrame or a Series
     that shares data with another DataFrame or Series object inplace.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
 - en: This avoids side-effects when modifying values and hence, most methods can avoid
     actually copying the data and only trigger a copy when necessary.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
 - en: 'The following example will operate inplace with CoW:'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE31]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'The object `df` does not share any data with any other object and hence no
     copy is triggered when updating the values. In contrast, the following operation
     triggers a copy of the data under CoW:'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE32]'
+  id: totrans-120
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: '`reset_index` returns a lazy copy with CoW while it copies the data without
     CoW. Since both objects, `df` and `df2` share the same data, a copy is triggered
     when modifying `df2`. The object `df` still has the same values as initially while
     `df2` was modified.'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
 - en: 'If the object `df` isn’t needed anymore after performing the `reset_index`
     operation, you can emulate an inplace-like operation through assigning the output
     of `reset_index` to the same variable:'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE33]'
+  id: totrans-123
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: The initial object gets out of scope as soon as the result of `reset_index`
     is reassigned and hence `df` does not share data with any other object. No copy
     is necessary when modifying the object. This is generally true for all methods
     listed in [Copy-on-Write optimizations](#copy-on-write-optimizations).
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
 - en: 'Previously, when operating on views, the view and the parent object was modified:'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE34]'
+  id: totrans-126
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'CoW triggers a copy when `df` is changed to avoid mutating `view` as well:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE35]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: '## Chained Assignment'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
 - en: Chained assignment references a technique where an object is updated through
     two subsequent indexing operations, e.g.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE36]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'The column `foo` is updated where the column `bar` is greater than 5. This
     violates the CoW principles though, because it would have to modify the view `df["foo"]`
     and `df` in one step. Hence, chained assignment will consistently never work and
     raise a `ChainedAssignmentError` warning with CoW enabled:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE37]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: With copy on write this can be done by using `loc`.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE38]'
+  id: totrans-135
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: '## Read-only NumPy arrays'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
 - en: 'Accessing the underlying NumPy array of a DataFrame will return a read-only
     array if the array shares data with the initial DataFrame:'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
 - en: 'The array is a copy if the initial DataFrame consists of more than one array:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果初始 DataFrame 包含多个数组，则数组是副本：
 - en: '[PRE39]'
+  id: totrans-139
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'The array shares data with the DataFrame if the DataFrame consists of only
     one NumPy array:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 DataFrame 只包含一个 NumPy 数组，则该数组与 DataFrame 共享数据：
 - en: '[PRE40]'
+  id: totrans-141
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'This array is read-only, which means that it can’t be modified inplace:'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 此数组是只读的，这意味着它不能就地修改：
 - en: '[PRE41]'
+  id: totrans-143
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: The same holds true for a Series, since a Series always consists of a single
     array.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于 Series 也是如此，因为 Series 总是由单个数组组成。
 - en: 'There are two potential solution to this:'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种潜在的解决方案：
 - en: Trigger a copy manually if you want to avoid updating DataFrames that share
     memory with your array.
+  id: totrans-146
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果您想要避免更新与数组共享内存的 DataFrame，则手动触发复制。
 - en: Make the array writeable. This is a more performant solution but circumvents
     Copy-on-Write rules, so it should be used with caution.
+  id: totrans-147
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使数组可写。这是一种更高效的解决方案，但是它绕过了写时复制规则，因此应谨慎使用。
 - en: '[PRE42]'
+  id: totrans-148
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: Patterns to avoid
+  id: totrans-149
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 避免的模式
 - en: No defensive copy will be performed if two objects share the same data while
     you are modifying one object inplace.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果两个对象在您就地修改一个对象时共享相同的数据，则不会执行防御性复制。
 - en: '[PRE43]'
+  id: totrans-151
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: This creates two objects that share data and thus the setitem operation will
     trigger a copy. This is not necessary if the initial object `df` isn’t needed
     anymore. Simply reassigning to the same variable will invalidate the reference
     that is held by the object.
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 这会创建两个共享数据的对象，因此 setitem 操作将触发复制。如果初始对象 `df` 不再需要，则不需要这样做。简单地重新分配给同一个变量将使对象持有的引用失效。
 - en: '[PRE44]'
+  id: totrans-153
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: No copy is necessary in this example. Creating multiple references keeps unnecessary
     references alive and thus will hurt performance with Copy-on-Write.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中不需要复制。创建多个引用会保持不必要的引用活动，因此会通过写时复制对性能造成损害。
 - en: '## Copy-on-Write optimizations'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 写时复制优化'
 - en: A new lazy copy mechanism that defers the copy until the object in question
     is modified and only if this object shares data with another object. This mechanism
     was added to methods that don’t require a copy of the underlying data. Popular
     examples are [`DataFrame.drop()`](../reference/api/pandas.DataFrame.drop.html#pandas.DataFrame.drop
     "pandas.DataFrame.drop") for `axis=1` and [`DataFrame.rename()`](../reference/api/pandas.DataFrame.rename.html#pandas.DataFrame.rename
     "pandas.DataFrame.rename").
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 新的惰性复制机制推迟了直到修改了问题对象并且仅在此对象与另一个对象共享数据时才复制该对象。此机制已添加到不需要复制底层数据的方法中。常见示例是[`DataFrame.drop()`](../reference/api/pandas.DataFrame.drop.html#pandas.DataFrame.drop
+    "pandas.DataFrame.drop")对于`axis=1`和[`DataFrame.rename()`](../reference/api/pandas.DataFrame.rename.html#pandas.DataFrame.rename
+    "pandas.DataFrame.rename")。
 - en: These methods return views when Copy-on-Write is enabled, which provides a significant
     performance improvement compared to the regular execution.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 当启用写时复制（Copy-on-Write）时，这些方法返回视图，与常规执行相比，这提供了显著的性能改进。
 - en: '## How to enable CoW'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 如何启用写时复制'
 - en: 'Copy-on-Write can be enabled through the configuration option `copy_on_write`.
     The option can be turned on __globally__ through either of the following:'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过配置选项 `copy_on_write` 启用写时复制。该选项可以通过以下任一全局方式进行打开：
 - en: '[PRE45]'
+  id: totrans-160
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
