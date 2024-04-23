@@ -1,270 +1,416 @@
 - en: Enhancing performance
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 提高性能
 - en: 原文：[https://pandas.pydata.org/docs/user_guide/enhancingperf.html](https://pandas.pydata.org/docs/user_guide/enhancingperf.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://pandas.pydata.org/docs/user_guide/enhancingperf.html](https://pandas.pydata.org/docs/user_guide/enhancingperf.html)
 - en: In this part of the tutorial, we will investigate how to speed up certain functions
     operating on pandas [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") using Cython, Numba and [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval"). Generally, using Cython and Numba can offer a larger speedup than
     using [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     but will require a lot more code.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本教程的这一部分中，我们将研究如何加速在pandas的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")上操作的某些函数，使用Cython、Numba和[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")。通常，使用Cython和Numba可以比使用[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")提供更大的加速，但需要更多的代码。
 - en: Note
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In addition to following the steps in this tutorial, users interested in enhancing
     performance are highly encouraged to install the [recommended dependencies](../getting_started/install.html#install-recommended-dependencies)
     for pandas. These dependencies are often not installed by default, but will offer
     speed improvements if present.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了按照本教程中的步骤操作外，强烈建议有兴趣提高性能的用户安装pandas的[推荐依赖项](../getting_started/install.html#install-recommended-dependencies)。这些依赖项通常不会默认安装，但如果存在将提供速度改进。
 - en: '## Cython (writing C extensions for pandas)'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: '## Cython（为pandas编写C扩展）'
 - en: For many use cases writing pandas in pure Python and NumPy is sufficient. In
     some computationally heavy applications however, it can be possible to achieve
     sizable speed-ups by offloading work to [cython](https://cython.org/).
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于许多用例，仅使用纯Python和NumPy编写pandas就足够了。然而，在一些计算密集型应用中，通过将工作转移到[cython](https://cython.org/)可以实现相当大的加速。
 - en: This tutorial assumes you have refactored as much as possible in Python, for
     example by trying to remove for-loops and making use of NumPy vectorization. It’s
     always worth optimising in Python first.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 本教程假设您已经尽可能在Python中进行了重构，例如尝试消除for循环并利用NumPy的向量化。在Python中进行优化总是值得的。
 - en: This tutorial walks through a “typical” process of cythonizing a slow computation.
     We use an [example from the Cython documentation](https://docs.cython.org/en/latest/src/quickstart/cythonize.html)
     but in the context of pandas. Our final cythonized solution is around 100 times
     faster than the pure Python solution.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 本教程演示了将缓慢计算进行Cython化的“典型”过程。我们使用了来自Cython文档的一个[示例](https://docs.cython.org/en/latest/src/quickstart/cythonize.html)，但在pandas的上下文中。我们的最终Cython化解决方案比纯Python解决方案快约100倍。
 - en: '### Pure Python'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 纯Python'
 - en: We have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") to which we want to apply a function row-wise.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们有一个要对其进行逐行应用函数的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")。
 - en: '[PRE0]'
+  id: totrans-11
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Here’s the function in pure Python:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是纯Python中的函数：
 - en: '[PRE1]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'We achieve our result by using [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
     "pandas.DataFrame.apply") (row-wise):'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们通过使用[`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply")（按行）来实现我们的结果：
 - en: '[PRE2]'
+  id: totrans-15
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Let’s take a look and see where the time is spent during this operation using
     the [prun ipython magic function](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun):'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看看在此操作期间花费时间的地方，使用[prun ipython魔术函数](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun)：
 - en: '[PRE3]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'By far the majority of time is spend inside either `integrate_f` or `f`, hence
     we’ll concentrate our efforts cythonizing these two functions.  ### Plain Cython'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 绝大部分时间都花费在`integrate_f`或`f`内部，因此我们将集中精力将这两个函数进行Cython化。### 纯Cython
 - en: 'First we’re going to need to import the Cython magic function to IPython:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要在IPython中导入Cython魔术函数：
 - en: '[PRE4]'
+  id: totrans-20
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Now, let’s simply copy our functions over to Cython:'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让我们简单地将我们的函数复制到Cython中：
 - en: '[PRE5]'
+  id: totrans-22
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: '[PRE6]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'This has improved the performance compared to the pure Python approach by one-third.  ###
     Declaring C types'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 与纯Python方法相比，这已经将性能提升了三分之一。### 声明C类型
 - en: 'We can annotate the function variables and return types as well as use `cdef`
     and `cpdef` to improve performance:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以对函数变量和返回类型进行注释，以及使用`cdef`和`cpdef`来提高性能：
 - en: '[PRE7]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: '[PRE8]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Annotating the functions with C types yields an over ten times performance
     improvement compared to the original Python implementation.  ### Using ndarray'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用C类型对函数进行注释，与原始的Python实现相比，性能提升了十多倍。### 使用ndarray
 - en: When re-profiling, time is spent creating a [`Series`](../reference/api/pandas.Series.html#pandas.Series
     "pandas.Series") from each row, and calling `__getitem__` from both the index
     and the series (three times for each row). These Python function calls are expensive
     and can be improved by passing an `np.ndarray`.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 在重新分析时，会花费时间从每一行创建一个[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")，并从索引和系列中调用`__getitem__`（每行三次）。这些Python函数调用是昂贵的，可以通过传递`np.ndarray`来改进。
 - en: '[PRE9]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: '[PRE10]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: This implementation creates an array of zeros and inserts the result of `integrate_f_typed`
     applied over each row. Looping over an `ndarray` is faster in Cython than looping
     over a [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
     object.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 该实现创建一个零数组，并插入应用于每一行的`integrate_f_typed`的结果。在Cython中循环`ndarray`比在[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")对象上循环更快。
 - en: Since `apply_integrate_f` is typed to accept an `np.ndarray`, [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
     "pandas.Series.to_numpy") calls are needed to utilize this function.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于`apply_integrate_f`被类型化为接受`np.ndarray`，因此需要调用[`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy")来利用此函数。
 - en: '[PRE11]'
+  id: totrans-34
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'Performance has improved from the prior implementation by almost ten times.  ###
     Disabling compiler directives'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 性能比以前的实现提高了近十倍。### 禁用编译器指令
 - en: The majority of the time is now spent in `apply_integrate_f`. Disabling Cython’s
     `boundscheck` and `wraparound` checks can yield more performance.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在大部分时间都花在`apply_integrate_f`上。禁用Cython的`boundscheck`和`wraparound`检查可以获得更多性能。
 - en: '[PRE12]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '[PRE13]'
+  id: totrans-38
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: '[PRE14]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'However, a loop indexer `i` accessing an invalid location in an array would
     cause a segfault because memory access isn’t checked. For more about `boundscheck`
     and `wraparound`, see the Cython docs on [compiler directives](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives).  ##
     Numba (JIT compilation)'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，访问数组中无效位置的循环索引器`i`会导致段错误，因为内存访问没有经过检查。有关`boundscheck`和`wraparound`的更多信息，请参阅Cython文档中关于[编译器指令](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives)的部分。##
+    Numba（JIT编译）
 - en: An alternative to statically compiling Cython code is to use a dynamic just-in-time
     (JIT) compiler with [Numba](https://numba.pydata.org/).
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为静态编译Cython代码的替代方案，可以使用动态即时（JIT）编译器[Numba](https://numba.pydata.org/)。
 - en: Numba allows you to write a pure Python function which can be JIT compiled to
     native machine instructions, similar in performance to C, C++ and Fortran, by
     decorating your function with `@jit`.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba允许您编写一个纯Python函数，该函数可以通过使用`@jit`装饰器编译为本机机器指令，性能类似于C、C++和Fortran，。
 - en: Numba works by generating optimized machine code using the LLVM compiler infrastructure
     at import time, runtime, or statically (using the included pycc tool). Numba supports
     compilation of Python to run on either CPU or GPU hardware and is designed to
     integrate with the Python scientific software stack.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba通过在导入时、运行时或静态（使用包含的pycc工具）生成优化的机器代码来工作。 Numba支持将Python编译为在CPU或GPU硬件上运行，并设计用于与Python科学软件堆栈集成。
 - en: Note
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The `@jit` compilation will add overhead to the runtime of the function, so
     performance benefits may not be realized especially when using small data sets.
     Consider [caching](https://numba.readthedocs.io/en/stable/developer/caching.html)
     your function to avoid compilation overhead each time your function is run.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: '`@jit`编译将增加函数运行时的开销，因此在使用小数据集时可能无法实现性能优势。考虑[缓存](https://numba.readthedocs.io/en/stable/developer/caching.html)您的函数，以避免每次运行函数时的编译开销。'
 - en: 'Numba can be used in 2 ways with pandas:'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba可以与pandas一起以2种方式使用：
 - en: Specify the `engine="numba"` keyword in select pandas methods
+  id: totrans-47
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在选择的pandas方法中指定`engine="numba"`关键字
 - en: Define your own Python function decorated with `@jit` and pass the underlying
     NumPy array of [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
     or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     (using [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
     "pandas.Series.to_numpy")) into the function
+  id: totrans-48
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义自己的Python函数，并使用`@jit`装饰器，并将[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")或[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的底层NumPy数组（使用[`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy")）传递给函数
 - en: pandas Numba Engine
+  id: totrans-49
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: pandas Numba引擎
 - en: 'If Numba is installed, one can specify `engine="numba"` in select pandas methods
     to execute the method using Numba. Methods that support `engine="numba"` will
     also have an `engine_kwargs` keyword that accepts a dictionary that allows one
     to specify `"nogil"`, `"nopython"` and `"parallel"` keys with boolean values to
     pass into the `@jit` decorator. If `engine_kwargs` is not specified, it defaults
     to `{"nogil": False, "nopython": True, "parallel": False}` unless otherwise specified.'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: '如果已安装Numba，可以在选择的pandas方法中指定`engine="numba"`以使用Numba执行该方法。支持`engine="numba"`的方法还将具有一个`engine_kwargs`关键字，接受一个字典，允许指定`"nogil"`、`"nopython"`和`"parallel"`键以及布尔值传递给`@jit`装饰器。如果未指定`engine_kwargs`，则默认为`{"nogil":
+    False, "nopython": True, "parallel": False}`，除非另有规定。'
 - en: Note
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In terms of performance, **the first time a function is run using the Numba
     engine will be slow** as Numba will have some function compilation overhead. However,
     the JIT compiled functions are cached, and subsequent calls will be fast. In general,
     the Numba engine is performant with a larger amount of data points (e.g. 1+ million).
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 就性能而言，**使用Numba引擎运行函数的第一次将会很慢**，因为Numba会有一些函数编译开销。然而，JIT编译的函数会被缓存，后续调用将会很快。一般来说，Numba引擎在处理大量数据点时表现良好（例如100万个以上）。
 - en: '[PRE15]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: If your compute hardware contains multiple CPUs, the largest performance gain
     can be realized by setting `parallel` to `True` to leverage more than 1 CPU. Internally,
     pandas leverages numba to parallelize computations over the columns of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame"); therefore, this performance benefit is only beneficial for
     a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     with a large number of columns.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您的计算硬件包含多个CPU，则将`parallel`设置为`True`可以实现最大的性能增益，以利用多个CPU。在内部，pandas利用numba来并行计算[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的列；因此，这种性能优势仅对具有大量列的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")有益。
 - en: '[PRE16]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Custom Function Examples
+  id: totrans-56
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 自定义函数示例
 - en: A custom Python function decorated with `@jit` can be used with pandas objects
     by passing their NumPy array representations with [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
     "pandas.Series.to_numpy").
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用`@jit`修饰的自定义Python函数，可以通过使用[`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy")将它们的NumPy数组表示传递给pandas对象。
 - en: '[PRE17]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: '[PRE18]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: In this example, using Numba was faster than Cython.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，使用Numba比Cython更快。
 - en: 'Numba can also be used to write vectorized functions that do not require the
     user to explicitly loop over the observations of a vector; a vectorized function
     will be applied to each row automatically. Consider the following example of doubling
     each observation:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba还可以用于编写不需要用户显式循环遍历向量观测的向量化函数；向量化函数将自动应用于每一行。考虑以下示例，将每个观测值加倍：
 - en: '[PRE19]'
+  id: totrans-62
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: '[PRE20]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: Caveats
+  id: totrans-64
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意事项
 - en: Numba is best at accelerating functions that apply numerical functions to NumPy
     arrays. If you try to `@jit` a function that contains unsupported [Python](https://numba.readthedocs.io/en/stable/reference/pysupported.html)
     or [NumPy](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)
@@ -273,20 +419,27 @@
     Numba throw an error if it cannot compile a function in a way that speeds up your
     code, pass Numba the argument `nopython=True` (e.g. `@jit(nopython=True)`). For
     more on troubleshooting Numba modes, see the [Numba troubleshooting page](https://numba.pydata.org/numba-doc/latest/user/troubleshoot.html#the-compiled-code-is-too-slow).
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba最擅长加速将数值函数应用于NumPy数组的函数。如果尝试`@jit`一个包含不受支持的[Python](https://numba.readthedocs.io/en/stable/reference/pysupported.html)或[NumPy](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)代码的函数，编译将会回退到[对象模式](https://numba.readthedocs.io/en/stable/glossary.html#term-object-mode)，这很可能不会加速您的函数。如果希望Numba在无法以加速代码的方式编译函数时抛出错误，请将参数`nopython=True`传递给Numba（例如`@jit(nopython=True)`）。有关Numba模式故障排除的更多信息，请参阅[Numba故障排除页面](https://numba.pydata.org/numba-doc/latest/user/troubleshoot.html#the-compiled-code-is-too-slow)。
 - en: Using `parallel=True` (e.g. `@jit(parallel=True)`) may result in a `SIGABRT`
     if the threading layer leads to unsafe behavior. You can first [specify a safe
     threading layer](https://numba.readthedocs.io/en/stable/user/threading-layer.html#selecting-a-threading-layer-for-safe-parallel-execution)
     before running a JIT function with `parallel=True`.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`parallel=True`（例如`@jit(parallel=True)`）可能会导致`SIGABRT`，如果线程层导致不安全行为。您可以在使用`parallel=True`运行JIT函数之前，首先[指定一个安全的线程层](https://numba.readthedocs.io/en/stable/user/threading-layer.html#selecting-a-threading-layer-for-safe-parallel-execution)。
 - en: 'Generally if the you encounter a segfault (`SIGSEGV`) while using Numba, please
     report the issue to the [Numba issue tracker.](https://github.com/numba/numba/issues/new/choose)  ##
     Expression evaluation via [`eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval")'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: '通常，如果在使用Numba时遇到段错误（`SIGSEGV`），请将问题报告给[Numba问题跟踪器。](https://github.com/numba/numba/issues/new/choose)  ##
+    通过[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")进行表达式评估'
 - en: The top-level function [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") implements performant expression evaluation of [`Series`](../reference/api/pandas.Series.html#pandas.Series
     "pandas.Series") and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
@@ -294,11 +447,18 @@
     strings and can potentially provide a performance improvement by evaluate arithmetic
     and boolean expression all at once for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame").
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 顶层函数[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")实现了对[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")和[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的高性能表达式评估。表达式评估允许将操作表达为字符串，并且可以通过一次性评估大型[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的算术和布尔表达式，潜在地提供性能改进。
 - en: Note
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: You should not use [`eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") for simple expressions or for expressions involving small DataFrames.
     In fact, [`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
@@ -306,825 +466,1244 @@
     Python. A good rule of thumb is to only use [`eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") when you have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with more than 10,000 rows.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 您不应该对简单表达式或涉及小DataFrame的表达式使用[`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")。实际上，对于较小的表达式或对象，[`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")比纯Python慢几个数量级。一个好的经验法则是只有在您有超过10,000行的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")时才使用[`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")。
 - en: Supported syntax
+  id: totrans-71
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 支持的语法
 - en: 'These operations are supported by [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval"):'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些操作由[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")支持：
 - en: Arithmetic operations except for the left shift (`<<`) and right shift (`>>`)
     operators, e.g., `df + 2 * pi / s ** 4 % 42 - the_golden_ratio`
+  id: totrans-73
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 算术运算，除了左移（`<<`）和右移（`>>`）运算符，例如，`df + 2 * pi / s ** 4 % 42 - the_golden_ratio`
 - en: Comparison operations, including chained comparisons, e.g., `2 < df < df2`
+  id: totrans-74
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 比较操作，包括链式比较，例如，`2 < df < df2`
 - en: Boolean operations, e.g., `df < df2 and df3 < df4 or not df_bool`
+  id: totrans-75
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 布尔运算，例如，`df < df2 and df3 < df4 or not df_bool`
 - en: '`list` and `tuple` literals, e.g., `[1, 2]` or `(1, 2)`'
+  id: totrans-76
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`list`和`tuple`字面值，例如，`[1, 2]`或`(1, 2)`'
 - en: Attribute access, e.g., `df.a`
+  id: totrans-77
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 属性访问，例如，`df.a`
 - en: Subscript expressions, e.g., `df[0]`
+  id: totrans-78
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 下标表达式，例如，`df[0]`
 - en: Simple variable evaluation, e.g., `pd.eval("df")` (this is not very useful)
+  id: totrans-79
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 简单变量评估，例如，`pd.eval("df")`（这并不是很有用）
 - en: 'Math functions: `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`, `sinh`,
     `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`, `arccosh`, `arcsinh`, `arctanh`,
     `abs`, `arctan2` and `log10`.'
+  id: totrans-80
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 数学函数：`sin`、`cos`、`exp`、`log`、`expm1`、`log1p`、`sqrt`、`sinh`、`cosh`、`tanh`、`arcsin`、`arccos`、`arctan`、`arccosh`、`arcsinh`、`arctanh`、`abs`、`arctan2`和`log10`。
 - en: 'The following Python syntax is **not** allowed:'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下Python语法**不**允许：
 - en: Expressions
+  id: totrans-82
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 表达式
 - en: Function calls other than math functions.
+  id: totrans-83
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 除数学函数外的函数调用。
 - en: ''
+  id: totrans-84
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-85
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`is`/`is not` operations'
+  id: totrans-86
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`is`/`is not`操作'
 - en: ''
+  id: totrans-87
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-88
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`if` expressions'
+  id: totrans-89
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`if`表达式'
 - en: ''
+  id: totrans-90
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-91
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`lambda` expressions'
+  id: totrans-92
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`lambda`表达式'
 - en: ''
+  id: totrans-93
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-94
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`list`/`set`/`dict` comprehensions'
+  id: totrans-95
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`list`/`set`/`dict`推导'
 - en: ''
+  id: totrans-96
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-97
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Literal `dict` and `set` expressions
+  id: totrans-98
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字面`dict`和`set`表达式
 - en: ''
+  id: totrans-99
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-100
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`yield` expressions'
+  id: totrans-101
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`yield`表达式'
 - en: ''
+  id: totrans-102
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-103
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Generator expressions
+  id: totrans-104
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 生成器表达式
 - en: ''
+  id: totrans-105
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-106
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Boolean expressions consisting of only scalar values
+  id: totrans-107
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 由标量值组成的布尔表达式
 - en: Statements
+  id: totrans-108
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 语句
 - en: Neither [simple](https://docs.python.org/3/reference/simple_stmts.html) or [compound](https://docs.python.org/3/reference/compound_stmts.html)
     statements are allowed. This includes `for`, `while`, and `if`.
+  id: totrans-109
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不允许使用[简单](https://docs.python.org/3/reference/simple_stmts.html)或[复合](https://docs.python.org/3/reference/compound_stmts.html)语句。这包括`for`、`while`和`if`。
 - en: Local variables
+  id: totrans-110
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 本地变量
 - en: You must *explicitly reference* any local variable that you want to use in an
     expression by placing the `@` character in front of the name. This mechanism is
     the same for both [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") and [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval"). For example,
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 你必须*显式引用*你想在表达式中使用的任何本地变量，方法是在名称前面放置`@`字符。这个机制对于[`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")和[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")都是相同的。例如，
 - en: '[PRE21]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: If you don’t prefix the local variable with `@`, pandas will raise an exception
     telling you the variable is undefined.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你不在本地变量前面加上`@`前缀，pandas会引发异常，告诉你该变量未定义。
 - en: When using [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") and [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query"), this allows you to have a local variable and a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") column with the same name in an expression.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 当使用[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")和[`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")时，这允许你在表达式中拥有一个本地变量和一个[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")列具有相同的名称。
 - en: '[PRE22]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Warning
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     will raise an exception if you cannot use the `@` prefix because it isn’t defined
     in that context.'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你不能在那个上下文中使用`@`前缀，[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")会引发异常。
 - en: '[PRE23]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: In this case, you should simply refer to the variables like you would in standard
     Python.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，你应该像在标准Python中那样简单地引用变量。
 - en: '[PRE24]'
+  id: totrans-120
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     parsers'
+  id: totrans-121
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    解析器'
 - en: There are two different expression syntax parsers.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种不同的表达式语法解析器。
 - en: The default `'pandas'` parser allows a more intuitive syntax for expressing
     query-like operations (comparisons, conjunctions and disjunctions). In particular,
     the precedence of the `&` and `|` operators is made equal to the precedence of
     the corresponding boolean operations `and` and `or`.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认的`'pandas'`解析器允许更直观地表达类似查询的操作（比较、连接和离散）。特别是，`&`和`|`运算符的优先级被设置为与相应布尔操作`and`和`or`的优先级相等。
 - en: For example, the above conjunction can be written without parentheses. Alternatively,
     you can use the `'python'` parser to enforce strict Python semantics.
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，上面的连接可以不使用括号写出。或者，你可以使用`'python'`解析器来强制执行严格的Python语义。
 - en: '[PRE25]'
+  id: totrans-125
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'The same expression can be “anded” together with the word [`and`](https://docs.python.org/3/reference/expressions.html#and
     "(in Python v3.12)") as well:'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 相同的表达式也可以用单词[`and`](https://docs.python.org/3/reference/expressions.html#and
+    "(in Python v3.12)")“与”在一起：
 - en: '[PRE26]'
+  id: totrans-127
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: The [`and`](https://docs.python.org/3/reference/expressions.html#and "(in Python
     v3.12)") and [`or`](https://docs.python.org/3/reference/expressions.html#or "(in
     Python v3.12)") operators here have the same precedence that they would in Python.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的[`and`](https://docs.python.org/3/reference/expressions.html#and "(in Python
+    v3.12)")和[`or`](https://docs.python.org/3/reference/expressions.html#or "(in Python
+    v3.12)")运算符具有与Python中相同的优先级。
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     engines'
+  id: totrans-129
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    引擎'
 - en: There are two different expression engines.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种不同的表达式引擎。
 - en: The `'numexpr'` engine is the more performant engine that can yield performance
     improvements compared to standard Python syntax for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame"). This engine requires the optional dependency `numexpr` to
     be installed.
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: '`''numexpr''`引擎是更高性能的引擎，可以相对于大型[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的标准Python语法提供性能改进。这个引擎需要安装可选依赖`numexpr`。'
 - en: The `'python'` engine is generally *not* useful except for testing other evaluation
     engines against it. You will achieve **no** performance benefits using [`eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") with `engine='python'` and may incur a performance hit.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: '`''python''` 引擎通常*不*有用，除非用于测试其他评估引擎。使用`engine=''python''`和可能会导致性能下降，不会获得**任何**性能优势。'
 - en: '[PRE27]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: '[PRE28]'
+  id: totrans-134
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: The [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") method
+  id: totrans-135
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") 方法'
 - en: In addition to the top level [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") function you can also evaluate an expression in the “context” of
     a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame").
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了顶层的[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")函数外，还可以在[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的“上下文”中评估表达式。
 - en: '[PRE29]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: Any expression that is a valid [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") expression is also a valid [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") expression, with the added benefit that you don’t have
     to prefix the name of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") to the column(s) you’re interested in evaluating.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 任何有效的[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")表达式也是有效的[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")表达式，额外的好处是您不必在要评估的列名前加上[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的名称。
 - en: In addition, you can perform assignment of columns within an expression. This
     allows for *formulaic evaluation*. The assignment target can be a new column name
     or an existing column name, and it must be a valid Python identifier.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，您可以在表达式中执行列的赋值。这允许*公式化评估*。赋值目标可以是新列名或现有列名，必须是有效的 Python 标识符。
 - en: '[PRE30]'
+  id: totrans-140
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: A copy of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with the new or modified columns is returned, and the original
     frame is unchanged.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回带有新列或修改列的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的副本，原始框架保持不变。
 - en: '[PRE31]'
+  id: totrans-142
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Multiple column assignments can be performed by using a multi-line string.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过使用多行字符串执行多列赋值。
 - en: '[PRE32]'
+  id: totrans-144
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: The equivalent in standard Python would be
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 标准 Python 中的等效操作将是
 - en: '[PRE33]'
+  id: totrans-146
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval") performance
     comparison'
+  id: totrans-147
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval") 性能比较'
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     works well with expressions containing large arrays.'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    在包含大型数组的表达式中表现良好。'
 - en: '[PRE34]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     arithmetic:'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    算术：'
 - en: '[PRE35]'
+  id: totrans-151
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: '[PRE36]'
+  id: totrans-152
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     comparison:'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    比较：'
 - en: '[PRE37]'
+  id: totrans-154
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: '[PRE38]'
+  id: totrans-155
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     arithmetic with unaligned axes.'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    具有不对齐轴的算术。'
 - en: '[PRE39]'
+  id: totrans-157
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: '[PRE40]'
+  id: totrans-158
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: Note
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Operations such as
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 操作如下
 - en: '[PRE41]'
+  id: totrans-161
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: should be performed in Python. An exception will be raised if you try to perform
     any boolean/bitwise operations with scalar operands that are not of type `bool`
     or `np.bool_`.
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 应该在 Python 中执行。如果尝试对不是`bool`或`np.bool_`类型的标量操作执行任何布尔/位操作，将引发异常。
 - en: Here is a plot showing the running time of [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") as function of the size of the frame involved in the computation.
     The two lines are two different engines.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是一个图表，显示了[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")的运行时间与涉及计算的框架大小的关系。两条线代表两种不同的引擎。
 - en: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
+  id: totrans-164
   prefs: []
   type: TYPE_IMG
+  zh: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
 - en: You will only see the performance benefits of using the `numexpr` engine with
     [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     if your [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") has more than approximately 100,000 rows.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 只有当您的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")的行数超过约10万行时，使用`numexpr`引擎与[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")才会带来性能优势。
 - en: This plot was created using a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with 3 columns each containing floating point values generated
     using `numpy.random.randn()`.
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 此图是使用包含使用`numpy.random.randn()`生成的浮点值的3列的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")创建的。
 - en: Expression evaluation limitations with `numexpr`
+  id: totrans-167
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用`numexpr`的表达式评估限制
 - en: 'Expressions that would result in an object dtype or involve datetime operations
     because of `NaT` must be evaluated in Python space, but part of an expression
     can still be evaluated with `numexpr`. For example:'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于`NaT`，导致对象dtype或涉及日期时间操作的表达式必须在Python空间中评估，但表达式的一部分仍然可以使用`numexpr`进行评估。例如：
 - en: '[PRE42]'
+  id: totrans-169
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: 'The numeric part of the comparison (`nums == 1`) will be evaluated by `numexpr`
     and the object part of the comparison (`"strings == ''a''`) will be evaluated
     by Python.  ## Cython (writing C extensions for pandas)'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 比较的数值部分（`nums == 1`）将由`numexpr`评估，比较的对象部分（`"strings == 'a'`）将由Python评估。## Cython（为pandas编写C扩展）
 - en: For many use cases writing pandas in pure Python and NumPy is sufficient. In
     some computationally heavy applications however, it can be possible to achieve
     sizable speed-ups by offloading work to [cython](https://cython.org/).
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于许多用例，纯Python和NumPy编写pandas已经足够了。然而，在一些计算密集型应用中，通过将工作转移到[cython](https://cython.org/)可以实现相当大的加速。
 - en: This tutorial assumes you have refactored as much as possible in Python, for
     example by trying to remove for-loops and making use of NumPy vectorization. It’s
     always worth optimising in Python first.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 本教程假设您已经尽可能在Python中进行了重构，例如尝试消除for循环并利用NumPy向量化。在Python中进行优化总是值得的。
 - en: This tutorial walks through a “typical” process of cythonizing a slow computation.
     We use an [example from the Cython documentation](https://docs.cython.org/en/latest/src/quickstart/cythonize.html)
     but in the context of pandas. Our final cythonized solution is around 100 times
     faster than the pure Python solution.
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 本教程演示了将一个缓慢的计算转换为Cython的“典型”过程。我们使用了来自Cython文档的一个[示例](https://docs.cython.org/en/latest/src/quickstart/cythonize.html)，但在pandas的上下文中。我们的最终cython化解决方案比纯Python解决方案快约100倍。
 - en: '### Pure Python'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 纯Python'
 - en: We have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") to which we want to apply a function row-wise.
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们有一个[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")，我们想要逐行应用一个函数。
 - en: '[PRE43]'
+  id: totrans-176
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'Here’s the function in pure Python:'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是纯Python中的函数：
 - en: '[PRE44]'
+  id: totrans-178
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'We achieve our result by using [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
     "pandas.DataFrame.apply") (row-wise):'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们通过使用[`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply")（逐行）来实现我们的结果：
 - en: '[PRE45]'
+  id: totrans-180
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'Let’s take a look and see where the time is spent during this operation using
     the [prun ipython magic function](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun):'
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看看在此操作期间时间花费在哪里，使用[prun ipython魔术函数](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun)：
 - en: '[PRE46]'
+  id: totrans-182
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: 'By far the majority of time is spend inside either `integrate_f` or `f`, hence
     we’ll concentrate our efforts cythonizing these two functions.  ### Plain Cython'
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 绝大多数时间都花在`integrate_f`或`f`内部，因此我们将集中精力将这两个函数进行cython化。### 纯Cython
 - en: 'First we’re going to need to import the Cython magic function to IPython:'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要将Cython魔术函数导入到IPython中：
 - en: '[PRE47]'
+  id: totrans-185
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: 'Now, let’s simply copy our functions over to Cython:'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让��们简单地将我们的函数复制到Cython中：
 - en: '[PRE48]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: '[PRE49]'
+  id: totrans-188
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'This has improved the performance compared to the pure Python approach by one-third.  ###
     Declaring C types'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 与纯Python方法相比，这将性能提升了三分之一。### 声明C类型
 - en: 'We can annotate the function variables and return types as well as use `cdef`
     and `cpdef` to improve performance:'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以注释函数变量和返回类型，以及使用`cdef`和`cpdef`来提高性能：
 - en: '[PRE50]'
+  id: totrans-191
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: '[PRE51]'
+  id: totrans-192
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'Annotating the functions with C types yields an over ten times performance
     improvement compared to the original Python implementation.  ### Using ndarray'
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用C类型对函数进行注释，与原始的Python实现相比，性能提升了十多倍。### 使用ndarray
 - en: When re-profiling, time is spent creating a [`Series`](../reference/api/pandas.Series.html#pandas.Series
     "pandas.Series") from each row, and calling `__getitem__` from both the index
     and the series (three times for each row). These Python function calls are expensive
     and can be improved by passing an `np.ndarray`.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 在重新分析时，时间花在从每一行创建一个[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")，并且从索引和系列中调用`__getitem__`（每行三次）。这些Python函数调用很昂贵，可以通过传递一个`np.ndarray`来改进。
 - en: '[PRE52]'
+  id: totrans-195
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: '[PRE53]'
+  id: totrans-196
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: This implementation creates an array of zeros and inserts the result of `integrate_f_typed`
     applied over each row. Looping over an `ndarray` is faster in Cython than looping
     over a [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
     object.
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个实现创建一个零数组，并插入应用于每一行的`integrate_f_typed`的结果。在Cython中循环`ndarray`比在[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")对象上循环更快。
 - en: Since `apply_integrate_f` is typed to accept an `np.ndarray`, [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
     "pandas.Series.to_numpy") calls are needed to utilize this function.
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于`apply_integrate_f`被定义为接受一个`np.ndarray`，因此需要调用[`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy")来利用这个函数。
 - en: '[PRE54]'
+  id: totrans-199
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: 'Performance has improved from the prior implementation by almost ten times.  ###
     Disabling compiler directives'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 性能比之前的实现提高了近十倍。### 禁用编译器指令
 - en: The majority of the time is now spent in `apply_integrate_f`. Disabling Cython’s
     `boundscheck` and `wraparound` checks can yield more performance.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 大部分时间现在花在`apply_integrate_f`上。禁用Cython的`boundscheck`和`wraparound`检查可以提高性能。
 - en: '[PRE55]'
+  id: totrans-202
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: '[PRE56]'
+  id: totrans-203
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: '[PRE57]'
+  id: totrans-204
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: 'However, a loop indexer `i` accessing an invalid location in an array would
     cause a segfault because memory access isn’t checked. For more about `boundscheck`
     and `wraparound`, see the Cython docs on [compiler directives](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives).  ###
     Pure Python'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，循环索引器`i`访问数组中的无效位置会导致段错误，因为内存访问没有检查。有关`boundscheck`和`wraparound`的更多信息，请参阅Cython文档中关于[编译器指令](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives)的部分。###
+    纯Python
 - en: We have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") to which we want to apply a function row-wise.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们有一个[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")，我们想要逐行应用一个函数。
 - en: '[PRE58]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'Here’s the function in pure Python:'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是纯Python中的函数：
 - en: '[PRE59]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: 'We achieve our result by using [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
     "pandas.DataFrame.apply") (row-wise):'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们通过使用[`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply")（逐行）来实现我们的结果：
 - en: '[PRE60]'
+  id: totrans-211
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: 'Let’s take a look and see where the time is spent during this operation using
     the [prun ipython magic function](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun):'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看看在这个操作中时间花在哪里，使用[prun ipython magic function](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun)：
 - en: '[PRE61]'
+  id: totrans-213
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: By far the majority of time is spend inside either `integrate_f` or `f`, hence
     we’ll concentrate our efforts cythonizing these two functions.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 绝大部分时间都花在`integrate_f`或`f`内部，因此我们将集中精力将这两个函数进行Cython化。
 - en: '### Plain Cython'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 纯Cython'
 - en: 'First we’re going to need to import the Cython magic function to IPython:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要将Cython魔术函数导入到IPython中：
 - en: '[PRE62]'
+  id: totrans-217
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: 'Now, let’s simply copy our functions over to Cython:'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让我们简单地将我们的函数复制到Cython中：
 - en: '[PRE63]'
+  id: totrans-219
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: '[PRE64]'
+  id: totrans-220
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: This has improved the performance compared to the pure Python approach by one-third.
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 与纯Python方法相比，性能提高了三分之一。
 - en: '### Declaring C types'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 声明C类型'
 - en: 'We can annotate the function variables and return types as well as use `cdef`
     and `cpdef` to improve performance:'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以注释函数变量和返回类型，以及使用`cdef`和`cpdef`来提高性能：
 - en: '[PRE65]'
+  id: totrans-224
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: '[PRE66]'
+  id: totrans-225
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: Annotating the functions with C types yields an over ten times performance improvement
     compared to the original Python implementation.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用C类型注释函数与原始Python实现相比，性能提高了十倍以上。
 - en: '### Using ndarray'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 使用ndarray'
 - en: When re-profiling, time is spent creating a [`Series`](../reference/api/pandas.Series.html#pandas.Series
     "pandas.Series") from each row, and calling `__getitem__` from both the index
     and the series (three times for each row). These Python function calls are expensive
     and can be improved by passing an `np.ndarray`.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 在重新分析时，时间花在从每一行创建一个[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series")，并且从索引和系列中调用`__getitem__`（每行三次）。这些Python函数调用很昂贵，可以通过传递一个`np.ndarray`来改进。
 - en: '[PRE67]'
+  id: totrans-229
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: '[PRE68]'
+  id: totrans-230
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: This implementation creates an array of zeros and inserts the result of `integrate_f_typed`
     applied over each row. Looping over an `ndarray` is faster in Cython than looping
     over a [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
     object.
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个实现创建了一个零数组，并插入了对每一行应用`integrate_f_typed`的结果。在Cython中循环遍历`ndarray`比循环遍历[`Series`](../reference/api/pandas.Series.html#pandas.Series)对象更快。
 - en: Since `apply_integrate_f` is typed to accept an `np.ndarray`, [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
     "pandas.Series.to_numpy") calls are needed to utilize this function.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于`apply_integrate_f`被定义为接受`np.ndarray`，因此需要调用[`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy)来利用这个函数。
 - en: '[PRE69]'
+  id: totrans-233
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: Performance has improved from the prior implementation by almost ten times.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 性能比以前的实现提高了近十倍。
 - en: '### Disabling compiler directives'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 禁用编译器指令'
 - en: The majority of the time is now spent in `apply_integrate_f`. Disabling Cython’s
     `boundscheck` and `wraparound` checks can yield more performance.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在大部分时间都花在了`apply_integrate_f`上。禁用Cython的`boundscheck`和`wraparound`检查可以提高性能。
 - en: '[PRE70]'
+  id: totrans-237
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: '[PRE71]'
+  id: totrans-238
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: '[PRE72]'
+  id: totrans-239
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: However, a loop indexer `i` accessing an invalid location in an array would
     cause a segfault because memory access isn’t checked. For more about `boundscheck`
     and `wraparound`, see the Cython docs on [compiler directives](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives).
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，循环索引器`i`访问数组中的无效位置会导致段错误，因为内存访问没有被检查。有关`boundscheck`和`wraparound`的更多信息，请参阅Cython文档中关于[编译器指令](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives)的部分。
 - en: '## Numba (JIT compilation)'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: '## Numba（即时编译）'
 - en: An alternative to statically compiling Cython code is to use a dynamic just-in-time
     (JIT) compiler with [Numba](https://numba.pydata.org/).
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个替代静态编译Cython代码的方法是使用动态即时（JIT）编译器[Numba](https://numba.pydata.org/)。
 - en: Numba allows you to write a pure Python function which can be JIT compiled to
     native machine instructions, similar in performance to C, C++ and Fortran, by
     decorating your function with `@jit`.
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba允许您编写一个纯Python函数，可以通过使用`@jit`装饰将其JIT编译为本机机器指令，性能类似于C、C++和Fortran。
 - en: Numba works by generating optimized machine code using the LLVM compiler infrastructure
     at import time, runtime, or statically (using the included pycc tool). Numba supports
     compilation of Python to run on either CPU or GPU hardware and is designed to
     integrate with the Python scientific software stack.
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba通过在导入时、运行时或静态（使用包含的pycc工具）生成优化的机器代码来工作。Numba支持将Python编译为在CPU或GPU硬件上运行，并设计用于与Python科学软件堆栈集成。
 - en: Note
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The `@jit` compilation will add overhead to the runtime of the function, so
     performance benefits may not be realized especially when using small data sets.
     Consider [caching](https://numba.readthedocs.io/en/stable/developer/caching.html)
     your function to avoid compilation overhead each time your function is run.
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: '`@jit`编译会增加函数运行时的开销，因此在使用小数据集时可能无法实现性能优势。考虑[缓存](https://numba.readthedocs.io/en/stable/developer/caching.html)你的函数，以避免每次运行函数时的编译开销。'
 - en: 'Numba can be used in 2 ways with pandas:'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba可以在pandas中以两种方式使用：
 - en: Specify the `engine="numba"` keyword in select pandas methods
+  id: totrans-248
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在选择的pandas方法中指定`engine="numba"`关键字
 - en: Define your own Python function decorated with `@jit` and pass the underlying
     NumPy array of [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
     or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     (using [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
     "pandas.Series.to_numpy")) into the function
+  id: totrans-249
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义自己的Python函数，并用`@jit`装饰，将[`Series`](../reference/api/pandas.Series.html#pandas.Series)或[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame)的底层NumPy数组（使用[`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy)）传递给函数。
 - en: pandas Numba Engine
+  id: totrans-250
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: pandas Numba 引擎
 - en: 'If Numba is installed, one can specify `engine="numba"` in select pandas methods
     to execute the method using Numba. Methods that support `engine="numba"` will
     also have an `engine_kwargs` keyword that accepts a dictionary that allows one
     to specify `"nogil"`, `"nopython"` and `"parallel"` keys with boolean values to
     pass into the `@jit` decorator. If `engine_kwargs` is not specified, it defaults
     to `{"nogil": False, "nopython": True, "parallel": False}` unless otherwise specified.'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: '如果已安装 Numba，可以在选择 pandas 方法中指定 `engine="numba"` 来使用 Numba 执行该方法。支持 `engine="numba"`
+    的方法还将具有一个 `engine_kwargs` 关键字，接受一个字典，允许指定 `"nogil"`、`"nopython"` 和 `"parallel"`
+    键以及布尔值传递给 `@jit` 装饰器。如果未指定 `engine_kwargs`，则默认为 `{"nogil": False, "nopython":
+    True, "parallel": False}`，除非另有规定。'
 - en: Note
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In terms of performance, **the first time a function is run using the Numba
     engine will be slow** as Numba will have some function compilation overhead. However,
     the JIT compiled functions are cached, and subsequent calls will be fast. In general,
     the Numba engine is performant with a larger amount of data points (e.g. 1+ million).
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 就性能而言，**使用 Numba 引擎运行函数的第一次将会很慢**，因为 Numba 将有一些函数编译开销。然而，JIT 编译的函数会被缓存，后续调用将会很快。一般来说，Numba
+    引擎在大量数据点（例如 100 万以上）上表现良好。
 - en: '[PRE73]'
+  id: totrans-254
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: If your compute hardware contains multiple CPUs, the largest performance gain
     can be realized by setting `parallel` to `True` to leverage more than 1 CPU. Internally,
     pandas leverages numba to parallelize computations over the columns of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame"); therefore, this performance benefit is only beneficial for
     a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     with a large number of columns.
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您的计算硬件包含多个 CPU，将 `parallel` 设置为 `True` 可以实现最大的性能提升，以利用多个 CPU。在内部，pandas 利用
+    numba 对 [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") 的列进行并行计算；因此，这种性能优势仅对具有大量列的 [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") 有益。
 - en: '[PRE74]'
+  id: totrans-256
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: Custom Function Examples
+  id: totrans-257
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 自定义函数示例
 - en: A custom Python function decorated with `@jit` can be used with pandas objects
     by passing their NumPy array representations with [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
     "pandas.Series.to_numpy").
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用 [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy") 将 pandas 对象的 NumPy 数组表示传递给自定义 Python 函数，并使用 `@jit` 装饰器可以与
+    pandas 对象一起使用。
 - en: '[PRE75]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: '[PRE76]'
+  id: totrans-260
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: In this example, using Numba was faster than Cython.
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，使用 Numba 比 Cython 更快。
 - en: 'Numba can also be used to write vectorized functions that do not require the
     user to explicitly loop over the observations of a vector; a vectorized function
     will be applied to each row automatically. Consider the following example of doubling
     each observation:'
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba 还可以用于编写不需要用户显式循环观察向量的向量化函数；向量化函数将自动应用于每一行。考虑以下示例，将每个观察值加倍：
 - en: '[PRE77]'
+  id: totrans-263
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: '[PRE78]'
+  id: totrans-264
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE78]'
 - en: Caveats
+  id: totrans-265
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意事项
 - en: Numba is best at accelerating functions that apply numerical functions to NumPy
     arrays. If you try to `@jit` a function that contains unsupported [Python](https://numba.readthedocs.io/en/stable/reference/pysupported.html)
     or [NumPy](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)
@@ -1133,87 +1712,133 @@
     Numba throw an error if it cannot compile a function in a way that speeds up your
     code, pass Numba the argument `nopython=True` (e.g. `@jit(nopython=True)`). For
     more on troubleshooting Numba modes, see the [Numba troubleshooting page](https://numba.pydata.org/numba-doc/latest/user/troubleshoot.html#the-compiled-code-is-too-slow).
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba 最擅长加速将数值函数应用于 NumPy 数组的函数。如果尝试对包含不受支持的 [Python](https://numba.readthedocs.io/en/stable/reference/pysupported.html)
+    或 [NumPy](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)
+    代码的函数进行 `@jit`，编译将会回退到 [object mode](https://numba.readthedocs.io/en/stable/glossary.html#term-object-mode)，这很可能不会加速函数。如果希望
+    Numba 在无法编译函数以加速代码时抛出错误，请传递参数 `nopython=True` 给 Numba（例如 `@jit(nopython=True)`）。有关故障排除
+    Numba 模式的更多信息，请参阅 [Numba 故障排除页面](https://numba.pydata.org/numba-doc/latest/user/troubleshoot.html#the-compiled-code-is-too-slow)。
 - en: Using `parallel=True` (e.g. `@jit(parallel=True)`) may result in a `SIGABRT`
     if the threading layer leads to unsafe behavior. You can first [specify a safe
     threading layer](https://numba.readthedocs.io/en/stable/user/threading-layer.html#selecting-a-threading-layer-for-safe-parallel-execution)
     before running a JIT function with `parallel=True`.
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`parallel=True`（例如`@jit(parallel=True)`）可能会导致`SIGABRT`，如果线程层导致不安全行为。您可以在使用`parallel=True`运行JIT函数之前，首先[指定一个安全的线程层](https://numba.readthedocs.io/en/stable/user/threading-layer.html#selecting-a-threading-layer-for-safe-parallel-execution)。
 - en: Generally if the you encounter a segfault (`SIGSEGV`) while using Numba, please
     report the issue to the [Numba issue tracker.](https://github.com/numba/numba/issues/new/choose)
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，如果在使用Numba时遇到段错误（`SIGSEGV`），请将问题报告给[Numba问题跟踪器。](https://github.com/numba/numba/issues/new/choose)
 - en: pandas Numba Engine
+  id: totrans-269
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: pandas Numba 引擎
 - en: 'If Numba is installed, one can specify `engine="numba"` in select pandas methods
     to execute the method using Numba. Methods that support `engine="numba"` will
     also have an `engine_kwargs` keyword that accepts a dictionary that allows one
     to specify `"nogil"`, `"nopython"` and `"parallel"` keys with boolean values to
     pass into the `@jit` decorator. If `engine_kwargs` is not specified, it defaults
     to `{"nogil": False, "nopython": True, "parallel": False}` unless otherwise specified.'
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: '如果安装了Numba，可以在选择pandas方法中指定`engine="numba"`以使用Numba执行该方法。支持`engine="numba"`的方法还将具有一个`engine_kwargs`关键字，接受一个字典，允许指定`"nogil"`、`"nopython"`和`"parallel"`键及其布尔值传递给`@jit`装饰器。如果未指定`engine_kwargs`，则默认为`{"nogil":
+    False, "nopython": True, "parallel": False}`，除非另有规定。'
 - en: Note
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In terms of performance, **the first time a function is run using the Numba
     engine will be slow** as Numba will have some function compilation overhead. However,
     the JIT compiled functions are cached, and subsequent calls will be fast. In general,
     the Numba engine is performant with a larger amount of data points (e.g. 1+ million).
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 就性能而言，**使用Numba引擎运行函数的第一次将会很慢**，因为Numba将有一些函数编译开销。然而，JIT编译的函数会被缓存，后续调用将会很快。一般来说，Numba引擎在大量数据点（例如100万个以上）上表现良好。
 - en: '[PRE79]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE79]'
 - en: If your compute hardware contains multiple CPUs, the largest performance gain
     can be realized by setting `parallel` to `True` to leverage more than 1 CPU. Internally,
     pandas leverages numba to parallelize computations over the columns of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame"); therefore, this performance benefit is only beneficial for
     a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     with a large number of columns.
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您的计算硬件包含多个CPU，通过将`parallel`设置为`True`可以实现最大的性能提升，以利用多个CPU。在内部，pandas利用numba来并行计算[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的列；因此，这种性能优势仅对具有大量列的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")有益。
 - en: '[PRE80]'
+  id: totrans-275
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE80]'
 - en: Custom Function Examples
+  id: totrans-276
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 自定义函数示例
 - en: A custom Python function decorated with `@jit` can be used with pandas objects
     by passing their NumPy array representations with [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
     "pandas.Series.to_numpy").
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用`@jit`装饰的自定义Python函数，可以通过[`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy")将它们的NumPy数组表示传递给pandas对象。
 - en: '[PRE81]'
+  id: totrans-278
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE81]'
 - en: '[PRE82]'
+  id: totrans-279
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE82]'
 - en: In this example, using Numba was faster than Cython.
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，使用Numba比Cython更快。
 - en: 'Numba can also be used to write vectorized functions that do not require the
     user to explicitly loop over the observations of a vector; a vectorized function
     will be applied to each row automatically. Consider the following example of doubling
     each observation:'
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba还可以用于编写矢量化函数，无需用户显式循环遍历向量的观测值；矢量化函数将自动应用于每一行。考虑以下示例，将每个观测值加倍：
 - en: '[PRE83]'
+  id: totrans-282
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE83]'
 - en: '[PRE84]'
+  id: totrans-283
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE84]'
 - en: Caveats
+  id: totrans-284
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意事项
 - en: Numba is best at accelerating functions that apply numerical functions to NumPy
     arrays. If you try to `@jit` a function that contains unsupported [Python](https://numba.readthedocs.io/en/stable/reference/pysupported.html)
     or [NumPy](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)
@@ -1222,20 +1847,24 @@
     Numba throw an error if it cannot compile a function in a way that speeds up your
     code, pass Numba the argument `nopython=True` (e.g. `@jit(nopython=True)`). For
     more on troubleshooting Numba modes, see the [Numba troubleshooting page](https://numba.pydata.org/numba-doc/latest/user/troubleshoot.html#the-compiled-code-is-too-slow).
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
 - en: Using `parallel=True` (e.g. `@jit(parallel=True)`) may result in a `SIGABRT`
     if the threading layer leads to unsafe behavior. You can first [specify a safe
     threading layer](https://numba.readthedocs.io/en/stable/user/threading-layer.html#selecting-a-threading-layer-for-safe-parallel-execution)
     before running a JIT function with `parallel=True`.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
 - en: Generally if the you encounter a segfault (`SIGSEGV`) while using Numba, please
     report the issue to the [Numba issue tracker.](https://github.com/numba/numba/issues/new/choose)
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
 - en: '## Expression evaluation via [`eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval")'
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
 - en: The top-level function [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
@@ -1245,9 +1874,11 @@
     strings and can potentially provide a performance improvement by evaluate arithmetic
     and boolean expression all at once for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame").
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
 - en: Note
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
 - en: You should not use [`eval()`](../reference/api/pandas.eval.html#pandas.eval
@@ -1257,913 +1888,1313 @@
     Python. A good rule of thumb is to only use [`eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") when you have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with more than 10,000 rows.
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
 - en: Supported syntax
+  id: totrans-292
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'These operations are supported by [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval"):'
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
 - en: Arithmetic operations except for the left shift (`<<`) and right shift (`>>`)
     operators, e.g., `df + 2 * pi / s ** 4 % 42 - the_golden_ratio`
+  id: totrans-294
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Comparison operations, including chained comparisons, e.g., `2 < df < df2`
+  id: totrans-295
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Boolean operations, e.g., `df < df2 and df3 < df4 or not df_bool`
+  id: totrans-296
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 布尔操作，例如，`df < df2 and df3 < df4 or not df_bool`
 - en: '`list` and `tuple` literals, e.g., `[1, 2]` or `(1, 2)`'
+  id: totrans-297
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`list`和`tuple`字面值，例如，`[1, 2]`或`(1, 2)`'
 - en: Attribute access, e.g., `df.a`
+  id: totrans-298
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 属性访问，例如，`df.a`
 - en: Subscript expressions, e.g., `df[0]`
+  id: totrans-299
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 下标表达式，例如，`df[0]`
 - en: Simple variable evaluation, e.g., `pd.eval("df")` (this is not very useful)
+  id: totrans-300
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 简单的变量评估，例如，`pd.eval("df")`（这并不是很有用）
 - en: 'Math functions: `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`, `sinh`,
     `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`, `arccosh`, `arcsinh`, `arctanh`,
     `abs`, `arctan2` and `log10`.'
+  id: totrans-301
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 数学函数：`sin`、`cos`、`exp`、`log`、`expm1`、`log1p`、`sqrt`、`sinh`、`cosh`、`tanh`、`arcsin`、`arccos`、`arctan`、`arccosh`、`arcsinh`、`arctanh`、`abs`、`arctan2`和`log10`。
 - en: 'The following Python syntax is **not** allowed:'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下Python语法**不**允许：
 - en: Expressions
+  id: totrans-303
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 表达式
 - en: Function calls other than math functions.
+  id: totrans-304
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 除数学函数外的函数调用。
 - en: ''
+  id: totrans-305
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-306
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`is`/`is not` operations'
+  id: totrans-307
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`is`/`is not`操作'
 - en: ''
+  id: totrans-308
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-309
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`if` expressions'
+  id: totrans-310
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`if`表达式'
 - en: ''
+  id: totrans-311
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-312
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`lambda` expressions'
+  id: totrans-313
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`lambda`表达式'
 - en: ''
+  id: totrans-314
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-315
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`list`/`set`/`dict` comprehensions'
+  id: totrans-316
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`list`/`set`/`dict`推导式'
 - en: ''
+  id: totrans-317
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-318
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Literal `dict` and `set` expressions
+  id: totrans-319
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字面`dict`和`set`表达式
 - en: ''
+  id: totrans-320
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-321
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`yield` expressions'
+  id: totrans-322
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`yield`表达式'
 - en: ''
+  id: totrans-323
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-324
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Generator expressions
+  id: totrans-325
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 生成器表达式
 - en: ''
+  id: totrans-326
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-327
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Boolean expressions consisting of only scalar values
+  id: totrans-328
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 由标量值组成的布尔表达式
 - en: Statements
+  id: totrans-329
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 语句
 - en: Neither [simple](https://docs.python.org/3/reference/simple_stmts.html) or [compound](https://docs.python.org/3/reference/compound_stmts.html)
     statements are allowed. This includes `for`, `while`, and `if`.
+  id: totrans-330
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 既不允许[简单](https://docs.python.org/3/reference/simple_stmts.html)也不允许[复合](https://docs.python.org/3/reference/compound_stmts.html)语句。这包括`for`、`while`和`if`。
 - en: Local variables
+  id: totrans-331
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 本地变量
 - en: You must *explicitly reference* any local variable that you want to use in an
     expression by placing the `@` character in front of the name. This mechanism is
     the same for both [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") and [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval"). For example,
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
+  zh: 您必须*显式引用*您想在表达式中使用的任何本地变量，方法是在名称前面放置`@`字符。这个机制对于[`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")和[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")都是相同的。例如，
 - en: '[PRE85]'
+  id: totrans-333
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE85]'
 - en: If you don’t prefix the local variable with `@`, pandas will raise an exception
     telling you the variable is undefined.
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您没有使用`@`前缀来引用本地变量，pandas将引发异常，告诉您该变量未定义。
 - en: When using [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") and [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query"), this allows you to have a local variable and a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") column with the same name in an expression.
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
+  zh: 当使用[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")和[`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")时，这允许您在表达式中具有与局部变量和[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")列相同的名称。
 - en: '[PRE86]'
+  id: totrans-336
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE86]'
 - en: Warning
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     will raise an exception if you cannot use the `@` prefix because it isn’t defined
     in that context.'
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")如果您在该上下文中不能使用`@`前缀，将会引发异常，因为它在那个上下文中未定义。'
 - en: '[PRE87]'
+  id: totrans-339
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE87]'
 - en: In this case, you should simply refer to the variables like you would in standard
     Python.
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，您应该像在标准Python中那样简单地引用变量。
 - en: '[PRE88]'
+  id: totrans-341
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE88]'
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     parsers'
+  id: totrans-342
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")解析器'
 - en: There are two different expression syntax parsers.
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种不同的表达语法解析器。
 - en: The default `'pandas'` parser allows a more intuitive syntax for expressing
     query-like operations (comparisons, conjunctions and disjunctions). In particular,
     the precedence of the `&` and `|` operators is made equal to the precedence of
     the corresponding boolean operations `and` and `or`.
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认的`'pandas'`解析器允许更直观的语法来表达类似查询的操作（比较、连接和或）。特别是，`&`和`|`运算符的优先级被设置为与相应的布尔操作`and`和`or`相等。
 - en: For example, the above conjunction can be written without parentheses. Alternatively,
     you can use the `'python'` parser to enforce strict Python semantics.
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，上述连接可以不使用括号来编写。或者，您可以使用`'python'`解析器来强制执行严格的Python语义。
 - en: '[PRE89]'
+  id: totrans-346
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE89]'
 - en: 'The same expression can be “anded” together with the word [`and`](https://docs.python.org/3/reference/expressions.html#and
     "(in Python v3.12)") as well:'
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
+  zh: 相同的表达式也可以用单词[`and`](https://docs.python.org/3/reference/expressions.html#and
+    "(in Python v3.12)")“与”在一起：
 - en: '[PRE90]'
+  id: totrans-348
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE90]'
 - en: The [`and`](https://docs.python.org/3/reference/expressions.html#and "(in Python
     v3.12)") and [`or`](https://docs.python.org/3/reference/expressions.html#or "(in
     Python v3.12)") operators here have the same precedence that they would in Python.
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的[`and`](https://docs.python.org/3/reference/expressions.html#and "(in Python
+    v3.12)")和[`or`](https://docs.python.org/3/reference/expressions.html#or "(in Python
+    v3.12)")运算符具有与Python中相同的优先级。
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     engines'
+  id: totrans-350
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")引擎'
 - en: There are two different expression engines.
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种不同的表达式引擎。
 - en: The `'numexpr'` engine is the more performant engine that can yield performance
     improvements compared to standard Python syntax for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame"). This engine requires the optional dependency `numexpr` to
     be installed.
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
+  zh: '`''numexpr''`引擎是更高性能的引擎，可以相对于大型[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的标准Python语法带来性能改进。此引擎需要安装可选依赖项`numexpr`。'
 - en: The `'python'` engine is generally *not* useful except for testing other evaluation
     engines against it. You will achieve **no** performance benefits using [`eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") with `engine='python'` and may incur a performance hit.
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: '`''python''`引擎通常*不*有用，除非用于测试其他评估引擎。使用`engine=''python''`和可能会导致性能下降，不会获得**任何**性能优势。'
 - en: '[PRE91]'
+  id: totrans-354
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE91]'
 - en: '[PRE92]'
+  id: totrans-355
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE92]'
 - en: The [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") method
+  id: totrans-356
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")方法'
 - en: In addition to the top level [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") function you can also evaluate an expression in the “context” of
     a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame").
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了顶层[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")函数外，您还可以在[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的“上下文”中评估表达式。
 - en: '[PRE93]'
+  id: totrans-358
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE93]'
 - en: Any expression that is a valid [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") expression is also a valid [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") expression, with the added benefit that you don’t have
     to prefix the name of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") to the column(s) you’re interested in evaluating.
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
+  zh: 任何有效的[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")表达式也是有效的[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")表达式，额外的好处是您不必在要评估的列名前加上[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的名称。
 - en: In addition, you can perform assignment of columns within an expression. This
     allows for *formulaic evaluation*. The assignment target can be a new column name
     or an existing column name, and it must be a valid Python identifier.
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，您可以在表达式中执行列的赋值。这允许*公式化评估*。赋值目标可以是新列名或现有列名，并且必须是有效的Python标识符。
 - en: '[PRE94]'
+  id: totrans-361
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE94]'
 - en: A copy of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with the new or modified columns is returned, and the original
     frame is unchanged.
+  id: totrans-362
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回具有新列或修改列的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的副本，原始框架保持不变。
 - en: '[PRE95]'
+  id: totrans-363
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE95]'
 - en: Multiple column assignments can be performed by using a multi-line string.
+  id: totrans-364
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过使用多行字符串执行多列赋值。
 - en: '[PRE96]'
+  id: totrans-365
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE96]'
 - en: The equivalent in standard Python would be
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
+  zh: 标准Python中的等效操作将是
 - en: '[PRE97]'
+  id: totrans-367
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE97]'
 - en: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval") performance
     comparison'
+  id: totrans-368
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")性能比较'
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     works well with expressions containing large arrays.'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")在包含大型数组的表达式中表现良好。'
 - en: '[PRE98]'
+  id: totrans-370
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE98]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     arithmetic:'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")算术：'
 - en: '[PRE99]'
+  id: totrans-372
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE99]'
 - en: '[PRE100]'
+  id: totrans-373
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE100]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     comparison:'
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")比较：'
 - en: '[PRE101]'
+  id: totrans-375
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE101]'
 - en: '[PRE102]'
+  id: totrans-376
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE102]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     arithmetic with unaligned axes.'
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")在未对齐轴上的算术运算。'
 - en: '[PRE103]'
+  id: totrans-378
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE103]'
 - en: '[PRE104]'
+  id: totrans-379
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE104]'
 - en: Note
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Operations such as
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
+  zh: 诸如
 - en: '[PRE105]'
+  id: totrans-382
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE105]'
 - en: should be performed in Python. An exception will be raised if you try to perform
     any boolean/bitwise operations with scalar operands that are not of type `bool`
     or `np.bool_`.
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
+  zh: 应在Python中执行。如果尝试对不是`bool`或`np.bool_`类型的标量操作数执行任何布尔/位操作，将引发异常。
 - en: Here is a plot showing the running time of [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") as function of the size of the frame involved in the computation.
     The two lines are two different engines.
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是一个显示[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")运行时间与涉及计算的数据框大小的函数关系的图。两条线代表两种不同的引擎。
 - en: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
+  id: totrans-385
   prefs: []
   type: TYPE_IMG
+  zh: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
 - en: You will only see the performance benefits of using the `numexpr` engine with
     [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     if your [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") has more than approximately 100,000 rows.
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 只有当您的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")的行数超过约10万行时，使用`numexpr`引擎与[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")才能看到性能优势。
 - en: This plot was created using a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with 3 columns each containing floating point values generated
     using `numpy.random.randn()`.
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
+  zh: 此图是使用包含使用`numpy.random.randn()`生成的浮点值的3列的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")创建的。
 - en: Expression evaluation limitations with `numexpr`
+  id: totrans-388
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用`numexpr`的表达式评估限制
 - en: 'Expressions that would result in an object dtype or involve datetime operations
     because of `NaT` must be evaluated in Python space, but part of an expression
     can still be evaluated with `numexpr`. For example:'
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于`NaT`，会导致对象dtype或涉及日期时间操作的表达式必须在Python空间中评估，但表达式的一部分仍然可以使用`numexpr`评估。例如：
 - en: '[PRE106]'
+  id: totrans-390
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE106]'
 - en: The numeric part of the comparison (`nums == 1`) will be evaluated by `numexpr`
     and the object part of the comparison (`"strings == 'a'`) will be evaluated by
     Python.
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
+  zh: 比较的数值部分（`nums == 1`）将由`numexpr`评估，比较的对象部分（`"strings == 'a'`）将由Python评估。
 - en: Supported syntax
+  id: totrans-392
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 支持的语法
 - en: 'These operations are supported by [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval"):'
+  id: totrans-393
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些操作由[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")支持：
 - en: Arithmetic operations except for the left shift (`<<`) and right shift (`>>`)
     operators, e.g., `df + 2 * pi / s ** 4 % 42 - the_golden_ratio`
+  id: totrans-394
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 除左移（`<<`）和右移（`>>`）运算符外的算术运算，例如，`df + 2 * pi / s ** 4 % 42 - the_golden_ratio`
 - en: Comparison operations, including chained comparisons, e.g., `2 < df < df2`
+  id: totrans-395
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 比较操作，包括链式比较，例如，`2 < df < df2`
 - en: Boolean operations, e.g., `df < df2 and df3 < df4 or not df_bool`
+  id: totrans-396
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 布尔运算，例如，`df < df2 and df3 < df4 or not df_bool`
 - en: '`list` and `tuple` literals, e.g., `[1, 2]` or `(1, 2)`'
+  id: totrans-397
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`list`和`tuple`字面值，例如，`[1, 2]`或`(1, 2)`'
 - en: Attribute access, e.g., `df.a`
+  id: totrans-398
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 属性访问，例如，`df.a`
 - en: Subscript expressions, e.g., `df[0]`
+  id: totrans-399
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 下标表达式，例如，`df[0]`
 - en: Simple variable evaluation, e.g., `pd.eval("df")` (this is not very useful)
+  id: totrans-400
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 简单的变量评估，例如，`pd.eval("df")`（这并不是很有用）
 - en: 'Math functions: `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`, `sinh`,
     `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`, `arccosh`, `arcsinh`, `arctanh`,
     `abs`, `arctan2` and `log10`.'
+  id: totrans-401
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 数学函数：`sin`、`cos`、`exp`、`log`、`expm1`、`log1p`、`sqrt`、`sinh`、`cosh`、`tanh`、`arcsin`、`arccos`、`arctan`、`arccosh`、`arcsinh`、`arctanh`、`abs`、`arctan2`和`log10`。
 - en: 'The following Python syntax is **not** allowed:'
+  id: totrans-402
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下Python语法**不**允许：
 - en: Expressions
+  id: totrans-403
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 表达式
 - en: Function calls other than math functions.
+  id: totrans-404
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 除数学函数外的函数调用。
 - en: ''
+  id: totrans-405
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-406
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`is`/`is not` operations'
+  id: totrans-407
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`is`/`is not`操作'
 - en: ''
+  id: totrans-408
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-409
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`if` expressions'
+  id: totrans-410
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`if`表达式'
 - en: ''
+  id: totrans-411
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-412
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`lambda` expressions'
+  id: totrans-413
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`lambda`表达式'
 - en: ''
+  id: totrans-414
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-415
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`list`/`set`/`dict` comprehensions'
+  id: totrans-416
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`list`/`set`/`dict`推导式'
 - en: ''
+  id: totrans-417
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-418
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Literal `dict` and `set` expressions
+  id: totrans-419
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字面`dict`和`set`表达式
 - en: ''
+  id: totrans-420
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-421
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`yield` expressions'
+  id: totrans-422
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`yield`表达式'
 - en: ''
+  id: totrans-423
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-424
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Generator expressions
+  id: totrans-425
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 生成器表达式
 - en: ''
+  id: totrans-426
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-427
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: Boolean expressions consisting of only scalar values
+  id: totrans-428
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 仅由标量值组成的布尔表达式
 - en: Statements
+  id: totrans-429
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 语句
 - en: Neither [simple](https://docs.python.org/3/reference/simple_stmts.html) or [compound](https://docs.python.org/3/reference/compound_stmts.html)
     statements are allowed. This includes `for`, `while`, and `if`.
+  id: totrans-430
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不允许简单或复合语句。这包括`for`、`while`和`if`。
 - en: Local variables
+  id: totrans-431
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 局部变量
 - en: You must *explicitly reference* any local variable that you want to use in an
     expression by placing the `@` character in front of the name. This mechanism is
     the same for both [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") and [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval"). For example,
+  id: totrans-432
   prefs: []
   type: TYPE_NORMAL
+  zh: 你必须通过在名称前加上`@`字符来*显式引用*任何你想在表达式中使用的本地变量。这个机制对于[`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")和[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")都是相同的。例如，
 - en: '[PRE107]'
+  id: totrans-433
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE107]'
 - en: If you don’t prefix the local variable with `@`, pandas will raise an exception
     telling you the variable is undefined.
+  id: totrans-434
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你不在本地变量前加上`@`前缀，pandas会引发一个异常，告诉你该变量未定义。
 - en: When using [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") and [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query"), this allows you to have a local variable and a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") column with the same name in an expression.
+  id: totrans-435
   prefs: []
   type: TYPE_NORMAL
+  zh: 在使用[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")和[`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")时，这允许你在表达式中同时拥有一个本地变量和一个[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")列具有相同的名称。
 - en: '[PRE108]'
+  id: totrans-436
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE108]'
 - en: Warning
+  id: totrans-437
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     will raise an exception if you cannot use the `@` prefix because it isn’t defined
     in that context.'
+  id: totrans-438
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你不能在上下文中使用`@`前缀因为它没有被定义，[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")会引发一个异常。
 - en: '[PRE109]'
+  id: totrans-439
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE109]'
 - en: In this case, you should simply refer to the variables like you would in standard
     Python.
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，你应该像在标准Python中那样简单地引用变量。
 - en: '[PRE110]'
+  id: totrans-441
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE110]'
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     parsers'
+  id: totrans-442
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")解析器'
 - en: There are two different expression syntax parsers.
+  id: totrans-443
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种不同的表达式语法解析器。
 - en: The default `'pandas'` parser allows a more intuitive syntax for expressing
     query-like operations (comparisons, conjunctions and disjunctions). In particular,
     the precedence of the `&` and `|` operators is made equal to the precedence of
     the corresponding boolean operations `and` and `or`.
+  id: totrans-444
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认的`'pandas'`解析器允许更直观地表达类似查询的操作（比较、连接和分离）。特别是，`&`和`|`运算符的优先级被设置为与相应的布尔运算`and`和`or`相同。
 - en: For example, the above conjunction can be written without parentheses. Alternatively,
     you can use the `'python'` parser to enforce strict Python semantics.
+  id: totrans-445
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，上面的连接词可以不用括号写。或者，你可以使用`'python'`解析器来强制执行严格的Python语义。
 - en: '[PRE111]'
+  id: totrans-446
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE111]'
 - en: 'The same expression can be “anded” together with the word [`and`](https://docs.python.org/3/reference/expressions.html#and
     "(in Python v3.12)") as well:'
+  id: totrans-447
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样的表达式也可以用单词[`and`](https://docs.python.org/3/reference/expressions.html#and
+    "(在 Python v3.12 中)")来“与”起来：
 - en: '[PRE112]'
+  id: totrans-448
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE112]'
 - en: The [`and`](https://docs.python.org/3/reference/expressions.html#and "(in Python
     v3.12)") and [`or`](https://docs.python.org/3/reference/expressions.html#or "(in
     Python v3.12)") operators here have the same precedence that they would in Python.
+  id: totrans-449
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的[`and`](https://docs.python.org/3/reference/expressions.html#and "(在 Python
+    v3.12 中)")和[`or`](https://docs.python.org/3/reference/expressions.html#or "(在
+    Python v3.12 中)")运算符具有与Python中相同的优先级。
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     engines'
+  id: totrans-450
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")引擎'
 - en: There are two different expression engines.
+  id: totrans-451
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种不同的表达式引擎。
 - en: The `'numexpr'` engine is the more performant engine that can yield performance
     improvements compared to standard Python syntax for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame"). This engine requires the optional dependency `numexpr` to
     be installed.
+  id: totrans-452
   prefs: []
   type: TYPE_NORMAL
+  zh: '`''numexpr''`引擎是更高性能的引擎，可以相对于大型[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的标准Python语法带来性能改进。这个引擎需要安装可选依赖`numexpr`。'
 - en: The `'python'` engine is generally *not* useful except for testing other evaluation
     engines against it. You will achieve **no** performance benefits using [`eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") with `engine='python'` and may incur a performance hit.
+  id: totrans-453
   prefs: []
   type: TYPE_NORMAL
+  zh: '`''python''`引擎通常*不*有用，除了用于测试其他评估引擎。使用`engine=''python''`和[`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")不会带来任何性能优势，反而可能会降低性能。'
 - en: '[PRE113]'
+  id: totrans-454
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE113]'
 - en: '[PRE114]'
+  id: totrans-455
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE114]'
 - en: The [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") method
+  id: totrans-456
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")方法'
 - en: In addition to the top level [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") function you can also evaluate an expression in the “context” of
     a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame").
+  id: totrans-457
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了顶层[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")函数外，您还可以在[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的“上下文”中评估表达式。
 - en: '[PRE115]'
+  id: totrans-458
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE115]'
 - en: Any expression that is a valid [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") expression is also a valid [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
     "pandas.DataFrame.eval") expression, with the added benefit that you don’t have
     to prefix the name of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") to the column(s) you’re interested in evaluating.
+  id: totrans-459
   prefs: []
   type: TYPE_NORMAL
+  zh: 任何有效的[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")表达式也是有效的[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")表达式，额外的好处是您不必在感兴趣的列名之前加上[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的名称。
 - en: In addition, you can perform assignment of columns within an expression. This
     allows for *formulaic evaluation*. The assignment target can be a new column name
     or an existing column name, and it must be a valid Python identifier.
+  id: totrans-460
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，您可以在表达式中执行列的赋值。这允许*公式评估*。赋值目标可以是新列名或现有列名，并且必须是有效的Python标识符。
 - en: '[PRE116]'
+  id: totrans-461
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE116]'
 - en: A copy of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with the new or modified columns is returned, and the original
     frame is unchanged.
+  id: totrans-462
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回具有新列或修改列的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")的副本，原始框架保持不变。
 - en: '[PRE117]'
+  id: totrans-463
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE117]'
 - en: Multiple column assignments can be performed by using a multi-line string.
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过使用多行字符串执行多列赋值。
 - en: '[PRE118]'
+  id: totrans-465
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE118]'
 - en: The equivalent in standard Python would be
+  id: totrans-466
   prefs: []
   type: TYPE_NORMAL
+  zh: 标准Python中的等效操作是
 - en: '[PRE119]'
+  id: totrans-467
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE119]'
 - en: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval") performance
     comparison'
+  id: totrans-468
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")性能比较'
 - en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     works well with expressions containing large arrays.'
+  id: totrans-469
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")适用于包含大型数组的表达式。'
 - en: '[PRE120]'
+  id: totrans-470
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE120]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     arithmetic:'
+  id: totrans-471
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")算术：'
 - en: '[PRE121]'
+  id: totrans-472
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE121]'
 - en: '[PRE122]'
+  id: totrans-473
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE122]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     comparison:'
+  id: totrans-474
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")比较：'
 - en: '[PRE123]'
+  id: totrans-475
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE123]'
 - en: '[PRE124]'
+  id: totrans-476
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE124]'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     arithmetic with unaligned axes.'
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
+  zh: 具有不对齐轴的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")算术。
 - en: '[PRE125]'
+  id: totrans-478
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE125]'
 - en: '[PRE126]'
+  id: totrans-479
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE126]'
 - en: Note
+  id: totrans-480
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Operations such as
+  id: totrans-481
   prefs: []
   type: TYPE_NORMAL
+  zh: 在Python中应执行诸如
 - en: '[PRE127]'
+  id: totrans-482
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE127]'
 - en: should be performed in Python. An exception will be raised if you try to perform
     any boolean/bitwise operations with scalar operands that are not of type `bool`
     or `np.bool_`.
+  id: totrans-483
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果尝试对不是`bool`或`np.bool_`类型的标量操作执行任何布尔/位操作，将引发异常。
 - en: Here is a plot showing the running time of [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
     "pandas.eval") as function of the size of the frame involved in the computation.
     The two lines are two different engines.
+  id: totrans-484
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是一个显示[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")运行时间与涉及计算的框架大小函数关系的图表。两条线代表两种不同的引擎。
 - en: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
+  id: totrans-485
   prefs: []
   type: TYPE_IMG
+  zh: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
 - en: You will only see the performance benefits of using the `numexpr` engine with
     [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
     if your [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") has more than approximately 100,000 rows.
+  id: totrans-486
   prefs: []
   type: TYPE_NORMAL
+  zh: 只有当您的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")的行数超过约100,000行时，使用`numexpr`引擎与[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")才能看到性能优势。
 - en: This plot was created using a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") with 3 columns each containing floating point values generated
     using `numpy.random.randn()`.
+  id: totrans-487
   prefs: []
   type: TYPE_NORMAL
+  zh: 此图是使用包含使用`numpy.random.randn()`生成的浮点值的3列的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")创建的。
 - en: Expression evaluation limitations with `numexpr`
+  id: totrans-488
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用`numexpr`的表达式评估限制
 - en: 'Expressions that would result in an object dtype or involve datetime operations
     because of `NaT` must be evaluated in Python space, but part of an expression
     can still be evaluated with `numexpr`. For example:'
+  id: totrans-489
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于`NaT`会导致结果为对象数据类型或涉及日期时间操作，因此表达式必须在Python空间中进行评估，但表达式的一部分仍然可以使用`numexpr`进行评估。例如：
 - en: '[PRE128]'
+  id: totrans-490
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE128]'
 - en: The numeric part of the comparison (`nums == 1`) will be evaluated by `numexpr`
     and the object part of the comparison (`"strings == 'a'`) will be evaluated by
     Python.
+  id: totrans-491
   prefs: []
   type: TYPE_NORMAL
+  zh: 比较的数值部分（`nums == 1`）将由`numexpr`评估，而比较的对象部分（`"strings == 'a'`）将由Python评估。
