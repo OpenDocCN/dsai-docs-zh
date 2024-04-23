@@ -1,6 +1,6 @@
-# <center>scikit-learn (sklearn) 官方文档中文版</center>
+# scikit-learn (sklearn) 官方文档中文版
 
-<center><img src="img/logo/scikit-learn-logo.png" alt="logo" /></center>
+<center><img src="" alt="logo" /></center>
 
 <br/>
 <table>
