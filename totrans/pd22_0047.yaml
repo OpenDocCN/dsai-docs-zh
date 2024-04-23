@@ -1,317 +1,486 @@
 - en: Scaling to large datasets
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 扩展到大型数据集
 - en: 原文：[https://pandas.pydata.org/docs/user_guide/scale.html](https://pandas.pydata.org/docs/user_guide/scale.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://pandas.pydata.org/docs/user_guide/scale.html](https://pandas.pydata.org/docs/user_guide/scale.html)
 - en: pandas provides data structures for in-memory analytics, which makes using pandas
     to analyze datasets that are larger than memory datasets somewhat tricky. Even
     datasets that are a sizable fraction of memory become unwieldy, as some pandas
     operations need to make intermediate copies.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas提供了用于内存分析的数据结构，这使得使用pandas分析大于内存数据集的数据集有些棘手。即使是占用相当大内存的数据集也变得难以处理，因为一些pandas操作需要进行中间复制。
 - en: This document provides a few recommendations for scaling your analysis to larger
     datasets. It’s a complement to [Enhancing performance](enhancingperf.html#enhancingperf),
     which focuses on speeding up analysis for datasets that fit in memory.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 本文提供了一些建议，以便将您的分析扩展到更大的数据集。这是对[提高性能](enhancingperf.html#enhancingperf)的补充，后者侧重于加快适���内存的数据集的分析。
 - en: Load less data
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 加载更少的数据
 - en: Suppose our raw dataset on disk has many columns.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们在磁盘上的原始数据集有许多列。
 - en: '[PRE0]'
+  id: totrans-6
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: To load the columns we want, we have two options. Option 1 loads in all the
     data and then filters to what we need.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 要加载我们想要的列，我们有两个选项。选项1加载所有数据，然后筛选我们需要的数据。
 - en: '[PRE1]'
+  id: totrans-8
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Option 2 only loads the columns we request.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 选项2仅加载我们请求的列。
 - en: '[PRE2]'
+  id: totrans-10
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: If we were to measure the memory usage of the two calls, we’d see that specifying
     `columns` uses about 1/10th the memory in this case.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们测量这两个调用的内存使用情况，我们会发现在这种情况下指定`columns`使用的内存约为1/10。
 - en: With [`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
     "pandas.read_csv"), you can specify `usecols` to limit the columns read into memory.
     Not all file formats that can be read by pandas provide an option to read a subset
     of columns.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用[`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")，您可以指定`usecols`来限制读入内存的列。并非所有可以被pandas读取的文件格式都提供读取子集列的选项。
 - en: Use efficient datatypes
+  id: totrans-13
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用高效的数据类型
 - en: The default pandas data types are not the most memory efficient. This is especially
     true for text data columns with relatively few unique values (commonly referred
     to as “low-cardinality” data). By using more efficient data types, you can store
     larger datasets in memory.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认的pandas数据类型并不是最节省内存的。特别是对于具有相对少量唯一值的文本数据列（通常称为“低基数”数据），这一点尤为明显。通过使用更高效的数据类型，您可以在内存中存储更大的数据集。
 - en: '[PRE3]'
+  id: totrans-15
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Now, let’s inspect the data types and memory usage to see where we should focus
     our attention.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让我们检查数据类型和内存使用情况，看看我们应该关注哪些方面。
 - en: '[PRE4]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: '[PRE5]'
+  id: totrans-18
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: The `name` column is taking up much more memory than any other. It has just
     a few unique values, so it’s a good candidate for converting to a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical"). With a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical"), we store each unique name once and use space-efficient
     integers to know which specific name is used in each row.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: '`name`列占用的内存比其他任何列都多得多。它只有几个唯一值，因此很适合转换为[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")。使用[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")，我们只需一次存储每个唯一名称，并使用节省空间的整数来知道每行中使用了哪个特定名称。'
 - en: '[PRE6]'
+  id: totrans-20
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: We can go a bit further and downcast the numeric columns to their smallest types
     using [`pandas.to_numeric()`](../reference/api/pandas.to_numeric.html#pandas.to_numeric
     "pandas.to_numeric").
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以进一步将数值列降级为它们的最小类型，使用[`pandas.to_numeric()`](../reference/api/pandas.to_numeric.html#pandas.to_numeric
+    "pandas.to_numeric")。
 - en: '[PRE7]'
+  id: totrans-22
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: '[PRE8]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '[PRE9]'
+  id: totrans-24
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: In all, we’ve reduced the in-memory footprint of this dataset to 1/5 of its
     original size.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 总的来说，我们将这个数据集的内存占用减少到原始大小的1/5。
 - en: See [Categorical data](categorical.html#categorical) for more on [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical") and [dtypes](basics.html#basics-dtypes) for an overview
     of all of pandas’ dtypes.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")的更多信息，请参阅[分类数据](categorical.html#categorical)，有关pandas所有数据类型的概述，请参阅[数据类型](basics.html#basics-dtypes)。
 - en: Use chunking
+  id: totrans-27
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用分块加载
 - en: Some workloads can be achieved with chunking by splitting a large problem into
     a bunch of small problems. For example, converting an individual CSV file into
     a Parquet file and repeating that for each file in a directory. As long as each
     chunk fits in memory, you can work with datasets that are much larger than memory.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将一个大问题分成一堆小问题，一些工作负载可以通过分块来实现。例如，将单个CSV文件转换为Parquet文件，并为目录中的每个文件重复此操作。只要每个块适合内存，您就可以处理比内存大得多的数据集。
 - en: Note
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Chunking works well when the operation you’re performing requires zero or minimal
     coordination between chunks. For more complicated workflows, you’re better off
     [using other libraries](#scale-other-libraries).
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你执行的操作需要零或最小的块之间协调时，分块工作效果很好。对于更复杂的工作流程，最好使用[其他库](#scale-other-libraries)。
 - en: Suppose we have an even larger “logical dataset” on disk that’s a directory
     of parquet files. Each file in the directory represents a different year of the
     entire dataset.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们在磁盘上有一个更大的“逻辑数据集”，它是一个parquet文件目录。目录中的每个文件代表整个数据集的不同年份。
 - en: '[PRE10]'
+  id: totrans-32
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: '[PRE11]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Now we’ll implement an out-of-core [`pandas.Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
     "pandas.Series.value_counts"). The peak memory usage of this workflow is the single
     largest chunk, plus a small series storing the unique value counts up to this
     point. As long as each individual file fits in memory, this will work for arbitrary-sized
     datasets.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们将实现一个分布式的[`pandas.Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
+    "pandas.Series.value_counts")。这个工作流程的峰值内存使用量是最大块的内存，再加上一个小系列存储到目前为止的唯一值计数。只要每个单独的文件都适合内存，这将适用于任意大小的数据集。
 - en: '[PRE12]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Some readers, like [`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
     "pandas.read_csv"), offer parameters to control the `chunksize` when reading a
     single file.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些读取器，比如[`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")，在读取单个文件时提供了控制`chunksize`的参数。
 - en: Manually chunking is an OK option for workflows that don’t require too sophisticated
     of operations. Some operations, like [`pandas.DataFrame.groupby()`](../reference/api/pandas.DataFrame.groupby.html#pandas.DataFrame.groupby
     "pandas.DataFrame.groupby"), are much harder to do chunkwise. In these cases,
     you may be better switching to a different library that implements these out-of-core
     algorithms for you.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 手动分块是一个适合不需要太复杂操作的工作流程的选择。一些操作，比如[`pandas.DataFrame.groupby()`](../reference/api/pandas.DataFrame.groupby.html#pandas.DataFrame.groupby
+    "pandas.DataFrame.groupby")，在块方式下要困难得多。在这些情况下，最好切换到一个实现这些分布式算法的不同库。
 - en: '## Use Other Libraries'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 使用其他库'
 - en: There are other libraries which provide similar APIs to pandas and work nicely
     with pandas DataFrame, and can give you the ability to scale your large dataset
     processing and analytics by parallel runtime, distributed memory, clustering,
     etc. You can find more information in [the ecosystem page](https://pandas.pydata.org/community/ecosystem.html#out-of-core).
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 还有其他类似于pandas并与pandas DataFrame很好配合的库，可以通过并行运行时、分布式内存、集群等功能来扩展大型数据集的处理和分析能力。您可以在[生态系统页面](https://pandas.pydata.org/community/ecosystem.html#out-of-core)找到更多信息。
 - en: Load less data
+  id: totrans-40
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 加载更少的数据
 - en: Suppose our raw dataset on disk has many columns.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们在磁盘上的原始数据集有许多列。
 - en: '[PRE13]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: To load the columns we want, we have two options. Option 1 loads in all the
     data and then filters to what we need.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 要加载我们想要的列，我们有两个选项。选项1加载所有数据，然后筛选我们需要的数据。
 - en: '[PRE14]'
+  id: totrans-44
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Option 2 only loads the columns we request.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 选项2只加载我们请求的列。
 - en: '[PRE15]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: If we were to measure the memory usage of the two calls, we’d see that specifying
     `columns` uses about 1/10th the memory in this case.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们测量这两个调用的内存使用情况，我们会发现在这种情况下指定`columns`使用的内存约为1/10。
 - en: With [`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
     "pandas.read_csv"), you can specify `usecols` to limit the columns read into memory.
     Not all file formats that can be read by pandas provide an option to read a subset
     of columns.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用[`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")，您可以指定`usecols`来限制读入内存的列。并非所有可以被pandas读取的文件格式都提供了读取子集列的选项。
 - en: Use efficient datatypes
+  id: totrans-49
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用高效的数据类型
 - en: The default pandas data types are not the most memory efficient. This is especially
     true for text data columns with relatively few unique values (commonly referred
     to as “low-cardinality” data). By using more efficient data types, you can store
     larger datasets in memory.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认的 pandas 数据类型不是最节省内存的。对于具有相对少量唯一值的文本数据列（通常称为“低基数”数据），这一点尤为明显。通过使用更高效的数据类型，您可以在内存中存储更大的数据集。
 - en: '[PRE16]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Now, let’s inspect the data types and memory usage to see where we should focus
     our attention.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让我们检查数据类型和内存使用情况，看看我们应该把注意力放在哪里。
 - en: '[PRE17]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: '[PRE18]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: The `name` column is taking up much more memory than any other. It has just
     a few unique values, so it’s a good candidate for converting to a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical"). With a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical"), we store each unique name once and use space-efficient
     integers to know which specific name is used in each row.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: '`name`列占用的内存比其他任何列都多。它只有很少的唯一值，因此很适合转换为[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")。使用[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")，我们只需一次存储每个唯一名称，并使用空间高效的整数来知道每行中使用了哪个特定名称。'
 - en: '[PRE19]'
+  id: totrans-56
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: We can go a bit further and downcast the numeric columns to their smallest types
     using [`pandas.to_numeric()`](../reference/api/pandas.to_numeric.html#pandas.to_numeric
     "pandas.to_numeric").
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以进一步将数值列降级为它们的最小类型，使用[`pandas.to_numeric()`](../reference/api/pandas.to_numeric.html#pandas.to_numeric
+    "pandas.to_numeric")。
 - en: '[PRE20]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: '[PRE21]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: '[PRE22]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: In all, we’ve reduced the in-memory footprint of this dataset to 1/5 of its
     original size.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 总的来说，我们已将此数据集的内存占用减少到原始大小的1/5。
 - en: See [Categorical data](categorical.html#categorical) for more on [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical") and [dtypes](basics.html#basics-dtypes) for an overview
     of all of pandas’ dtypes.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 请查看[Categorical data](categorical.html#categorical)以了解更多关于[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")和[dtypes](basics.html#basics-dtypes)以获得 pandas 所有 dtypes
+    的概述。
 - en: Use chunking
+  id: totrans-63
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用分块
 - en: Some workloads can be achieved with chunking by splitting a large problem into
     a bunch of small problems. For example, converting an individual CSV file into
     a Parquet file and repeating that for each file in a directory. As long as each
     chunk fits in memory, you can work with datasets that are much larger than memory.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将一个大问题分解为一堆小问题，可以使用分块来实现某些工作负载。例如，将单个 CSV 文件转换为 Parquet 文件，并为目录中的每个文件重复此操作。只要每个块适合内存，您就可以处理比内存大得多的数据集。
 - en: Note
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Chunking works well when the operation you’re performing requires zero or minimal
     coordination between chunks. For more complicated workflows, you’re better off
     [using other libraries](#scale-other-libraries).
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 当您执行的操作需要零或最小的分块之间协调时，分块效果很好。对于更复杂的工作流程，最好使用[其他库](#scale-other-libraries)。
 - en: Suppose we have an even larger “logical dataset” on disk that’s a directory
     of parquet files. Each file in the directory represents a different year of the
     entire dataset.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们在磁盘上有一个更大的“逻辑数据集”，它是一个 parquet 文件目录。目录中的每个文件代表整个数据集的不同年份。
 - en: '[PRE23]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: '[PRE24]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Now we’ll implement an out-of-core [`pandas.Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
     "pandas.Series.value_counts"). The peak memory usage of this workflow is the single
     largest chunk, plus a small series storing the unique value counts up to this
     point. As long as each individual file fits in memory, this will work for arbitrary-sized
     datasets.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们将实现一个基于磁盘的[`pandas.Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
+    "pandas.Series.value_counts")。此工作流的峰值内存使用量是最大的单个块，再加上一个小系列，用于存储到目前为止的唯一值计数。只要每个单独的文件都适合内存，这将适用于任意大小的数据集。
 - en: '[PRE25]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Some readers, like [`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
     "pandas.read_csv"), offer parameters to control the `chunksize` when reading a
     single file.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些读取器，如[`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")，在读取单个文件时提供控制`chunksize`的参数。
 - en: Manually chunking is an OK option for workflows that don’t require too sophisticated
     of operations. Some operations, like [`pandas.DataFrame.groupby()`](../reference/api/pandas.DataFrame.groupby.html#pandas.DataFrame.groupby
     "pandas.DataFrame.groupby"), are much harder to do chunkwise. In these cases,
     you may be better switching to a different library that implements these out-of-core
     algorithms for you.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 手动分块是一个适用于不需要太复杂操作的工作流程的选择。一些操作，比如[`pandas.DataFrame.groupby()`](../reference/api/pandas.DataFrame.groupby.html#pandas.DataFrame.groupby
+    "pandas.DataFrame.groupby")，在分块方式下要困难得多。在这些情况下，最好切换到另一个库，该库为您实现这些基于外存储算法。
 - en: '## Use Other Libraries'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 使用其他库'
 - en: There are other libraries which provide similar APIs to pandas and work nicely
     with pandas DataFrame, and can give you the ability to scale your large dataset
     processing and analytics by parallel runtime, distributed memory, clustering,
     etc. You can find more information in [the ecosystem page](https://pandas.pydata.org/community/ecosystem.html#out-of-core).
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 还有其他库提供类似于 pandas 的 API，并与 pandas DataFrame 很好地配合，可以通过并行运行时、分布式内存、集群等功能来扩展大型数据集的处理和分析能力。您可以在[生态系统页面](https://pandas.pydata.org/community/ecosystem.html#out-of-core)找到更多信息。
