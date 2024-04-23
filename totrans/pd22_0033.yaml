@@ -1,0 +1,2001 @@
+- en: Working with text data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/text.html](https://pandas.pydata.org/docs/user_guide/text.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## Text data types'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two ways to store text data in pandas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`object` -dtype NumPy array.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype") extension type.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We recommend using [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype") to store text data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Prior to pandas 1.0, `object` dtype was the only option. This was unfortunate
+    for many reasons:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can accidentally store a *mixture* of strings and non-strings in an `object`
+    dtype array. It’s better to have a dedicated dtype.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`object` dtype breaks dtype-specific operations like [`DataFrame.select_dtypes()`](../reference/api/pandas.DataFrame.select_dtypes.html#pandas.DataFrame.select_dtypes
+    "pandas.DataFrame.select_dtypes"). There isn’t a clear way to select *just* text
+    while excluding non-text but still object-dtype columns.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When reading code, the contents of an `object` dtype array is less clear than
+    `'string'`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Currently, the performance of `object` dtype arrays of strings and [`arrays.StringArray`](../reference/api/pandas.arrays.StringArray.html#pandas.arrays.StringArray
+    "pandas.arrays.StringArray") are about the same. We expect future enhancements
+    to significantly increase the performance and lower the memory overhead of [`StringArray`](../reference/api/pandas.arrays.StringArray.html#pandas.arrays.StringArray
+    "pandas.arrays.StringArray").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`StringArray` is currently considered experimental. The implementation and
+    parts of the API may change without warning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For backwards-compatibility, `object` dtype remains the default type we infer
+    a list of strings to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: To explicitly request `string` dtype, specify the `dtype`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Or `astype` after the `Series` or `DataFrame` is created
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also use [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype")/`"string"` as the dtype on non-string data and it will be
+    converted to `string` dtype:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or convert from existing pandas data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Behavior differences'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These are places where the behavior of `StringDtype` objects differ from `object`
+    dtype
+  prefs: []
+  type: TYPE_NORMAL
+- en: For `StringDtype`, [string accessor methods](../reference/series.html#api-series-str)
+    that return **numeric** output will always return a nullable integer dtype, rather
+    than either int or float dtype, depending on the presence of NA values. Methods
+    returning **boolean** output will return a nullable boolean dtype.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Both outputs are `Int64` dtype. Compare that with object-dtype
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: When NA values are present, the output dtype is float64\. Similarly for methods
+    returning boolean values.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Some string methods, like [`Series.str.decode()`](../reference/api/pandas.Series.str.decode.html#pandas.Series.str.decode
+    "pandas.Series.str.decode") are not available on `StringArray` because `StringArray`
+    only holds strings, not bytes.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In comparison operations, [`arrays.StringArray`](../reference/api/pandas.arrays.StringArray.html#pandas.arrays.StringArray
+    "pandas.arrays.StringArray") and `Series` backed by a `StringArray` will return
+    an object with [`BooleanDtype`](../reference/api/pandas.BooleanDtype.html#pandas.BooleanDtype
+    "pandas.BooleanDtype"), rather than a `bool` dtype object. Missing values in a
+    `StringArray` will propagate in comparison operations, rather than always comparing
+    unequal like `numpy.nan`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Everything else that follows in the rest of this document applies equally to
+    `string` and `object` dtype.  ## String methods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Series and Index are equipped with a set of string processing methods that
+    make it easy to operate on each element of the array. Perhaps most importantly,
+    these methods exclude missing/NA values automatically. These are accessed via
+    the `str` attribute and generally have names matching the equivalent (scalar)
+    built-in string methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The string methods on Index are especially useful for cleaning up or transforming
+    DataFrame columns. For instance, you may have columns with leading or trailing
+    whitespace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Since `df.columns` is an Index object, we can use the `.str` accessor
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'These string methods can then be used to clean up the columns as needed. Here
+    we are removing leading and trailing whitespaces, lower casing all names, and
+    replacing any remaining whitespaces with underscores:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have a `Series` where lots of elements are repeated (i.e. the number
+    of unique elements in the `Series` is a lot smaller than the length of the `Series`),
+    it can be faster to convert the original `Series` to one of type `category` and
+    then use `.str.<method>` or `.dt.<property>` on that. The performance difference
+    comes from the fact that, for `Series` of type `category`, the string operations
+    are done on the `.categories` and not on each element of the `Series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Please note that a `Series` of type `category` with string `.categories` has
+    some limitations in comparison to `Series` of type string (e.g. you can’t add
+    strings to each other: `s + " " + s` won’t work if `s` is a `Series` of type `category`).
+    Also, `.str` methods which operate on elements of type `list` are not available
+    on such a `Series`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: The type of the Series is inferred and the allowed types (i.e. strings).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Generally speaking, the `.str` accessor is intended to work only on strings.
+    With very few exceptions, other uses are not supported, and may be disabled at
+    a later point.  ## Splitting and replacing strings'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Methods like `split` return a Series of lists:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Elements in the split lists can be accessed using `get` or `[]` notation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is easy to expand this to return a DataFrame using `expand`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: When original `Series` has [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype"), the output columns will all be [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype") as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is also possible to limit the number of splits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`rsplit` is similar to `split` except it works in the reverse direction, i.e.,
+    from the end of the string to the beginning of the string:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`replace` optionally uses [regular expressions](https://docs.python.org/3/library/re.html):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Changed in version 2.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Single character pattern with `regex=True` will also be treated as regular
+    expressions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you want literal replacement of a string (equivalent to [`str.replace()`](https://docs.python.org/3/library/stdtypes.html#str.replace
+    "(in Python v3.12)")), you can set the optional `regex` parameter to `False`,
+    rather than escaping each character. In this case both `pat` and `repl` must be
+    strings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `replace` method can also take a callable as replacement. It is called on
+    every `pat` using [`re.sub()`](https://docs.python.org/3/library/re.html#re.sub
+    "(in Python v3.12)"). The callable should expect one positional argument (a regex
+    object) and return a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `replace` method also accepts a compiled regular expression object from
+    [`re.compile()`](https://docs.python.org/3/library/re.html#re.compile "(in Python
+    v3.12)") as a pattern. All flags should be included in the compiled regular expression
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Including a `flags` argument when calling `replace` with a compiled regular
+    expression object will raise a `ValueError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`removeprefix` and `removesuffix` have the same effect as `str.removeprefix`
+    and `str.removesuffix` added in Python 3.9 <[https://docs.python.org/3/library/stdtypes.html#str.removeprefix](https://docs.python.org/3/library/stdtypes.html#str.removeprefix)>`__:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.4.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]  ## Concatenation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are several ways to concatenate a `Series` or `Index`, either with itself
+    or others, all based on [`cat()`](../reference/api/pandas.Series.str.cat.html#pandas.Series.str.cat
+    "pandas.Series.str.cat"), resp. `Index.str.cat`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concatenating a single Series into a string
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The content of a `Series` (or `Index`) can be concatenated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If not specified, the keyword `sep` for the separator defaults to the empty
+    string, `sep=''''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default, missing values are ignored. Using `na_rep`, they can be given a
+    representation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and something list-like into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The first argument to [`cat()`](../reference/api/pandas.Series.str.cat.html#pandas.Series.str.cat
+    "pandas.Series.str.cat") can be a list-like object, provided that it matches the
+    length of the calling `Series` (or `Index`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Missing values on either side will result in missing values in the result as
+    well, *unless* `na_rep` is specified:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and something array-like into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The parameter `others` can also be two-dimensional. In this case, the number
+    or rows must match the lengths of the calling `Series` (or `Index`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and an indexed object into a Series, with alignment
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For concatenation with a `Series` or `DataFrame`, it is possible to align the
+    indexes before concatenation by setting the `join`-keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: The usual options are available for `join` (one of `'left', 'outer', 'inner',
+    'right'`). In particular, alignment also means that the different lengths do not
+    need to coincide anymore.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same alignment can be used when `others` is a `DataFrame`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and many objects into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Several array-like items (specifically: `Series`, `Index`, and 1-dimensional
+    variants of `np.ndarray`) can be combined in a list-like container (including
+    iterators, `dict`-views, etc.).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All elements without an index (e.g. `np.ndarray`) within the passed list-like
+    must match in length to the calling `Series` (or `Index`), but `Series` and `Index`
+    may have arbitrary length (as long as alignment is not disabled with `join=None`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If using `join=''right''` on a list-like of `others` that contains different
+    indexes, the union of these indexes will be used as the basis for the final concatenation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indexing with `.str`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You can use `[]` notation to directly index by position locations. If you index
+    past the end of the string, the result will be a `NaN`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extracting substrings
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '### Extract first match in each subject (extract)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `extract` method accepts a [regular expression](https://docs.python.org/3/library/re.html)
+    with at least one capture group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extracting a regular expression with more than one group returns a DataFrame
+    with one column per group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Elements that do not match return a row filled with `NaN`. Thus, a Series of
+    messy strings can be “converted” into a like-indexed Series or DataFrame of cleaned-up
+    or more useful strings, without necessitating `get()` to access tuples or `re.match`
+    objects. The dtype of the result is always object, even if no match is found and
+    the result only contains `NaN`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Named groups like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: and optional groups like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: can also be used. Note that any capture group names in the regular expression
+    will be used for column names; otherwise capture group numbers will be used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extracting a regular expression with one group returns a `DataFrame` with one
+    column if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: It returns a Series if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling on an `Index` with a regex with exactly one capture group returns a
+    `DataFrame` with one column if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: It returns an `Index` if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling on an `Index` with a regex with more than one capture group returns
+    a `DataFrame` if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: It raises `ValueError` if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: The table below summarizes the behavior of `extract(expand=False)` (input subject
+    in first column, number of groups in regex in first row)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | 1 group | >1 group |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Index | Index | ValueError |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Series | Series | DataFrame |'
+  prefs: []
+  type: TYPE_TB
+- en: Extract all matches in each subject (extractall)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Unlike `extract` (which returns only the first match),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: the `extractall` method returns every match. The result of `extractall` is always
+    a `DataFrame` with a `MultiIndex` on its rows. The last level of the `MultiIndex`
+    is named `match` and indicates the order in the subject.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: When each subject string in the Series has exactly one match,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: then `extractall(pat).xs(0, level='match')` gives the same result as `extract(pat)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Index` also supports `.str.extractall`. It returns a `DataFrame` which has
+    the same result as a `Series.str.extractall` with a default index (starts from
+    0).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: Testing for strings that match or contain a pattern
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You can check whether elements contain a pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or whether elements match a pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The distinction between `match`, `fullmatch`, and `contains` is strictness:
+    `fullmatch` tests whether the entire string matches the regular expression; `match`
+    tests whether there is a match of the regular expression that begins at the first
+    character of the string; and `contains` tests whether there is a match of the
+    regular expression at any position within the string.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The corresponding functions in the `re` package for these three match modes
+    are [re.fullmatch](https://docs.python.org/3/library/re.html#re.fullmatch), [re.match](https://docs.python.org/3/library/re.html#re.match),
+    and [re.search](https://docs.python.org/3/library/re.html#re.search), respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Methods like `match`, `fullmatch`, `contains`, `startswith`, and `endswith`
+    take an extra `na` argument so missing values can be considered True or False:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Creating indicator variables'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can extract dummy variables from string columns. For example if they are
+    separated by a `''|''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: String `Index` also supports `get_dummies` which returns a `MultiIndex`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also [`get_dummies()`](../reference/api/pandas.get_dummies.html#pandas.get_dummies
+    "pandas.get_dummies").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '| Method | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`cat()`](../reference/api/pandas.Series.str.cat.html#pandas.Series.str.cat
+    "pandas.Series.str.cat") | Concatenate strings |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`split()`](../reference/api/pandas.Series.str.split.html#pandas.Series.str.split
+    "pandas.Series.str.split") | Split strings on delimiter |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rsplit()`](../reference/api/pandas.Series.str.rsplit.html#pandas.Series.str.rsplit
+    "pandas.Series.str.rsplit") | Split strings on delimiter working from the end
+    of the string |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`get()`](../reference/api/pandas.Series.str.get.html#pandas.Series.str.get
+    "pandas.Series.str.get") | Index into each element (retrieve i-th element) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`join()`](../reference/api/pandas.Series.str.join.html#pandas.Series.str.join
+    "pandas.Series.str.join") | Join strings in each element of the Series with passed
+    separator |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`get_dummies()`](../reference/api/pandas.Series.str.get_dummies.html#pandas.Series.str.get_dummies
+    "pandas.Series.str.get_dummies") | Split strings on the delimiter returning DataFrame
+    of dummy variables |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`contains()`](../reference/api/pandas.Series.str.contains.html#pandas.Series.str.contains
+    "pandas.Series.str.contains") | Return boolean array if each string contains pattern/regex
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`replace()`](../reference/api/pandas.Series.str.replace.html#pandas.Series.str.replace
+    "pandas.Series.str.replace") | Replace occurrences of pattern/regex/string with
+    some other string or the return value of a callable given the occurrence |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`removeprefix()`](../reference/api/pandas.Series.str.removeprefix.html#pandas.Series.str.removeprefix
+    "pandas.Series.str.removeprefix") | Remove prefix from string, i.e. only remove
+    if string starts with prefix. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`removesuffix()`](../reference/api/pandas.Series.str.removesuffix.html#pandas.Series.str.removesuffix
+    "pandas.Series.str.removesuffix") | Remove suffix from string, i.e. only remove
+    if string ends with suffix. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`repeat()`](../reference/api/pandas.Series.str.repeat.html#pandas.Series.str.repeat
+    "pandas.Series.str.repeat") | Duplicate values (`s.str.repeat(3)` equivalent to
+    `x * 3`) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`pad()`](../reference/api/pandas.Series.str.pad.html#pandas.Series.str.pad
+    "pandas.Series.str.pad") | Add whitespace to left, right, or both sides of strings
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`center()`](../reference/api/pandas.Series.str.center.html#pandas.Series.str.center
+    "pandas.Series.str.center") | Equivalent to `str.center` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`ljust()`](../reference/api/pandas.Series.str.ljust.html#pandas.Series.str.ljust
+    "pandas.Series.str.ljust") | Equivalent to `str.ljust` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rjust()`](../reference/api/pandas.Series.str.rjust.html#pandas.Series.str.rjust
+    "pandas.Series.str.rjust") | Equivalent to `str.rjust` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`zfill()`](../reference/api/pandas.Series.str.zfill.html#pandas.Series.str.zfill
+    "pandas.Series.str.zfill") | Equivalent to `str.zfill` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`wrap()`](../reference/api/pandas.Series.str.wrap.html#pandas.Series.str.wrap
+    "pandas.Series.str.wrap") | Split long strings into lines with length less than
+    a given width |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`slice()`](../reference/api/pandas.Series.str.slice.html#pandas.Series.str.slice
+    "pandas.Series.str.slice") | Slice each string in the Series |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`slice_replace()`](../reference/api/pandas.Series.str.slice_replace.html#pandas.Series.str.slice_replace
+    "pandas.Series.str.slice_replace") | Replace slice in each string with passed
+    value |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`count()`](../reference/api/pandas.Series.str.count.html#pandas.Series.str.count
+    "pandas.Series.str.count") | Count occurrences of pattern |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`startswith()`](../reference/api/pandas.Series.str.startswith.html#pandas.Series.str.startswith
+    "pandas.Series.str.startswith") | Equivalent to `str.startswith(pat)` for each
+    element |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`endswith()`](../reference/api/pandas.Series.str.endswith.html#pandas.Series.str.endswith
+    "pandas.Series.str.endswith") | Equivalent to `str.endswith(pat)` for each element
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`findall()`](../reference/api/pandas.Series.str.findall.html#pandas.Series.str.findall
+    "pandas.Series.str.findall") | Compute list of all occurrences of pattern/regex
+    for each string |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`match()`](../reference/api/pandas.Series.str.match.html#pandas.Series.str.match
+    "pandas.Series.str.match") | Call `re.match` on each element, returning matched
+    groups as list |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`extract()`](../reference/api/pandas.Series.str.extract.html#pandas.Series.str.extract
+    "pandas.Series.str.extract") | Call `re.search` on each element, returning DataFrame
+    with one row for each element and one column for each regex capture group |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`extractall()`](../reference/api/pandas.Series.str.extractall.html#pandas.Series.str.extractall
+    "pandas.Series.str.extractall") | Call `re.findall` on each element, returning
+    DataFrame with one row for each match and one column for each regex capture group
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`len()`](../reference/api/pandas.Series.str.len.html#pandas.Series.str.len
+    "pandas.Series.str.len") | Compute string lengths |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`strip()`](../reference/api/pandas.Series.str.strip.html#pandas.Series.str.strip
+    "pandas.Series.str.strip") | Equivalent to `str.strip` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rstrip()`](../reference/api/pandas.Series.str.rstrip.html#pandas.Series.str.rstrip
+    "pandas.Series.str.rstrip") | Equivalent to `str.rstrip` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`lstrip()`](../reference/api/pandas.Series.str.lstrip.html#pandas.Series.str.lstrip
+    "pandas.Series.str.lstrip") | Equivalent to `str.lstrip` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`partition()`](../reference/api/pandas.Series.str.partition.html#pandas.Series.str.partition
+    "pandas.Series.str.partition") | Equivalent to `str.partition` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rpartition()`](../reference/api/pandas.Series.str.rpartition.html#pandas.Series.str.rpartition
+    "pandas.Series.str.rpartition") | Equivalent to `str.rpartition` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`lower()`](../reference/api/pandas.Series.str.lower.html#pandas.Series.str.lower
+    "pandas.Series.str.lower") | Equivalent to `str.lower` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`casefold()`](../reference/api/pandas.Series.str.casefold.html#pandas.Series.str.casefold
+    "pandas.Series.str.casefold") | Equivalent to `str.casefold` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`upper()`](../reference/api/pandas.Series.str.upper.html#pandas.Series.str.upper
+    "pandas.Series.str.upper") | Equivalent to `str.upper` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`find()`](../reference/api/pandas.Series.str.find.html#pandas.Series.str.find
+    "pandas.Series.str.find") | Equivalent to `str.find` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rfind()`](../reference/api/pandas.Series.str.rfind.html#pandas.Series.str.rfind
+    "pandas.Series.str.rfind") | Equivalent to `str.rfind` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`index()`](../reference/api/pandas.Series.str.index.html#pandas.Series.str.index
+    "pandas.Series.str.index") | Equivalent to `str.index` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rindex()`](../reference/api/pandas.Series.str.rindex.html#pandas.Series.str.rindex
+    "pandas.Series.str.rindex") | Equivalent to `str.rindex` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`capitalize()`](../reference/api/pandas.Series.str.capitalize.html#pandas.Series.str.capitalize
+    "pandas.Series.str.capitalize") | Equivalent to `str.capitalize` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`swapcase()`](../reference/api/pandas.Series.str.swapcase.html#pandas.Series.str.swapcase
+    "pandas.Series.str.swapcase") | Equivalent to `str.swapcase` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`normalize()`](../reference/api/pandas.Series.str.normalize.html#pandas.Series.str.normalize
+    "pandas.Series.str.normalize") | Return Unicode normal form. Equivalent to `unicodedata.normalize`
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`translate()`](../reference/api/pandas.Series.str.translate.html#pandas.Series.str.translate
+    "pandas.Series.str.translate") | Equivalent to `str.translate` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isalnum()`](../reference/api/pandas.Series.str.isalnum.html#pandas.Series.str.isalnum
+    "pandas.Series.str.isalnum") | Equivalent to `str.isalnum` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isalpha()`](../reference/api/pandas.Series.str.isalpha.html#pandas.Series.str.isalpha
+    "pandas.Series.str.isalpha") | Equivalent to `str.isalpha` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isdigit()`](../reference/api/pandas.Series.str.isdigit.html#pandas.Series.str.isdigit
+    "pandas.Series.str.isdigit") | Equivalent to `str.isdigit` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isspace()`](../reference/api/pandas.Series.str.isspace.html#pandas.Series.str.isspace
+    "pandas.Series.str.isspace") | Equivalent to `str.isspace` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`islower()`](../reference/api/pandas.Series.str.islower.html#pandas.Series.str.islower
+    "pandas.Series.str.islower") | Equivalent to `str.islower` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isupper()`](../reference/api/pandas.Series.str.isupper.html#pandas.Series.str.isupper
+    "pandas.Series.str.isupper") | Equivalent to `str.isupper` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`istitle()`](../reference/api/pandas.Series.str.istitle.html#pandas.Series.str.istitle
+    "pandas.Series.str.istitle") | Equivalent to `str.istitle` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isnumeric()`](../reference/api/pandas.Series.str.isnumeric.html#pandas.Series.str.isnumeric
+    "pandas.Series.str.isnumeric") | Equivalent to `str.isnumeric` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isdecimal()`](../reference/api/pandas.Series.str.isdecimal.html#pandas.Series.str.isdecimal
+    "pandas.Series.str.isdecimal") | Equivalent to `str.isdecimal` |'
+  prefs: []
+  type: TYPE_TB
+- en: '## Text data types'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two ways to store text data in pandas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`object` -dtype NumPy array.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype") extension type.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We recommend using [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype") to store text data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Prior to pandas 1.0, `object` dtype was the only option. This was unfortunate
+    for many reasons:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can accidentally store a *mixture* of strings and non-strings in an `object`
+    dtype array. It’s better to have a dedicated dtype.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`object` dtype breaks dtype-specific operations like [`DataFrame.select_dtypes()`](../reference/api/pandas.DataFrame.select_dtypes.html#pandas.DataFrame.select_dtypes
+    "pandas.DataFrame.select_dtypes"). There isn’t a clear way to select *just* text
+    while excluding non-text but still object-dtype columns.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When reading code, the contents of an `object` dtype array is less clear than
+    `'string'`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Currently, the performance of `object` dtype arrays of strings and [`arrays.StringArray`](../reference/api/pandas.arrays.StringArray.html#pandas.arrays.StringArray
+    "pandas.arrays.StringArray") are about the same. We expect future enhancements
+    to significantly increase the performance and lower the memory overhead of [`StringArray`](../reference/api/pandas.arrays.StringArray.html#pandas.arrays.StringArray
+    "pandas.arrays.StringArray").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`StringArray` is currently considered experimental. The implementation and
+    parts of the API may change without warning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For backwards-compatibility, `object` dtype remains the default type we infer
+    a list of strings to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: To explicitly request `string` dtype, specify the `dtype`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Or `astype` after the `Series` or `DataFrame` is created
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also use [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype")/`"string"` as the dtype on non-string data and it will be
+    converted to `string` dtype:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or convert from existing pandas data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Behavior differences'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These are places where the behavior of `StringDtype` objects differ from `object`
+    dtype
+  prefs: []
+  type: TYPE_NORMAL
+- en: For `StringDtype`, [string accessor methods](../reference/series.html#api-series-str)
+    that return **numeric** output will always return a nullable integer dtype, rather
+    than either int or float dtype, depending on the presence of NA values. Methods
+    returning **boolean** output will return a nullable boolean dtype.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Both outputs are `Int64` dtype. Compare that with object-dtype
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: When NA values are present, the output dtype is float64\. Similarly for methods
+    returning boolean values.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Some string methods, like [`Series.str.decode()`](../reference/api/pandas.Series.str.decode.html#pandas.Series.str.decode
+    "pandas.Series.str.decode") are not available on `StringArray` because `StringArray`
+    only holds strings, not bytes.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In comparison operations, [`arrays.StringArray`](../reference/api/pandas.arrays.StringArray.html#pandas.arrays.StringArray
+    "pandas.arrays.StringArray") and `Series` backed by a `StringArray` will return
+    an object with [`BooleanDtype`](../reference/api/pandas.BooleanDtype.html#pandas.BooleanDtype
+    "pandas.BooleanDtype"), rather than a `bool` dtype object. Missing values in a
+    `StringArray` will propagate in comparison operations, rather than always comparing
+    unequal like `numpy.nan`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Everything else that follows in the rest of this document applies equally to
+    `string` and `object` dtype.  ### Behavior differences'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These are places where the behavior of `StringDtype` objects differ from `object`
+    dtype
+  prefs: []
+  type: TYPE_NORMAL
+- en: For `StringDtype`, [string accessor methods](../reference/series.html#api-series-str)
+    that return **numeric** output will always return a nullable integer dtype, rather
+    than either int or float dtype, depending on the presence of NA values. Methods
+    returning **boolean** output will return a nullable boolean dtype.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Both outputs are `Int64` dtype. Compare that with object-dtype
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: When NA values are present, the output dtype is float64\. Similarly for methods
+    returning boolean values.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Some string methods, like [`Series.str.decode()`](../reference/api/pandas.Series.str.decode.html#pandas.Series.str.decode
+    "pandas.Series.str.decode") are not available on `StringArray` because `StringArray`
+    only holds strings, not bytes.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In comparison operations, [`arrays.StringArray`](../reference/api/pandas.arrays.StringArray.html#pandas.arrays.StringArray
+    "pandas.arrays.StringArray") and `Series` backed by a `StringArray` will return
+    an object with [`BooleanDtype`](../reference/api/pandas.BooleanDtype.html#pandas.BooleanDtype
+    "pandas.BooleanDtype"), rather than a `bool` dtype object. Missing values in a
+    `StringArray` will propagate in comparison operations, rather than always comparing
+    unequal like `numpy.nan`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Everything else that follows in the rest of this document applies equally to
+    `string` and `object` dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## String methods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Series and Index are equipped with a set of string processing methods that
+    make it easy to operate on each element of the array. Perhaps most importantly,
+    these methods exclude missing/NA values automatically. These are accessed via
+    the `str` attribute and generally have names matching the equivalent (scalar)
+    built-in string methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The string methods on Index are especially useful for cleaning up or transforming
+    DataFrame columns. For instance, you may have columns with leading or trailing
+    whitespace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: Since `df.columns` is an Index object, we can use the `.str` accessor
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'These string methods can then be used to clean up the columns as needed. Here
+    we are removing leading and trailing whitespaces, lower casing all names, and
+    replacing any remaining whitespaces with underscores:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have a `Series` where lots of elements are repeated (i.e. the number
+    of unique elements in the `Series` is a lot smaller than the length of the `Series`),
+    it can be faster to convert the original `Series` to one of type `category` and
+    then use `.str.<method>` or `.dt.<property>` on that. The performance difference
+    comes from the fact that, for `Series` of type `category`, the string operations
+    are done on the `.categories` and not on each element of the `Series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Please note that a `Series` of type `category` with string `.categories` has
+    some limitations in comparison to `Series` of type string (e.g. you can’t add
+    strings to each other: `s + " " + s` won’t work if `s` is a `Series` of type `category`).
+    Also, `.str` methods which operate on elements of type `list` are not available
+    on such a `Series`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: The type of the Series is inferred and the allowed types (i.e. strings).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generally speaking, the `.str` accessor is intended to work only on strings.
+    With very few exceptions, other uses are not supported, and may be disabled at
+    a later point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Splitting and replacing strings'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Methods like `split` return a Series of lists:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Elements in the split lists can be accessed using `get` or `[]` notation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is easy to expand this to return a DataFrame using `expand`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: When original `Series` has [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype"), the output columns will all be [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype") as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is also possible to limit the number of splits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`rsplit` is similar to `split` except it works in the reverse direction, i.e.,
+    from the end of the string to the beginning of the string:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`replace` optionally uses [regular expressions](https://docs.python.org/3/library/re.html):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: Changed in version 2.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Single character pattern with `regex=True` will also be treated as regular
+    expressions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you want literal replacement of a string (equivalent to [`str.replace()`](https://docs.python.org/3/library/stdtypes.html#str.replace
+    "(in Python v3.12)")), you can set the optional `regex` parameter to `False`,
+    rather than escaping each character. In this case both `pat` and `repl` must be
+    strings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `replace` method can also take a callable as replacement. It is called on
+    every `pat` using [`re.sub()`](https://docs.python.org/3/library/re.html#re.sub
+    "(in Python v3.12)"). The callable should expect one positional argument (a regex
+    object) and return a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `replace` method also accepts a compiled regular expression object from
+    [`re.compile()`](https://docs.python.org/3/library/re.html#re.compile "(in Python
+    v3.12)") as a pattern. All flags should be included in the compiled regular expression
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: Including a `flags` argument when calling `replace` with a compiled regular
+    expression object will raise a `ValueError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`removeprefix` and `removesuffix` have the same effect as `str.removeprefix`
+    and `str.removesuffix` added in Python 3.9 <[https://docs.python.org/3/library/stdtypes.html#str.removeprefix](https://docs.python.org/3/library/stdtypes.html#str.removeprefix)>`__:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.4.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Concatenation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are several ways to concatenate a `Series` or `Index`, either with itself
+    or others, all based on [`cat()`](../reference/api/pandas.Series.str.cat.html#pandas.Series.str.cat
+    "pandas.Series.str.cat"), resp. `Index.str.cat`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concatenating a single Series into a string
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The content of a `Series` (or `Index`) can be concatenated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If not specified, the keyword `sep` for the separator defaults to the empty
+    string, `sep=''''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default, missing values are ignored. Using `na_rep`, they can be given a
+    representation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and something list-like into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The first argument to [`cat()`](../reference/api/pandas.Series.str.cat.html#pandas.Series.str.cat
+    "pandas.Series.str.cat") can be a list-like object, provided that it matches the
+    length of the calling `Series` (or `Index`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Missing values on either side will result in missing values in the result as
+    well, *unless* `na_rep` is specified:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and something array-like into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The parameter `others` can also be two-dimensional. In this case, the number
+    or rows must match the lengths of the calling `Series` (or `Index`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and an indexed object into a Series, with alignment
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For concatenation with a `Series` or `DataFrame`, it is possible to align the
+    indexes before concatenation by setting the `join`-keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: The usual options are available for `join` (one of `'left', 'outer', 'inner',
+    'right'`). In particular, alignment also means that the different lengths do not
+    need to coincide anymore.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same alignment can be used when `others` is a `DataFrame`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and many objects into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Several array-like items (specifically: `Series`, `Index`, and 1-dimensional
+    variants of `np.ndarray`) can be combined in a list-like container (including
+    iterators, `dict`-views, etc.).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All elements without an index (e.g. `np.ndarray`) within the passed list-like
+    must match in length to the calling `Series` (or `Index`), but `Series` and `Index`
+    may have arbitrary length (as long as alignment is not disabled with `join=None`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If using `join=''right''` on a list-like of `others` that contains different
+    indexes, the union of these indexes will be used as the basis for the final concatenation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a single Series into a string
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The content of a `Series` (or `Index`) can be concatenated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If not specified, the keyword `sep` for the separator defaults to the empty
+    string, `sep=''''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default, missing values are ignored. Using `na_rep`, they can be given a
+    representation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and something list-like into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The first argument to [`cat()`](../reference/api/pandas.Series.str.cat.html#pandas.Series.str.cat
+    "pandas.Series.str.cat") can be a list-like object, provided that it matches the
+    length of the calling `Series` (or `Index`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Missing values on either side will result in missing values in the result as
+    well, *unless* `na_rep` is specified:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and something array-like into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The parameter `others` can also be two-dimensional. In this case, the number
+    or rows must match the lengths of the calling `Series` (or `Index`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and an indexed object into a Series, with alignment
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For concatenation with a `Series` or `DataFrame`, it is possible to align the
+    indexes before concatenation by setting the `join`-keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: The usual options are available for `join` (one of `'left', 'outer', 'inner',
+    'right'`). In particular, alignment also means that the different lengths do not
+    need to coincide anymore.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same alignment can be used when `others` is a `DataFrame`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: Concatenating a Series and many objects into a Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Several array-like items (specifically: `Series`, `Index`, and 1-dimensional
+    variants of `np.ndarray`) can be combined in a list-like container (including
+    iterators, `dict`-views, etc.).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All elements without an index (e.g. `np.ndarray`) within the passed list-like
+    must match in length to the calling `Series` (or `Index`), but `Series` and `Index`
+    may have arbitrary length (as long as alignment is not disabled with `join=None`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If using `join=''right''` on a list-like of `others` that contains different
+    indexes, the union of these indexes will be used as the basis for the final concatenation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indexing with `.str`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You can use `[]` notation to directly index by position locations. If you index
+    past the end of the string, the result will be a `NaN`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extracting substrings
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '### Extract first match in each subject (extract)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `extract` method accepts a [regular expression](https://docs.python.org/3/library/re.html)
+    with at least one capture group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extracting a regular expression with more than one group returns a DataFrame
+    with one column per group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: Elements that do not match return a row filled with `NaN`. Thus, a Series of
+    messy strings can be “converted” into a like-indexed Series or DataFrame of cleaned-up
+    or more useful strings, without necessitating `get()` to access tuples or `re.match`
+    objects. The dtype of the result is always object, even if no match is found and
+    the result only contains `NaN`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Named groups like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: and optional groups like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: can also be used. Note that any capture group names in the regular expression
+    will be used for column names; otherwise capture group numbers will be used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extracting a regular expression with one group returns a `DataFrame` with one
+    column if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: It returns a Series if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling on an `Index` with a regex with exactly one capture group returns a
+    `DataFrame` with one column if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: It returns an `Index` if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling on an `Index` with a regex with more than one capture group returns
+    a `DataFrame` if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: It raises `ValueError` if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: The table below summarizes the behavior of `extract(expand=False)` (input subject
+    in first column, number of groups in regex in first row)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | 1 group | >1 group |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Index | Index | ValueError |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Series | Series | DataFrame |'
+  prefs: []
+  type: TYPE_TB
+- en: Extract all matches in each subject (extractall)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Unlike `extract` (which returns only the first match),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: the `extractall` method returns every match. The result of `extractall` is always
+    a `DataFrame` with a `MultiIndex` on its rows. The last level of the `MultiIndex`
+    is named `match` and indicates the order in the subject.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: When each subject string in the Series has exactly one match,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: then `extractall(pat).xs(0, level='match')` gives the same result as `extract(pat)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Index` also supports `.str.extractall`. It returns a `DataFrame` which has
+    the same result as a `Series.str.extractall` with a default index (starts from
+    0).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Extract first match in each subject (extract)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `extract` method accepts a [regular expression](https://docs.python.org/3/library/re.html)
+    with at least one capture group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extracting a regular expression with more than one group returns a DataFrame
+    with one column per group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: Elements that do not match return a row filled with `NaN`. Thus, a Series of
+    messy strings can be “converted” into a like-indexed Series or DataFrame of cleaned-up
+    or more useful strings, without necessitating `get()` to access tuples or `re.match`
+    objects. The dtype of the result is always object, even if no match is found and
+    the result only contains `NaN`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Named groups like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: and optional groups like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: can also be used. Note that any capture group names in the regular expression
+    will be used for column names; otherwise capture group numbers will be used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extracting a regular expression with one group returns a `DataFrame` with one
+    column if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: It returns a Series if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling on an `Index` with a regex with exactly one capture group returns a
+    `DataFrame` with one column if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: It returns an `Index` if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling on an `Index` with a regex with more than one capture group returns
+    a `DataFrame` if `expand=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: It raises `ValueError` if `expand=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: The table below summarizes the behavior of `extract(expand=False)` (input subject
+    in first column, number of groups in regex in first row)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | 1 group | >1 group |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Index | Index | ValueError |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Series | Series | DataFrame |'
+  prefs: []
+  type: TYPE_TB
+- en: Extract all matches in each subject (extractall)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Unlike `extract` (which returns only the first match),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: the `extractall` method returns every match. The result of `extractall` is always
+    a `DataFrame` with a `MultiIndex` on its rows. The last level of the `MultiIndex`
+    is named `match` and indicates the order in the subject.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: When each subject string in the Series has exactly one match,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: then `extractall(pat).xs(0, level='match')` gives the same result as `extract(pat)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Index` also supports `.str.extractall`. It returns a `DataFrame` which has
+    the same result as a `Series.str.extractall` with a default index (starts from
+    0).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: Testing for strings that match or contain a pattern
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You can check whether elements contain a pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or whether elements match a pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The distinction between `match`, `fullmatch`, and `contains` is strictness:
+    `fullmatch` tests whether the entire string matches the regular expression; `match`
+    tests whether there is a match of the regular expression that begins at the first
+    character of the string; and `contains` tests whether there is a match of the
+    regular expression at any position within the string.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The corresponding functions in the `re` package for these three match modes
+    are [re.fullmatch](https://docs.python.org/3/library/re.html#re.fullmatch), [re.match](https://docs.python.org/3/library/re.html#re.match),
+    and [re.search](https://docs.python.org/3/library/re.html#re.search), respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Methods like `match`, `fullmatch`, `contains`, `startswith`, and `endswith`
+    take an extra `na` argument so missing values can be considered True or False:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Creating indicator variables'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can extract dummy variables from string columns. For example if they are
+    separated by a `''|''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: String `Index` also supports `get_dummies` which returns a `MultiIndex`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also [`get_dummies()`](../reference/api/pandas.get_dummies.html#pandas.get_dummies
+    "pandas.get_dummies").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '| Method | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`cat()`](../reference/api/pandas.Series.str.cat.html#pandas.Series.str.cat
+    "pandas.Series.str.cat") | Concatenate strings |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`split()`](../reference/api/pandas.Series.str.split.html#pandas.Series.str.split
+    "pandas.Series.str.split") | Split strings on delimiter |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rsplit()`](../reference/api/pandas.Series.str.rsplit.html#pandas.Series.str.rsplit
+    "pandas.Series.str.rsplit") | Split strings on delimiter working from the end
+    of the string |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`get()`](../reference/api/pandas.Series.str.get.html#pandas.Series.str.get
+    "pandas.Series.str.get") | Index into each element (retrieve i-th element) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`join()`](../reference/api/pandas.Series.str.join.html#pandas.Series.str.join
+    "pandas.Series.str.join") | Join strings in each element of the Series with passed
+    separator |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`get_dummies()`](../reference/api/pandas.Series.str.get_dummies.html#pandas.Series.str.get_dummies
+    "pandas.Series.str.get_dummies") | Split strings on the delimiter returning DataFrame
+    of dummy variables |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`contains()`](../reference/api/pandas.Series.str.contains.html#pandas.Series.str.contains
+    "pandas.Series.str.contains") | Return boolean array if each string contains pattern/regex
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`replace()`](../reference/api/pandas.Series.str.replace.html#pandas.Series.str.replace
+    "pandas.Series.str.replace") | Replace occurrences of pattern/regex/string with
+    some other string or the return value of a callable given the occurrence |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`removeprefix()`](../reference/api/pandas.Series.str.removeprefix.html#pandas.Series.str.removeprefix
+    "pandas.Series.str.removeprefix") | Remove prefix from string, i.e. only remove
+    if string starts with prefix. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`removesuffix()`](../reference/api/pandas.Series.str.removesuffix.html#pandas.Series.str.removesuffix
+    "pandas.Series.str.removesuffix") | Remove suffix from string, i.e. only remove
+    if string ends with suffix. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`repeat()`](../reference/api/pandas.Series.str.repeat.html#pandas.Series.str.repeat
+    "pandas.Series.str.repeat") | Duplicate values (`s.str.repeat(3)` equivalent to
+    `x * 3`) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`pad()`](../reference/api/pandas.Series.str.pad.html#pandas.Series.str.pad
+    "pandas.Series.str.pad") | Add whitespace to left, right, or both sides of strings
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`center()`](../reference/api/pandas.Series.str.center.html#pandas.Series.str.center
+    "pandas.Series.str.center") | Equivalent to `str.center` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`ljust()`](../reference/api/pandas.Series.str.ljust.html#pandas.Series.str.ljust
+    "pandas.Series.str.ljust") | Equivalent to `str.ljust` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rjust()`](../reference/api/pandas.Series.str.rjust.html#pandas.Series.str.rjust
+    "pandas.Series.str.rjust") | Equivalent to `str.rjust` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`zfill()`](../reference/api/pandas.Series.str.zfill.html#pandas.Series.str.zfill
+    "pandas.Series.str.zfill") | Equivalent to `str.zfill` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`wrap()`](../reference/api/pandas.Series.str.wrap.html#pandas.Series.str.wrap
+    "pandas.Series.str.wrap") | Split long strings into lines with length less than
+    a given width |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`slice()`](../reference/api/pandas.Series.str.slice.html#pandas.Series.str.slice
+    "pandas.Series.str.slice") | Slice each string in the Series |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`slice_replace()`](../reference/api/pandas.Series.str.slice_replace.html#pandas.Series.str.slice_replace
+    "pandas.Series.str.slice_replace") | Replace slice in each string with passed
+    value |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`count()`](../reference/api/pandas.Series.str.count.html#pandas.Series.str.count
+    "pandas.Series.str.count") | Count occurrences of pattern |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`startswith()`](../reference/api/pandas.Series.str.startswith.html#pandas.Series.str.startswith
+    "pandas.Series.str.startswith") | Equivalent to `str.startswith(pat)` for each
+    element |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`endswith()`](../reference/api/pandas.Series.str.endswith.html#pandas.Series.str.endswith
+    "pandas.Series.str.endswith") | Equivalent to `str.endswith(pat)` for each element
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`findall()`](../reference/api/pandas.Series.str.findall.html#pandas.Series.str.findall
+    "pandas.Series.str.findall") | Compute list of all occurrences of pattern/regex
+    for each string |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`match()`](../reference/api/pandas.Series.str.match.html#pandas.Series.str.match
+    "pandas.Series.str.match") | Call `re.match` on each element, returning matched
+    groups as list |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`extract()`](../reference/api/pandas.Series.str.extract.html#pandas.Series.str.extract
+    "pandas.Series.str.extract") | Call `re.search` on each element, returning DataFrame
+    with one row for each element and one column for each regex capture group |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`extractall()`](../reference/api/pandas.Series.str.extractall.html#pandas.Series.str.extractall
+    "pandas.Series.str.extractall") | Call `re.findall` on each element, returning
+    DataFrame with one row for each match and one column for each regex capture group
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`len()`](../reference/api/pandas.Series.str.len.html#pandas.Series.str.len
+    "pandas.Series.str.len") | Compute string lengths |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`strip()`](../reference/api/pandas.Series.str.strip.html#pandas.Series.str.strip
+    "pandas.Series.str.strip") | Equivalent to `str.strip` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rstrip()`](../reference/api/pandas.Series.str.rstrip.html#pandas.Series.str.rstrip
+    "pandas.Series.str.rstrip") | Equivalent to `str.rstrip` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`lstrip()`](../reference/api/pandas.Series.str.lstrip.html#pandas.Series.str.lstrip
+    "pandas.Series.str.lstrip") | Equivalent to `str.lstrip` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`partition()`](../reference/api/pandas.Series.str.partition.html#pandas.Series.str.partition
+    "pandas.Series.str.partition") | Equivalent to `str.partition` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rpartition()`](../reference/api/pandas.Series.str.rpartition.html#pandas.Series.str.rpartition
+    "pandas.Series.str.rpartition") | Equivalent to `str.rpartition` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`lower()`](../reference/api/pandas.Series.str.lower.html#pandas.Series.str.lower
+    "pandas.Series.str.lower") | Equivalent to `str.lower` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`casefold()`](../reference/api/pandas.Series.str.casefold.html#pandas.Series.str.casefold
+    "pandas.Series.str.casefold") | Equivalent to `str.casefold` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`upper()`](../reference/api/pandas.Series.str.upper.html#pandas.Series.str.upper
+    "pandas.Series.str.upper") | Equivalent to `str.upper` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`find()`](../reference/api/pandas.Series.str.find.html#pandas.Series.str.find
+    "pandas.Series.str.find") | Equivalent to `str.find` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rfind()`](../reference/api/pandas.Series.str.rfind.html#pandas.Series.str.rfind
+    "pandas.Series.str.rfind") | Equivalent to `str.rfind` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`index()`](../reference/api/pandas.Series.str.index.html#pandas.Series.str.index
+    "pandas.Series.str.index") | Equivalent to `str.index` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`rindex()`](../reference/api/pandas.Series.str.rindex.html#pandas.Series.str.rindex
+    "pandas.Series.str.rindex") | Equivalent to `str.rindex` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`capitalize()`](../reference/api/pandas.Series.str.capitalize.html#pandas.Series.str.capitalize
+    "pandas.Series.str.capitalize") | Equivalent to `str.capitalize` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`swapcase()`](../reference/api/pandas.Series.str.swapcase.html#pandas.Series.str.swapcase
+    "pandas.Series.str.swapcase") | Equivalent to `str.swapcase` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`normalize()`](../reference/api/pandas.Series.str.normalize.html#pandas.Series.str.normalize
+    "pandas.Series.str.normalize") | Return Unicode normal form. Equivalent to `unicodedata.normalize`
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`translate()`](../reference/api/pandas.Series.str.translate.html#pandas.Series.str.translate
+    "pandas.Series.str.translate") | Equivalent to `str.translate` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isalnum()`](../reference/api/pandas.Series.str.isalnum.html#pandas.Series.str.isalnum
+    "pandas.Series.str.isalnum") | Equivalent to `str.isalnum` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isalpha()`](../reference/api/pandas.Series.str.isalpha.html#pandas.Series.str.isalpha
+    "pandas.Series.str.isalpha") | Equivalent to `str.isalpha` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isdigit()`](../reference/api/pandas.Series.str.isdigit.html#pandas.Series.str.isdigit
+    "pandas.Series.str.isdigit") | Equivalent to `str.isdigit` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isspace()`](../reference/api/pandas.Series.str.isspace.html#pandas.Series.str.isspace
+    "pandas.Series.str.isspace") | Equivalent to `str.isspace` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`islower()`](../reference/api/pandas.Series.str.islower.html#pandas.Series.str.islower
+    "pandas.Series.str.islower") | Equivalent to `str.islower` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isupper()`](../reference/api/pandas.Series.str.isupper.html#pandas.Series.str.isupper
+    "pandas.Series.str.isupper") | Equivalent to `str.isupper` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`istitle()`](../reference/api/pandas.Series.str.istitle.html#pandas.Series.str.istitle
+    "pandas.Series.str.istitle") | Equivalent to `str.istitle` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isnumeric()`](../reference/api/pandas.Series.str.isnumeric.html#pandas.Series.str.isnumeric
+    "pandas.Series.str.isnumeric") | Equivalent to `str.isnumeric` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isdecimal()`](../reference/api/pandas.Series.str.isdecimal.html#pandas.Series.str.isdecimal
+    "pandas.Series.str.isdecimal") | Equivalent to `str.isdecimal` |'
+  prefs: []
+  type: TYPE_TB

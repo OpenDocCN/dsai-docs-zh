@@ -1,0 +1,3435 @@
+- en: Contributing to the code base
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/development/contributing_codebase.html](https://pandas.pydata.org/docs/development/contributing_codebase.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Table of Contents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Code standards](#code-standards)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Pre-commit](#pre-commit)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Optional dependencies](#optional-dependencies)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Backwards compatibility](#backwards-compatibility)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Type hints](#type-hints)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Style guidelines](#style-guidelines)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[pandas-specific types](#pandas-specific-types)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Validating type hints](#validating-type-hints)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Testing type hints in code using pandas](#testing-type-hints-in-code-using-pandas)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Testing with continuous integration](#testing-with-continuous-integration)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Test-driven development](#test-driven-development)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Writing tests](#writing-tests)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Using `pytest`](#using-pytest)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Test structure](#test-structure)'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Preferred `pytest` idioms](#preferred-pytest-idioms)'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Testing a warning](#testing-a-warning)'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Testing an exception](#testing-an-exception)'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Testing involving files](#testing-involving-files)'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Testing involving network connectivity](#testing-involving-network-connectivity)'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Example](#example)'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Using `hypothesis`](#using-hypothesis)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Running the test suite](#running-the-test-suite)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Running the performance test suite](#running-the-performance-test-suite)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Documenting your code](#documenting-your-code)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Code standards](#id2)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Writing good code is not just about what you write. It is also about *how* you
+    write it. During [Continuous Integration](#contributing-ci) testing, several tools
+    will be run to check your code for stylistic errors. Generating any warnings will
+    cause the test to fail. Thus, good style is a requirement for submitting code
+    to pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a couple of tools in pandas to help contributors verify their changes
+    before contributing to the project
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`./ci/code_checks.sh`: a script validates the doctests, formatting in docstrings,
+    and imported modules. It is possible to run the checks independently by using
+    the parameters `docstrings`, `code`, and `doctests` (e.g. `./ci/code_checks.sh
+    doctests`);'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pre-commit`, which we go into detail on in the next section.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In addition, because a lot of people use our library, it is important that we
+    do not make sudden changes to the code that could have the potential to break
+    a lot of user code as a result, that is, we need it to be as *backwards compatible*
+    as possible to avoid mass breakages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## [Pre-commit](#id3)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Additionally, [Continuous Integration](#contributing-ci) will run code formatting
+    checks like `black`, `ruff`, `isort`, and `clang-format` and more using [pre-commit
+    hooks](https://pre-commit.com/). Any warnings from these checks will cause the
+    [Continuous Integration](#contributing-ci) to fail; therefore, it is helpful to
+    run the check yourself before submitting code. This can be done by installing
+    `pre-commit` (which should already have happened if you followed the instructions
+    in [Setting up your development environment](contributing_environment.html#contributing-environment))
+    and then running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: from the root of the pandas repository. Now all of the styling checks will be
+    run each time you commit changes without your needing to run each one manually.
+    In addition, using `pre-commit` will also allow you to more easily remain up-to-date
+    with our code checks as they change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that if needed, you can skip these checks with `git commit --no-verify`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you don’t want to use `pre-commit` as part of your workflow, you can still
+    use it to run its checks with one of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: without needing to have done `pre-commit install` beforehand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, we also have some slow pre-commit checks, which don’t run on each
+    commit but which do run during continuous integration. You can trigger them manually
+    with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may want to periodically run `pre-commit gc`, to clean up repos which are
+    no longer used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have conflicting installations of `virtualenv`, then you may get an error
+    - see [here](https://github.com/pypa/virtualenv/issues/1875).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, due to a [bug in virtualenv](https://github.com/pypa/virtualenv/issues/1986),
+    you may run into issues if you’re using conda. To solve this, you can downgrade
+    `virtualenv` to version `20.0.33`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have recently merged in main from the upstream branch, some of the dependencies
+    used by `pre-commit` may have changed. Make sure to [update your development environment](contributing.html#contributing-update-dev).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Optional dependencies](#id4)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Optional dependencies (e.g. matplotlib) should be imported with the private
+    helper `pandas.compat._optional.import_optional_dependency`. This ensures a consistent
+    error message when the dependency is not met.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All methods using an optional dependency should include a test asserting that
+    an `ImportError` is raised when the optional dependency is not found. This test
+    should be skipped if the library is present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All optional dependencies should be documented in [Optional dependencies](../getting_started/install.html#install-optional-dependencies)
+    and the minimum required version should be set in the `pandas.compat._optional.VERSIONS`
+    dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Backwards compatibility](#id5)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Please try to maintain backward compatibility. pandas has lots of users with
+    lots of existing code, so don’t break it if at all possible. If you think breakage
+    is required, clearly state why as part of the pull request. Also, be careful when
+    changing method signatures and add deprecation warnings where needed. Also, add
+    the deprecated sphinx directive to the deprecated functions or methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If a function with the same arguments as the one being deprecated exist, you
+    can use the `pandas.util._decorators.deprecate`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Otherwise, you need to do it manually:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: You’ll also need to
+  prefs: []
+  type: TYPE_NORMAL
+- en: Write a new test that asserts a warning is issued when calling with the deprecated
+    argument
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Update all of pandas existing tests and code to use the new argument
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: See [Testing a warning](#contributing-warnings) for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## [Type hints](#id6)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas strongly encourages the use of [**PEP 484**](https://peps.python.org/pep-0484/)
+    style type hints. New development should contain type hints and pull requests
+    to annotate existing code are accepted as well!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Style guidelines](#id7)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Type imports should follow the `from typing import ...` convention. Your code
+    may be automatically re-written to use some modern constructs (e.g. using the
+    built-in `list` instead of `typing.List`) by the [pre-commit checks](#contributing-pre-commit).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In some cases in the code base classes may define class variables that shadow
+    builtins. This causes an issue as described in [Mypy 1775](https://github.com/python/mypy/issues/1775#issuecomment-310969854).
+    The defensive solution here is to create an unambiguous alias of the builtin and
+    use that without your annotation. For example, if you come across a definition
+    like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The appropriate way to annotate this would be as follows
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: In some cases you may be tempted to use `cast` from the typing module when you
+    know better than the analyzer. This occurs particularly when using custom inference
+    functions. For example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The limitation here is that while a human can reasonably understand that `is_number`
+    would catch the `int` and `float` types mypy cannot make that same inference just
+    yet (see [mypy #5206](https://github.com/python/mypy/issues/5206). While the above
+    works, the use of `cast` is **strongly discouraged**. Where applicable a refactor
+    of the code to appease static analysis is preferable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: With custom types and inference this is not always possible so exceptions are
+    made, but every effort should be exhausted to avoid `cast` before going down such
+    paths.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[pandas-specific types](#id8)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Commonly used types specific to pandas will appear in [pandas._typing](https://github.com/pandas-dev/pandas/blob/main/pandas/_typing.py)
+    and you should use these where applicable. This module is private for now but
+    ultimately this should be exposed to third party libraries who want to implement
+    type checking against pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, quite a few functions in pandas accept a `dtype` argument. This
+    can be expressed as a string like `"object"`, a `numpy.dtype` like `np.int64`
+    or even a pandas `ExtensionDtype` like `pd.CategoricalDtype`. Rather than burden
+    the user with having to constantly annotate all of those options, this can simply
+    be imported and reused from the pandas._typing module
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: This module will ultimately house types for repeatedly used concepts like “path-like”,
+    “array-like”, “numeric”, etc… and can also hold aliases for commonly appearing
+    parameters like `axis`. Development of this module is active so be sure to refer
+    to the source for the most up to date list of available types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Validating type hints](#id9)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: pandas uses [mypy](http://mypy-lang.org) and [pyright](https://github.com/microsoft/pyright)
+    to statically analyze the code base and type hints. After making any change you
+    can ensure your type hints are consistent by running
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: in your python environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please be aware that the above commands will use the current python environment.
+    If your python packages are older/newer than those installed by the pandas CI,
+    the above commands might fail. This is often the case when the `mypy` or `numpy`
+    versions do not match. Please see [how to setup the python environment](contributing_environment.html#contributing-mamba)
+    or select a [recently succeeded workflow](https://github.com/pandas-dev/pandas/actions/workflows/code-checks.yml?query=branch%3Amain+is%3Asuccess),
+    select the “Docstring validation, typing, and other manual pre-commit hooks” job,
+    then click on “Set up Conda” and “Environment info” to see which versions the
+    pandas CI installs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '### [Testing type hints in code using pandas](#id10)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pandas is not yet a py.typed library ([**PEP 561**](https://peps.python.org/pep-0561/))!
+    The primary purpose of locally declaring pandas as a py.typed library is to test
+    and improve the pandas-builtin type annotations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Until pandas becomes a py.typed library, it is possible to easily experiment
+    with the type annotations shipped with pandas by creating an empty file named
+    “py.typed” in the pandas installation folder:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: The existence of the py.typed file signals to type checkers that pandas is already
+    a py.typed library. This makes type checkers aware of the type annotations shipped
+    with pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Testing with continuous integration](#id11)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The pandas test suite will run automatically on [GitHub Actions](https://github.com/features/actions/)
+    continuous integration services, once your pull request is submitted. However,
+    if you wish to run the test suite on a branch prior to submitting the pull request,
+    then the continuous integration services need to be hooked to your GitHub repository.
+    Instructions are here for [GitHub Actions](https://docs.github.com/en/actions/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: A pull-request will be considered for merging when you have an all ‘green’ build.
+    If any tests are failing, then you will get a red ‘X’, where you can click through
+    to see the individual failed tests. This is an example of a green build.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../_images/ci.png](../Images/174672c6cd526852399da413884bf421.png) ## [Test-driven
+    development](#id12)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'pandas is serious about testing and strongly encourages contributors to embrace
+    [test-driven development (TDD)](https://en.wikipedia.org/wiki/Test-driven_development).
+    This development process “relies on the repetition of a very short development
+    cycle: first the developer writes an (initially failing) automated test case that
+    defines a desired improvement or new function, then produces the minimum amount
+    of code to pass that test.” So, before actually writing any code, you should write
+    your tests. Often the test can be taken from the original GitHub issue. However,
+    it is always worth considering additional use cases and writing corresponding
+    tests.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding tests is one of the most common requests after code is pushed to pandas.
+    Therefore, it is worth getting in the habit of writing tests ahead of time so
+    this is never an issue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Writing tests](#id13)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: All tests should go into the `tests` subdirectory of the specific package. This
+    folder contains many current examples of tests, and we suggest looking to these
+    for inspiration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a general tip, you can use the search functionality in your integrated development
+    environment (IDE) or the git grep command in a terminal to find test files in
+    which the method is called. If you are unsure of the best location to put your
+    test, take your best guess, but note that reviewers may request that you move
+    the test to a different location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To use git grep, you can run the following command in a terminal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`git grep "function_name("`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This will search through all files in your repository for the text `function_name(`.
+    This can be a useful way to quickly locate the function in the codebase and determine
+    the best location to add a test for it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ideally, there should be one, and only one, obvious place for a test to reside.
+    Until we reach that ideal, these are some rules of thumb for where a test should
+    be located.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Does your test depend only on code in `pd._libs.tslibs`? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.tslibs
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: No file in `tests.tslibs` should import from any pandas modules outside of `pd._libs.tslibs`
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.scalar
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.tseries.offsets
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Does your test depend only on code in pd._libs? This test likely belongs in
+    one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.libs
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.groupby.test_libgroupby
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for an arithmetic or comparison method? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These are intended for tests that can be shared to test the behavior of DataFrame/Series/Index/ExtensionArray
+    using the `box_with_array` fixture.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.frame.test_arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for a reduction method (min, max, sum, prod, …)? This test likely
+    belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These are intended for tests that can be shared to test the behavior of DataFrame/Series/Index/ExtensionArray.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.frame.test_reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.test_nanops
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Is your test for an indexing method? This is the most difficult case for deciding
+    where a test belongs, because there are many of these tests, and many of them
+    test more than one method (e.g. both `Series.__getitem__` and `Series.loc.__getitem__`)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Is the test specifically testing an Index method (e.g. `Index.get_loc`, `Index.get_indexer`)?
+    This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexes.test_indexing
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexes.fooindex.test_indexing
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Within that files there should be a method-specific test class e.g. `TestGetLoc`.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: In most cases, neither `Series` nor `DataFrame` objects should be needed in
+    these tests.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is the test for a Series or DataFrame indexing method *other* than `__getitem__`
+    or `__setitem__`, e.g. `xs`, `where`, `take`, `mask`, `lookup`, or `insert`? This
+    test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.frame.indexing.test_methodname
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.indexing.test_methodname
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is the test for any of `loc`, `iloc`, `at`, or `iat`? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_loc
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_iloc
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_at
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_iat
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Within the appropriate file, test classes correspond to either types of indexers
+    (e.g. `TestLocBooleanMask`) or major use cases (e.g. `TestLocSetitemWithExpansion`).
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: See the note in section D) about tests that test multiple indexing methods.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is the test for `Series.__getitem__`, `Series.__setitem__`, `DataFrame.__getitem__`,
+    or `DataFrame.__setitem__`? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.series.test_getitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_setitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.test_getitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.test_setitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If many cases such a test may test multiple similar methods, e.g.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: In cases like this, the test location should be based on the *underlying* method
+    being tested. Or in the case of a test for a bugfix, the location of the actual
+    bug. So in this example, we know that `Series.__getitem__` calls `Series.loc.__getitem__`,
+    so this is *really* a test for `loc.__getitem__`. So this test belongs in `tests.indexing.test_loc`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Is your test for a DataFrame or Series method?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Is the method a plotting method? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.plotting
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is the method an IO method? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.io
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: This includes `to_string` but excludes `__repr__`, which is tested in `tests.frame.test_repr`
+    and `tests.series.test_repr`. Other classes often have a `test_formats` file.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Otherwise This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.series.methods.test_mymethod
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.methods.test_mymethod
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: If a test can be shared between DataFrame/Series using the `frame_or_series`
+    fixture, by convention it goes in the `tests.frame` file.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is your test for an Index method, not depending on Series/DataFrame? This test
+    likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexes
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for one of the pandas-provided ExtensionArrays (`Categorical`,
+    `DatetimeArray`, `TimedeltaArray`, `PeriodArray`, `IntervalArray`, `NumpyExtensionArray`,
+    `FloatArray`, `BoolArray`, `StringArray`)? This test likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.arrays
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for *all* ExtensionArray subclasses (the “EA Interface”)? This
+    test likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.extension
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Using `pytest`](#id14)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[Test structure](#id15)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: pandas existing test structure is *mostly* class-based, meaning that you will
+    typically find tests wrapped in a class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We prefer a more *functional* style using the [pytest](https://docs.pytest.org/en/latest/)
+    framework, which offers a richer testing framework that will facilitate testing
+    and developing. Thus, instead of writing test classes, we will write test functions
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Preferred `pytest` idioms](#id16)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Functional tests named `def test_*` and *only* take arguments that are either
+    fixtures or parameters.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use a bare `assert` for testing scalars and truth-testing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use `tm.assert_series_equal(result, expected)` and `tm.assert_frame_equal(result,
+    expected)` for comparing [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") results respectively.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [@pytest.mark.parameterize](https://docs.pytest.org/en/latest/how-to/parametrize.html)
+    when testing multiple cases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.mark.xfail](https://docs.pytest.org/en/latest/reference/reference.html?#pytest.mark.xfail)
+    when a test case is expected to fail.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.mark.skip](https://docs.pytest.org/en/latest/reference/reference.html?#pytest.mark.skip)
+    when a test case is never expected to pass.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.param](https://docs.pytest.org/en/latest/reference/reference.html?#pytest-param)
+    when a test case needs a particular mark.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [@pytest.fixture](https://docs.pytest.org/en/latest/reference/reference.html?#pytest-fixture)
+    if multiple tests can share a setup object.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Do not use `pytest.xfail` (which is different than `pytest.mark.xfail`) since
+    it immediately stops the test and does not check if the test will fail. If this
+    is the behavior you desire, use `pytest.skip` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a test is known to fail but the manner in which it fails is not meant to
+    be captured, use `pytest.mark.xfail` It is common to use this method for a test
+    that exhibits buggy behavior or a non-implemented feature. If the failing test
+    has flaky behavior, use the argument `strict=False`. This will make it so pytest
+    does not fail if the test happens to pass. Using `strict=False` is highly undesirable,
+    please use it only as a last resort.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Prefer the decorator `@pytest.mark.xfail` and the argument `pytest.param` over
+    usage within a test so that the test is appropriately marked during the collection
+    phase of pytest. For xfailing a test that involves multiple parameters, a fixture,
+    or a combination of these, it is only possible to xfail during the testing phase.
+    To do so, use the `request` fixture:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: xfail is not to be used for tests involving failure due to invalid user arguments.
+    For these tests, we need to verify the correct exception type and error message
+    is being raised, using `pytest.raises` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#### [Testing a warning](#id17)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use `tm.assert_produces_warning` as a context manager to check that a block
+    of code raises a warning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: If a warning should specifically not happen in a block of code, pass `False`
+    into the context manager.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have a test that would emit a warning, but you aren’t actually testing
+    the warning itself (say because it’s going to be removed in the future, or because
+    we’re matching a 3rd-party library’s behavior), then use `pytest.mark.filterwarnings`
+    to ignore the error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing an exception](#id18)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Use [pytest.raises](https://docs.pytest.org/en/latest/reference/reference.html#pytest-raises)
+    as a context manager with the specific exception subclass (i.e. never use [`Exception`](https://docs.python.org/3/library/exceptions.html#Exception
+    "(in Python v3.12)")) and the exception message in `match`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing involving files](#id19)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The `tm.ensure_clean` context manager creates a temporary file for testing,
+    with a generated filename (or your filename if provided), that is automatically
+    deleted when the context block is exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing involving network connectivity](#id20)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A unit test should not access a public data set over the internet due to flakiness
+    of network connections and lack of ownership of the server that is being connected
+    to. To mock this interaction, use the `httpserver` fixture from the [pytest-localserver
+    plugin.](https://github.com/pytest-dev/pytest-localserver) with synthetic data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Example](#id21)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Here is an example of a self-contained set of tests in a file `pandas/tests/test_cool_feature.py`
+    that illustrate multiple features that we like to use. Please remember to add
+    the GitHub Issue Number as a comment to a new test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: A test run of this yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tests that we have `parametrized` are now accessible via the test name, for
+    example we could run these with `-k int8` to sub-select *only* those tests which
+    match `int8`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### [Using `hypothesis`](#id22)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hypothesis is a library for property-based testing. Instead of explicitly parametrizing
+    a test, you can describe *all* valid inputs and let Hypothesis try to find a failing
+    input. Even better, no matter how many random examples it tries, Hypothesis always
+    reports a single minimal counterexample to your assertions - often an example
+    that you would never have thought to test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [Getting Started with Hypothesis](https://hypothesis.works/articles/getting-started-with-hypothesis/)
+    for more of an introduction, then [refer to the Hypothesis documentation for details](https://hypothesis.readthedocs.io/en/latest/index.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This test shows off several useful features of Hypothesis, as well as demonstrating
+    a good use-case: checking properties that should hold over a large or complicated
+    domain of inputs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To keep the pandas test suite running quickly, parametrized tests are preferred
+    if the inputs or logic are simple, with Hypothesis tests reserved for cases with
+    complex logic or where there are too many combinations of options or subtle interactions
+    to test (or think of!) all of them.  ## [Running the test suite](#id23)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The tests can then be run directly inside your Git clone (without having to
+    install pandas) by typing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a handful of tests don’t pass, it may not be an issue with your pandas installation.
+    Some tests (e.g. some SQLAlchemy ones) require additional setup, others might
+    start failing because a non-pinned library released a new version, and others
+    might be flaky if run in parallel. As long as you can import pandas from your
+    locally built version, your installation is probably fine and you can start contributing!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Often it is worth running only a subset of tests first around your changes
+    before running the entire suite (tip: you can use the [pandas-coverage app](https://pandas-coverage-12d2130077bc.herokuapp.com/))
+    to find out which tests hit the lines of code you’ve modified, and then run only
+    those).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The easiest way to do this is with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or with one of the following constructs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using [pytest-xdist](https://pypi.org/project/pytest-xdist), which is included
+    in our ‘pandas-dev’ environment, one can speed up local testing on multicore machines.
+    The `-n` number flag then can be specified when running pytest to parallelize
+    a test run across the number of specified cores or auto to utilize all the available
+    cores on your machine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you’d like to speed things along further a more advanced use of this command
+    would look like this
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In addition to the multithreaded performance increase this improves test speed
+    by skipping some tests using the `-m` mark flag:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'slow: any test taking long (think seconds rather than milliseconds)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'network: tests requiring network connectivity'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'db: tests requiring a database (mysql or postgres)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'single_cpu: tests that should run on a single cpu only'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You might want to enable the following option if it’s relevant for you:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'arm_slow: any test taking long on arm64 architecture'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These markers are defined [in this toml file](https://github.com/pandas-dev/pandas/blob/main/pyproject.toml)
+    , under `[tool.pytest.ini_options]` in a list called `markers`, in case you want
+    to check if new ones have been created which are of interest to you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `-r` report flag will display a short summary info (see [pytest documentation](https://docs.pytest.org/en/4.6.x/usage.html#detailed-summary-report))
+    . Here we are displaying the number of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 's: skipped tests'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'x: xfailed tests'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'X: xpassed tests'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The summary is optional and can be removed if you don’t need the added information.
+    Using the parallelization option can significantly reduce the time it takes to
+    locally run tests before submitting a pull request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you require assistance with the results, which has happened in the past,
+    please set a seed before running the command and opening a bug report, that way
+    we can reproduce it. Here’s an example for setting a seed on windows
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: On Unix use
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: For more, see the [pytest](https://docs.pytest.org/en/latest/) documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Furthermore one can run
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: with an imported pandas to run tests similarly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Running the performance test suite](#id24)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Performance matters and it is worth considering whether your code has introduced
+    performance regressions. pandas is in the process of migrating to [asv benchmarks](https://github.com/airspeed-velocity/asv)
+    to enable easy monitoring of the performance of critical pandas operations. These
+    benchmarks are all found in the `pandas/asv_bench` directory, and the test results
+    can be found [here](https://asv-runner.github.io/asv-collection/pandas).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use all features of asv, you will need either `conda` or `virtualenv`. For
+    more details please check the [asv installation webpage](https://asv.readthedocs.io/en/latest/installing.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To install asv:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you need to run a benchmark, change your directory to `asv_bench/` and run:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can replace `HEAD` with the name of the branch you are working on, and
+    report benchmarks that changed by more than 10%. The command uses `conda` by default
+    for creating the benchmark environments. If you want to use virtualenv instead,
+    write:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `-E virtualenv` option should be added to all `asv` commands that run benchmarks.
+    The default value is defined in `asv.conf.json`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running the full benchmark suite can be an all-day process, depending on your
+    hardware and its resource utilization. However, usually it is sufficient to paste
+    only a subset of the results into the pull request to show that the committed
+    changes do not cause unexpected performance regressions. You can run specific
+    benchmarks using the `-b` flag, which takes a regular expression. For example,
+    this will only run benchmarks from a `pandas/asv_bench/benchmarks/groupby.py`
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you want to only run a specific group of benchmarks from a file, you can
+    do it using `.` as a separator. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: will only run the `GroupByMethods` benchmark defined in `groupby.py`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can also run the benchmark suite using the version of `pandas` already
+    installed in your current Python environment. This can be useful if you do not
+    have virtualenv or conda, or are using the `setup.py develop` approach discussed
+    above; for the in-place build you need to set `PYTHONPATH`, e.g. `PYTHONPATH="$PWD/.."
+    asv [remaining arguments]`. You can run benchmarks using an existing Python environment
+    by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or, to use a specific Python interpreter,:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will display stderr from the benchmarks, and use your local `python` that
+    comes from your `$PATH`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Information on how to write a benchmark and how to use asv can be found in the
+    [asv documentation](https://asv.readthedocs.io/en/latest/writing_benchmarks.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Documenting your code](#id25)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Changes should be reflected in the release notes located in `doc/source/whatsnew/vx.y.z.rst`.
+    This file contains an ongoing change log for each release. Add an entry to this
+    file to document your fix, enhancement or (unavoidable) breaking change. Make
+    sure to include the GitHub issue number when adding your entry (using `:issue:`1234``
+    where `1234` is the issue/pull request number). Your entry should be written using
+    full sentences and proper grammar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When mentioning parts of the API, use a Sphinx `:func:`, `:meth:`, or `:class:`
+    directive as appropriate. Not all public API functions and methods have a documentation
+    page; ideally links would only be added if they resolve. You can usually find
+    similar examples by checking the release notes for one of the previous versions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If your code is a bugfix, add your entry to the relevant bugfix section. Avoid
+    adding to the `Other` section; only in rare cases should entries go there. Being
+    as concise as possible, the description of the bug should include how the user
+    may encounter it and an indication of the bug itself, e.g. “produces incorrect
+    results” or “incorrectly raises”. It may be necessary to also indicate the new
+    behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If your code is an enhancement, it is most likely necessary to add usage examples
+    to the existing documentation. This can be done following the section regarding
+    [documentation](contributing_documentation.html#contributing-documentation). Further,
+    to let users know when this feature was added, the `versionadded` directive is
+    used. The sphinx syntax for that is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will put the text *New in version 2.1.0* wherever you put the sphinx directive.
+    This should also be put in the docstring when adding a new function or method
+    ([example](https://github.com/pandas-dev/pandas/blob/v0.20.2/pandas/core/frame.py#L1495))
+    or a new keyword argument ([example](https://github.com/pandas-dev/pandas/blob/v0.20.2/pandas/core/generic.py#L568)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Code standards](#id2)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Writing good code is not just about what you write. It is also about *how* you
+    write it. During [Continuous Integration](#contributing-ci) testing, several tools
+    will be run to check your code for stylistic errors. Generating any warnings will
+    cause the test to fail. Thus, good style is a requirement for submitting code
+    to pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a couple of tools in pandas to help contributors verify their changes
+    before contributing to the project
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`./ci/code_checks.sh`: a script validates the doctests, formatting in docstrings,
+    and imported modules. It is possible to run the checks independently by using
+    the parameters `docstrings`, `code`, and `doctests` (e.g. `./ci/code_checks.sh
+    doctests`);'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pre-commit`, which we go into detail on in the next section.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In addition, because a lot of people use our library, it is important that we
+    do not make sudden changes to the code that could have the potential to break
+    a lot of user code as a result, that is, we need it to be as *backwards compatible*
+    as possible to avoid mass breakages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## [Pre-commit](#id3)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Additionally, [Continuous Integration](#contributing-ci) will run code formatting
+    checks like `black`, `ruff`, `isort`, and `clang-format` and more using [pre-commit
+    hooks](https://pre-commit.com/). Any warnings from these checks will cause the
+    [Continuous Integration](#contributing-ci) to fail; therefore, it is helpful to
+    run the check yourself before submitting code. This can be done by installing
+    `pre-commit` (which should already have happened if you followed the instructions
+    in [Setting up your development environment](contributing_environment.html#contributing-environment))
+    and then running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: from the root of the pandas repository. Now all of the styling checks will be
+    run each time you commit changes without your needing to run each one manually.
+    In addition, using `pre-commit` will also allow you to more easily remain up-to-date
+    with our code checks as they change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that if needed, you can skip these checks with `git commit --no-verify`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you don’t want to use `pre-commit` as part of your workflow, you can still
+    use it to run its checks with one of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: without needing to have done `pre-commit install` beforehand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, we also have some slow pre-commit checks, which don’t run on each
+    commit but which do run during continuous integration. You can trigger them manually
+    with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may want to periodically run `pre-commit gc`, to clean up repos which are
+    no longer used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have conflicting installations of `virtualenv`, then you may get an error
+    - see [here](https://github.com/pypa/virtualenv/issues/1875).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, due to a [bug in virtualenv](https://github.com/pypa/virtualenv/issues/1986),
+    you may run into issues if you’re using conda. To solve this, you can downgrade
+    `virtualenv` to version `20.0.33`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have recently merged in main from the upstream branch, some of the dependencies
+    used by `pre-commit` may have changed. Make sure to [update your development environment](contributing.html#contributing-update-dev).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Optional dependencies](#id4)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Optional dependencies (e.g. matplotlib) should be imported with the private
+    helper `pandas.compat._optional.import_optional_dependency`. This ensures a consistent
+    error message when the dependency is not met.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All methods using an optional dependency should include a test asserting that
+    an `ImportError` is raised when the optional dependency is not found. This test
+    should be skipped if the library is present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All optional dependencies should be documented in [Optional dependencies](../getting_started/install.html#install-optional-dependencies)
+    and the minimum required version should be set in the `pandas.compat._optional.VERSIONS`
+    dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Backwards compatibility](#id5)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Please try to maintain backward compatibility. pandas has lots of users with
+    lots of existing code, so don’t break it if at all possible. If you think breakage
+    is required, clearly state why as part of the pull request. Also, be careful when
+    changing method signatures and add deprecation warnings where needed. Also, add
+    the deprecated sphinx directive to the deprecated functions or methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If a function with the same arguments as the one being deprecated exist, you
+    can use the `pandas.util._decorators.deprecate`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Otherwise, you need to do it manually:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: You’ll also need to
+  prefs: []
+  type: TYPE_NORMAL
+- en: Write a new test that asserts a warning is issued when calling with the deprecated
+    argument
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Update all of pandas existing tests and code to use the new argument
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: See [Testing a warning](#contributing-warnings) for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## [Type hints](#id6)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas strongly encourages the use of [**PEP 484**](https://peps.python.org/pep-0484/)
+    style type hints. New development should contain type hints and pull requests
+    to annotate existing code are accepted as well!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Style guidelines](#id7)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Type imports should follow the `from typing import ...` convention. Your code
+    may be automatically re-written to use some modern constructs (e.g. using the
+    built-in `list` instead of `typing.List`) by the [pre-commit checks](#contributing-pre-commit).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In some cases in the code base classes may define class variables that shadow
+    builtins. This causes an issue as described in [Mypy 1775](https://github.com/python/mypy/issues/1775#issuecomment-310969854).
+    The defensive solution here is to create an unambiguous alias of the builtin and
+    use that without your annotation. For example, if you come across a definition
+    like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: The appropriate way to annotate this would be as follows
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: In some cases you may be tempted to use `cast` from the typing module when you
+    know better than the analyzer. This occurs particularly when using custom inference
+    functions. For example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The limitation here is that while a human can reasonably understand that `is_number`
+    would catch the `int` and `float` types mypy cannot make that same inference just
+    yet (see [mypy #5206](https://github.com/python/mypy/issues/5206). While the above
+    works, the use of `cast` is **strongly discouraged**. Where applicable a refactor
+    of the code to appease static analysis is preferable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: With custom types and inference this is not always possible so exceptions are
+    made, but every effort should be exhausted to avoid `cast` before going down such
+    paths.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[pandas-specific types](#id8)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Commonly used types specific to pandas will appear in [pandas._typing](https://github.com/pandas-dev/pandas/blob/main/pandas/_typing.py)
+    and you should use these where applicable. This module is private for now but
+    ultimately this should be exposed to third party libraries who want to implement
+    type checking against pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, quite a few functions in pandas accept a `dtype` argument. This
+    can be expressed as a string like `"object"`, a `numpy.dtype` like `np.int64`
+    or even a pandas `ExtensionDtype` like `pd.CategoricalDtype`. Rather than burden
+    the user with having to constantly annotate all of those options, this can simply
+    be imported and reused from the pandas._typing module
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: This module will ultimately house types for repeatedly used concepts like “path-like”,
+    “array-like”, “numeric”, etc… and can also hold aliases for commonly appearing
+    parameters like `axis`. Development of this module is active so be sure to refer
+    to the source for the most up to date list of available types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Validating type hints](#id9)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: pandas uses [mypy](http://mypy-lang.org) and [pyright](https://github.com/microsoft/pyright)
+    to statically analyze the code base and type hints. After making any change you
+    can ensure your type hints are consistent by running
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: in your python environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please be aware that the above commands will use the current python environment.
+    If your python packages are older/newer than those installed by the pandas CI,
+    the above commands might fail. This is often the case when the `mypy` or `numpy`
+    versions do not match. Please see [how to setup the python environment](contributing_environment.html#contributing-mamba)
+    or select a [recently succeeded workflow](https://github.com/pandas-dev/pandas/actions/workflows/code-checks.yml?query=branch%3Amain+is%3Asuccess),
+    select the “Docstring validation, typing, and other manual pre-commit hooks” job,
+    then click on “Set up Conda” and “Environment info” to see which versions the
+    pandas CI installs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '### [Testing type hints in code using pandas](#id10)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pandas is not yet a py.typed library ([**PEP 561**](https://peps.python.org/pep-0561/))!
+    The primary purpose of locally declaring pandas as a py.typed library is to test
+    and improve the pandas-builtin type annotations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Until pandas becomes a py.typed library, it is possible to easily experiment
+    with the type annotations shipped with pandas by creating an empty file named
+    “py.typed” in the pandas installation folder:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: The existence of the py.typed file signals to type checkers that pandas is already
+    a py.typed library. This makes type checkers aware of the type annotations shipped
+    with pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Style guidelines](#id7)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Type imports should follow the `from typing import ...` convention. Your code
+    may be automatically re-written to use some modern constructs (e.g. using the
+    built-in `list` instead of `typing.List`) by the [pre-commit checks](#contributing-pre-commit).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In some cases in the code base classes may define class variables that shadow
+    builtins. This causes an issue as described in [Mypy 1775](https://github.com/python/mypy/issues/1775#issuecomment-310969854).
+    The defensive solution here is to create an unambiguous alias of the builtin and
+    use that without your annotation. For example, if you come across a definition
+    like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: The appropriate way to annotate this would be as follows
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: In some cases you may be tempted to use `cast` from the typing module when you
+    know better than the analyzer. This occurs particularly when using custom inference
+    functions. For example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The limitation here is that while a human can reasonably understand that `is_number`
+    would catch the `int` and `float` types mypy cannot make that same inference just
+    yet (see [mypy #5206](https://github.com/python/mypy/issues/5206). While the above
+    works, the use of `cast` is **strongly discouraged**. Where applicable a refactor
+    of the code to appease static analysis is preferable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: With custom types and inference this is not always possible so exceptions are
+    made, but every effort should be exhausted to avoid `cast` before going down such
+    paths.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[pandas-specific types](#id8)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Commonly used types specific to pandas will appear in [pandas._typing](https://github.com/pandas-dev/pandas/blob/main/pandas/_typing.py)
+    and you should use these where applicable. This module is private for now but
+    ultimately this should be exposed to third party libraries who want to implement
+    type checking against pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, quite a few functions in pandas accept a `dtype` argument. This
+    can be expressed as a string like `"object"`, a `numpy.dtype` like `np.int64`
+    or even a pandas `ExtensionDtype` like `pd.CategoricalDtype`. Rather than burden
+    the user with having to constantly annotate all of those options, this can simply
+    be imported and reused from the pandas._typing module
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: This module will ultimately house types for repeatedly used concepts like “path-like”,
+    “array-like”, “numeric”, etc… and can also hold aliases for commonly appearing
+    parameters like `axis`. Development of this module is active so be sure to refer
+    to the source for the most up to date list of available types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Validating type hints](#id9)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: pandas uses [mypy](http://mypy-lang.org) and [pyright](https://github.com/microsoft/pyright)
+    to statically analyze the code base and type hints. After making any change you
+    can ensure your type hints are consistent by running
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: in your python environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please be aware that the above commands will use the current python environment.
+    If your python packages are older/newer than those installed by the pandas CI,
+    the above commands might fail. This is often the case when the `mypy` or `numpy`
+    versions do not match. Please see [how to setup the python environment](contributing_environment.html#contributing-mamba)
+    or select a [recently succeeded workflow](https://github.com/pandas-dev/pandas/actions/workflows/code-checks.yml?query=branch%3Amain+is%3Asuccess),
+    select the “Docstring validation, typing, and other manual pre-commit hooks” job,
+    then click on “Set up Conda” and “Environment info” to see which versions the
+    pandas CI installs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '### [Testing type hints in code using pandas](#id10)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pandas is not yet a py.typed library ([**PEP 561**](https://peps.python.org/pep-0561/))!
+    The primary purpose of locally declaring pandas as a py.typed library is to test
+    and improve the pandas-builtin type annotations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Until pandas becomes a py.typed library, it is possible to easily experiment
+    with the type annotations shipped with pandas by creating an empty file named
+    “py.typed” in the pandas installation folder:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: The existence of the py.typed file signals to type checkers that pandas is already
+    a py.typed library. This makes type checkers aware of the type annotations shipped
+    with pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Testing with continuous integration](#id11)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The pandas test suite will run automatically on [GitHub Actions](https://github.com/features/actions/)
+    continuous integration services, once your pull request is submitted. However,
+    if you wish to run the test suite on a branch prior to submitting the pull request,
+    then the continuous integration services need to be hooked to your GitHub repository.
+    Instructions are here for [GitHub Actions](https://docs.github.com/en/actions/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: A pull-request will be considered for merging when you have an all ‘green’ build.
+    If any tests are failing, then you will get a red ‘X’, where you can click through
+    to see the individual failed tests. This is an example of a green build.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../_images/ci.png](../Images/174672c6cd526852399da413884bf421.png) ## [Test-driven
+    development](#id12)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'pandas is serious about testing and strongly encourages contributors to embrace
+    [test-driven development (TDD)](https://en.wikipedia.org/wiki/Test-driven_development).
+    This development process “relies on the repetition of a very short development
+    cycle: first the developer writes an (initially failing) automated test case that
+    defines a desired improvement or new function, then produces the minimum amount
+    of code to pass that test.” So, before actually writing any code, you should write
+    your tests. Often the test can be taken from the original GitHub issue. However,
+    it is always worth considering additional use cases and writing corresponding
+    tests.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding tests is one of the most common requests after code is pushed to pandas.
+    Therefore, it is worth getting in the habit of writing tests ahead of time so
+    this is never an issue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Writing tests](#id13)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: All tests should go into the `tests` subdirectory of the specific package. This
+    folder contains many current examples of tests, and we suggest looking to these
+    for inspiration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a general tip, you can use the search functionality in your integrated development
+    environment (IDE) or the git grep command in a terminal to find test files in
+    which the method is called. If you are unsure of the best location to put your
+    test, take your best guess, but note that reviewers may request that you move
+    the test to a different location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To use git grep, you can run the following command in a terminal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`git grep "function_name("`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This will search through all files in your repository for the text `function_name(`.
+    This can be a useful way to quickly locate the function in the codebase and determine
+    the best location to add a test for it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ideally, there should be one, and only one, obvious place for a test to reside.
+    Until we reach that ideal, these are some rules of thumb for where a test should
+    be located.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Does your test depend only on code in `pd._libs.tslibs`? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.tslibs
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: No file in `tests.tslibs` should import from any pandas modules outside of `pd._libs.tslibs`
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.scalar
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.tseries.offsets
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Does your test depend only on code in pd._libs? This test likely belongs in
+    one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.libs
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.groupby.test_libgroupby
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for an arithmetic or comparison method? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These are intended for tests that can be shared to test the behavior of DataFrame/Series/Index/ExtensionArray
+    using the `box_with_array` fixture.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.frame.test_arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for a reduction method (min, max, sum, prod, …)? This test likely
+    belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These are intended for tests that can be shared to test the behavior of DataFrame/Series/Index/ExtensionArray.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.frame.test_reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.test_nanops
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Is your test for an indexing method? This is the most difficult case for deciding
+    where a test belongs, because there are many of these tests, and many of them
+    test more than one method (e.g. both `Series.__getitem__` and `Series.loc.__getitem__`)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Is the test specifically testing an Index method (e.g. `Index.get_loc`, `Index.get_indexer`)?
+    This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexes.test_indexing
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexes.fooindex.test_indexing
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Within that files there should be a method-specific test class e.g. `TestGetLoc`.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: In most cases, neither `Series` nor `DataFrame` objects should be needed in
+    these tests.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is the test for a Series or DataFrame indexing method *other* than `__getitem__`
+    or `__setitem__`, e.g. `xs`, `where`, `take`, `mask`, `lookup`, or `insert`? This
+    test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.frame.indexing.test_methodname
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.indexing.test_methodname
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is the test for any of `loc`, `iloc`, `at`, or `iat`? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_loc
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_iloc
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_at
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_iat
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Within the appropriate file, test classes correspond to either types of indexers
+    (e.g. `TestLocBooleanMask`) or major use cases (e.g. `TestLocSetitemWithExpansion`).
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: See the note in section D) about tests that test multiple indexing methods.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is the test for `Series.__getitem__`, `Series.__setitem__`, `DataFrame.__getitem__`,
+    or `DataFrame.__setitem__`? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.series.test_getitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_setitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.test_getitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.test_setitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If many cases such a test may test multiple similar methods, e.g.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: In cases like this, the test location should be based on the *underlying* method
+    being tested. Or in the case of a test for a bugfix, the location of the actual
+    bug. So in this example, we know that `Series.__getitem__` calls `Series.loc.__getitem__`,
+    so this is *really* a test for `loc.__getitem__`. So this test belongs in `tests.indexing.test_loc`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Is your test for a DataFrame or Series method?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Is the method a plotting method? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.plotting
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is the method an IO method? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.io
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: This includes `to_string` but excludes `__repr__`, which is tested in `tests.frame.test_repr`
+    and `tests.series.test_repr`. Other classes often have a `test_formats` file.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Otherwise This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.series.methods.test_mymethod
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.methods.test_mymethod
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: If a test can be shared between DataFrame/Series using the `frame_or_series`
+    fixture, by convention it goes in the `tests.frame` file.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is your test for an Index method, not depending on Series/DataFrame? This test
+    likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexes
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for one of the pandas-provided ExtensionArrays (`Categorical`,
+    `DatetimeArray`, `TimedeltaArray`, `PeriodArray`, `IntervalArray`, `NumpyExtensionArray`,
+    `FloatArray`, `BoolArray`, `StringArray`)? This test likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.arrays
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for *all* ExtensionArray subclasses (the “EA Interface”)? This
+    test likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.extension
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Using `pytest`](#id14)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[Test structure](#id15)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: pandas existing test structure is *mostly* class-based, meaning that you will
+    typically find tests wrapped in a class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We prefer a more *functional* style using the [pytest](https://docs.pytest.org/en/latest/)
+    framework, which offers a richer testing framework that will facilitate testing
+    and developing. Thus, instead of writing test classes, we will write test functions
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Preferred `pytest` idioms](#id16)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Functional tests named `def test_*` and *only* take arguments that are either
+    fixtures or parameters.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use a bare `assert` for testing scalars and truth-testing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use `tm.assert_series_equal(result, expected)` and `tm.assert_frame_equal(result,
+    expected)` for comparing [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") results respectively.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [@pytest.mark.parameterize](https://docs.pytest.org/en/latest/how-to/parametrize.html)
+    when testing multiple cases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.mark.xfail](https://docs.pytest.org/en/latest/reference/reference.html?#pytest.mark.xfail)
+    when a test case is expected to fail.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.mark.skip](https://docs.pytest.org/en/latest/reference/reference.html?#pytest.mark.skip)
+    when a test case is never expected to pass.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.param](https://docs.pytest.org/en/latest/reference/reference.html?#pytest-param)
+    when a test case needs a particular mark.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [@pytest.fixture](https://docs.pytest.org/en/latest/reference/reference.html?#pytest-fixture)
+    if multiple tests can share a setup object.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Do not use `pytest.xfail` (which is different than `pytest.mark.xfail`) since
+    it immediately stops the test and does not check if the test will fail. If this
+    is the behavior you desire, use `pytest.skip` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a test is known to fail but the manner in which it fails is not meant to
+    be captured, use `pytest.mark.xfail` It is common to use this method for a test
+    that exhibits buggy behavior or a non-implemented feature. If the failing test
+    has flaky behavior, use the argument `strict=False`. This will make it so pytest
+    does not fail if the test happens to pass. Using `strict=False` is highly undesirable,
+    please use it only as a last resort.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Prefer the decorator `@pytest.mark.xfail` and the argument `pytest.param` over
+    usage within a test so that the test is appropriately marked during the collection
+    phase of pytest. For xfailing a test that involves multiple parameters, a fixture,
+    or a combination of these, it is only possible to xfail during the testing phase.
+    To do so, use the `request` fixture:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: xfail is not to be used for tests involving failure due to invalid user arguments.
+    For these tests, we need to verify the correct exception type and error message
+    is being raised, using `pytest.raises` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#### [Testing a warning](#id17)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use `tm.assert_produces_warning` as a context manager to check that a block
+    of code raises a warning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: If a warning should specifically not happen in a block of code, pass `False`
+    into the context manager.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have a test that would emit a warning, but you aren’t actually testing
+    the warning itself (say because it’s going to be removed in the future, or because
+    we’re matching a 3rd-party library’s behavior), then use `pytest.mark.filterwarnings`
+    to ignore the error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing an exception](#id18)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Use [pytest.raises](https://docs.pytest.org/en/latest/reference/reference.html#pytest-raises)
+    as a context manager with the specific exception subclass (i.e. never use [`Exception`](https://docs.python.org/3/library/exceptions.html#Exception
+    "(in Python v3.12)")) and the exception message in `match`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing involving files](#id19)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The `tm.ensure_clean` context manager creates a temporary file for testing,
+    with a generated filename (or your filename if provided), that is automatically
+    deleted when the context block is exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing involving network connectivity](#id20)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A unit test should not access a public data set over the internet due to flakiness
+    of network connections and lack of ownership of the server that is being connected
+    to. To mock this interaction, use the `httpserver` fixture from the [pytest-localserver
+    plugin.](https://github.com/pytest-dev/pytest-localserver) with synthetic data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Example](#id21)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Here is an example of a self-contained set of tests in a file `pandas/tests/test_cool_feature.py`
+    that illustrate multiple features that we like to use. Please remember to add
+    the GitHub Issue Number as a comment to a new test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: A test run of this yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tests that we have `parametrized` are now accessible via the test name, for
+    example we could run these with `-k int8` to sub-select *only* those tests which
+    match `int8`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### [Using `hypothesis`](#id22)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hypothesis is a library for property-based testing. Instead of explicitly parametrizing
+    a test, you can describe *all* valid inputs and let Hypothesis try to find a failing
+    input. Even better, no matter how many random examples it tries, Hypothesis always
+    reports a single minimal counterexample to your assertions - often an example
+    that you would never have thought to test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [Getting Started with Hypothesis](https://hypothesis.works/articles/getting-started-with-hypothesis/)
+    for more of an introduction, then [refer to the Hypothesis documentation for details](https://hypothesis.readthedocs.io/en/latest/index.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This test shows off several useful features of Hypothesis, as well as demonstrating
+    a good use-case: checking properties that should hold over a large or complicated
+    domain of inputs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To keep the pandas test suite running quickly, parametrized tests are preferred
+    if the inputs or logic are simple, with Hypothesis tests reserved for cases with
+    complex logic or where there are too many combinations of options or subtle interactions
+    to test (or think of!) all of them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Writing tests](#id13)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: All tests should go into the `tests` subdirectory of the specific package. This
+    folder contains many current examples of tests, and we suggest looking to these
+    for inspiration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a general tip, you can use the search functionality in your integrated development
+    environment (IDE) or the git grep command in a terminal to find test files in
+    which the method is called. If you are unsure of the best location to put your
+    test, take your best guess, but note that reviewers may request that you move
+    the test to a different location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To use git grep, you can run the following command in a terminal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`git grep "function_name("`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This will search through all files in your repository for the text `function_name(`.
+    This can be a useful way to quickly locate the function in the codebase and determine
+    the best location to add a test for it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ideally, there should be one, and only one, obvious place for a test to reside.
+    Until we reach that ideal, these are some rules of thumb for where a test should
+    be located.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Does your test depend only on code in `pd._libs.tslibs`? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.tslibs
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: No file in `tests.tslibs` should import from any pandas modules outside of `pd._libs.tslibs`
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.scalar
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.tseries.offsets
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Does your test depend only on code in pd._libs? This test likely belongs in
+    one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.libs
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.groupby.test_libgroupby
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for an arithmetic or comparison method? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These are intended for tests that can be shared to test the behavior of DataFrame/Series/Index/ExtensionArray
+    using the `box_with_array` fixture.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.frame.test_arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_arithmetic
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for a reduction method (min, max, sum, prod, …)? This test likely
+    belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These are intended for tests that can be shared to test the behavior of DataFrame/Series/Index/ExtensionArray.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: tests.frame.test_reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_reductions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.test_nanops
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Is your test for an indexing method? This is the most difficult case for deciding
+    where a test belongs, because there are many of these tests, and many of them
+    test more than one method (e.g. both `Series.__getitem__` and `Series.loc.__getitem__`)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Is the test specifically testing an Index method (e.g. `Index.get_loc`, `Index.get_indexer`)?
+    This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexes.test_indexing
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexes.fooindex.test_indexing
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Within that files there should be a method-specific test class e.g. `TestGetLoc`.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: In most cases, neither `Series` nor `DataFrame` objects should be needed in
+    these tests.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is the test for a Series or DataFrame indexing method *other* than `__getitem__`
+    or `__setitem__`, e.g. `xs`, `where`, `take`, `mask`, `lookup`, or `insert`? This
+    test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.frame.indexing.test_methodname
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.indexing.test_methodname
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is the test for any of `loc`, `iloc`, `at`, or `iat`? This test likely belongs
+    in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_loc
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_iloc
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_at
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.indexing.test_iat
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Within the appropriate file, test classes correspond to either types of indexers
+    (e.g. `TestLocBooleanMask`) or major use cases (e.g. `TestLocSetitemWithExpansion`).
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: See the note in section D) about tests that test multiple indexing methods.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is the test for `Series.__getitem__`, `Series.__setitem__`, `DataFrame.__getitem__`,
+    or `DataFrame.__setitem__`? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.series.test_getitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.series.test_setitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.test_getitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.test_setitem
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If many cases such a test may test multiple similar methods, e.g.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: In cases like this, the test location should be based on the *underlying* method
+    being tested. Or in the case of a test for a bugfix, the location of the actual
+    bug. So in this example, we know that `Series.__getitem__` calls `Series.loc.__getitem__`,
+    so this is *really* a test for `loc.__getitem__`. So this test belongs in `tests.indexing.test_loc`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Is your test for a DataFrame or Series method?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Is the method a plotting method? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.plotting
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is the method an IO method? This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.io
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: This includes `to_string` but excludes `__repr__`, which is tested in `tests.frame.test_repr`
+    and `tests.series.test_repr`. Other classes often have a `test_formats` file.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Otherwise This test likely belongs in one of:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.series.methods.test_mymethod
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: tests.frame.methods.test_mymethod
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: If a test can be shared between DataFrame/Series using the `frame_or_series`
+    fixture, by convention it goes in the `tests.frame` file.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Is your test for an Index method, not depending on Series/DataFrame? This test
+    likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.indexes
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for one of the pandas-provided ExtensionArrays (`Categorical`,
+    `DatetimeArray`, `TimedeltaArray`, `PeriodArray`, `IntervalArray`, `NumpyExtensionArray`,
+    `FloatArray`, `BoolArray`, `StringArray`)? This test likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.arrays
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Is your test for *all* ExtensionArray subclasses (the “EA Interface”)? This
+    test likely belongs in one of:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: tests.extension
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Using `pytest`](#id14)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[Test structure](#id15)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: pandas existing test structure is *mostly* class-based, meaning that you will
+    typically find tests wrapped in a class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We prefer a more *functional* style using the [pytest](https://docs.pytest.org/en/latest/)
+    framework, which offers a richer testing framework that will facilitate testing
+    and developing. Thus, instead of writing test classes, we will write test functions
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Preferred `pytest` idioms](#id16)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Functional tests named `def test_*` and *only* take arguments that are either
+    fixtures or parameters.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use a bare `assert` for testing scalars and truth-testing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use `tm.assert_series_equal(result, expected)` and `tm.assert_frame_equal(result,
+    expected)` for comparing [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") results respectively.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [@pytest.mark.parameterize](https://docs.pytest.org/en/latest/how-to/parametrize.html)
+    when testing multiple cases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.mark.xfail](https://docs.pytest.org/en/latest/reference/reference.html?#pytest.mark.xfail)
+    when a test case is expected to fail.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.mark.skip](https://docs.pytest.org/en/latest/reference/reference.html?#pytest.mark.skip)
+    when a test case is never expected to pass.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.param](https://docs.pytest.org/en/latest/reference/reference.html?#pytest-param)
+    when a test case needs a particular mark.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [@pytest.fixture](https://docs.pytest.org/en/latest/reference/reference.html?#pytest-fixture)
+    if multiple tests can share a setup object.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Do not use `pytest.xfail` (which is different than `pytest.mark.xfail`) since
+    it immediately stops the test and does not check if the test will fail. If this
+    is the behavior you desire, use `pytest.skip` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a test is known to fail but the manner in which it fails is not meant to
+    be captured, use `pytest.mark.xfail` It is common to use this method for a test
+    that exhibits buggy behavior or a non-implemented feature. If the failing test
+    has flaky behavior, use the argument `strict=False`. This will make it so pytest
+    does not fail if the test happens to pass. Using `strict=False` is highly undesirable,
+    please use it only as a last resort.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Prefer the decorator `@pytest.mark.xfail` and the argument `pytest.param` over
+    usage within a test so that the test is appropriately marked during the collection
+    phase of pytest. For xfailing a test that involves multiple parameters, a fixture,
+    or a combination of these, it is only possible to xfail during the testing phase.
+    To do so, use the `request` fixture:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: xfail is not to be used for tests involving failure due to invalid user arguments.
+    For these tests, we need to verify the correct exception type and error message
+    is being raised, using `pytest.raises` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#### [Testing a warning](#id17)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use `tm.assert_produces_warning` as a context manager to check that a block
+    of code raises a warning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: If a warning should specifically not happen in a block of code, pass `False`
+    into the context manager.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have a test that would emit a warning, but you aren’t actually testing
+    the warning itself (say because it’s going to be removed in the future, or because
+    we’re matching a 3rd-party library’s behavior), then use `pytest.mark.filterwarnings`
+    to ignore the error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing an exception](#id18)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Use [pytest.raises](https://docs.pytest.org/en/latest/reference/reference.html#pytest-raises)
+    as a context manager with the specific exception subclass (i.e. never use [`Exception`](https://docs.python.org/3/library/exceptions.html#Exception
+    "(in Python v3.12)")) and the exception message in `match`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing involving files](#id19)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The `tm.ensure_clean` context manager creates a temporary file for testing,
+    with a generated filename (or your filename if provided), that is automatically
+    deleted when the context block is exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing involving network connectivity](#id20)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A unit test should not access a public data set over the internet due to flakiness
+    of network connections and lack of ownership of the server that is being connected
+    to. To mock this interaction, use the `httpserver` fixture from the [pytest-localserver
+    plugin.](https://github.com/pytest-dev/pytest-localserver) with synthetic data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Example](#id21)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Here is an example of a self-contained set of tests in a file `pandas/tests/test_cool_feature.py`
+    that illustrate multiple features that we like to use. Please remember to add
+    the GitHub Issue Number as a comment to a new test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: A test run of this yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tests that we have `parametrized` are now accessible via the test name, for
+    example we could run these with `-k int8` to sub-select *only* those tests which
+    match `int8`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Test structure](#id15)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: pandas existing test structure is *mostly* class-based, meaning that you will
+    typically find tests wrapped in a class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We prefer a more *functional* style using the [pytest](https://docs.pytest.org/en/latest/)
+    framework, which offers a richer testing framework that will facilitate testing
+    and developing. Thus, instead of writing test classes, we will write test functions
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Preferred `pytest` idioms](#id16)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Functional tests named `def test_*` and *only* take arguments that are either
+    fixtures or parameters.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use a bare `assert` for testing scalars and truth-testing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use `tm.assert_series_equal(result, expected)` and `tm.assert_frame_equal(result,
+    expected)` for comparing [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") results respectively.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [@pytest.mark.parameterize](https://docs.pytest.org/en/latest/how-to/parametrize.html)
+    when testing multiple cases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.mark.xfail](https://docs.pytest.org/en/latest/reference/reference.html?#pytest.mark.xfail)
+    when a test case is expected to fail.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.mark.skip](https://docs.pytest.org/en/latest/reference/reference.html?#pytest.mark.skip)
+    when a test case is never expected to pass.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [pytest.param](https://docs.pytest.org/en/latest/reference/reference.html?#pytest-param)
+    when a test case needs a particular mark.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use [@pytest.fixture](https://docs.pytest.org/en/latest/reference/reference.html?#pytest-fixture)
+    if multiple tests can share a setup object.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Do not use `pytest.xfail` (which is different than `pytest.mark.xfail`) since
+    it immediately stops the test and does not check if the test will fail. If this
+    is the behavior you desire, use `pytest.skip` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a test is known to fail but the manner in which it fails is not meant to
+    be captured, use `pytest.mark.xfail` It is common to use this method for a test
+    that exhibits buggy behavior or a non-implemented feature. If the failing test
+    has flaky behavior, use the argument `strict=False`. This will make it so pytest
+    does not fail if the test happens to pass. Using `strict=False` is highly undesirable,
+    please use it only as a last resort.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Prefer the decorator `@pytest.mark.xfail` and the argument `pytest.param` over
+    usage within a test so that the test is appropriately marked during the collection
+    phase of pytest. For xfailing a test that involves multiple parameters, a fixture,
+    or a combination of these, it is only possible to xfail during the testing phase.
+    To do so, use the `request` fixture:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: xfail is not to be used for tests involving failure due to invalid user arguments.
+    For these tests, we need to verify the correct exception type and error message
+    is being raised, using `pytest.raises` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#### [Testing a warning](#id17)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use `tm.assert_produces_warning` as a context manager to check that a block
+    of code raises a warning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: If a warning should specifically not happen in a block of code, pass `False`
+    into the context manager.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have a test that would emit a warning, but you aren’t actually testing
+    the warning itself (say because it’s going to be removed in the future, or because
+    we’re matching a 3rd-party library’s behavior), then use `pytest.mark.filterwarnings`
+    to ignore the error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing an exception](#id18)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Use [pytest.raises](https://docs.pytest.org/en/latest/reference/reference.html#pytest-raises)
+    as a context manager with the specific exception subclass (i.e. never use [`Exception`](https://docs.python.org/3/library/exceptions.html#Exception
+    "(in Python v3.12)")) and the exception message in `match`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing involving files](#id19)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The `tm.ensure_clean` context manager creates a temporary file for testing,
+    with a generated filename (or your filename if provided), that is automatically
+    deleted when the context block is exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Testing involving network connectivity](#id20)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A unit test should not access a public data set over the internet due to flakiness
+    of network connections and lack of ownership of the server that is being connected
+    to. To mock this interaction, use the `httpserver` fixture from the [pytest-localserver
+    plugin.](https://github.com/pytest-dev/pytest-localserver) with synthetic data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Example](#id21)'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Here is an example of a self-contained set of tests in a file `pandas/tests/test_cool_feature.py`
+    that illustrate multiple features that we like to use. Please remember to add
+    the GitHub Issue Number as a comment to a new test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: A test run of this yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tests that we have `parametrized` are now accessible via the test name, for
+    example we could run these with `-k int8` to sub-select *only* those tests which
+    match `int8`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### [Using `hypothesis`](#id22)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hypothesis is a library for property-based testing. Instead of explicitly parametrizing
+    a test, you can describe *all* valid inputs and let Hypothesis try to find a failing
+    input. Even better, no matter how many random examples it tries, Hypothesis always
+    reports a single minimal counterexample to your assertions - often an example
+    that you would never have thought to test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [Getting Started with Hypothesis](https://hypothesis.works/articles/getting-started-with-hypothesis/)
+    for more of an introduction, then [refer to the Hypothesis documentation for details](https://hypothesis.readthedocs.io/en/latest/index.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This test shows off several useful features of Hypothesis, as well as demonstrating
+    a good use-case: checking properties that should hold over a large or complicated
+    domain of inputs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To keep the pandas test suite running quickly, parametrized tests are preferred
+    if the inputs or logic are simple, with Hypothesis tests reserved for cases with
+    complex logic or where there are too many combinations of options or subtle interactions
+    to test (or think of!) all of them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## [Running the test suite](#id23)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The tests can then be run directly inside your Git clone (without having to
+    install pandas) by typing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a handful of tests don’t pass, it may not be an issue with your pandas installation.
+    Some tests (e.g. some SQLAlchemy ones) require additional setup, others might
+    start failing because a non-pinned library released a new version, and others
+    might be flaky if run in parallel. As long as you can import pandas from your
+    locally built version, your installation is probably fine and you can start contributing!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Often it is worth running only a subset of tests first around your changes
+    before running the entire suite (tip: you can use the [pandas-coverage app](https://pandas-coverage-12d2130077bc.herokuapp.com/))
+    to find out which tests hit the lines of code you’ve modified, and then run only
+    those).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The easiest way to do this is with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or with one of the following constructs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using [pytest-xdist](https://pypi.org/project/pytest-xdist), which is included
+    in our ‘pandas-dev’ environment, one can speed up local testing on multicore machines.
+    The `-n` number flag then can be specified when running pytest to parallelize
+    a test run across the number of specified cores or auto to utilize all the available
+    cores on your machine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you’d like to speed things along further a more advanced use of this command
+    would look like this
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In addition to the multithreaded performance increase this improves test speed
+    by skipping some tests using the `-m` mark flag:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'slow: any test taking long (think seconds rather than milliseconds)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'network: tests requiring network connectivity'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'db: tests requiring a database (mysql or postgres)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'single_cpu: tests that should run on a single cpu only'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You might want to enable the following option if it’s relevant for you:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'arm_slow: any test taking long on arm64 architecture'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These markers are defined [in this toml file](https://github.com/pandas-dev/pandas/blob/main/pyproject.toml)
+    , under `[tool.pytest.ini_options]` in a list called `markers`, in case you want
+    to check if new ones have been created which are of interest to you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `-r` report flag will display a short summary info (see [pytest documentation](https://docs.pytest.org/en/4.6.x/usage.html#detailed-summary-report))
+    . Here we are displaying the number of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 's: skipped tests'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'x: xfailed tests'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'X: xpassed tests'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The summary is optional and can be removed if you don’t need the added information.
+    Using the parallelization option can significantly reduce the time it takes to
+    locally run tests before submitting a pull request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you require assistance with the results, which has happened in the past,
+    please set a seed before running the command and opening a bug report, that way
+    we can reproduce it. Here’s an example for setting a seed on windows
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: On Unix use
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: For more, see the [pytest](https://docs.pytest.org/en/latest/) documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Furthermore one can run
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: with an imported pandas to run tests similarly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Running the performance test suite](#id24)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Performance matters and it is worth considering whether your code has introduced
+    performance regressions. pandas is in the process of migrating to [asv benchmarks](https://github.com/airspeed-velocity/asv)
+    to enable easy monitoring of the performance of critical pandas operations. These
+    benchmarks are all found in the `pandas/asv_bench` directory, and the test results
+    can be found [here](https://asv-runner.github.io/asv-collection/pandas).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use all features of asv, you will need either `conda` or `virtualenv`. For
+    more details please check the [asv installation webpage](https://asv.readthedocs.io/en/latest/installing.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To install asv:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you need to run a benchmark, change your directory to `asv_bench/` and run:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can replace `HEAD` with the name of the branch you are working on, and
+    report benchmarks that changed by more than 10%. The command uses `conda` by default
+    for creating the benchmark environments. If you want to use virtualenv instead,
+    write:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `-E virtualenv` option should be added to all `asv` commands that run benchmarks.
+    The default value is defined in `asv.conf.json`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running the full benchmark suite can be an all-day process, depending on your
+    hardware and its resource utilization. However, usually it is sufficient to paste
+    only a subset of the results into the pull request to show that the committed
+    changes do not cause unexpected performance regressions. You can run specific
+    benchmarks using the `-b` flag, which takes a regular expression. For example,
+    this will only run benchmarks from a `pandas/asv_bench/benchmarks/groupby.py`
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you want to only run a specific group of benchmarks from a file, you can
+    do it using `.` as a separator. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: will only run the `GroupByMethods` benchmark defined in `groupby.py`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can also run the benchmark suite using the version of `pandas` already
+    installed in your current Python environment. This can be useful if you do not
+    have virtualenv or conda, or are using the `setup.py develop` approach discussed
+    above; for the in-place build you need to set `PYTHONPATH`, e.g. `PYTHONPATH="$PWD/.."
+    asv [remaining arguments]`. You can run benchmarks using an existing Python environment
+    by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or, to use a specific Python interpreter,:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will display stderr from the benchmarks, and use your local `python` that
+    comes from your `$PATH`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Information on how to write a benchmark and how to use asv can be found in the
+    [asv documentation](https://asv.readthedocs.io/en/latest/writing_benchmarks.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Documenting your code](#id25)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Changes should be reflected in the release notes located in `doc/source/whatsnew/vx.y.z.rst`.
+    This file contains an ongoing change log for each release. Add an entry to this
+    file to document your fix, enhancement or (unavoidable) breaking change. Make
+    sure to include the GitHub issue number when adding your entry (using `:issue:`1234``
+    where `1234` is the issue/pull request number). Your entry should be written using
+    full sentences and proper grammar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When mentioning parts of the API, use a Sphinx `:func:`, `:meth:`, or `:class:`
+    directive as appropriate. Not all public API functions and methods have a documentation
+    page; ideally links would only be added if they resolve. You can usually find
+    similar examples by checking the release notes for one of the previous versions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If your code is a bugfix, add your entry to the relevant bugfix section. Avoid
+    adding to the `Other` section; only in rare cases should entries go there. Being
+    as concise as possible, the description of the bug should include how the user
+    may encounter it and an indication of the bug itself, e.g. “produces incorrect
+    results” or “incorrectly raises”. It may be necessary to also indicate the new
+    behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If your code is an enhancement, it is most likely necessary to add usage examples
+    to the existing documentation. This can be done following the section regarding
+    [documentation](contributing_documentation.html#contributing-documentation). Further,
+    to let users know when this feature was added, the `versionadded` directive is
+    used. The sphinx syntax for that is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will put the text *New in version 2.1.0* wherever you put the sphinx directive.
+    This should also be put in the docstring when adding a new function or method
+    ([example](https://github.com/pandas-dev/pandas/blob/v0.20.2/pandas/core/frame.py#L1495))
+    or a new keyword argument ([example](https://github.com/pandas-dev/pandas/blob/v0.20.2/pandas/core/generic.py#L568)).
+  prefs: []
+  type: TYPE_NORMAL

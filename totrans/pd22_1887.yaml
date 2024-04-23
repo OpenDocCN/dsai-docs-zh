@@ -1,0 +1,561 @@
+- en: Developer
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/development/developer.html](https://pandas.pydata.org/docs/development/developer.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This section will focus on downstream applications of pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Storing pandas DataFrame objects in Apache Parquet format'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [Apache Parquet](https://github.com/apache/parquet-format) format provides
+    key-value metadata at the file and column level, stored in the footer of the Parquet
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: where `KeyValue` is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So that a `pandas.DataFrame` can be faithfully reconstructed, we store a `pandas`
+    metadata key in the `FileMetaData` with the value stored as :'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The “descriptor” values `<descr0>` in the `'index_columns'` field are strings
+    (referring to a column) or dictionaries with values as described below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `<c0>`/`<ci0>` and so forth are dictionaries containing the metadata for
+    each column, *including the index columns*. This has JSON form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: See below for the detailed specification for these.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Index metadata descriptors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`RangeIndex` can be stored as metadata only, not requiring serialization. The
+    descriptor format for these as is follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other index types must be serialized as data columns along with the other DataFrame
+    columns. The metadata for these is a string indicating the name of the field in
+    the data columns, for example `'__index_level_0__'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If an index has a non-None `name` attribute, and there is no other column with
+    a name matching that value, then the `index.name` value can be used as the descriptor.
+    Otherwise (for unnamed indexes and ones with names colliding with other column
+    names) a disambiguating name with pattern matching `__index_level_\d+__` should
+    be used. In cases of named indexes as data columns, `name` attribute is always
+    stored in the column descriptors as above.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Column metadata
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`pandas_type` is the logical type of the column, and is one of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Boolean: `''bool''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Integers: `''int8'', ''int16'', ''int32'', ''int64'', ''uint8'', ''uint16'',
+    ''uint32'', ''uint64''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Floats: `''float16'', ''float32'', ''float64''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Date and Time Types: `''datetime'', ''datetimetz''`, `''timedelta''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'String: `''unicode'', ''bytes''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Categorical: `''categorical''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Other Python objects: `''object''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `numpy_type` is the physical storage type of the column, which is the result
+    of `str(dtype)` for the underlying NumPy array that holds the data. So for `datetimetz`
+    this is `datetime64[ns]` and for categorical, it may be any of the supported integer
+    categorical types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `metadata` field is `None` except for:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`datetimetz`: `{''timezone'': zone, ''unit'': ''ns''}`, e.g. `{''timezone'',
+    ''America/New_York'', ''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
+    it is assumed to be nanoseconds.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`categorical`: `{''num_categories'': K, ''ordered'': is_ordered, ''type'':
+    $TYPE}`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Here `'type'` is optional, and can be a nested pandas type specification here
+    (but not categorical)
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`unicode`: `{''encoding'': encoding}`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The encoding is optional, and if not present is UTF-8
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`object`: `{''encoding'': encoding}`. Objects can be serialized and stored
+    in `BYTE_ARRAY` Parquet columns. The encoding can be one of:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`''pickle''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''bson''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''json''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`timedelta`: `{''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
+    it is assumed to be nanoseconds. This metadata is optional altogether'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For types other than these, the `'metadata'` key can be omitted. Implementations
+    can assume `None` if the key is not present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example of fully-formed metadata:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]  ## Storing pandas DataFrame objects in Apache Parquet format'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [Apache Parquet](https://github.com/apache/parquet-format) format provides
+    key-value metadata at the file and column level, stored in the footer of the Parquet
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: where `KeyValue` is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So that a `pandas.DataFrame` can be faithfully reconstructed, we store a `pandas`
+    metadata key in the `FileMetaData` with the value stored as :'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The “descriptor” values `<descr0>` in the `'index_columns'` field are strings
+    (referring to a column) or dictionaries with values as described below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `<c0>`/`<ci0>` and so forth are dictionaries containing the metadata for
+    each column, *including the index columns*. This has JSON form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: See below for the detailed specification for these.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Index metadata descriptors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`RangeIndex` can be stored as metadata only, not requiring serialization. The
+    descriptor format for these as is follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other index types must be serialized as data columns along with the other DataFrame
+    columns. The metadata for these is a string indicating the name of the field in
+    the data columns, for example `'__index_level_0__'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If an index has a non-None `name` attribute, and there is no other column with
+    a name matching that value, then the `index.name` value can be used as the descriptor.
+    Otherwise (for unnamed indexes and ones with names colliding with other column
+    names) a disambiguating name with pattern matching `__index_level_\d+__` should
+    be used. In cases of named indexes as data columns, `name` attribute is always
+    stored in the column descriptors as above.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Column metadata
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`pandas_type` is the logical type of the column, and is one of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Boolean: `''bool''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Integers: `''int8'', ''int16'', ''int32'', ''int64'', ''uint8'', ''uint16'',
+    ''uint32'', ''uint64''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Floats: `''float16'', ''float32'', ''float64''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Date and Time Types: `''datetime'', ''datetimetz''`, `''timedelta''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'String: `''unicode'', ''bytes''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Categorical: `''categorical''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Other Python objects: `''object''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `numpy_type` is the physical storage type of the column, which is the result
+    of `str(dtype)` for the underlying NumPy array that holds the data. So for `datetimetz`
+    this is `datetime64[ns]` and for categorical, it may be any of the supported integer
+    categorical types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `metadata` field is `None` except for:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`datetimetz`: `{''timezone'': zone, ''unit'': ''ns''}`, e.g. `{''timezone'',
+    ''America/New_York'', ''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
+    it is assumed to be nanoseconds.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`categorical`: `{''num_categories'': K, ''ordered'': is_ordered, ''type'':
+    $TYPE}`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Here `'type'` is optional, and can be a nested pandas type specification here
+    (but not categorical)
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`unicode`: `{''encoding'': encoding}`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The encoding is optional, and if not present is UTF-8
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`object`: `{''encoding'': encoding}`. Objects can be serialized and stored
+    in `BYTE_ARRAY` Parquet columns. The encoding can be one of:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`''pickle''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''bson''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''json''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`timedelta`: `{''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
+    it is assumed to be nanoseconds. This metadata is optional altogether'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For types other than these, the `'metadata'` key can be omitted. Implementations
+    can assume `None` if the key is not present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example of fully-formed metadata:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Index metadata descriptors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`RangeIndex` can be stored as metadata only, not requiring serialization. The
+    descriptor format for these as is follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other index types must be serialized as data columns along with the other DataFrame
+    columns. The metadata for these is a string indicating the name of the field in
+    the data columns, for example `'__index_level_0__'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If an index has a non-None `name` attribute, and there is no other column with
+    a name matching that value, then the `index.name` value can be used as the descriptor.
+    Otherwise (for unnamed indexes and ones with names colliding with other column
+    names) a disambiguating name with pattern matching `__index_level_\d+__` should
+    be used. In cases of named indexes as data columns, `name` attribute is always
+    stored in the column descriptors as above.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Column metadata
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`pandas_type` is the logical type of the column, and is one of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Boolean: `''bool''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Integers: `''int8'', ''int16'', ''int32'', ''int64'', ''uint8'', ''uint16'',
+    ''uint32'', ''uint64''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Floats: `''float16'', ''float32'', ''float64''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Date and Time Types: `''datetime'', ''datetimetz''`, `''timedelta''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'String: `''unicode'', ''bytes''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Categorical: `''categorical''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Other Python objects: `''object''`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `numpy_type` is the physical storage type of the column, which is the result
+    of `str(dtype)` for the underlying NumPy array that holds the data. So for `datetimetz`
+    this is `datetime64[ns]` and for categorical, it may be any of the supported integer
+    categorical types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `metadata` field is `None` except for:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`datetimetz`: `{''timezone'': zone, ''unit'': ''ns''}`, e.g. `{''timezone'',
+    ''America/New_York'', ''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
+    it is assumed to be nanoseconds.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`categorical`: `{''num_categories'': K, ''ordered'': is_ordered, ''type'':
+    $TYPE}`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Here `'type'` is optional, and can be a nested pandas type specification here
+    (but not categorical)
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`unicode`: `{''encoding'': encoding}`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The encoding is optional, and if not present is UTF-8
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`object`: `{''encoding'': encoding}`. Objects can be serialized and stored
+    in `BYTE_ARRAY` Parquet columns. The encoding can be one of:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`''pickle''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''bson''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''json''`'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`timedelta`: `{''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
+    it is assumed to be nanoseconds. This metadata is optional altogether'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For types other than these, the `'metadata'` key can be omitted. Implementations
+    can assume `None` if the key is not present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example of fully-formed metadata:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE

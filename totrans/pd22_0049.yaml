@@ -1,0 +1,983 @@
+- en: Frequently Asked Questions (FAQ)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/gotchas.html](https://pandas.pydata.org/docs/user_guide/gotchas.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## DataFrame memory usage'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The memory usage of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") (including the index) is shown when calling the [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info"). A configuration option, `display.memory_usage` (see
+    [the list of options](options.html#options-available)), specifies if the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") memory usage will be displayed when invoking the [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info") method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, the memory usage of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") below is shown when calling [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `+` symbol indicates that the true memory usage could be higher, because
+    pandas does not count the memory used by values in columns with `dtype=object`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passing `memory_usage='deep'` will enable a more accurate memory usage report,
+    accounting for the full usage of the contained objects. This is optional as it
+    can be expensive to do this deeper introspection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default the display option is set to `True` but can be explicitly overridden
+    by passing the `memory_usage` argument when invoking [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The memory usage of each column can be found by calling the [`memory_usage()`](../reference/api/pandas.DataFrame.memory_usage.html#pandas.DataFrame.memory_usage
+    "pandas.DataFrame.memory_usage") method. This returns a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with an index represented by column names and memory usage of
+    each column shown in bytes. For the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") above, the memory usage of each column and the total memory
+    usage can be found with the [`memory_usage()`](../reference/api/pandas.DataFrame.memory_usage.html#pandas.DataFrame.memory_usage
+    "pandas.DataFrame.memory_usage") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default the memory usage of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") index is shown in the returned [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"), the memory usage of the index can be suppressed by passing the
+    `index=False` argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The memory usage displayed by the [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info") method utilizes the [`memory_usage()`](../reference/api/pandas.DataFrame.memory_usage.html#pandas.DataFrame.memory_usage
+    "pandas.DataFrame.memory_usage") method to determine the memory usage of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") while also formatting the output in human-readable units (base-2
+    representation; i.e. 1KB = 1024 bytes).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'See also [Categorical Memory Usage](categorical.html#categorical-memory).  ##
+    Using if/truth statements with pandas'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'pandas follows the NumPy convention of raising an error when you try to convert
+    something to a `bool`. This happens in an `if`-statement or when using the boolean
+    operations: `and`, `or`, and `not`. It is not clear what the result of the following
+    code should be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Should it be `True` because it’s not zero-length, or `False` because there
+    are `False` values? It is unclear, so instead, pandas raises a `ValueError`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You need to explicitly choose what you want to do with the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"), e.g. use [`any()`](../reference/api/pandas.DataFrame.any.html#pandas.DataFrame.any
+    "pandas.DataFrame.any"), [`all()`](../reference/api/pandas.DataFrame.all.html#pandas.DataFrame.all
+    "pandas.DataFrame.all") or [`empty()`](../reference/api/pandas.DataFrame.empty.html#pandas.DataFrame.empty
+    "pandas.DataFrame.empty"). Alternatively, you might want to compare if the pandas
+    object is `None`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Below is how to check if any of the values are `True`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Bitwise boolean
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Bitwise boolean operators like `==` and `!=` return a boolean [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") which performs an element-wise comparison when compared to a
+    scalar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [boolean comparisons](basics.html#basics-compare) for more examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the `in` operator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Using the Python `in` operator on a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") tests for membership in the **index**, not membership among the
+    values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If this behavior is surprising, keep in mind that using `in` on a Python dictionary
+    tests keys, not values, and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") are dict-like. To test for membership in the values, use the
+    method [`isin()`](../reference/api/pandas.Series.isin.html#pandas.Series.isin
+    "pandas.Series.isin"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame"),
+    likewise, `in` applies to the column axis, testing for membership in the list
+    of column names.  ## Mutating with User Defined Function (UDF) methods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This section applies to pandas methods that take a UDF. In particular, the methods
+    [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply"), [`DataFrame.aggregate()`](../reference/api/pandas.DataFrame.aggregate.html#pandas.DataFrame.aggregate
+    "pandas.DataFrame.aggregate"), [`DataFrame.transform()`](../reference/api/pandas.DataFrame.transform.html#pandas.DataFrame.transform
+    "pandas.DataFrame.transform"), and [`DataFrame.filter()`](../reference/api/pandas.DataFrame.filter.html#pandas.DataFrame.filter
+    "pandas.DataFrame.filter").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is a general rule in programming that one should not mutate a container
+    while it is being iterated over. Mutation will invalidate the iterator, causing
+    unexpected behavior. Consider the example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: One probably would have expected that the result would be `[1, 3, 5]`. When
+    using a pandas method that takes a UDF, internally pandas is often iterating over
+    the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    or other pandas object. Therefore, if the UDF mutates (changes) the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"), unexpected behavior can arise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is a similar example with [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: To resolve this issue, one can make a copy so that the mutation does not apply
+    to the container being iterated over.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Missing value representation for NumPy types
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`np.nan` as the `NA` representation for NumPy types'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For lack of `NA` (missing) support from the ground up in NumPy and Python in
+    general, `NA` could have been represented with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A *masked array* solution: an array of data and an array of boolean values
+    indicating whether a value is there or is missing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Using a special sentinel value, bit pattern, or set of sentinel values to denote
+    `NA` across the dtypes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The special value `np.nan` (Not-A-Number) was chosen as the `NA` value for NumPy
+    types, and there are API functions like [`DataFrame.isna()`](../reference/api/pandas.DataFrame.isna.html#pandas.DataFrame.isna
+    "pandas.DataFrame.isna") and [`DataFrame.notna()`](../reference/api/pandas.DataFrame.notna.html#pandas.DataFrame.notna
+    "pandas.DataFrame.notna") which can be used across the dtypes to detect NA values.
+    However, this choice has a downside of coercing missing integer data as float
+    types as shown in [Support for integer NA](#gotchas-intna).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`NA` type promotions for NumPy types'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When introducing NAs into an existing [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") via [`reindex()`](../reference/api/pandas.Series.reindex.html#pandas.Series.reindex
+    "pandas.Series.reindex") or some other means, boolean and integer types will be
+    promoted to a different dtype in order to store the NAs. The promotions are summarized
+    in this table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Typeclass | Promotion dtype for storing NAs |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `floating` | no change |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `object` | no change |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `integer` | cast to `float64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `boolean` | cast to `object` |'
+  prefs: []
+  type: TYPE_TB
+- en: '### Support for integer `NA`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the absence of high performance `NA` support being built into NumPy from
+    the ground up, the primary casualty is the ability to represent NAs in integer
+    arrays. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: This trade-off is made largely for memory and performance reasons, and also
+    so that the resulting [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") continues to be “numeric”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you need to represent integers with possibly missing values, use one of the
+    nullable-integer extension dtypes provided by pandas or pyarrow
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Int8Dtype`](../reference/api/pandas.Int8Dtype.html#pandas.Int8Dtype "pandas.Int8Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int16Dtype`](../reference/api/pandas.Int16Dtype.html#pandas.Int16Dtype "pandas.Int16Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int32Dtype`](../reference/api/pandas.Int32Dtype.html#pandas.Int32Dtype "pandas.Int32Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype "pandas.Int64Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype "pandas.ArrowDtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [Nullable integer data type](integer_na.html#integer-na) and [PyArrow Functionality](pyarrow.html#pyarrow)
+    for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why not make NumPy like R?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Many people have suggested that NumPy should simply emulate the `NA` support
+    present in the more domain-specific statistical programming language [R](https://www.r-project.org/).
+    Part of the reason is the NumPy type hierarchy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Typeclass | Dtypes |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.floating` | `float16, float32, float64, float128` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.integer` | `int8, int16, int32, int64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.unsignedinteger` | `uint8, uint16, uint32, uint64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.object_` | `object_` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.bool_` | `bool_` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.character` | `bytes_, str_` |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The R language, by contrast, only has a handful of built-in data types: `integer`,
+    `numeric` (floating-point), `character`, and `boolean`. `NA` types are implemented
+    by reserving special bit patterns for each type to be used as the missing value.
+    While doing this with the full NumPy type hierarchy would be possible, it would
+    be a more substantial trade-off (especially for the 8- and 16-bit data types)
+    and implementation undertaking.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, R `NA` semantics are now available by using masked NumPy types such
+    as [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype "pandas.Int64Dtype")
+    or PyArrow types ([`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Differences with NumPy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    objects, [`var()`](../reference/api/pandas.DataFrame.var.html#pandas.DataFrame.var
+    "pandas.DataFrame.var") normalizes by `N-1` to produce [unbiased estimates of
+    the population variance](https://en.wikipedia.org/wiki/Bias_of_an_estimator),
+    while NumPy’s `numpy.var()` normalizes by N, which measures the variance of the
+    sample. Note that [`cov()`](../reference/api/pandas.DataFrame.cov.html#pandas.DataFrame.cov
+    "pandas.DataFrame.cov") normalizes by `N-1` in both pandas and NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Thread-safety'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas is not 100% thread safe. The known issues relate to the [`copy()`](../reference/api/pandas.DataFrame.copy.html#pandas.DataFrame.copy
+    "pandas.DataFrame.copy") method. If you are doing a lot of copying of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") objects shared among threads, we recommend holding locks inside
+    the threads where the data copying occurs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [this link](https://stackoverflow.com/questions/13592618/python-pandas-dataframe-thread-safe)
+    for more information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Byte-ordering issues
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Occasionally you may have to deal with data that were created on a machine
+    with a different byte order than the one on which you are running Python. A common
+    symptom of this issue is an error like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To deal with this issue you should convert the underlying NumPy array to the
+    native system byte order *before* passing it to [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") constructors using something similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [the NumPy documentation on byte order](https://numpy.org/doc/stable/user/basics.byteswapping.html)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## DataFrame memory usage'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The memory usage of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") (including the index) is shown when calling the [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info"). A configuration option, `display.memory_usage` (see
+    [the list of options](options.html#options-available)), specifies if the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") memory usage will be displayed when invoking the [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info") method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, the memory usage of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") below is shown when calling [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `+` symbol indicates that the true memory usage could be higher, because
+    pandas does not count the memory used by values in columns with `dtype=object`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passing `memory_usage='deep'` will enable a more accurate memory usage report,
+    accounting for the full usage of the contained objects. This is optional as it
+    can be expensive to do this deeper introspection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default the display option is set to `True` but can be explicitly overridden
+    by passing the `memory_usage` argument when invoking [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The memory usage of each column can be found by calling the [`memory_usage()`](../reference/api/pandas.DataFrame.memory_usage.html#pandas.DataFrame.memory_usage
+    "pandas.DataFrame.memory_usage") method. This returns a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with an index represented by column names and memory usage of
+    each column shown in bytes. For the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") above, the memory usage of each column and the total memory
+    usage can be found with the [`memory_usage()`](../reference/api/pandas.DataFrame.memory_usage.html#pandas.DataFrame.memory_usage
+    "pandas.DataFrame.memory_usage") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default the memory usage of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") index is shown in the returned [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"), the memory usage of the index can be suppressed by passing the
+    `index=False` argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: The memory usage displayed by the [`info()`](../reference/api/pandas.DataFrame.info.html#pandas.DataFrame.info
+    "pandas.DataFrame.info") method utilizes the [`memory_usage()`](../reference/api/pandas.DataFrame.memory_usage.html#pandas.DataFrame.memory_usage
+    "pandas.DataFrame.memory_usage") method to determine the memory usage of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") while also formatting the output in human-readable units (base-2
+    representation; i.e. 1KB = 1024 bytes).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also [Categorical Memory Usage](categorical.html#categorical-memory).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Using if/truth statements with pandas'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'pandas follows the NumPy convention of raising an error when you try to convert
+    something to a `bool`. This happens in an `if`-statement or when using the boolean
+    operations: `and`, `or`, and `not`. It is not clear what the result of the following
+    code should be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Should it be `True` because it’s not zero-length, or `False` because there
+    are `False` values? It is unclear, so instead, pandas raises a `ValueError`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You need to explicitly choose what you want to do with the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"), e.g. use [`any()`](../reference/api/pandas.DataFrame.any.html#pandas.DataFrame.any
+    "pandas.DataFrame.any"), [`all()`](../reference/api/pandas.DataFrame.all.html#pandas.DataFrame.all
+    "pandas.DataFrame.all") or [`empty()`](../reference/api/pandas.DataFrame.empty.html#pandas.DataFrame.empty
+    "pandas.DataFrame.empty"). Alternatively, you might want to compare if the pandas
+    object is `None`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Below is how to check if any of the values are `True`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Bitwise boolean
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Bitwise boolean operators like `==` and `!=` return a boolean [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") which performs an element-wise comparison when compared to a
+    scalar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [boolean comparisons](basics.html#basics-compare) for more examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the `in` operator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Using the Python `in` operator on a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") tests for membership in the **index**, not membership among the
+    values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If this behavior is surprising, keep in mind that using `in` on a Python dictionary
+    tests keys, not values, and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") are dict-like. To test for membership in the values, use the
+    method [`isin()`](../reference/api/pandas.Series.isin.html#pandas.Series.isin
+    "pandas.Series.isin"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: For [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame"),
+    likewise, `in` applies to the column axis, testing for membership in the list
+    of column names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bitwise boolean
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Bitwise boolean operators like `==` and `!=` return a boolean [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") which performs an element-wise comparison when compared to a
+    scalar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [boolean comparisons](basics.html#basics-compare) for more examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the `in` operator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Using the Python `in` operator on a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") tests for membership in the **index**, not membership among the
+    values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If this behavior is surprising, keep in mind that using `in` on a Python dictionary
+    tests keys, not values, and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") are dict-like. To test for membership in the values, use the
+    method [`isin()`](../reference/api/pandas.Series.isin.html#pandas.Series.isin
+    "pandas.Series.isin"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: For [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame"),
+    likewise, `in` applies to the column axis, testing for membership in the list
+    of column names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Mutating with User Defined Function (UDF) methods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This section applies to pandas methods that take a UDF. In particular, the methods
+    [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply"), [`DataFrame.aggregate()`](../reference/api/pandas.DataFrame.aggregate.html#pandas.DataFrame.aggregate
+    "pandas.DataFrame.aggregate"), [`DataFrame.transform()`](../reference/api/pandas.DataFrame.transform.html#pandas.DataFrame.transform
+    "pandas.DataFrame.transform"), and [`DataFrame.filter()`](../reference/api/pandas.DataFrame.filter.html#pandas.DataFrame.filter
+    "pandas.DataFrame.filter").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is a general rule in programming that one should not mutate a container
+    while it is being iterated over. Mutation will invalidate the iterator, causing
+    unexpected behavior. Consider the example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: One probably would have expected that the result would be `[1, 3, 5]`. When
+    using a pandas method that takes a UDF, internally pandas is often iterating over
+    the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    or other pandas object. Therefore, if the UDF mutates (changes) the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"), unexpected behavior can arise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is a similar example with [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: To resolve this issue, one can make a copy so that the mutation does not apply
+    to the container being iterated over.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Missing value representation for NumPy types
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`np.nan` as the `NA` representation for NumPy types'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For lack of `NA` (missing) support from the ground up in NumPy and Python in
+    general, `NA` could have been represented with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A *masked array* solution: an array of data and an array of boolean values
+    indicating whether a value is there or is missing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Using a special sentinel value, bit pattern, or set of sentinel values to denote
+    `NA` across the dtypes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The special value `np.nan` (Not-A-Number) was chosen as the `NA` value for NumPy
+    types, and there are API functions like [`DataFrame.isna()`](../reference/api/pandas.DataFrame.isna.html#pandas.DataFrame.isna
+    "pandas.DataFrame.isna") and [`DataFrame.notna()`](../reference/api/pandas.DataFrame.notna.html#pandas.DataFrame.notna
+    "pandas.DataFrame.notna") which can be used across the dtypes to detect NA values.
+    However, this choice has a downside of coercing missing integer data as float
+    types as shown in [Support for integer NA](#gotchas-intna).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`NA` type promotions for NumPy types'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When introducing NAs into an existing [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") via [`reindex()`](../reference/api/pandas.Series.reindex.html#pandas.Series.reindex
+    "pandas.Series.reindex") or some other means, boolean and integer types will be
+    promoted to a different dtype in order to store the NAs. The promotions are summarized
+    in this table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Typeclass | Promotion dtype for storing NAs |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `floating` | no change |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `object` | no change |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `integer` | cast to `float64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `boolean` | cast to `object` |'
+  prefs: []
+  type: TYPE_TB
+- en: '### Support for integer `NA`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the absence of high performance `NA` support being built into NumPy from
+    the ground up, the primary casualty is the ability to represent NAs in integer
+    arrays. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: This trade-off is made largely for memory and performance reasons, and also
+    so that the resulting [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") continues to be “numeric”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you need to represent integers with possibly missing values, use one of the
+    nullable-integer extension dtypes provided by pandas or pyarrow
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Int8Dtype`](../reference/api/pandas.Int8Dtype.html#pandas.Int8Dtype "pandas.Int8Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int16Dtype`](../reference/api/pandas.Int16Dtype.html#pandas.Int16Dtype "pandas.Int16Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int32Dtype`](../reference/api/pandas.Int32Dtype.html#pandas.Int32Dtype "pandas.Int32Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype "pandas.Int64Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype "pandas.ArrowDtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [Nullable integer data type](integer_na.html#integer-na) and [PyArrow Functionality](pyarrow.html#pyarrow)
+    for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why not make NumPy like R?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Many people have suggested that NumPy should simply emulate the `NA` support
+    present in the more domain-specific statistical programming language [R](https://www.r-project.org/).
+    Part of the reason is the NumPy type hierarchy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Typeclass | Dtypes |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.floating` | `float16, float32, float64, float128` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.integer` | `int8, int16, int32, int64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.unsignedinteger` | `uint8, uint16, uint32, uint64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.object_` | `object_` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.bool_` | `bool_` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.character` | `bytes_, str_` |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The R language, by contrast, only has a handful of built-in data types: `integer`,
+    `numeric` (floating-point), `character`, and `boolean`. `NA` types are implemented
+    by reserving special bit patterns for each type to be used as the missing value.
+    While doing this with the full NumPy type hierarchy would be possible, it would
+    be a more substantial trade-off (especially for the 8- and 16-bit data types)
+    and implementation undertaking.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, R `NA` semantics are now available by using masked NumPy types such
+    as [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype "pandas.Int64Dtype")
+    or PyArrow types ([`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`np.nan` as the `NA` representation for NumPy types'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For lack of `NA` (missing) support from the ground up in NumPy and Python in
+    general, `NA` could have been represented with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A *masked array* solution: an array of data and an array of boolean values
+    indicating whether a value is there or is missing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Using a special sentinel value, bit pattern, or set of sentinel values to denote
+    `NA` across the dtypes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The special value `np.nan` (Not-A-Number) was chosen as the `NA` value for NumPy
+    types, and there are API functions like [`DataFrame.isna()`](../reference/api/pandas.DataFrame.isna.html#pandas.DataFrame.isna
+    "pandas.DataFrame.isna") and [`DataFrame.notna()`](../reference/api/pandas.DataFrame.notna.html#pandas.DataFrame.notna
+    "pandas.DataFrame.notna") which can be used across the dtypes to detect NA values.
+    However, this choice has a downside of coercing missing integer data as float
+    types as shown in [Support for integer NA](#gotchas-intna).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`NA` type promotions for NumPy types'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When introducing NAs into an existing [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") via [`reindex()`](../reference/api/pandas.Series.reindex.html#pandas.Series.reindex
+    "pandas.Series.reindex") or some other means, boolean and integer types will be
+    promoted to a different dtype in order to store the NAs. The promotions are summarized
+    in this table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Typeclass | Promotion dtype for storing NAs |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `floating` | no change |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `object` | no change |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `integer` | cast to `float64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `boolean` | cast to `object` |'
+  prefs: []
+  type: TYPE_TB
+- en: '### Support for integer `NA`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the absence of high performance `NA` support being built into NumPy from
+    the ground up, the primary casualty is the ability to represent NAs in integer
+    arrays. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: This trade-off is made largely for memory and performance reasons, and also
+    so that the resulting [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") continues to be “numeric”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you need to represent integers with possibly missing values, use one of the
+    nullable-integer extension dtypes provided by pandas or pyarrow
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Int8Dtype`](../reference/api/pandas.Int8Dtype.html#pandas.Int8Dtype "pandas.Int8Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int16Dtype`](../reference/api/pandas.Int16Dtype.html#pandas.Int16Dtype "pandas.Int16Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int32Dtype`](../reference/api/pandas.Int32Dtype.html#pandas.Int32Dtype "pandas.Int32Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype "pandas.Int64Dtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype "pandas.ArrowDtype")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [Nullable integer data type](integer_na.html#integer-na) and [PyArrow Functionality](pyarrow.html#pyarrow)
+    for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why not make NumPy like R?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Many people have suggested that NumPy should simply emulate the `NA` support
+    present in the more domain-specific statistical programming language [R](https://www.r-project.org/).
+    Part of the reason is the NumPy type hierarchy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Typeclass | Dtypes |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.floating` | `float16, float32, float64, float128` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.integer` | `int8, int16, int32, int64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.unsignedinteger` | `uint8, uint16, uint32, uint64` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.object_` | `object_` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.bool_` | `bool_` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `numpy.character` | `bytes_, str_` |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The R language, by contrast, only has a handful of built-in data types: `integer`,
+    `numeric` (floating-point), `character`, and `boolean`. `NA` types are implemented
+    by reserving special bit patterns for each type to be used as the missing value.
+    While doing this with the full NumPy type hierarchy would be possible, it would
+    be a more substantial trade-off (especially for the 8- and 16-bit data types)
+    and implementation undertaking.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, R `NA` semantics are now available by using masked NumPy types such
+    as [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype "pandas.Int64Dtype")
+    or PyArrow types ([`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Differences with NumPy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    objects, [`var()`](../reference/api/pandas.DataFrame.var.html#pandas.DataFrame.var
+    "pandas.DataFrame.var") normalizes by `N-1` to produce [unbiased estimates of
+    the population variance](https://en.wikipedia.org/wiki/Bias_of_an_estimator),
+    while NumPy’s `numpy.var()` normalizes by N, which measures the variance of the
+    sample. Note that [`cov()`](../reference/api/pandas.DataFrame.cov.html#pandas.DataFrame.cov
+    "pandas.DataFrame.cov") normalizes by `N-1` in both pandas and NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Thread-safety'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas is not 100% thread safe. The known issues relate to the [`copy()`](../reference/api/pandas.DataFrame.copy.html#pandas.DataFrame.copy
+    "pandas.DataFrame.copy") method. If you are doing a lot of copying of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") objects shared among threads, we recommend holding locks inside
+    the threads where the data copying occurs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [this link](https://stackoverflow.com/questions/13592618/python-pandas-dataframe-thread-safe)
+    for more information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Byte-ordering issues
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Occasionally you may have to deal with data that were created on a machine
+    with a different byte order than the one on which you are running Python. A common
+    symptom of this issue is an error like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To deal with this issue you should convert the underlying NumPy array to the
+    native system byte order *before* passing it to [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") constructors using something similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [the NumPy documentation on byte order](https://numpy.org/doc/stable/user/basics.byteswapping.html)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,994 @@
+- en: Version 0.8.0 (June 29, 2012)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/whatsnew/v0.8.0.html](https://pandas.pydata.org/docs/whatsnew/v0.8.0.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This is a major release from 0.7.3 and includes extensive work on the time series
+    handling and processing infrastructure as well as a great deal of new functionality
+    throughout the library. It includes over 700 commits from more than 20 distinct
+    authors. Most pandas 0.7.3 and earlier users should not experience any issues
+    upgrading, but due to the migration to the NumPy datetime64 dtype, there may be
+    a number of bugs and incompatibilities lurking. Lingering incompatibilities will
+    be fixed ASAP in a 0.8.1 release if necessary. See the [full release notes](index.html#release)
+    or issue tracker on GitHub for a complete list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support for non-unique indexes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: All objects can now work with non-unique indexes. Data alignment / join operations
+    work according to SQL join semantics (including, if application, index duplication
+    in many-to-many joins)
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy datetime64 dtype and 1.6 dependency
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Time series data are now represented using NumPy’s datetime64 dtype; thus, pandas
+    0.8.0 now requires at least NumPy 1.6\. It has been tested and verified to work
+    with the development version (1.7+) of NumPy as well which includes some significant
+    user-facing API changes. NumPy 1.6 also has a number of bugs having to do with
+    nanosecond resolution data, so I recommend that you steer clear of NumPy 1.6’s
+    datetime64 API functions (though limited as they are) and only interact with this
+    data using the interface that pandas provides.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the end of the 0.8.0 section for a “porting” guide listing potential issues
+    for users migrating legacy code bases from pandas 0.7 or earlier to 0.8.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bug fixes to the 0.7.x series for legacy NumPy < 1.6 users will be provided
+    as they arise. There will be no more further development in 0.7.x beyond bug fixes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Time Series changes and improvements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: With this release, legacy scikits.timeseries users should be able to port their
+    code to use pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [documentation](../user_guide/timeseries.html#timeseries) for overview of
+    pandas timeseries API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New datetime64 representation **speeds up join operations and data alignment**,
+    **reduces memory usage**, and improve serialization / deserialization performance
+    significantly over datetime.datetime
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: High performance and flexible **resample** method for converting from high-to-low
+    and low-to-high frequency. Supports interpolation, user-defined aggregation functions,
+    and control over how the intervals and result labeling are defined. A suite of
+    high performance Cython/C-based resampling functions (including Open-High-Low-Close)
+    have also been implemented.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Revamp of [frequency aliases](../user_guide/timeseries.html#timeseries-offset-aliases)
+    and support for **frequency shortcuts** like ‘15min’, or ‘1h30min’
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New [DatetimeIndex class](../user_guide/timeseries.html#timeseries-datetimeindex)
+    supports both fixed frequency and irregular time series. Replaces now deprecated
+    DateRange class
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New `PeriodIndex` and `Period` classes for representing [time spans](../user_guide/timeseries.html#timeseries-periods)
+    and performing **calendar logic**, including the `12 fiscal quarterly frequencies
+    <timeseries.quarterly>`. This is a partial port of, and a substantial enhancement
+    to, elements of the scikits.timeseries code base. Support for conversion between
+    PeriodIndex and DatetimeIndex
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New Timestamp data type subclasses `datetime.datetime`, providing the same interface
+    while enabling working with nanosecond-resolution data. Also provides [easy time
+    zone conversions](../user_guide/timeseries.html#timeseries-timezone).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enhanced support for [time zones](../user_guide/timeseries.html#timeseries-timezone).
+    Add `tz_convert` and `tz_localize` methods to TimeSeries and DataFrame. All timestamps
+    are stored as UTC; Timestamps from DatetimeIndex objects with time zone set will
+    be localized to local time. Time zone conversions are therefore essentially free.
+    User needs to know very little about pytz library now; only time zone names as
+    strings are required. Time zone-aware timestamps are equal if and only if their
+    UTC timestamps match. Operations between time zone-aware time series with different
+    time zones will result in a UTC-indexed time series.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Time series **string indexing conveniences** / shortcuts: slice years, year
+    and month, and index values with strings'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enhanced time series **plotting**; adaptation of scikits.timeseries matplotlib-based
+    plotting code
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New `date_range`, `bdate_range`, and `period_range` [factory functions](../user_guide/timeseries.html#timeseries-daterange)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robust **frequency inference** function `infer_freq` and `inferred_freq` property
+    of DatetimeIndex, with option to infer frequency on construction of DatetimeIndex
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: to_datetime function efficiently **parses array of strings** to DatetimeIndex.
+    DatetimeIndex will parse array or list of strings to datetime64
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Optimized** support for datetime64-dtype data in Series and DataFrame columns'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New NaT (Not-a-Time) type to represent **NA** in timestamp arrays
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Optimize Series.asof for looking up **“as of” values** for arrays of timestamps
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Milli, Micro, Nano date offset objects
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Can index time series with datetime.time objects to select all data at particular
+    **time of day** (`TimeSeries.at_time`) or **between two times** (`TimeSeries.between_time`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [tshift](../user_guide/timeseries.html#timeseries-advanced-datetime) method
+    for leading/lagging using the frequency (if any) of the index, as opposed to a
+    naive lead/lag using shift
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Other new features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: New [cut](../user_guide/reshaping.html#reshaping-tile-cut) and `qcut` functions
+    (like R’s cut function) for computing a categorical variable from a continuous
+    variable by binning values either into value-based (`cut`) or quantile-based (`qcut`)
+    bins
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rename `Factor` to `Categorical` and add a number of usability features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [limit](../user_guide/missing_data.html#missing-data-fillna-limit) argument
+    to fillna/reindex
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: More flexible multiple function application in GroupBy, and can pass list (name,
+    function) tuples to get result in particular order with given names
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add flexible [replace](../user_guide/missing_data.html#missing-data-replace)
+    method for efficiently substituting values
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enhanced [read_csv/read_table](../user_guide/io.html#io-parse-dates) for reading
+    time series data and converting multiple columns to dates
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Add [comments](../user_guide/io.html#io-comments) option to parser functions:
+    read_csv, etc.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [dayfirst](../user_guide/io.html#io-dayfirst) option to parser functions
+    for parsing international DD/MM/YYYY dates
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Allow the user to specify the CSV reader [dialect](../user_guide/io.html#io-dialect)
+    to control quoting etc.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Handling [thousands](../user_guide/io.html#io-thousands) separators in read_csv
+    to improve integer parsing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enable unstacking of multiple levels in one shot. Alleviate `pivot_table` bugs
+    (empty columns being introduced)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Move to klib-based hash tables for indexing; better performance and less memory
+    usage than Python’s dict
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add first, last, min, max, and prod optimized GroupBy functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New [ordered_merge](../user_guide/merging.html#merging-merge-ordered) function
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add flexible [comparison](../user_guide/basics.html#basics-binop) instance methods
+    eq, ne, lt, gt, etc. to DataFrame, Series
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improve [scatter_matrix](../user_guide/visualization.html#visualization-scatter-matrix)
+    plotting function and add histogram or kernel density estimates to diagonal
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [‘kde’](../user_guide/visualization.html#visualization-kde) plot option
+    for density plots
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for converting DataFrame to R data.frame through rpy2
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improved support for complex numbers in Series and DataFrame
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add `pct_change` method to all data structures
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add max_colwidth configuration option for DataFrame console output
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Interpolate](../user_guide/missing_data.html#missing-data-interpolate) Series
+    values using index values'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Can select multiple columns from GroupBy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [update](../user_guide/merging.html#merging-combine-first-update) methods
+    to Series/DataFrame for updating values in place
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add `any` and `all` method to DataFrame
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New plotting methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Series.plot` now supports a `secondary_y` option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Vytautas Jancauskas, the 2012 GSOC participant, has added many new plot types.
+    For example, `''kde''` is a new option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [the plotting page](../user_guide/visualization.html#visualization-other)
+    for much more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other API changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Deprecation of `offset`, `time_rule`, and `timeRule` arguments names in time
+    series functions. Warnings will be printed until pandas 0.9 or 1.0.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Potential porting issues for pandas <= 0.7.3 users
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The major change that may affect you in pandas 0.8.0 is that time series indexes
+    use NumPy’s `datetime64` data type instead of `dtype=object` arrays of Python’s
+    built-in `datetime.datetime` objects. `DateRange` has been replaced by `DatetimeIndex`
+    but otherwise behaved identically. But, if you have code that converts `DateRange`
+    or `Index` objects that used to contain `datetime.datetime` values to plain NumPy
+    arrays, you may have bugs lurking with code using scalar values because you are
+    handing control over to NumPy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas’s `Timestamp` object is a subclass of `datetime.datetime` that has nanosecond
+    support (the `nanosecond` field store the nanosecond value between 0 and 999).
+    It should substitute directly into any code that used `datetime.datetime` values
+    before. Thus, I recommend not casting `DatetimeIndex` to regular NumPy arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you have code that requires an array of `datetime.datetime` objects, you
+    have a couple of options. First, the `astype(object)` method of `DatetimeIndex`
+    produces an array of `Timestamp` objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To get an array of proper `datetime.datetime` objects, use the `to_pydatetime`
+    method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: matplotlib knows how to handle `datetime.datetime` but not Timestamp objects.
+    While I recommend that you plot time series using `TimeSeries.plot`, you can either
+    use `to_pydatetime` or register a converter for the Timestamp type. See [matplotlib
+    documentation](http://matplotlib.org/api/units_api.html) for more on this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are bugs in the user-facing API with the nanosecond datetime64 unit in
+    NumPy 1.6\. In particular, the string version of the array shows garbage values,
+    and conversion to `dtype=object` is similarly broken.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Trust me: don’t panic**. If you are using NumPy 1.6 and restrict your interaction
+    with `datetime64` values to pandas’s API you will be just fine. There is nothing
+    wrong with the data-type (a 64-bit integer internally); all of the important data
+    processing happens in pandas and is heavily tested. I strongly recommend that
+    you **do not work directly with datetime64 arrays in NumPy 1.6** and only use
+    the pandas API.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Support for non-unique indexes**: In the latter case, you may have code inside
+    a `try:... catch:` block that failed due to the index not being unique. In many
+    cases it will no longer fail (some method like `append` still check for uniqueness
+    unless disabled). However, all is not lost: you can inspect `index.is_unique`
+    and raise an exception explicitly if it is `False` or go to a different code branch.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Contributors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of 27 people contributed patches to this release. People with a “+”
+    by their names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adam Klein
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chang She
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Zaslavsky +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Chlebek +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jacques Kvam
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kamil Kisiel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kelsey Jordahl +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kieran O’Mahony +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lorenzo Bolla +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Luca Beltrame
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marc Abramowitz +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mark Wiebe +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Paddy Mullen +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Peng Yu +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Roy Hyunjin Han +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: RuiDC +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Senthil Palanisami +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Skipper Seabold
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stefan van der Walt +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Takafumi Arakaki +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Thomas Kluyver
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vytautas Jancauskas +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wes McKinney
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wouter Overmeire
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yaroslav Halchenko
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: thuske +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: timmie +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for non-unique indexes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: All objects can now work with non-unique indexes. Data alignment / join operations
+    work according to SQL join semantics (including, if application, index duplication
+    in many-to-many joins)
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy datetime64 dtype and 1.6 dependency
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Time series data are now represented using NumPy’s datetime64 dtype; thus, pandas
+    0.8.0 now requires at least NumPy 1.6\. It has been tested and verified to work
+    with the development version (1.7+) of NumPy as well which includes some significant
+    user-facing API changes. NumPy 1.6 also has a number of bugs having to do with
+    nanosecond resolution data, so I recommend that you steer clear of NumPy 1.6’s
+    datetime64 API functions (though limited as they are) and only interact with this
+    data using the interface that pandas provides.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the end of the 0.8.0 section for a “porting” guide listing potential issues
+    for users migrating legacy code bases from pandas 0.7 or earlier to 0.8.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bug fixes to the 0.7.x series for legacy NumPy < 1.6 users will be provided
+    as they arise. There will be no more further development in 0.7.x beyond bug fixes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Time Series changes and improvements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: With this release, legacy scikits.timeseries users should be able to port their
+    code to use pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [documentation](../user_guide/timeseries.html#timeseries) for overview of
+    pandas timeseries API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New datetime64 representation **speeds up join operations and data alignment**,
+    **reduces memory usage**, and improve serialization / deserialization performance
+    significantly over datetime.datetime
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: High performance and flexible **resample** method for converting from high-to-low
+    and low-to-high frequency. Supports interpolation, user-defined aggregation functions,
+    and control over how the intervals and result labeling are defined. A suite of
+    high performance Cython/C-based resampling functions (including Open-High-Low-Close)
+    have also been implemented.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Revamp of [frequency aliases](../user_guide/timeseries.html#timeseries-offset-aliases)
+    and support for **frequency shortcuts** like ‘15min’, or ‘1h30min’
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New [DatetimeIndex class](../user_guide/timeseries.html#timeseries-datetimeindex)
+    supports both fixed frequency and irregular time series. Replaces now deprecated
+    DateRange class
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New `PeriodIndex` and `Period` classes for representing [time spans](../user_guide/timeseries.html#timeseries-periods)
+    and performing **calendar logic**, including the `12 fiscal quarterly frequencies
+    <timeseries.quarterly>`. This is a partial port of, and a substantial enhancement
+    to, elements of the scikits.timeseries code base. Support for conversion between
+    PeriodIndex and DatetimeIndex
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New Timestamp data type subclasses `datetime.datetime`, providing the same interface
+    while enabling working with nanosecond-resolution data. Also provides [easy time
+    zone conversions](../user_guide/timeseries.html#timeseries-timezone).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enhanced support for [time zones](../user_guide/timeseries.html#timeseries-timezone).
+    Add `tz_convert` and `tz_localize` methods to TimeSeries and DataFrame. All timestamps
+    are stored as UTC; Timestamps from DatetimeIndex objects with time zone set will
+    be localized to local time. Time zone conversions are therefore essentially free.
+    User needs to know very little about pytz library now; only time zone names as
+    strings are required. Time zone-aware timestamps are equal if and only if their
+    UTC timestamps match. Operations between time zone-aware time series with different
+    time zones will result in a UTC-indexed time series.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Time series **string indexing conveniences** / shortcuts: slice years, year
+    and month, and index values with strings'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enhanced time series **plotting**; adaptation of scikits.timeseries matplotlib-based
+    plotting code
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New `date_range`, `bdate_range`, and `period_range` [factory functions](../user_guide/timeseries.html#timeseries-daterange)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robust **frequency inference** function `infer_freq` and `inferred_freq` property
+    of DatetimeIndex, with option to infer frequency on construction of DatetimeIndex
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: to_datetime function efficiently **parses array of strings** to DatetimeIndex.
+    DatetimeIndex will parse array or list of strings to datetime64
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Optimized** support for datetime64-dtype data in Series and DataFrame columns'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New NaT (Not-a-Time) type to represent **NA** in timestamp arrays
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Optimize Series.asof for looking up **“as of” values** for arrays of timestamps
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Milli, Micro, Nano date offset objects
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Can index time series with datetime.time objects to select all data at particular
+    **time of day** (`TimeSeries.at_time`) or **between two times** (`TimeSeries.between_time`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [tshift](../user_guide/timeseries.html#timeseries-advanced-datetime) method
+    for leading/lagging using the frequency (if any) of the index, as opposed to a
+    naive lead/lag using shift
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Other new features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: New [cut](../user_guide/reshaping.html#reshaping-tile-cut) and `qcut` functions
+    (like R’s cut function) for computing a categorical variable from a continuous
+    variable by binning values either into value-based (`cut`) or quantile-based (`qcut`)
+    bins
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rename `Factor` to `Categorical` and add a number of usability features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [limit](../user_guide/missing_data.html#missing-data-fillna-limit) argument
+    to fillna/reindex
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: More flexible multiple function application in GroupBy, and can pass list (name,
+    function) tuples to get result in particular order with given names
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add flexible [replace](../user_guide/missing_data.html#missing-data-replace)
+    method for efficiently substituting values
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enhanced [read_csv/read_table](../user_guide/io.html#io-parse-dates) for reading
+    time series data and converting multiple columns to dates
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Add [comments](../user_guide/io.html#io-comments) option to parser functions:
+    read_csv, etc.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [dayfirst](../user_guide/io.html#io-dayfirst) option to parser functions
+    for parsing international DD/MM/YYYY dates
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Allow the user to specify the CSV reader [dialect](../user_guide/io.html#io-dialect)
+    to control quoting etc.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Handling [thousands](../user_guide/io.html#io-thousands) separators in read_csv
+    to improve integer parsing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enable unstacking of multiple levels in one shot. Alleviate `pivot_table` bugs
+    (empty columns being introduced)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Move to klib-based hash tables for indexing; better performance and less memory
+    usage than Python’s dict
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add first, last, min, max, and prod optimized GroupBy functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New [ordered_merge](../user_guide/merging.html#merging-merge-ordered) function
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add flexible [comparison](../user_guide/basics.html#basics-binop) instance methods
+    eq, ne, lt, gt, etc. to DataFrame, Series
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improve [scatter_matrix](../user_guide/visualization.html#visualization-scatter-matrix)
+    plotting function and add histogram or kernel density estimates to diagonal
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [‘kde’](../user_guide/visualization.html#visualization-kde) plot option
+    for density plots
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for converting DataFrame to R data.frame through rpy2
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improved support for complex numbers in Series and DataFrame
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add `pct_change` method to all data structures
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add max_colwidth configuration option for DataFrame console output
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Interpolate](../user_guide/missing_data.html#missing-data-interpolate) Series
+    values using index values'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Can select multiple columns from GroupBy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [update](../user_guide/merging.html#merging-combine-first-update) methods
+    to Series/DataFrame for updating values in place
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add `any` and `all` method to DataFrame
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New plotting methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Series.plot` now supports a `secondary_y` option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Vytautas Jancauskas, the 2012 GSOC participant, has added many new plot types.
+    For example, `''kde''` is a new option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [the plotting page](../user_guide/visualization.html#visualization-other)
+    for much more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other API changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Deprecation of `offset`, `time_rule`, and `timeRule` arguments names in time
+    series functions. Warnings will be printed until pandas 0.9 or 1.0.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Potential porting issues for pandas <= 0.7.3 users
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The major change that may affect you in pandas 0.8.0 is that time series indexes
+    use NumPy’s `datetime64` data type instead of `dtype=object` arrays of Python’s
+    built-in `datetime.datetime` objects. `DateRange` has been replaced by `DatetimeIndex`
+    but otherwise behaved identically. But, if you have code that converts `DateRange`
+    or `Index` objects that used to contain `datetime.datetime` values to plain NumPy
+    arrays, you may have bugs lurking with code using scalar values because you are
+    handing control over to NumPy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas’s `Timestamp` object is a subclass of `datetime.datetime` that has nanosecond
+    support (the `nanosecond` field store the nanosecond value between 0 and 999).
+    It should substitute directly into any code that used `datetime.datetime` values
+    before. Thus, I recommend not casting `DatetimeIndex` to regular NumPy arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you have code that requires an array of `datetime.datetime` objects, you
+    have a couple of options. First, the `astype(object)` method of `DatetimeIndex`
+    produces an array of `Timestamp` objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To get an array of proper `datetime.datetime` objects, use the `to_pydatetime`
+    method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: matplotlib knows how to handle `datetime.datetime` but not Timestamp objects.
+    While I recommend that you plot time series using `TimeSeries.plot`, you can either
+    use `to_pydatetime` or register a converter for the Timestamp type. See [matplotlib
+    documentation](http://matplotlib.org/api/units_api.html) for more on this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are bugs in the user-facing API with the nanosecond datetime64 unit in
+    NumPy 1.6\. In particular, the string version of the array shows garbage values,
+    and conversion to `dtype=object` is similarly broken.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Trust me: don’t panic**. If you are using NumPy 1.6 and restrict your interaction
+    with `datetime64` values to pandas’s API you will be just fine. There is nothing
+    wrong with the data-type (a 64-bit integer internally); all of the important data
+    processing happens in pandas and is heavily tested. I strongly recommend that
+    you **do not work directly with datetime64 arrays in NumPy 1.6** and only use
+    the pandas API.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Support for non-unique indexes**: In the latter case, you may have code inside
+    a `try:... catch:` block that failed due to the index not being unique. In many
+    cases it will no longer fail (some method like `append` still check for uniqueness
+    unless disabled). However, all is not lost: you can inspect `index.is_unique`
+    and raise an exception explicitly if it is `False` or go to a different code branch.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Contributors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of 27 people contributed patches to this release. People with a “+”
+    by their names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adam Klein
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chang She
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Zaslavsky +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Chlebek +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jacques Kvam
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kamil Kisiel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kelsey Jordahl +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kieran O’Mahony +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lorenzo Bolla +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Luca Beltrame
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marc Abramowitz +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mark Wiebe +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Paddy Mullen +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Peng Yu +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Roy Hyunjin Han +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: RuiDC +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Senthil Palanisami +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Skipper Seabold
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stefan van der Walt +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Takafumi Arakaki +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Thomas Kluyver
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vytautas Jancauskas +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wes McKinney
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wouter Overmeire
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yaroslav Halchenko
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: thuske +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: timmie +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

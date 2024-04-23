@@ -1,0 +1,2533 @@
+- en: Categorical data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/categorical.html](https://pandas.pydata.org/docs/user_guide/categorical.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This is an introduction to pandas categorical data type, including a short comparison
+    with R’s `factor`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Categoricals` are a pandas data type corresponding to categorical variables
+    in statistics. A categorical variable takes on a limited, and usually fixed, number
+    of possible values (`categories`; `levels` in R). Examples are gender, social
+    class, blood type, country affiliation, observation time or rating via Likert
+    scales.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to statistical categorical variables, categorical data might have
+    an order (e.g. ‘strongly agree’ vs ‘agree’ or ‘first observation’ vs. ‘second
+    observation’), but numerical operations (additions, divisions, …) are not possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All values of categorical data are either in `categories` or `np.nan`. Order
+    is defined by the order of `categories`, not lexical order of the values. Internally,
+    the data structure consists of a `categories` array and an integer array of `codes`
+    which point to the real value in the `categories` array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The categorical data type is useful in the following cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A string variable consisting of only a few different values. Converting such
+    a string variable to a categorical variable will save some memory, see [here](#categorical-memory).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The lexical order of a variable is not the same as the logical order (“one”,
+    “two”, “three”). By converting to a categorical and specifying an order on the
+    categories, sorting and min/max will use the logical order instead of the lexical
+    order, see [here](#categorical-sort).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: As a signal to other Python libraries that this column should be treated as
+    a categorical variable (e.g. to use suitable statistical methods or plot types).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See also the [API docs on categoricals](../reference/arrays.html#api-arrays-categorical).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Object creation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Series creation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Categorical `Series` or columns in a `DataFrame` can be created in several
+    ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By specifying `dtype="category"` when constructing a `Series`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By converting an existing `Series` or column to a `category` dtype:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: By using special functions, such as [`cut()`](../reference/api/pandas.cut.html#pandas.cut
+    "pandas.cut"), which groups data into discrete bins. See the [example on tiling](reshaping.html#reshaping-tile-cut)
+    in the docs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: By passing a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical") object to a `Series` or assigning it to a `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Categorical data has a specific `category` [dtype](basics.html#basics-dtypes):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: DataFrame creation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Similar to the previous section where a single column was converted to categorical,
+    all columns in a `DataFrame` can be batch converted to categorical either during
+    or after construction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This can be done during construction by specifying `dtype="category"` in the
+    `DataFrame` constructor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that the categories present in each column differ; the conversion is done
+    column by column, so only labels present in a given column are categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Analogously, all columns in an existing `DataFrame` can be batch converted
+    using [`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This conversion is likewise done column by column:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Controlling behavior
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In the examples above where we passed `dtype=''category''`, we used the default
+    behavior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Categories are inferred from the data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Categories are unordered.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To control those behaviors, instead of passing `'category'`, use an instance
+    of `CategoricalDtype`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Similarly, a `CategoricalDtype` can be used with a `DataFrame` to ensure that
+    categories are consistent among all columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: To perform table-wise conversion, where all labels in the entire `DataFrame`
+    are used as categories for each column, the `categories` parameter can be determined
+    programmatically by `categories = pd.unique(df.to_numpy().ravel())`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you already have `codes` and `categories`, you can use the [`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
+    "pandas.Categorical.from_codes") constructor to save the factorize step during
+    normal constructor mode:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Regaining original data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To get back to the original `Series` or NumPy array, use `Series.astype(original_dtype)`
+    or `np.asarray(categorical)`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor` function, categorical data is not converting input
+    values to strings; categories will end up the same data type as the original values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In contrast to R’s `factor` function, there is currently no way to assign/change
+    labels at creation time. Use `categories` to change the categories after creation
+    time.  ## CategoricalDtype'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A categorical’s type is fully described by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`categories`: a sequence of unique values and no missing values'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`ordered`: a boolean'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This information can be stored in a `CategoricalDtype`. The `categories` argument
+    is optional, which implies that the actual categories should be inferred from
+    whatever is present in the data when the [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical") is created. The categories are assumed to be unordered by
+    default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: A `CategoricalDtype` can be used in any place pandas expects a `dtype`. For
+    example [`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv"), [`pandas.DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype"), or in the `Series` constructor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a convenience, you can use the string `'category'` in place of a `CategoricalDtype`
+    when you want the default behavior of the categories being unordered, and equal
+    to the set values present in the array. In other words, `dtype='category'` is
+    equivalent to `dtype=CategoricalDtype()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Equality semantics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Two instances of `CategoricalDtype` compare equal whenever they have the same
+    categories and order. When comparing two unordered categoricals, the order of
+    the `categories` is not considered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: All instances of `CategoricalDtype` compare equal to the string `'category'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Description
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Using [`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
+    "pandas.DataFrame.describe") on categorical data will produce similar output to
+    a `Series` or `DataFrame` of type `string`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Working with categories'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Categorical data has a `categories` and a `ordered` property, which list their
+    possible values and whether the ordering matters or not. These properties are
+    exposed as `s.cat.categories` and `s.cat.ordered`. If you don’t manually specify
+    categories and ordering, they are inferred from the passed arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It’s also possible to pass in the categories in a specific order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: New categorical data are **not** automatically ordered. You must explicitly
+    pass `ordered=True` to indicate an ordered `Categorical`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The result of [`unique()`](../reference/api/pandas.Series.unique.html#pandas.Series.unique
+    "pandas.Series.unique") is not always the same as `Series.cat.categories`, because
+    `Series.unique()` has a couple of guarantees, namely that it returns categories
+    in the order of appearance, and it only includes values that are actually present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Renaming categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Renaming categories is done by using the `rename_categories()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor`, categorical data can have categories of other types
+    than string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Categories must be unique or a `ValueError` is raised:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Categories must also not be `NaN` or a `ValueError` is raised:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Appending new categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Appending categories can be done by using the `add_categories()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Removing categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Removing categories can be done by using the `remove_categories()` method.
+    Values which are removed are replaced by `np.nan`.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Removing unused categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Removing unused categories can also be done:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setting categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If you want to do remove and add new categories in one step (which has some
+    speed advantage), or simply set the categories to a predefined scale, use `set_categories()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Be aware that `Categorical.set_categories()` cannot know whether some category
+    is omitted intentionally or because it is misspelled or (under Python3) due to
+    a type difference (e.g., NumPy S1 dtype and Python strings). This can result in
+    surprising behaviour!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sorting and order
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: If categorical data is ordered (`s.cat.ordered == True`), then the order of
+    the categories has a meaning and certain operations are possible. If the categorical
+    is unordered, `.min()/.max()` will raise a `TypeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can set categorical data to be ordered by using `as_ordered()` or unordered
+    by using `as_unordered()`. These will by default return a *new* object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sorting will use the order defined by categories, not any lexical order present
+    on the data type. This is even true for strings and numeric data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reordering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Reordering the categories is possible via the `Categorical.reorder_categories()`
+    and the `Categorical.set_categories()` methods. For `Categorical.reorder_categories()`,
+    all old categories must be included in the new categories and no new categories
+    are allowed. This will necessarily make the sort order the same as the categories
+    order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note the difference between assigning new categories and reordering the categories:
+    the first renames categories and therefore the individual values in the `Series`,
+    but if the first position was sorted last, the renamed value will still be sorted
+    last. Reordering means that the way values are sorted is different afterwards,
+    but not that individual values in the `Series` are changed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the `Categorical` is not ordered, [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min") and [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max") will raise `TypeError`. Numeric operations like `+`, `-`,
+    `*`, `/` and operations based on them (e.g. [`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
+    "pandas.Series.median"), which would need to compute the mean between two values
+    if the length of an array is even) do not work and raise a `TypeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi column sorting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A categorical dtyped column will participate in a multi-column sort in a similar
+    manner to other columns. The ordering of the categorical is determined by the
+    `categories` of that column.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reordering the `categories` changes a future sort.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Comparisons
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Comparing categorical data with other objects is possible in three cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Comparing equality (`==` and `!=`) to a list-like object (list, Series, array,
+    …) of the same length as the categorical data.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All comparisons (`==`, `!=`, `>`, `>=`, `<`, and `<=`) of categorical data to
+    another categorical Series, when `ordered==True` and the `categories` are the
+    same.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All comparisons of a categorical data to a scalar.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All other comparisons, especially “non-equality” comparisons of two categoricals
+    with different categories or a categorical with any list-like object, will raise
+    a `TypeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Any “non-equality” comparisons of categorical data with a `Series`, `np.array`,
+    `list` or categorical data with different categories or ordering will raise a
+    `TypeError` because custom categories ordering could be interpreted in two ways:
+    one with taking into account the ordering and one without.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Comparing to a categorical with the same categories and ordering or to a scalar
+    works:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Equality comparisons work with any list-like object of same length and scalars:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This doesn’t work because the categories are not the same:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you want to do a “non-equality” comparison of a categorical series with
+    a list-like object which is not categorical data, you need to be explicit and
+    convert the categorical data back to the original values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When you compare two unordered categoricals with the same categories, the order
+    is not considered:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Operations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Apart from [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min"), [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max") and [`Series.mode()`](../reference/api/pandas.Series.mode.html#pandas.Series.mode
+    "pandas.Series.mode"), the following operations are possible with categorical
+    data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Series` methods like [`Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
+    "pandas.Series.value_counts") will use all categories, even if some categories
+    are not present in the data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`DataFrame` methods like [`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
+    "pandas.DataFrame.sum") also show “unused” categories when `observed=False`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Groupby will also show “unused” categories when `observed=False`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Pivot tables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data munging
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The optimized pandas data access methods `.loc`, `.iloc`, `.at`, and `.iat`,
+    work as normal. The only difference is the return type (for getting) and that
+    only values already in `categories` can be assigned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If the slicing operation returns either a `DataFrame` or a column of type `Series`,
+    the `category` dtype is preserved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An example where the category type is not preserved is if you take one single
+    row: the resulting `Series` is of dtype `object`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returning a single item from categorical data will also return the value, not
+    a categorical of length “1”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The is in contrast to R’s `factor` function, where `factor(c(1,2,3))[1]` returns
+    a single value `factor`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To get a single value `Series` of type `category`, you pass in a list with
+    a single value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: String and datetime accessors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The accessors `.dt` and `.str` will work if the `s.cat.categories` are of an
+    appropriate type:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The returned `Series` (or `DataFrame`) is of the same type as if you used the
+    `.str.<method>` / `.dt.<method>` on a `Series` of that type (and not of type `category`!).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That means, that the returned values from methods and properties on the accessors
+    of a `Series` and the returned values from methods and properties on the accessors
+    of this `Series` transformed to one of type `category` will be equal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The work is done on the `categories` and then a new `Series` is constructed.
+    This has some performance implication if you have a `Series` of type string, where
+    lots of elements are repeated (i.e. the number of unique elements in the `Series`
+    is a lot smaller than the length of the `Series`). In this case it can be faster
+    to convert the original `Series` to one of type `category` and use `.str.<method>`
+    or `.dt.<property>` on that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Setting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Setting values in a categorical column (or `Series`) works as long as the value
+    is included in the `categories`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Setting values by assigning categorical data will also check that the `categories`
+    match:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Assigning a `Categorical` to parts of a column of other types will use the
+    values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Merging / concatenation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, combining `Series` or `DataFrames` which contain the same categories
+    results in `category` dtype, otherwise results will depend on the dtype of the
+    underlying categories. Merges that result in non-categorical dtypes will likely
+    have higher memory usage. Use `.astype` or `union_categoricals` to ensure `category`
+    results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following table summarizes the results of merging `Categoricals`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| arg1 | arg2 | identical | result |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category | category | True | category |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category (object) | category (object) | False | object (dtype is inferred)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category (int) | category (float) | False | float (dtype is inferred) |  ###
+    Unioning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you want to combine categoricals that do not necessarily have the same categories,
+    the [`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals") function will combine a list-like of categoricals.
+    The new categories will be the union of the categories being combined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, the resulting categories will be ordered as they appear in the data.
+    If you want the categories to be lexsorted, use `sort_categories=True` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`union_categoricals` also works with the “easy” case of combining two categoricals
+    of the same categories and order information (e.g. what you could also `append`
+    for).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: The below raises `TypeError` because the categories are ordered and not identical.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Ordered categoricals with different categories or orderings can be combined
+    by using the `ignore_ordered=True` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals") also works with a `CategoricalIndex`, or
+    `Series` containing categorical data, but note that the resulting array will always
+    be a plain `Categorical`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`union_categoricals` may recode the integer codes for categories when combining
+    categoricals. This is likely what you want, but if you are relying on the exact
+    numbering of the categories, be aware.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Getting data in/out
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You can write data that contains `category` dtypes to a `HDFStore`. See [here](io.html#io-hdf5-categorical)
+    for an example and caveats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is also possible to write data to and reading data from *Stata* format files.
+    See [here](io.html#io-stata-categorical) for an example and caveats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing to a CSV file will convert the data, effectively removing any information
+    about the categorical (categories and ordering). So if you read back the CSV file
+    you have to convert the relevant columns back to `category` and assign the right
+    categories and categories ordering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: The same holds for writing to a SQL database with `to_sql`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: pandas primarily uses the value `np.nan` to represent missing data. It is by
+    default not included in computations. See the [Missing Data section](missing_data.html#missing-data).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing values should **not** be included in the Categorical’s `categories`,
+    only in the `values`. Instead, it is understood that NaN is different, and is
+    always a possibility. When working with the Categorical’s `codes`, missing values
+    will always have a code of `-1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Methods for working with missing data, e.g. [`isna()`](../reference/api/pandas.Series.isna.html#pandas.Series.isna
+    "pandas.Series.isna"), [`fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
+    "pandas.Series.fillna"), [`dropna()`](../reference/api/pandas.Series.dropna.html#pandas.Series.dropna
+    "pandas.Series.dropna"), all work normally:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: Differences to R’s `factor`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The following differences to R’s factor functions can be observed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: R’s `levels` are named `categories`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: R’s `levels` are always of type string, while `categories` in pandas can be
+    of any dtype.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It’s not possible to specify labels at creation time. Use `s.cat.rename_categories(new_labels)`
+    afterwards.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor` function, using categorical data as the sole input
+    to create a new categorical series will *not* remove unused categories but create
+    a new categorical series which is equal to the passed in one!
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: R allows for missing values to be included in its `levels` (pandas’ `categories`).
+    pandas does not allow `NaN` categories, but missing values can still be in the
+    `values`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gotchas
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '### Memory usage'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The memory usage of a `Categorical` is proportional to the number of categories
+    plus the length of the data. In contrast, an `object` dtype is a constant times
+    the length of the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the number of categories approaches the length of the data, the `Categorical`
+    will use nearly the same or more memory than an equivalent `object` dtype representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Categorical` is not a `numpy` array'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Currently, categorical data and the underlying `Categorical` is implemented
+    as a Python object and not as a low-level NumPy array dtype. This leads to some
+    problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy itself doesn’t know about the new `dtype`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Dtype comparisons work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To check if a Series contains Categorical data, use `hasattr(s, ''cat'')`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using NumPy functions on a `Series` of type `category` should not work as `Categoricals`
+    are not numeric data (even in the case that `.categories` is numeric).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If such a function works, please file a bug at [pandas-dev/pandas](https://github.com/pandas-dev/pandas)!
+  prefs: []
+  type: TYPE_NORMAL
+- en: dtype in apply
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'pandas currently does not preserve the dtype in apply functions: If you apply
+    along rows you get a `Series` of `object` `dtype` (same as getting a row -> getting
+    one element will return a basic type) and applying along columns will also convert
+    to object. `NaN` values are unaffected. You can use `fillna` to handle missing
+    values before applying a function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Categorical index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`CategoricalIndex` is a type of index that is useful for supporting indexing
+    with duplicates. This is a container around a `Categorical` and allows efficient
+    indexing and storage of an index with a large number of duplicated elements. See
+    the [advanced indexing docs](advanced.html#advanced-categoricalindex) for a more
+    detailed explanation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Setting the index will create a `CategoricalIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: Side effects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Constructing a `Series` from a `Categorical` will not copy the input `Categorical`.
+    This means that changes to the `Series` will in most cases change the original
+    `Categorical`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Use `copy=True` to prevent such a behaviour or simply don’t reuse `Categoricals`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This also happens in some cases when you supply a NumPy array instead of a
+    `Categorical`: using an int array (e.g. `np.array([1,2,3,4])`) will exhibit the
+    same behavior, while using a string array (e.g. `np.array(["a","b","c","a"])`)
+    will not.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Object creation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Series creation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Categorical `Series` or columns in a `DataFrame` can be created in several
+    ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By specifying `dtype="category"` when constructing a `Series`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By converting an existing `Series` or column to a `category` dtype:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: By using special functions, such as [`cut()`](../reference/api/pandas.cut.html#pandas.cut
+    "pandas.cut"), which groups data into discrete bins. See the [example on tiling](reshaping.html#reshaping-tile-cut)
+    in the docs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: By passing a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical") object to a `Series` or assigning it to a `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Categorical data has a specific `category` [dtype](basics.html#basics-dtypes):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: DataFrame creation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Similar to the previous section where a single column was converted to categorical,
+    all columns in a `DataFrame` can be batch converted to categorical either during
+    or after construction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This can be done during construction by specifying `dtype="category"` in the
+    `DataFrame` constructor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that the categories present in each column differ; the conversion is done
+    column by column, so only labels present in a given column are categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Analogously, all columns in an existing `DataFrame` can be batch converted
+    using [`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This conversion is likewise done column by column:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: Controlling behavior
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In the examples above where we passed `dtype=''category''`, we used the default
+    behavior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Categories are inferred from the data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Categories are unordered.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To control those behaviors, instead of passing `'category'`, use an instance
+    of `CategoricalDtype`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Similarly, a `CategoricalDtype` can be used with a `DataFrame` to ensure that
+    categories are consistent among all columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: To perform table-wise conversion, where all labels in the entire `DataFrame`
+    are used as categories for each column, the `categories` parameter can be determined
+    programmatically by `categories = pd.unique(df.to_numpy().ravel())`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you already have `codes` and `categories`, you can use the [`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
+    "pandas.Categorical.from_codes") constructor to save the factorize step during
+    normal constructor mode:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: Regaining original data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To get back to the original `Series` or NumPy array, use `Series.astype(original_dtype)`
+    or `np.asarray(categorical)`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor` function, categorical data is not converting input
+    values to strings; categories will end up the same data type as the original values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor` function, there is currently no way to assign/change
+    labels at creation time. Use `categories` to change the categories after creation
+    time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Series creation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Categorical `Series` or columns in a `DataFrame` can be created in several
+    ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By specifying `dtype="category"` when constructing a `Series`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By converting an existing `Series` or column to a `category` dtype:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: By using special functions, such as [`cut()`](../reference/api/pandas.cut.html#pandas.cut
+    "pandas.cut"), which groups data into discrete bins. See the [example on tiling](reshaping.html#reshaping-tile-cut)
+    in the docs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: By passing a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical") object to a `Series` or assigning it to a `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Categorical data has a specific `category` [dtype](basics.html#basics-dtypes):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: DataFrame creation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Similar to the previous section where a single column was converted to categorical,
+    all columns in a `DataFrame` can be batch converted to categorical either during
+    or after construction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This can be done during construction by specifying `dtype="category"` in the
+    `DataFrame` constructor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that the categories present in each column differ; the conversion is done
+    column by column, so only labels present in a given column are categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Analogously, all columns in an existing `DataFrame` can be batch converted
+    using [`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This conversion is likewise done column by column:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: Controlling behavior
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In the examples above where we passed `dtype=''category''`, we used the default
+    behavior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Categories are inferred from the data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Categories are unordered.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To control those behaviors, instead of passing `'category'`, use an instance
+    of `CategoricalDtype`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: Similarly, a `CategoricalDtype` can be used with a `DataFrame` to ensure that
+    categories are consistent among all columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: To perform table-wise conversion, where all labels in the entire `DataFrame`
+    are used as categories for each column, the `categories` parameter can be determined
+    programmatically by `categories = pd.unique(df.to_numpy().ravel())`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you already have `codes` and `categories`, you can use the [`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
+    "pandas.Categorical.from_codes") constructor to save the factorize step during
+    normal constructor mode:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: Regaining original data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To get back to the original `Series` or NumPy array, use `Series.astype(original_dtype)`
+    or `np.asarray(categorical)`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor` function, categorical data is not converting input
+    values to strings; categories will end up the same data type as the original values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor` function, there is currently no way to assign/change
+    labels at creation time. Use `categories` to change the categories after creation
+    time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## CategoricalDtype'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A categorical’s type is fully described by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`categories`: a sequence of unique values and no missing values'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`ordered`: a boolean'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This information can be stored in a `CategoricalDtype`. The `categories` argument
+    is optional, which implies that the actual categories should be inferred from
+    whatever is present in the data when the [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical") is created. The categories are assumed to be unordered by
+    default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: A `CategoricalDtype` can be used in any place pandas expects a `dtype`. For
+    example [`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv"), [`pandas.DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype"), or in the `Series` constructor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a convenience, you can use the string `'category'` in place of a `CategoricalDtype`
+    when you want the default behavior of the categories being unordered, and equal
+    to the set values present in the array. In other words, `dtype='category'` is
+    equivalent to `dtype=CategoricalDtype()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Equality semantics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Two instances of `CategoricalDtype` compare equal whenever they have the same
+    categories and order. When comparing two unordered categoricals, the order of
+    the `categories` is not considered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: All instances of `CategoricalDtype` compare equal to the string `'category'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: Equality semantics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Two instances of `CategoricalDtype` compare equal whenever they have the same
+    categories and order. When comparing two unordered categoricals, the order of
+    the `categories` is not considered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: All instances of `CategoricalDtype` compare equal to the string `'category'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: Description
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Using [`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
+    "pandas.DataFrame.describe") on categorical data will produce similar output to
+    a `Series` or `DataFrame` of type `string`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Working with categories'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Categorical data has a `categories` and a `ordered` property, which list their
+    possible values and whether the ordering matters or not. These properties are
+    exposed as `s.cat.categories` and `s.cat.ordered`. If you don’t manually specify
+    categories and ordering, they are inferred from the passed arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It’s also possible to pass in the categories in a specific order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: New categorical data are **not** automatically ordered. You must explicitly
+    pass `ordered=True` to indicate an ordered `Categorical`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The result of [`unique()`](../reference/api/pandas.Series.unique.html#pandas.Series.unique
+    "pandas.Series.unique") is not always the same as `Series.cat.categories`, because
+    `Series.unique()` has a couple of guarantees, namely that it returns categories
+    in the order of appearance, and it only includes values that are actually present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: Renaming categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Renaming categories is done by using the `rename_categories()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor`, categorical data can have categories of other types
+    than string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Categories must be unique or a `ValueError` is raised:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Categories must also not be `NaN` or a `ValueError` is raised:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: Appending new categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Appending categories can be done by using the `add_categories()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: Removing categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Removing categories can be done by using the `remove_categories()` method.
+    Values which are removed are replaced by `np.nan`.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: Removing unused categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Removing unused categories can also be done:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setting categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If you want to do remove and add new categories in one step (which has some
+    speed advantage), or simply set the categories to a predefined scale, use `set_categories()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Be aware that `Categorical.set_categories()` cannot know whether some category
+    is omitted intentionally or because it is misspelled or (under Python3) due to
+    a type difference (e.g., NumPy S1 dtype and Python strings). This can result in
+    surprising behaviour!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Renaming categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Renaming categories is done by using the `rename_categories()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor`, categorical data can have categories of other types
+    than string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Categories must be unique or a `ValueError` is raised:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Categories must also not be `NaN` or a `ValueError` is raised:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: Appending new categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Appending categories can be done by using the `add_categories()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: Removing categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Removing categories can be done by using the `remove_categories()` method.
+    Values which are removed are replaced by `np.nan`.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: Removing unused categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Removing unused categories can also be done:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setting categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If you want to do remove and add new categories in one step (which has some
+    speed advantage), or simply set the categories to a predefined scale, use `set_categories()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Be aware that `Categorical.set_categories()` cannot know whether some category
+    is omitted intentionally or because it is misspelled or (under Python3) due to
+    a type difference (e.g., NumPy S1 dtype and Python strings). This can result in
+    surprising behaviour!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sorting and order
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: If categorical data is ordered (`s.cat.ordered == True`), then the order of
+    the categories has a meaning and certain operations are possible. If the categorical
+    is unordered, `.min()/.max()` will raise a `TypeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can set categorical data to be ordered by using `as_ordered()` or unordered
+    by using `as_unordered()`. These will by default return a *new* object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sorting will use the order defined by categories, not any lexical order present
+    on the data type. This is even true for strings and numeric data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reordering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Reordering the categories is possible via the `Categorical.reorder_categories()`
+    and the `Categorical.set_categories()` methods. For `Categorical.reorder_categories()`,
+    all old categories must be included in the new categories and no new categories
+    are allowed. This will necessarily make the sort order the same as the categories
+    order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note the difference between assigning new categories and reordering the categories:
+    the first renames categories and therefore the individual values in the `Series`,
+    but if the first position was sorted last, the renamed value will still be sorted
+    last. Reordering means that the way values are sorted is different afterwards,
+    but not that individual values in the `Series` are changed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the `Categorical` is not ordered, [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min") and [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max") will raise `TypeError`. Numeric operations like `+`, `-`,
+    `*`, `/` and operations based on them (e.g. [`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
+    "pandas.Series.median"), which would need to compute the mean between two values
+    if the length of an array is even) do not work and raise a `TypeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi column sorting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A categorical dtyped column will participate in a multi-column sort in a similar
+    manner to other columns. The ordering of the categorical is determined by the
+    `categories` of that column.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reordering the `categories` changes a future sort.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reordering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Reordering the categories is possible via the `Categorical.reorder_categories()`
+    and the `Categorical.set_categories()` methods. For `Categorical.reorder_categories()`,
+    all old categories must be included in the new categories and no new categories
+    are allowed. This will necessarily make the sort order the same as the categories
+    order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note the difference between assigning new categories and reordering the categories:
+    the first renames categories and therefore the individual values in the `Series`,
+    but if the first position was sorted last, the renamed value will still be sorted
+    last. Reordering means that the way values are sorted is different afterwards,
+    but not that individual values in the `Series` are changed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the `Categorical` is not ordered, [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min") and [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max") will raise `TypeError`. Numeric operations like `+`, `-`,
+    `*`, `/` and operations based on them (e.g. [`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
+    "pandas.Series.median"), which would need to compute the mean between two values
+    if the length of an array is even) do not work and raise a `TypeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi column sorting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A categorical dtyped column will participate in a multi-column sort in a similar
+    manner to other columns. The ordering of the categorical is determined by the
+    `categories` of that column.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reordering the `categories` changes a future sort.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: Comparisons
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Comparing categorical data with other objects is possible in three cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Comparing equality (`==` and `!=`) to a list-like object (list, Series, array,
+    …) of the same length as the categorical data.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All comparisons (`==`, `!=`, `>`, `>=`, `<`, and `<=`) of categorical data to
+    another categorical Series, when `ordered==True` and the `categories` are the
+    same.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All comparisons of a categorical data to a scalar.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All other comparisons, especially “non-equality” comparisons of two categoricals
+    with different categories or a categorical with any list-like object, will raise
+    a `TypeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Any “non-equality” comparisons of categorical data with a `Series`, `np.array`,
+    `list` or categorical data with different categories or ordering will raise a
+    `TypeError` because custom categories ordering could be interpreted in two ways:
+    one with taking into account the ordering and one without.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Comparing to a categorical with the same categories and ordering or to a scalar
+    works:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Equality comparisons work with any list-like object of same length and scalars:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This doesn’t work because the categories are not the same:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you want to do a “non-equality” comparison of a categorical series with
+    a list-like object which is not categorical data, you need to be explicit and
+    convert the categorical data back to the original values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When you compare two unordered categoricals with the same categories, the order
+    is not considered:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: Operations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Apart from [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min"), [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max") and [`Series.mode()`](../reference/api/pandas.Series.mode.html#pandas.Series.mode
+    "pandas.Series.mode"), the following operations are possible with categorical
+    data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Series` methods like [`Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
+    "pandas.Series.value_counts") will use all categories, even if some categories
+    are not present in the data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`DataFrame` methods like [`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
+    "pandas.DataFrame.sum") also show “unused” categories when `observed=False`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Groupby will also show “unused” categories when `observed=False`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Pivot tables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data munging
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The optimized pandas data access methods `.loc`, `.iloc`, `.at`, and `.iat`,
+    work as normal. The only difference is the return type (for getting) and that
+    only values already in `categories` can be assigned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If the slicing operation returns either a `DataFrame` or a column of type `Series`,
+    the `category` dtype is preserved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An example where the category type is not preserved is if you take one single
+    row: the resulting `Series` is of dtype `object`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returning a single item from categorical data will also return the value, not
+    a categorical of length “1”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The is in contrast to R’s `factor` function, where `factor(c(1,2,3))[1]` returns
+    a single value `factor`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To get a single value `Series` of type `category`, you pass in a list with
+    a single value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: String and datetime accessors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The accessors `.dt` and `.str` will work if the `s.cat.categories` are of an
+    appropriate type:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The returned `Series` (or `DataFrame`) is of the same type as if you used the
+    `.str.<method>` / `.dt.<method>` on a `Series` of that type (and not of type `category`!).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That means, that the returned values from methods and properties on the accessors
+    of a `Series` and the returned values from methods and properties on the accessors
+    of this `Series` transformed to one of type `category` will be equal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The work is done on the `categories` and then a new `Series` is constructed.
+    This has some performance implication if you have a `Series` of type string, where
+    lots of elements are repeated (i.e. the number of unique elements in the `Series`
+    is a lot smaller than the length of the `Series`). In this case it can be faster
+    to convert the original `Series` to one of type `category` and use `.str.<method>`
+    or `.dt.<property>` on that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Setting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Setting values in a categorical column (or `Series`) works as long as the value
+    is included in the `categories`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Setting values by assigning categorical data will also check that the `categories`
+    match:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Assigning a `Categorical` to parts of a column of other types will use the
+    values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Merging / concatenation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, combining `Series` or `DataFrames` which contain the same categories
+    results in `category` dtype, otherwise results will depend on the dtype of the
+    underlying categories. Merges that result in non-categorical dtypes will likely
+    have higher memory usage. Use `.astype` or `union_categoricals` to ensure `category`
+    results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following table summarizes the results of merging `Categoricals`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| arg1 | arg2 | identical | result |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category | category | True | category |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category (object) | category (object) | False | object (dtype is inferred)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category (int) | category (float) | False | float (dtype is inferred) |  ###
+    Unioning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you want to combine categoricals that do not necessarily have the same categories,
+    the [`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals") function will combine a list-like of categoricals.
+    The new categories will be the union of the categories being combined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, the resulting categories will be ordered as they appear in the data.
+    If you want the categories to be lexsorted, use `sort_categories=True` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`union_categoricals` also works with the “easy” case of combining two categoricals
+    of the same categories and order information (e.g. what you could also `append`
+    for).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: The below raises `TypeError` because the categories are ordered and not identical.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: Ordered categoricals with different categories or orderings can be combined
+    by using the `ignore_ordered=True` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE155]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals") also works with a `CategoricalIndex`, or
+    `Series` containing categorical data, but note that the resulting array will always
+    be a plain `Categorical`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`union_categoricals` may recode the integer codes for categories when combining
+    categoricals. This is likely what you want, but if you are relying on the exact
+    numbering of the categories, be aware.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: Getting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If the slicing operation returns either a `DataFrame` or a column of type `Series`,
+    the `category` dtype is preserved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An example where the category type is not preserved is if you take one single
+    row: the resulting `Series` is of dtype `object`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returning a single item from categorical data will also return the value, not
+    a categorical of length “1”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE160]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The is in contrast to R’s `factor` function, where `factor(c(1,2,3))[1]` returns
+    a single value `factor`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To get a single value `Series` of type `category`, you pass in a list with
+    a single value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE161]'
+  prefs: []
+  type: TYPE_PRE
+- en: String and datetime accessors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The accessors `.dt` and `.str` will work if the `s.cat.categories` are of an
+    appropriate type:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE162]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The returned `Series` (or `DataFrame`) is of the same type as if you used the
+    `.str.<method>` / `.dt.<method>` on a `Series` of that type (and not of type `category`!).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That means, that the returned values from methods and properties on the accessors
+    of a `Series` and the returned values from methods and properties on the accessors
+    of this `Series` transformed to one of type `category` will be equal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE163]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The work is done on the `categories` and then a new `Series` is constructed.
+    This has some performance implication if you have a `Series` of type string, where
+    lots of elements are repeated (i.e. the number of unique elements in the `Series`
+    is a lot smaller than the length of the `Series`). In this case it can be faster
+    to convert the original `Series` to one of type `category` and use `.str.<method>`
+    or `.dt.<property>` on that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Setting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Setting values in a categorical column (or `Series`) works as long as the value
+    is included in the `categories`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE164]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Setting values by assigning categorical data will also check that the `categories`
+    match:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE165]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Assigning a `Categorical` to parts of a column of other types will use the
+    values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE166]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Merging / concatenation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, combining `Series` or `DataFrames` which contain the same categories
+    results in `category` dtype, otherwise results will depend on the dtype of the
+    underlying categories. Merges that result in non-categorical dtypes will likely
+    have higher memory usage. Use `.astype` or `union_categoricals` to ensure `category`
+    results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE167]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following table summarizes the results of merging `Categoricals`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| arg1 | arg2 | identical | result |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category | category | True | category |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category (object) | category (object) | False | object (dtype is inferred)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| category (int) | category (float) | False | float (dtype is inferred) |'
+  prefs: []
+  type: TYPE_TB
+- en: '### Unioning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you want to combine categoricals that do not necessarily have the same categories,
+    the [`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals") function will combine a list-like of categoricals.
+    The new categories will be the union of the categories being combined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE168]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, the resulting categories will be ordered as they appear in the data.
+    If you want the categories to be lexsorted, use `sort_categories=True` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE169]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`union_categoricals` also works with the “easy” case of combining two categoricals
+    of the same categories and order information (e.g. what you could also `append`
+    for).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE170]'
+  prefs: []
+  type: TYPE_PRE
+- en: The below raises `TypeError` because the categories are ordered and not identical.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE171]'
+  prefs: []
+  type: TYPE_PRE
+- en: Ordered categoricals with different categories or orderings can be combined
+    by using the `ignore_ordered=True` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE172]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals") also works with a `CategoricalIndex`, or
+    `Series` containing categorical data, but note that the resulting array will always
+    be a plain `Categorical`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE173]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`union_categoricals` may recode the integer codes for categories when combining
+    categoricals. This is likely what you want, but if you are relying on the exact
+    numbering of the categories, be aware.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE174]'
+  prefs: []
+  type: TYPE_PRE
+- en: Getting data in/out
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You can write data that contains `category` dtypes to a `HDFStore`. See [here](io.html#io-hdf5-categorical)
+    for an example and caveats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is also possible to write data to and reading data from *Stata* format files.
+    See [here](io.html#io-stata-categorical) for an example and caveats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing to a CSV file will convert the data, effectively removing any information
+    about the categorical (categories and ordering). So if you read back the CSV file
+    you have to convert the relevant columns back to `category` and assign the right
+    categories and categories ordering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE175]'
+  prefs: []
+  type: TYPE_PRE
+- en: The same holds for writing to a SQL database with `to_sql`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: pandas primarily uses the value `np.nan` to represent missing data. It is by
+    default not included in computations. See the [Missing Data section](missing_data.html#missing-data).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing values should **not** be included in the Categorical’s `categories`,
+    only in the `values`. Instead, it is understood that NaN is different, and is
+    always a possibility. When working with the Categorical’s `codes`, missing values
+    will always have a code of `-1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE176]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Methods for working with missing data, e.g. [`isna()`](../reference/api/pandas.Series.isna.html#pandas.Series.isna
+    "pandas.Series.isna"), [`fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
+    "pandas.Series.fillna"), [`dropna()`](../reference/api/pandas.Series.dropna.html#pandas.Series.dropna
+    "pandas.Series.dropna"), all work normally:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE177]'
+  prefs: []
+  type: TYPE_PRE
+- en: Differences to R’s `factor`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The following differences to R’s factor functions can be observed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: R’s `levels` are named `categories`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: R’s `levels` are always of type string, while `categories` in pandas can be
+    of any dtype.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It’s not possible to specify labels at creation time. Use `s.cat.rename_categories(new_labels)`
+    afterwards.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In contrast to R’s `factor` function, using categorical data as the sole input
+    to create a new categorical series will *not* remove unused categories but create
+    a new categorical series which is equal to the passed in one!
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: R allows for missing values to be included in its `levels` (pandas’ `categories`).
+    pandas does not allow `NaN` categories, but missing values can still be in the
+    `values`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gotchas
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '### Memory usage'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The memory usage of a `Categorical` is proportional to the number of categories
+    plus the length of the data. In contrast, an `object` dtype is a constant times
+    the length of the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE178]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the number of categories approaches the length of the data, the `Categorical`
+    will use nearly the same or more memory than an equivalent `object` dtype representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE179]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Categorical` is not a `numpy` array'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Currently, categorical data and the underlying `Categorical` is implemented
+    as a Python object and not as a low-level NumPy array dtype. This leads to some
+    problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy itself doesn’t know about the new `dtype`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE180]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Dtype comparisons work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE181]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To check if a Series contains Categorical data, use `hasattr(s, ''cat'')`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE182]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using NumPy functions on a `Series` of type `category` should not work as `Categoricals`
+    are not numeric data (even in the case that `.categories` is numeric).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE183]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If such a function works, please file a bug at [pandas-dev/pandas](https://github.com/pandas-dev/pandas)!
+  prefs: []
+  type: TYPE_NORMAL
+- en: dtype in apply
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'pandas currently does not preserve the dtype in apply functions: If you apply
+    along rows you get a `Series` of `object` `dtype` (same as getting a row -> getting
+    one element will return a basic type) and applying along columns will also convert
+    to object. `NaN` values are unaffected. You can use `fillna` to handle missing
+    values before applying a function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE184]'
+  prefs: []
+  type: TYPE_PRE
+- en: Categorical index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`CategoricalIndex` is a type of index that is useful for supporting indexing
+    with duplicates. This is a container around a `Categorical` and allows efficient
+    indexing and storage of an index with a large number of duplicated elements. See
+    the [advanced indexing docs](advanced.html#advanced-categoricalindex) for a more
+    detailed explanation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Setting the index will create a `CategoricalIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE185]'
+  prefs: []
+  type: TYPE_PRE
+- en: Side effects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Constructing a `Series` from a `Categorical` will not copy the input `Categorical`.
+    This means that changes to the `Series` will in most cases change the original
+    `Categorical`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE186]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Use `copy=True` to prevent such a behaviour or simply don’t reuse `Categoricals`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE187]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This also happens in some cases when you supply a NumPy array instead of a
+    `Categorical`: using an int array (e.g. `np.array([1,2,3,4])`) will exhibit the
+    same behavior, while using a string array (e.g. `np.array(["a","b","c","a"])`)
+    will not.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Memory usage'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The memory usage of a `Categorical` is proportional to the number of categories
+    plus the length of the data. In contrast, an `object` dtype is a constant times
+    the length of the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE188]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the number of categories approaches the length of the data, the `Categorical`
+    will use nearly the same or more memory than an equivalent `object` dtype representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE189]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Categorical` is not a `numpy` array'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Currently, categorical data and the underlying `Categorical` is implemented
+    as a Python object and not as a low-level NumPy array dtype. This leads to some
+    problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy itself doesn’t know about the new `dtype`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE190]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Dtype comparisons work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE191]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To check if a Series contains Categorical data, use `hasattr(s, ''cat'')`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE192]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using NumPy functions on a `Series` of type `category` should not work as `Categoricals`
+    are not numeric data (even in the case that `.categories` is numeric).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE193]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If such a function works, please file a bug at [pandas-dev/pandas](https://github.com/pandas-dev/pandas)!
+  prefs: []
+  type: TYPE_NORMAL
+- en: dtype in apply
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'pandas currently does not preserve the dtype in apply functions: If you apply
+    along rows you get a `Series` of `object` `dtype` (same as getting a row -> getting
+    one element will return a basic type) and applying along columns will also convert
+    to object. `NaN` values are unaffected. You can use `fillna` to handle missing
+    values before applying a function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE194]'
+  prefs: []
+  type: TYPE_PRE
+- en: Categorical index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`CategoricalIndex` is a type of index that is useful for supporting indexing
+    with duplicates. This is a container around a `Categorical` and allows efficient
+    indexing and storage of an index with a large number of duplicated elements. See
+    the [advanced indexing docs](advanced.html#advanced-categoricalindex) for a more
+    detailed explanation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Setting the index will create a `CategoricalIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE195]'
+  prefs: []
+  type: TYPE_PRE
+- en: Side effects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Constructing a `Series` from a `Categorical` will not copy the input `Categorical`.
+    This means that changes to the `Series` will in most cases change the original
+    `Categorical`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE196]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Use `copy=True` to prevent such a behaviour or simply don’t reuse `Categoricals`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE197]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This also happens in some cases when you supply a NumPy array instead of a
+    `Categorical`: using an int array (e.g. `np.array([1,2,3,4])`) will exhibit the
+    same behavior, while using a string array (e.g. `np.array(["a","b","c","a"])`)
+    will not.'
+  prefs: []
+  type: TYPE_NORMAL

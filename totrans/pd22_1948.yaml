@@ -1,0 +1,613 @@
+- en: Version 0.22.0 (December 29, 2017)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/whatsnew/v0.22.0.html](https://pandas.pydata.org/docs/whatsnew/v0.22.0.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This is a major release from 0.21.1 and includes a single, API-breaking change.
+    We recommend that all users upgrade to this version after carefully reading the
+    release note (singular!).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Backwards incompatible API changes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas 0.22.0 changes the handling of empty and all-*NA* sums and products.
+    The summary is that
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sum of an empty or all-*NA* `Series` is now `0`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The product of an empty or all-*NA* `Series` is now `1`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We’ve added a `min_count` parameter to `.sum()` and `.prod()` controlling the
+    minimum number of valid values for the result to be valid. If fewer than `min_count`
+    non-*NA* values are present, the result is *NA*. The default is `0`. To return
+    `NaN`, the 0.21 behavior, use `min_count=1`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Some background: In pandas 0.21, we fixed a long-standing inconsistency in
+    the return value of all-*NA* series depending on whether or not bottleneck was
+    installed. See [Sum/prod of all-NaN or empty Series/DataFrames is now consistently
+    NaN](v0.21.0.html#whatsnew-0210-api-breaking-bottleneck). At the same time, we
+    changed the sum and prod of an empty `Series` to also be `NaN`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Based on feedback, we’ve partially reverted those changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arithmetic operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The default sum for empty or all-*NA* `Series` is now `0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default behavior is the same as pandas 0.20.3 with bottleneck installed.
+    It also matches the behavior of NumPy’s `np.nansum` on empty and all-*NA* arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To have the sum of an empty series return `NaN` (the default behavior of pandas
+    0.20.3 without bottleneck, or pandas 0.21.x), use the `min_count` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Thanks to the `skipna` parameter, the `.sum` on an all-*NA* series is conceptually
+    the same as the `.sum` of an empty one with `skipna=True` (the default).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `min_count` parameter refers to the minimum number of *non-null* values
+    required for a non-NA sum or product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Series.prod()`](../reference/api/pandas.Series.prod.html#pandas.Series.prod
+    "pandas.Series.prod") has been updated to behave the same as [`Series.sum()`](../reference/api/pandas.Series.sum.html#pandas.Series.sum
+    "pandas.Series.sum"), returning `1` instead.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: These changes affect [`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
+    "pandas.DataFrame.sum") and [`DataFrame.prod()`](../reference/api/pandas.DataFrame.prod.html#pandas.DataFrame.prod
+    "pandas.DataFrame.prod") as well. Finally, a few less obvious places in pandas
+    are affected by this change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Grouping by a Categorical
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Grouping by a `Categorical` and summing now returns `0` instead of `NaN` for
+    categories with no observations. The product now returns `1` instead of `NaN`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: To restore the 0.21 behavior of returning `NaN` for unobserved groups, use `min_count>=1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Resample
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The sum and product of all-*NA* bins has changed from `NaN` to `0` for sum and
+    `1` for product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: To restore the 0.21 behavior of returning `NaN`, use `min_count>=1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: In particular, upsampling and taking the sum or product is affected, as upsampling
+    introduces missing values even if the original series was entirely valid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once again, the `min_count` keyword is available to restore the 0.21 behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rolling and expanding
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Rolling and expanding already have a `min_periods` keyword that behaves similar
+    to `min_count`. The only case that changes is when doing a rolling or expanding
+    sum with `min_periods=0`. Previously this returned `NaN`, when fewer than `min_periods`
+    non-*NA* values were in the window. Now it returns `0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default behavior of `min_periods=None`, implying that `min_periods` equals
+    the window size, is unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compatibility
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: If you maintain a library that should work across pandas versions, it may be
+    easiest to exclude pandas 0.21 from your requirements. Otherwise, all your `sum()`
+    calls would need to check if the `Series` is empty before summing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With setuptools, in your `setup.py` use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: With conda, use
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the inconsistency in the return value for all-*NA* series is still
+    there for pandas 0.20.3 and earlier. Avoiding pandas 0.21 will only help with
+    the empty case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Contributors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of 1 people contributed patches to this release. People with a “+” by
+    their names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Tom Augspurger  ## Backwards incompatible API changes'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: pandas 0.22.0 changes the handling of empty and all-*NA* sums and products.
+    The summary is that
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sum of an empty or all-*NA* `Series` is now `0`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The product of an empty or all-*NA* `Series` is now `1`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We’ve added a `min_count` parameter to `.sum()` and `.prod()` controlling the
+    minimum number of valid values for the result to be valid. If fewer than `min_count`
+    non-*NA* values are present, the result is *NA*. The default is `0`. To return
+    `NaN`, the 0.21 behavior, use `min_count=1`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Some background: In pandas 0.21, we fixed a long-standing inconsistency in
+    the return value of all-*NA* series depending on whether or not bottleneck was
+    installed. See [Sum/prod of all-NaN or empty Series/DataFrames is now consistently
+    NaN](v0.21.0.html#whatsnew-0210-api-breaking-bottleneck). At the same time, we
+    changed the sum and prod of an empty `Series` to also be `NaN`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Based on feedback, we’ve partially reverted those changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arithmetic operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The default sum for empty or all-*NA* `Series` is now `0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default behavior is the same as pandas 0.20.3 with bottleneck installed.
+    It also matches the behavior of NumPy’s `np.nansum` on empty and all-*NA* arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To have the sum of an empty series return `NaN` (the default behavior of pandas
+    0.20.3 without bottleneck, or pandas 0.21.x), use the `min_count` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Thanks to the `skipna` parameter, the `.sum` on an all-*NA* series is conceptually
+    the same as the `.sum` of an empty one with `skipna=True` (the default).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `min_count` parameter refers to the minimum number of *non-null* values
+    required for a non-NA sum or product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Series.prod()`](../reference/api/pandas.Series.prod.html#pandas.Series.prod
+    "pandas.Series.prod") has been updated to behave the same as [`Series.sum()`](../reference/api/pandas.Series.sum.html#pandas.Series.sum
+    "pandas.Series.sum"), returning `1` instead.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: These changes affect [`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
+    "pandas.DataFrame.sum") and [`DataFrame.prod()`](../reference/api/pandas.DataFrame.prod.html#pandas.DataFrame.prod
+    "pandas.DataFrame.prod") as well. Finally, a few less obvious places in pandas
+    are affected by this change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Grouping by a Categorical
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Grouping by a `Categorical` and summing now returns `0` instead of `NaN` for
+    categories with no observations. The product now returns `1` instead of `NaN`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: To restore the 0.21 behavior of returning `NaN` for unobserved groups, use `min_count>=1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Resample
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The sum and product of all-*NA* bins has changed from `NaN` to `0` for sum and
+    `1` for product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: To restore the 0.21 behavior of returning `NaN`, use `min_count>=1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: In particular, upsampling and taking the sum or product is affected, as upsampling
+    introduces missing values even if the original series was entirely valid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once again, the `min_count` keyword is available to restore the 0.21 behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rolling and expanding
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Rolling and expanding already have a `min_periods` keyword that behaves similar
+    to `min_count`. The only case that changes is when doing a rolling or expanding
+    sum with `min_periods=0`. Previously this returned `NaN`, when fewer than `min_periods`
+    non-*NA* values were in the window. Now it returns `0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default behavior of `min_periods=None`, implying that `min_periods` equals
+    the window size, is unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arithmetic operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The default sum for empty or all-*NA* `Series` is now `0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default behavior is the same as pandas 0.20.3 with bottleneck installed.
+    It also matches the behavior of NumPy’s `np.nansum` on empty and all-*NA* arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To have the sum of an empty series return `NaN` (the default behavior of pandas
+    0.20.3 without bottleneck, or pandas 0.21.x), use the `min_count` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Thanks to the `skipna` parameter, the `.sum` on an all-*NA* series is conceptually
+    the same as the `.sum` of an empty one with `skipna=True` (the default).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `min_count` parameter refers to the minimum number of *non-null* values
+    required for a non-NA sum or product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Series.prod()`](../reference/api/pandas.Series.prod.html#pandas.Series.prod
+    "pandas.Series.prod") has been updated to behave the same as [`Series.sum()`](../reference/api/pandas.Series.sum.html#pandas.Series.sum
+    "pandas.Series.sum"), returning `1` instead.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: These changes affect [`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
+    "pandas.DataFrame.sum") and [`DataFrame.prod()`](../reference/api/pandas.DataFrame.prod.html#pandas.DataFrame.prod
+    "pandas.DataFrame.prod") as well. Finally, a few less obvious places in pandas
+    are affected by this change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Grouping by a Categorical
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Grouping by a `Categorical` and summing now returns `0` instead of `NaN` for
+    categories with no observations. The product now returns `1` instead of `NaN`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: To restore the 0.21 behavior of returning `NaN` for unobserved groups, use `min_count>=1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Resample
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The sum and product of all-*NA* bins has changed from `NaN` to `0` for sum and
+    `1` for product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: To restore the 0.21 behavior of returning `NaN`, use `min_count>=1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: In particular, upsampling and taking the sum or product is affected, as upsampling
+    introduces missing values even if the original series was entirely valid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once again, the `min_count` keyword is available to restore the 0.21 behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rolling and expanding
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Rolling and expanding already have a `min_periods` keyword that behaves similar
+    to `min_count`. The only case that changes is when doing a rolling or expanding
+    sum with `min_periods=0`. Previously this returned `NaN`, when fewer than `min_periods`
+    non-*NA* values were in the window. Now it returns `0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*pandas 0.21.1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*pandas 0.22.0*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default behavior of `min_periods=None`, implying that `min_periods` equals
+    the window size, is unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compatibility
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: If you maintain a library that should work across pandas versions, it may be
+    easiest to exclude pandas 0.21 from your requirements. Otherwise, all your `sum()`
+    calls would need to check if the `Series` is empty before summing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With setuptools, in your `setup.py` use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: With conda, use
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the inconsistency in the return value for all-*NA* series is still
+    there for pandas 0.20.3 and earlier. Avoiding pandas 0.21 will only help with
+    the empty case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Contributors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of 1 people contributed patches to this release. People with a “+” by
+    their names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tom Augspurger
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

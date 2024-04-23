@@ -1,0 +1,407 @@
+- en: Sparse data structures
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/sparse.html](https://pandas.pydata.org/docs/user_guide/sparse.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: pandas provides data structures for efficiently storing sparse data. These are
+    not necessarily sparse in the typical “mostly 0”. Rather, you can view these objects
+    as being “compressed” where any data matching a specific value (`NaN` / missing
+    value, though any value can be chosen, including 0) is omitted. The compressed
+    values are not actually stored in the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice the dtype, `Sparse[float64, nan]`. The `nan` means that elements in the
+    array that are `nan` aren’t actually stored, only the non-`nan` elements are.
+    Those non-`nan` elements have a `float64` dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The sparse objects exist for memory efficiency reasons. Suppose you had a large,
+    mostly NA [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the density (% of values that have not been “compressed”) is
+    extremely low. This sparse object takes up much less memory on disk (pickled)
+    and in the Python interpreter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Functionally, their behavior should be nearly identical to their dense counterparts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## SparseArray'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`arrays.SparseArray`](../reference/api/pandas.arrays.SparseArray.html#pandas.arrays.SparseArray
+    "pandas.arrays.SparseArray") is a [`ExtensionArray`](../reference/api/pandas.api.extensions.ExtensionArray.html#pandas.api.extensions.ExtensionArray
+    "pandas.api.extensions.ExtensionArray") for storing an array of sparse values
+    (see [dtypes](basics.html#basics-dtypes) for more on extension arrays). It is
+    a 1-dimensional ndarray-like object storing only values distinct from the `fill_value`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: A sparse array can be converted to a regular (dense) ndarray with `numpy.asarray()`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]  ## SparseDtype'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `SparseArray.dtype` property stores two pieces of information
+  prefs: []
+  type: TYPE_NORMAL
+- en: The dtype of the non-sparse values
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The scalar fill value
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: A [`SparseDtype`](../reference/api/pandas.SparseDtype.html#pandas.SparseDtype
+    "pandas.SparseDtype") may be constructed by passing only a dtype
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: in which case a default fill value will be used (for NumPy dtypes this is often
+    the “missing” value for that dtype). To override this default an explicit fill
+    value may be passed instead
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, the string alias `'Sparse[dtype]'` may be used to specify a sparse
+    dtype in many places
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]  ## Sparse accessor'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas provides a `.sparse` accessor, similar to `.str` for string data, `.cat`
+    for categorical data, and `.dt` for datetime-like data. This namespace provides
+    attributes and methods that are specific to sparse data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: This accessor is available only on data with `SparseDtype`, and on the [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") class itself for creating a Series with sparse data from a scipy
+    COO matrix with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A `.sparse` accessor has been added for [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") as well. See [Sparse accessor](../reference/frame.html#api-frame-sparse)
+    for more.  ## Sparse calculation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can apply NumPy [ufuncs](https://numpy.org/doc/stable/reference/ufuncs.html)
+    to [`arrays.SparseArray`](../reference/api/pandas.arrays.SparseArray.html#pandas.arrays.SparseArray
+    "pandas.arrays.SparseArray") and get a [`arrays.SparseArray`](../reference/api/pandas.arrays.SparseArray.html#pandas.arrays.SparseArray
+    "pandas.arrays.SparseArray") as a result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: The *ufunc* is also applied to `fill_value`. This is needed to get the correct
+    dense result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Conversion**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To convert data from sparse to dense, use the `.sparse` accessors
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: From dense to sparse, use [`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype") with a [`SparseDtype`](../reference/api/pandas.SparseDtype.html#pandas.SparseDtype
+    "pandas.SparseDtype").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]  ## Interaction with *scipy.sparse*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use [`DataFrame.sparse.from_spmatrix()`](../reference/api/pandas.DataFrame.sparse.from_spmatrix.html#pandas.DataFrame.sparse.from_spmatrix
+    "pandas.DataFrame.sparse.from_spmatrix") to create a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with sparse values from a sparse matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All sparse formats are supported, but matrices that are not in [`COOrdinate`](https://docs.scipy.org/doc/scipy/reference/sparse.html#module-scipy.sparse
+    "(in SciPy v1.13.0)") format will be converted, copying data as needed. To convert
+    back to sparse SciPy matrix in COO format, you can use the [`DataFrame.sparse.to_coo()`](../reference/api/pandas.DataFrame.sparse.to_coo.html#pandas.DataFrame.sparse.to_coo
+    "pandas.DataFrame.sparse.to_coo") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`Series.sparse.to_coo()`](../reference/api/pandas.Series.sparse.to_coo.html#pandas.Series.sparse.to_coo
+    "pandas.Series.sparse.to_coo") is implemented for transforming a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with sparse values indexed by a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") to a [`scipy.sparse.coo_matrix`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html#scipy.sparse.coo_matrix
+    "(in SciPy v1.13.0)").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The method requires a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") with two or more levels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the example below, we transform the [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") to a sparse representation of a 2-d array by specifying that
+    the first and second `MultiIndex` levels define labels for the rows and the third
+    and fourth levels define labels for the columns. We also specify that the column
+    and row labels should be sorted in the final sparse representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Specifying different row and column labels (and not sorting them) yields a
+    different sparse matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: A convenience method [`Series.sparse.from_coo()`](../reference/api/pandas.Series.sparse.from_coo.html#pandas.Series.sparse.from_coo
+    "pandas.Series.sparse.from_coo") is implemented for creating a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with sparse values from a `scipy.sparse.coo_matrix`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default behaviour (with `dense_index=False`) simply returns a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") containing only the non-null entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Specifying `dense_index=True` will result in an index that is the Cartesian
+    product of the row and columns coordinates of the matrix. Note that this will
+    consume a significant amount of memory (relative to `dense_index=False`) if the
+    sparse matrix is large (and sparse) enough.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]  ## SparseArray'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`arrays.SparseArray`](../reference/api/pandas.arrays.SparseArray.html#pandas.arrays.SparseArray
+    "pandas.arrays.SparseArray") is a [`ExtensionArray`](../reference/api/pandas.api.extensions.ExtensionArray.html#pandas.api.extensions.ExtensionArray
+    "pandas.api.extensions.ExtensionArray") for storing an array of sparse values
+    (see [dtypes](basics.html#basics-dtypes) for more on extension arrays). It is
+    a 1-dimensional ndarray-like object storing only values distinct from the `fill_value`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: A sparse array can be converted to a regular (dense) ndarray with `numpy.asarray()`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## SparseDtype'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `SparseArray.dtype` property stores two pieces of information
+  prefs: []
+  type: TYPE_NORMAL
+- en: The dtype of the non-sparse values
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The scalar fill value
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: A [`SparseDtype`](../reference/api/pandas.SparseDtype.html#pandas.SparseDtype
+    "pandas.SparseDtype") may be constructed by passing only a dtype
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: in which case a default fill value will be used (for NumPy dtypes this is often
+    the “missing” value for that dtype). To override this default an explicit fill
+    value may be passed instead
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, the string alias `'Sparse[dtype]'` may be used to specify a sparse
+    dtype in many places
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Sparse accessor'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas provides a `.sparse` accessor, similar to `.str` for string data, `.cat`
+    for categorical data, and `.dt` for datetime-like data. This namespace provides
+    attributes and methods that are specific to sparse data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: This accessor is available only on data with `SparseDtype`, and on the [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") class itself for creating a Series with sparse data from a scipy
+    COO matrix with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A `.sparse` accessor has been added for [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") as well. See [Sparse accessor](../reference/frame.html#api-frame-sparse)
+    for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Sparse calculation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can apply NumPy [ufuncs](https://numpy.org/doc/stable/reference/ufuncs.html)
+    to [`arrays.SparseArray`](../reference/api/pandas.arrays.SparseArray.html#pandas.arrays.SparseArray
+    "pandas.arrays.SparseArray") and get a [`arrays.SparseArray`](../reference/api/pandas.arrays.SparseArray.html#pandas.arrays.SparseArray
+    "pandas.arrays.SparseArray") as a result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: The *ufunc* is also applied to `fill_value`. This is needed to get the correct
+    dense result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Conversion**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To convert data from sparse to dense, use the `.sparse` accessors
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: From dense to sparse, use [`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype") with a [`SparseDtype`](../reference/api/pandas.SparseDtype.html#pandas.SparseDtype
+    "pandas.SparseDtype").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Interaction with *scipy.sparse*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use [`DataFrame.sparse.from_spmatrix()`](../reference/api/pandas.DataFrame.sparse.from_spmatrix.html#pandas.DataFrame.sparse.from_spmatrix
+    "pandas.DataFrame.sparse.from_spmatrix") to create a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with sparse values from a sparse matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All sparse formats are supported, but matrices that are not in [`COOrdinate`](https://docs.scipy.org/doc/scipy/reference/sparse.html#module-scipy.sparse
+    "(in SciPy v1.13.0)") format will be converted, copying data as needed. To convert
+    back to sparse SciPy matrix in COO format, you can use the [`DataFrame.sparse.to_coo()`](../reference/api/pandas.DataFrame.sparse.to_coo.html#pandas.DataFrame.sparse.to_coo
+    "pandas.DataFrame.sparse.to_coo") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`Series.sparse.to_coo()`](../reference/api/pandas.Series.sparse.to_coo.html#pandas.Series.sparse.to_coo
+    "pandas.Series.sparse.to_coo") is implemented for transforming a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with sparse values indexed by a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") to a [`scipy.sparse.coo_matrix`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html#scipy.sparse.coo_matrix
+    "(in SciPy v1.13.0)").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The method requires a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") with two or more levels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the example below, we transform the [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") to a sparse representation of a 2-d array by specifying that
+    the first and second `MultiIndex` levels define labels for the rows and the third
+    and fourth levels define labels for the columns. We also specify that the column
+    and row labels should be sorted in the final sparse representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Specifying different row and column labels (and not sorting them) yields a
+    different sparse matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: A convenience method [`Series.sparse.from_coo()`](../reference/api/pandas.Series.sparse.from_coo.html#pandas.Series.sparse.from_coo
+    "pandas.Series.sparse.from_coo") is implemented for creating a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with sparse values from a `scipy.sparse.coo_matrix`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default behaviour (with `dense_index=False`) simply returns a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") containing only the non-null entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Specifying `dense_index=True` will result in an index that is the Cartesian
+    product of the row and columns coordinates of the matrix. Note that this will
+    consume a significant amount of memory (relative to `dense_index=False`) if the
+    sparse matrix is large (and sparse) enough.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE

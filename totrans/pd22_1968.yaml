@@ -1,0 +1,4607 @@
+- en: Version 0.14.0 (May 31 , 2014)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/whatsnew/v0.14.0.html](https://pandas.pydata.org/docs/whatsnew/v0.14.0.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This is a major release from 0.13.1 and includes a small number of API changes,
+    several new features, enhancements, and performance improvements along with a
+    large number of bug fixes. We recommend that all users upgrade to this version.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Highlights include:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Officially support Python 3.4
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SQL interfaces updated to use `sqlalchemy`, See [Here](#whatsnew-0140-sql).
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Display interface changes, See [Here](#whatsnew-0140-display)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: MultiIndexing Using Slicers, See [Here](#whatsnew-0140-slicers).
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ability to join a singly-indexed DataFrame with a MultiIndexed DataFrame, see
+    [Here](../user_guide/merging.html#merging-join-on-mi)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: More consistency in groupby results and more flexible groupby specifications,
+    See [Here](#whatsnew-0140-groupby)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Holiday calendars are now supported in `CustomBusinessDay`, see [Here](../user_guide/timeseries.html#timeseries-holiday)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Several improvements in plotting functions, including: hexbin, area and pie
+    plots, see [Here](#whatsnew-0140-plotting).'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance doc section on I/O operations, See [Here](../user_guide/io.html#io-perf)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Other Enhancements](#whatsnew-0140-enhancements)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[API Changes](#whatsnew-0140-api)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Text Parsing API Changes](#whatsnew-0140-parsing)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Groupby API Changes](#whatsnew-0140-groupby)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Performance Improvements](#whatsnew-0140-performance)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Prior Deprecations](#whatsnew-0140-prior-deprecations)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Deprecations](#whatsnew-0140-deprecations)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Known Issues](#whatsnew-0140-knownissues)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Bug Fixes](#whatsnew-0140-bug-fixes)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: In 0.14.0 all `NDFrame` based containers have undergone significant internal
+    refactoring. Before that each block of homogeneous data had its own labels and
+    extra care was necessary to keep those in sync with the parent container’s labels.
+    This should not have any visible user/API behavior changes ([GH 6745](https://github.com/pandas-dev/pandas/issues/6745))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## API changes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`read_excel` uses 0 as the default sheet ([GH 6573](https://github.com/pandas-dev/pandas/issues/6573))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`iloc` will now accept out-of-bounds indexers for slices, e.g. a value that
+    exceeds the length of the object being indexed. These will be excluded. This will
+    make pandas conform more with python/numpy indexing of out-of-bounds values. A
+    single indexer that is out-of-bounds and drops the dimensions of the object will
+    still raise `IndexError` ([GH 6296](https://github.com/pandas-dev/pandas/issues/6296),
+    [GH 6299](https://github.com/pandas-dev/pandas/issues/6299)). This could result
+    in an empty axis (e.g. an empty DataFrame being returned)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: These are out-of-bounds selections
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Slicing with negative start, stop & step values handles corner cases better
+    ([GH 6531](https://github.com/pandas-dev/pandas/issues/6531)):'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`df.iloc[:-len(df)]` is now empty'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`df.iloc[len(df)::-1]` now enumerates all elements in reverse'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The [`DataFrame.interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") keyword `downcast` default has been changed from
+    `infer` to `None`. This is to preserve the original dtype unless explicitly requested
+    otherwise ([GH 6290](https://github.com/pandas-dev/pandas/issues/6290)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When converting a dataframe to HTML it used to return `Empty DataFrame`. This
+    special case has been removed, instead a header with the column names is returned
+    ([GH 6062](https://github.com/pandas-dev/pandas/issues/6062)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Series` and `Index` now internally share more common operations, e.g. `factorize(),nunique(),value_counts()`
+    are now supported on `Index` types as well. The `Series.weekday` property from
+    is removed from Series for API consistency. Using a `DatetimeIndex/PeriodIndex`
+    method on a Series will now raise a `TypeError`. ([GH 4551](https://github.com/pandas-dev/pandas/issues/4551),
+    [GH 4056](https://github.com/pandas-dev/pandas/issues/4056), [GH 5519](https://github.com/pandas-dev/pandas/issues/5519),
+    [GH 6380](https://github.com/pandas-dev/pandas/issues/6380), [GH 7206](https://github.com/pandas-dev/pandas/issues/7206)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add `is_month_start`, `is_month_end`, `is_quarter_start`, `is_quarter_end`,
+    `is_year_start`, `is_year_end` accessors for `DateTimeIndex` / `Timestamp` which
+    return a boolean array of whether the timestamp(s) are at the start/end of the
+    month/quarter/year defined by the frequency of the `DateTimeIndex` / `Timestamp`
+    ([GH 4565](https://github.com/pandas-dev/pandas/issues/4565), [GH 6998](https://github.com/pandas-dev/pandas/issues/6998))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Local variable usage has changed in [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")/[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")/[`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") ([GH 5987](https://github.com/pandas-dev/pandas/issues/5987)).
+    For the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") methods, two things have changed
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Column names are now given precedence over locals
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Local variables must be referred to explicitly. This means that even if you
+    have a local variable that is *not* a column you must still refer to it with the
+    `'@'` prefix.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can have an expression like `df.query('@a < a')` with no complaints from
+    `pandas` about ambiguity of the name `a`.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The top-level [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") function does not allow you use the `'@'` prefix and provides you
+    with an error message telling you so.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`NameResolutionError` was removed because it isn’t necessary anymore.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Define and document the order of column vs index names in query/eval ([GH 6676](https://github.com/pandas-dev/pandas/issues/6676))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`concat` will now concatenate mixed Series and DataFrames using the Series
+    name or numbering columns as needed ([GH 2385](https://github.com/pandas-dev/pandas/issues/2385)).
+    See [the docs](../user_guide/merging.html#merging-mixed-ndims)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Slicing and advanced/boolean indexing operations on `Index` classes as well
+    as [`Index.delete()`](../reference/api/pandas.Index.delete.html#pandas.Index.delete
+    "pandas.Index.delete") and [`Index.drop()`](../reference/api/pandas.Index.drop.html#pandas.Index.drop
+    "pandas.Index.drop") methods will no longer change the type of the resulting index
+    ([GH 6440](https://github.com/pandas-dev/pandas/issues/6440), [GH 7040](https://github.com/pandas-dev/pandas/issues/7040))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Previously, the above operation would return `Int64Index`. If you’d like to
+    do this manually, use [`Index.astype()`](../reference/api/pandas.Index.astype.html#pandas.Index.astype
+    "pandas.Index.astype")
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`set_index` no longer converts MultiIndexes to an Index of tuples. For example,
+    the old behavior returned an Index in this case ([GH 6459](https://github.com/pandas-dev/pandas/issues/6459)):'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This also applies when passing multiple indices to `set_index`:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`pairwise` keyword was added to the statistical moment functions `rolling_cov`,
+    `rolling_corr`, `ewmcov`, `ewmcorr`, `expanding_cov`, `expanding_corr` to allow
+    the calculation of moving window covariance and correlation matrices ([GH 4950](https://github.com/pandas-dev/pandas/issues/4950)).
+    See [Computing rolling pairwise covariances and correlations](../user_guide/window.html#window-corr-pairwise)
+    in the docs.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`Series.iteritems()` is now lazy (returns an iterator rather than a list).
+    This was the documented behavior prior to 0.14\. ([GH 6760](https://github.com/pandas-dev/pandas/issues/6760))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Added `nunique` and `value_counts` functions to `Index` for counting unique
+    elements. ([GH 6734](https://github.com/pandas-dev/pandas/issues/6734))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`stack` and `unstack` now raise a `ValueError` when the `level` keyword refers
+    to a non-unique item in the `Index` (previously raised a `KeyError`). ([GH 6738](https://github.com/pandas-dev/pandas/issues/6738))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: drop unused order argument from `Series.sort`; args now are in the same order
+    as `Series.order`; add `na_position` arg to conform to `Series.order` ([GH 6847](https://github.com/pandas-dev/pandas/issues/6847))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: default sorting algorithm for `Series.order` is now `quicksort`, to conform
+    with `Series.sort` (and numpy defaults)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: add `inplace` keyword to `Series.order/sort` to make them inverses ([GH 6859](https://github.com/pandas-dev/pandas/issues/6859))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.sort` now places NaNs at the beginning or end of the sort according
+    to the `na_position` parameter. ([GH 3917](https://github.com/pandas-dev/pandas/issues/3917))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: accept `TextFileReader` in `concat`, which was affecting a common user idiom
+    ([GH 6583](https://github.com/pandas-dev/pandas/issues/6583)), this was a regression
+    from 0.13.1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Added `factorize` functions to `Index` and `Series` to get indexer and unique
+    values ([GH 7090](https://github.com/pandas-dev/pandas/issues/7090))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`describe` on a DataFrame with a mix of Timestamp and string like objects returns
+    a different Index ([GH 7088](https://github.com/pandas-dev/pandas/issues/7088)).
+    Previously the index was unintentionally sorted.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Arithmetic operations with **only** `bool` dtypes now give a warning indicating
+    that they are evaluated in Python space for `+`, `-`, and `*` operations and raise
+    for all others ([GH 7011](https://github.com/pandas-dev/pandas/issues/7011), [GH
+    6762](https://github.com/pandas-dev/pandas/issues/6762), [GH 7015](https://github.com/pandas-dev/pandas/issues/7015),
+    [GH 7210](https://github.com/pandas-dev/pandas/issues/7210))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: In `HDFStore`, `select_as_multiple` will always raise a `KeyError`, when a key
+    or the selector is not found ([GH 6177](https://github.com/pandas-dev/pandas/issues/6177))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`df[''col''] = value` and `df.loc[:,''col''] = value` are now completely equivalent;
+    previously the `.loc` would not necessarily coerce the dtype of the resultant
+    series ([GH 6149](https://github.com/pandas-dev/pandas/issues/6149))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`dtypes` and `ftypes` now return a series with `dtype=object` on empty containers
+    ([GH 5740](https://github.com/pandas-dev/pandas/issues/5740))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`df.to_csv` will now return a string of the CSV data if neither a target path
+    nor a buffer is provided ([GH 6061](https://github.com/pandas-dev/pandas/issues/6061))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pd.infer_freq()` will now raise a `TypeError` if given an invalid `Series/Index`
+    type ([GH 6407](https://github.com/pandas-dev/pandas/issues/6407), [GH 6463](https://github.com/pandas-dev/pandas/issues/6463))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A tuple passed to `DataFame.sort_index` will be interpreted as the levels of
+    the index, rather than requiring a list of tuple ([GH 4370](https://github.com/pandas-dev/pandas/issues/4370))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: all offset operations now return `Timestamp` types (rather than datetime), Business/Week
+    frequencies were incorrect ([GH 4069](https://github.com/pandas-dev/pandas/issues/4069))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`to_excel` now converts `np.inf` into a string representation, customizable
+    by the `inf_rep` keyword argument (Excel has no native inf representation) ([GH
+    6782](https://github.com/pandas-dev/pandas/issues/6782))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Replace `pandas.compat.scipy.scoreatpercentile` with `numpy.percentile` ([GH
+    6810](https://github.com/pandas-dev/pandas/issues/6810))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.quantile` on a `datetime[ns]` series now returns `Timestamp` instead of `np.datetime64`
+    objects ([GH 6810](https://github.com/pandas-dev/pandas/issues/6810))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: change `AssertionError` to `TypeError` for invalid types passed to `concat`
+    ([GH 6583](https://github.com/pandas-dev/pandas/issues/6583))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Raise a `TypeError` when `DataFrame` is passed an iterator as the `data` argument
+    ([GH 5357](https://github.com/pandas-dev/pandas/issues/5357))  ## Display changes'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The default way of printing large DataFrames has changed. DataFrames exceeding
+    `max_rows` and/or `max_columns` are now displayed in a centrally truncated view,
+    consistent with the printing of a [`pandas.Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") ([GH 5603](https://github.com/pandas-dev/pandas/issues/5603)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In previous versions, a DataFrame was truncated once the dimension constraints
+    were reached and an ellipse (…) signaled that part of the data was cut off.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![The previous look of truncate.](../Images/784f79e22b13d8ec61c873e5e284a20d.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: In the current version, large DataFrames are centrally truncated, showing a
+    preview of head and tail in both dimensions.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![The new look.](../Images/1f7004c5604d4fcd32bea2cde4c92614.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: allow option `'truncate'` for `display.show_dimensions` to only show the dimensions
+    if the frame is truncated ([GH 6547](https://github.com/pandas-dev/pandas/issues/6547)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The default for `display.show_dimensions` will now be `truncate`. This is consistent
+    with how Series display length.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Regression in the display of a MultiIndexed Series with `display.max_rows` is
+    less than the length of the series ([GH 7101](https://github.com/pandas-dev/pandas/issues/7101))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fixed a bug in the HTML repr of a truncated Series or DataFrame not showing
+    the class name with the `large_repr` set to ‘info’ ([GH 7105](https://github.com/pandas-dev/pandas/issues/7105))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `verbose` keyword in `DataFrame.info()`, which controls whether to shorten
+    the `info` representation, is now `None` by default. This will follow the global
+    setting in `display.max_info_columns`. The global setting can be overridden with
+    `verbose=True` or `verbose=False`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fixed a bug with the `info` repr not honoring the `display.max_info_columns`
+    setting ([GH 6939](https://github.com/pandas-dev/pandas/issues/6939))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Offset/freq info now in Timestamp __repr__ ([GH 4553](https://github.com/pandas-dev/pandas/issues/4553))  ##
+    Text parsing API changes'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv "pandas.read_csv")/[`read_table()`](../reference/api/pandas.read_table.html#pandas.read_table
+    "pandas.read_table") will now be noisier w.r.t invalid options rather than falling
+    back to the `PythonParser`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Raise `ValueError` when `sep` specified with `delim_whitespace=True` in [`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")/[`read_table()`](../reference/api/pandas.read_table.html#pandas.read_table
+    "pandas.read_table") ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raise `ValueError` when `engine='c'` specified with unsupported options in [`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")/[`read_table()`](../reference/api/pandas.read_table.html#pandas.read_table
+    "pandas.read_table") ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raise `ValueError` when fallback to python parser causes options to be ignored
+    ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Produce `ParserWarning` on fallback to python parser when no options are ignored
+    ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Translate `sep=''\s+''` to `delim_whitespace=True` in [`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")/[`read_table()`](../reference/api/pandas.read_table.html#pandas.read_table
+    "pandas.read_table") if no other C-unsupported options specified ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))  ##
+    GroupBy API changes'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'More consistent behavior for some groupby methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'groupby `head` and `tail` now act more like `filter` rather than an aggregation:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'groupby head and tail respect column selection:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: groupby `nth` now reduces by default; filtering can be achieved by passing `as_index=False`.
+    With an optional `dropna` argument to ignore NaN. See [the docs](../user_guide/groupby.html#groupby-nth).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Reducing
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Filtering
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: groupby will now not return the grouped column for non-cython functions ([GH
+    5610](https://github.com/pandas-dev/pandas/issues/5610), [GH 5614](https://github.com/pandas-dev/pandas/issues/5614),
+    [GH 6732](https://github.com/pandas-dev/pandas/issues/6732)), as its already the
+    index
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: passing `as_index` will leave the grouped column in-place (this is not change
+    in 0.14.0)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Allow specification of a more complex groupby via `pd.Grouper`, such as grouping
+    by a Time and a string field simultaneously. See [the docs](../user_guide/groupby.html#groupby-specify).
+    ([GH 3794](https://github.com/pandas-dev/pandas/issues/3794))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Better propagation/preservation of Series names when performing groupby operations:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`SeriesGroupBy.agg` will ensure that the name attribute of the original series
+    is propagated to the result ([GH 6265](https://github.com/pandas-dev/pandas/issues/6265)).'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If the function provided to `GroupBy.apply` returns a named series, the name
+    of the series will be kept as the name of the column index of the DataFrame returned
+    by `GroupBy.apply` ([GH 6124](https://github.com/pandas-dev/pandas/issues/6124)).
+    This facilitates `DataFrame.stack` operations where the name of the column index
+    is used as the name of the inserted column containing the pivoted data.  ## SQL'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The SQL reading and writing functions now support more database flavors through
+    SQLAlchemy ([GH 2717](https://github.com/pandas-dev/pandas/issues/2717), [GH 4163](https://github.com/pandas-dev/pandas/issues/4163),
+    [GH 5950](https://github.com/pandas-dev/pandas/issues/5950), [GH 6292](https://github.com/pandas-dev/pandas/issues/6292)).
+    All databases supported by SQLAlchemy can be used, such as PostgreSQL, MySQL,
+    Oracle, Microsoft SQL server (see documentation of SQLAlchemy on [included dialects](https://sqlalchemy.readthedocs.io/en/latest/dialects/index.html)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The functionality of providing DBAPI connection objects will only be supported
+    for sqlite3 in the future. The `'mysql'` flavor is deprecated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The new functions [`read_sql_query()`](../reference/api/pandas.read_sql_query.html#pandas.read_sql_query
+    "pandas.read_sql_query") and [`read_sql_table()`](../reference/api/pandas.read_sql_table.html#pandas.read_sql_table
+    "pandas.read_sql_table") are introduced. The function [`read_sql()`](../reference/api/pandas.read_sql.html#pandas.read_sql
+    "pandas.read_sql") is kept as a convenience wrapper around the other two and will
+    delegate to specific function depending on the provided input (database table
+    name or sql query).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In practice, you have to provide a SQLAlchemy `engine` to the sql functions.
+    To connect with SQLAlchemy you use the `create_engine()` function to create an
+    engine object from database URI. You only need to create the engine once per database
+    you are connecting to. For an in-memory sqlite database:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This `engine` can then be used to write or read data to/from this database:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can read data from a database by specifying the table name:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or by specifying a sql query:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Some other enhancements to the sql functions include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: support for writing the index. This can be controlled with the `index` keyword
+    (default is True).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: specify the column label to use when writing the index with `index_label`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: specify string columns to parse as datetimes with the `parse_dates` keyword
+    in [`read_sql_query()`](../reference/api/pandas.read_sql_query.html#pandas.read_sql_query
+    "pandas.read_sql_query") and [`read_sql_table()`](../reference/api/pandas.read_sql_table.html#pandas.read_sql_table
+    "pandas.read_sql_table").
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some of the existing functions or function aliases have been deprecated and
+    will be removed in future versions. This includes: `tquery`, `uquery`, `read_frame`,
+    `frame_query`, `write_frame`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The support for the ‘mysql’ flavor when using DBAPI connection objects has
+    been deprecated. MySQL will be further supported with SQLAlchemy engines ([GH
+    6900](https://github.com/pandas-dev/pandas/issues/6900)).  ## Multi-indexing using
+    slicers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In 0.14.0 we added a new way to slice MultiIndexed objects. You can slice a
+    MultiIndex by providing multiple indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can provide any of the selectors as if you are indexing by label, see [Selection
+    by Label](../user_guide/indexing.html#indexing-label), including slices, lists
+    of labels, labels, and boolean indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use `slice(None)` to select all the contents of *that* level. You do
+    not need to specify all the *deeper* levels, they will be implied as `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As usual, **both sides** of the slicers are included as this is label indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [the docs](../user_guide/advanced.html#advanced-mi-slicers) See also issues
+    ([GH 6134](https://github.com/pandas-dev/pandas/issues/6134), [GH 4036](https://github.com/pandas-dev/pandas/issues/4036),
+    [GH 3057](https://github.com/pandas-dev/pandas/issues/3057), [GH 2598](https://github.com/pandas-dev/pandas/issues/2598),
+    [GH 5641](https://github.com/pandas-dev/pandas/issues/5641), [GH 7106](https://github.com/pandas-dev/pandas/issues/7106))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should specify all axes in the `.loc` specifier, meaning the indexer for
+    the **index** and for the **columns**. Their are some ambiguous cases where the
+    passed indexer could be mis-interpreted as indexing *both* axes, rather than into
+    say the MultiIndex for the rows.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'You should do this:'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You will need to make sure that the selection axes are fully lexsorted!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic MultiIndex slicing using slices, lists, and labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use a `pd.IndexSlice` to shortcut the creation of these slices
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is possible to perform quite complicated selections using this method on
+    multiple axes at the same time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using a boolean indexer you can provide selection related to the *values*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also specify the `axis` argument to `.loc` to interpret the passed slicers
+    on a single axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Furthermore you can *set* the values using these methods
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use a right-hand-side of an alignable object as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]  ## Plotting'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hexagonal bin plots from `DataFrame.plot` with `kind='hexbin'` ([GH 5478](https://github.com/pandas-dev/pandas/issues/5478)),
+    See [the docs](../user_guide/visualization.html#visualization-hexbin).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.plot` and `Series.plot` now supports area plot with specifying `kind=''area''`
+    ([GH 6656](https://github.com/pandas-dev/pandas/issues/6656)), See [the docs](../user_guide/visualization.html#visualization-area-plot)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pie plots from `Series.plot` and `DataFrame.plot` with `kind='pie'` ([GH 6976](https://github.com/pandas-dev/pandas/issues/6976)),
+    See [the docs](../user_guide/visualization.html#visualization-pie).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Plotting with Error Bars is now supported in the `.plot` method of `DataFrame`
+    and `Series` objects ([GH 3796](https://github.com/pandas-dev/pandas/issues/3796),
+    [GH 6834](https://github.com/pandas-dev/pandas/issues/6834)), See [the docs](../user_guide/visualization.html#visualization-errorbars).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.plot` and `Series.plot` now support a `table` keyword for plotting
+    `matplotlib.Table`, See [the docs](../user_guide/visualization.html#visualization-table).
+    The `table` keyword can receive the following values.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`False`: Do nothing (default).'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`True`: Draw a table using the `DataFrame` or `Series` called `plot` method.
+    Data will be transposed to meet matplotlib’s default layout.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame` or `Series`: Draw matplotlib.table using the passed data. The data
+    will be drawn as displayed in print method (not transposed automatically). Also,
+    helper function `pandas.tools.plotting.table` is added to create a table from
+    `DataFrame` and `Series`, and add it to an `matplotlib.Axes`.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`plot(legend=''reverse'')` will now reverse the order of legend labels for
+    most plot kinds. ([GH 6014](https://github.com/pandas-dev/pandas/issues/6014))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Line plot and area plot can be stacked by `stacked=True` ([GH 6656](https://github.com/pandas-dev/pandas/issues/6656))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Following keywords are now acceptable for [`DataFrame.plot()`](../reference/api/pandas.DataFrame.plot.html#pandas.DataFrame.plot
+    "pandas.DataFrame.plot") with `kind=''bar''` and `kind=''barh''`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`width`: Specify the bar width. In previous versions, static value 0.5 was
+    passed to matplotlib and it cannot be overwritten. ([GH 6604](https://github.com/pandas-dev/pandas/issues/6604))'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`align`: Specify the bar alignment. Default is `center` (different from matplotlib).
+    In previous versions, pandas passes `align=''edge''` to matplotlib and adjust
+    the location to `center` by itself, and it results `align` keyword is not applied
+    as expected. ([GH 4525](https://github.com/pandas-dev/pandas/issues/4525))'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`position`: Specify relative alignments for bar plot layout. From 0 (left/bottom-end)
+    to 1(right/top-end). Default is 0.5 (center). ([GH 6604](https://github.com/pandas-dev/pandas/issues/6604))'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Because of the default `align` value changes, coordinates of bar plots are now
+    located on integer values (0.0, 1.0, 2.0 …). This is intended to make bar plot
+    be located on the same coordinates as line plot. However, bar plot may differs
+    unexpectedly when you manually adjust the bar location or drawing area, such as
+    using `set_xlim`, `set_ylim`, etc. In this cases, please modify your script to
+    meet with new coordinates.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The `parallel_coordinates()` function now takes argument `color` instead of
+    `colors`. A `FutureWarning` is raised to alert that the old `colors` argument
+    will not be supported in a future release. ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `parallel_coordinates()` and `andrews_curves()` functions now take positional
+    argument `frame` instead of `data`. A `FutureWarning` is raised if the old `data`
+    argument is used by name. ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame.boxplot()`](../reference/api/pandas.DataFrame.boxplot.html#pandas.DataFrame.boxplot
+    "pandas.DataFrame.boxplot") now supports `layout` keyword ([GH 6769](https://github.com/pandas-dev/pandas/issues/6769))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame.boxplot()`](../reference/api/pandas.DataFrame.boxplot.html#pandas.DataFrame.boxplot
+    "pandas.DataFrame.boxplot") has a new keyword argument, `return_type`. It accepts
+    `''dict''`, `''axes''`, or `''both''`, in which case a namedtuple with the matplotlib
+    axes and a dict of matplotlib Lines is returned.  ## Prior version deprecations/changes'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are prior version deprecations that are taking effect as of 0.14.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remove `DateRange` in favor of [`DatetimeIndex`](../reference/api/pandas.DatetimeIndex.html#pandas.DatetimeIndex
+    "pandas.DatetimeIndex") ([GH 6816](https://github.com/pandas-dev/pandas/issues/6816))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `column` keyword from `DataFrame.sort` ([GH 4370](https://github.com/pandas-dev/pandas/issues/4370))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `precision` keyword from [`set_eng_float_format()`](../reference/api/pandas.set_eng_float_format.html#pandas.set_eng_float_format
+    "pandas.set_eng_float_format") ([GH 395](https://github.com/pandas-dev/pandas/issues/395))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `force_unicode` keyword from [`DataFrame.to_string()`](../reference/api/pandas.DataFrame.to_string.html#pandas.DataFrame.to_string
+    "pandas.DataFrame.to_string"), [`DataFrame.to_latex()`](../reference/api/pandas.DataFrame.to_latex.html#pandas.DataFrame.to_latex
+    "pandas.DataFrame.to_latex"), and [`DataFrame.to_html()`](../reference/api/pandas.DataFrame.to_html.html#pandas.DataFrame.to_html
+    "pandas.DataFrame.to_html"); these function encode in unicode by default ([GH
+    2224](https://github.com/pandas-dev/pandas/issues/2224), [GH 2225](https://github.com/pandas-dev/pandas/issues/2225))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `nanRep` keyword from [`DataFrame.to_csv()`](../reference/api/pandas.DataFrame.to_csv.html#pandas.DataFrame.to_csv
+    "pandas.DataFrame.to_csv") and [`DataFrame.to_string()`](../reference/api/pandas.DataFrame.to_string.html#pandas.DataFrame.to_string
+    "pandas.DataFrame.to_string") ([GH 275](https://github.com/pandas-dev/pandas/issues/275))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `unique` keyword from `HDFStore.select_column()` ([GH 3256](https://github.com/pandas-dev/pandas/issues/3256))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `inferTimeRule` keyword from `Timestamp.offset()` ([GH 391](https://github.com/pandas-dev/pandas/issues/391))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `name` keyword from `get_data_yahoo()` and `get_data_google()` ( [commit
+    b921d1a](https://github.com/pandas-dev/pandas/commit/b921d1a2) )
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `offset` keyword from [`DatetimeIndex`](../reference/api/pandas.DatetimeIndex.html#pandas.DatetimeIndex
+    "pandas.DatetimeIndex") constructor ( [commit 3136390](https://github.com/pandas-dev/pandas/commit/3136390)
+    )
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `time_rule` from several rolling-moment statistical functions, such as
+    `rolling_sum()` ([GH 1042](https://github.com/pandas-dev/pandas/issues/1042))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Removed neg `-` boolean operations on numpy arrays in favor of inv `~`, as
+    this is going to be deprecated in numpy 1.9 ([GH 6960](https://github.com/pandas-dev/pandas/issues/6960))  ##
+    Deprecations'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The [`pivot_table()`](../reference/api/pandas.pivot_table.html#pandas.pivot_table
+    "pandas.pivot_table")/[`DataFrame.pivot_table()`](../reference/api/pandas.DataFrame.pivot_table.html#pandas.DataFrame.pivot_table
+    "pandas.DataFrame.pivot_table") and [`crosstab()`](../reference/api/pandas.crosstab.html#pandas.crosstab
+    "pandas.crosstab") functions now take arguments `index` and `columns` instead
+    of `rows` and `cols`. A `FutureWarning` is raised to alert that the old `rows`
+    and `cols` arguments will not be supported in a future release ([GH 5505](https://github.com/pandas-dev/pandas/issues/5505))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The [`DataFrame.drop_duplicates()`](../reference/api/pandas.DataFrame.drop_duplicates.html#pandas.DataFrame.drop_duplicates
+    "pandas.DataFrame.drop_duplicates") and [`DataFrame.duplicated()`](../reference/api/pandas.DataFrame.duplicated.html#pandas.DataFrame.duplicated
+    "pandas.DataFrame.duplicated") methods now take argument `subset` instead of `cols`
+    to better align with [`DataFrame.dropna()`](../reference/api/pandas.DataFrame.dropna.html#pandas.DataFrame.dropna
+    "pandas.DataFrame.dropna"). A `FutureWarning` is raised to alert that the old
+    `cols` arguments will not be supported in a future release ([GH 6680](https://github.com/pandas-dev/pandas/issues/6680))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The [`DataFrame.to_csv()`](../reference/api/pandas.DataFrame.to_csv.html#pandas.DataFrame.to_csv
+    "pandas.DataFrame.to_csv") and [`DataFrame.to_excel()`](../reference/api/pandas.DataFrame.to_excel.html#pandas.DataFrame.to_excel
+    "pandas.DataFrame.to_excel") functions now takes argument `columns` instead of
+    `cols`. A `FutureWarning` is raised to alert that the old `cols` arguments will
+    not be supported in a future release ([GH 6645](https://github.com/pandas-dev/pandas/issues/6645))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Indexers will warn `FutureWarning` when used with a scalar indexer and a non-floating
+    point Index ([GH 4892](https://github.com/pandas-dev/pandas/issues/4892), [GH
+    6960](https://github.com/pandas-dev/pandas/issues/6960))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Numpy 1.9 compat w.r.t. deprecation warnings ([GH 6960](https://github.com/pandas-dev/pandas/issues/6960))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Panel.shift()` now has a function signature that matches [`DataFrame.shift()`](../reference/api/pandas.DataFrame.shift.html#pandas.DataFrame.shift
+    "pandas.DataFrame.shift"). The old positional argument `lags` has been changed
+    to a keyword argument `periods` with a default value of 1\. A `FutureWarning`
+    is raised if the old argument `lags` is used by name. ([GH 6910](https://github.com/pandas-dev/pandas/issues/6910))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `order` keyword argument of [`factorize()`](../reference/api/pandas.factorize.html#pandas.factorize
+    "pandas.factorize") will be removed. ([GH 6926](https://github.com/pandas-dev/pandas/issues/6926)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove the `copy` keyword from [`DataFrame.xs()`](../reference/api/pandas.DataFrame.xs.html#pandas.DataFrame.xs
+    "pandas.DataFrame.xs"), `Panel.major_xs()`, `Panel.minor_xs()`. A view will be
+    returned if possible, otherwise a copy will be made. Previously the user could
+    think that `copy=False` would ALWAYS return a view. ([GH 6894](https://github.com/pandas-dev/pandas/issues/6894))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `parallel_coordinates()` function now takes argument `color` instead of
+    `colors`. A `FutureWarning` is raised to alert that the old `colors` argument
+    will not be supported in a future release. ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `parallel_coordinates()` and `andrews_curves()` functions now take positional
+    argument `frame` instead of `data`. A `FutureWarning` is raised if the old `data`
+    argument is used by name. ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The support for the ‘mysql’ flavor when using DBAPI connection objects has been
+    deprecated. MySQL will be further supported with SQLAlchemy engines ([GH 6900](https://github.com/pandas-dev/pandas/issues/6900)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following `io.sql` functions have been deprecated: `tquery`, `uquery`,
+    `read_frame`, `frame_query`, `write_frame`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `percentile_width` keyword argument in [`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
+    "pandas.DataFrame.describe") has been deprecated. Use the `percentiles` keyword
+    instead, which takes a list of percentiles to display. The default output is unchanged.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The default return type of `boxplot()` will change from a dict to a matplotlib
+    Axes in a future release. You can use the future behavior now by passing `return_type=''axes''`
+    to boxplot.  ## Known issues'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'OpenPyXL 2.0.0 breaks backwards compatibility ([GH 7169](https://github.com/pandas-dev/pandas/issues/7169))  ##
+    Enhancements'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: DataFrame and Series will create a MultiIndex object if passed a tuples dict,
+    See [the docs](../user_guide/dsintro.html#basics-dataframe-from-dict-of-tuples)
+    ([GH 3323](https://github.com/pandas-dev/pandas/issues/3323))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Added the `sym_diff` method to `Index` ([GH 5543](https://github.com/pandas-dev/pandas/issues/5543))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.to_latex` now takes a longtable keyword, which if True will return
+    a table in a longtable environment. ([GH 6617](https://github.com/pandas-dev/pandas/issues/6617))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add option to turn off escaping in `DataFrame.to_latex` ([GH 6472](https://github.com/pandas-dev/pandas/issues/6472))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pd.read_clipboard` will, if the keyword `sep` is unspecified, try to detect
+    data copied from a spreadsheet and parse accordingly. ([GH 6223](https://github.com/pandas-dev/pandas/issues/6223))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joining a singly-indexed DataFrame with a MultiIndexed DataFrame ([GH 3662](https://github.com/pandas-dev/pandas/issues/3662))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See [the docs](../user_guide/merging.html#merging-join-on-mi). Joining MultiIndex
+    DataFrames on both the left and right is not yet supported ATM.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`quotechar`, `doublequote`, and `escapechar` can now be specified when using
+    `DataFrame.to_csv` ([GH 5414](https://github.com/pandas-dev/pandas/issues/5414),
+    [GH 4528](https://github.com/pandas-dev/pandas/issues/4528))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Partially sort by only the specified levels of a MultiIndex with the `sort_remaining`
+    boolean kwarg. ([GH 3984](https://github.com/pandas-dev/pandas/issues/3984))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Added `to_julian_date` to `TimeStamp` and `DatetimeIndex`. The Julian Date is
+    used primarily in astronomy and represents the number of days from noon, January
+    1, 4713 BC. Because nanoseconds are used to define the time in pandas the actual
+    range of dates that you can use is 1678 AD to 2262 AD. ([GH 4041](https://github.com/pandas-dev/pandas/issues/4041))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.to_stata` will now check data for compatibility with Stata data
+    types and will upcast when needed. When it is not possible to losslessly upcast,
+    a warning is issued ([GH 6327](https://github.com/pandas-dev/pandas/issues/6327))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.to_stata` and `StataWriter` will accept keyword arguments time_stamp
+    and data_label which allow the time stamp and dataset label to be set when creating
+    a file. ([GH 6545](https://github.com/pandas-dev/pandas/issues/6545))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pandas.io.gbq` now handles reading unicode strings properly. ([GH 5940](https://github.com/pandas-dev/pandas/issues/5940))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Holidays Calendars](../user_guide/timeseries.html#timeseries-holiday) are
+    now available and can be used with the `CustomBusinessDay` offset ([GH 6719](https://github.com/pandas-dev/pandas/issues/6719))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Float64Index` is now backed by a `float64` dtype ndarray instead of an `object`
+    dtype array ([GH 6471](https://github.com/pandas-dev/pandas/issues/6471)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Implemented `Panel.pct_change` ([GH 6904](https://github.com/pandas-dev/pandas/issues/6904))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Added `how` option to rolling-moment functions to dictate how to handle resampling;
+    `rolling_max()` defaults to max, `rolling_min()` defaults to min, and all others
+    default to mean ([GH 6297](https://github.com/pandas-dev/pandas/issues/6297))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`CustomBusinessMonthBegin` and `CustomBusinessMonthEnd` are now available ([GH
+    6866](https://github.com/pandas-dev/pandas/issues/6866))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Series.quantile()`](../reference/api/pandas.Series.quantile.html#pandas.Series.quantile
+    "pandas.Series.quantile") and [`DataFrame.quantile()`](../reference/api/pandas.DataFrame.quantile.html#pandas.DataFrame.quantile
+    "pandas.DataFrame.quantile") now accept an array of quantiles.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
+    "pandas.DataFrame.describe") now accepts an array of percentiles to include in
+    the summary statistics ([GH 4196](https://github.com/pandas-dev/pandas/issues/4196))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pivot_table` can now accept `Grouper` by `index` and `columns` keywords ([GH
+    6913](https://github.com/pandas-dev/pandas/issues/6913))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Arrays of strings can be wrapped to a specified width (`str.wrap`) ([GH 6999](https://github.com/pandas-dev/pandas/issues/6999))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [`nsmallest()`](../reference/api/pandas.Series.nsmallest.html#pandas.Series.nsmallest
+    "pandas.Series.nsmallest") and [`Series.nlargest()`](../reference/api/pandas.Series.nlargest.html#pandas.Series.nlargest
+    "pandas.Series.nlargest") methods to Series, See [the docs](../user_guide/basics.html#basics-nsorted)
+    ([GH 3960](https://github.com/pandas-dev/pandas/issues/3960))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`PeriodIndex` fully supports partial string indexing like `DatetimeIndex` ([GH
+    7043](https://github.com/pandas-dev/pandas/issues/7043))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`read_excel` can now read milliseconds in Excel dates and times with xlrd >=
+    0.9.3\. ([GH 5945](https://github.com/pandas-dev/pandas/issues/5945))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pd.stats.moments.rolling_var` now uses Welford’s method for increased numerical
+    stability ([GH 6817](https://github.com/pandas-dev/pandas/issues/6817))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: pd.expanding_apply and pd.rolling_apply now take args and kwargs that are passed
+    on to the func ([GH 6289](https://github.com/pandas-dev/pandas/issues/6289))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.rank()` now has a percentage rank option ([GH 5971](https://github.com/pandas-dev/pandas/issues/5971))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Series.rank()` now has a percentage rank option ([GH 5971](https://github.com/pandas-dev/pandas/issues/5971))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Series.rank()` and `DataFrame.rank()` now accept `method=''dense''` for ranks
+    without gaps ([GH 6514](https://github.com/pandas-dev/pandas/issues/6514))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support passing `encoding` with xlwt ([GH 3710](https://github.com/pandas-dev/pandas/issues/3710))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Refactor Block classes removing `Block.items` attributes to avoid duplication
+    in item handling ([GH 6745](https://github.com/pandas-dev/pandas/issues/6745),
+    [GH 6988](https://github.com/pandas-dev/pandas/issues/6988)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Testing statements updated to use specialized asserts ([GH 6175](https://github.com/pandas-dev/pandas/issues/6175))  ##
+    Performance'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvement when converting `DatetimeIndex` to floating ordinals
+    using `DatetimeConverter` ([GH 6636](https://github.com/pandas-dev/pandas/issues/6636))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvement for `DataFrame.shift` ([GH 5609](https://github.com/pandas-dev/pandas/issues/5609))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvement in indexing into a MultiIndexed Series ([GH 5567](https://github.com/pandas-dev/pandas/issues/5567))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvements in single-dtyped indexing ([GH 6484](https://github.com/pandas-dev/pandas/issues/6484))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improve performance of DataFrame construction with certain offsets, by removing
+    faulty caching (e.g. MonthEnd,BusinessMonthEnd), ([GH 6479](https://github.com/pandas-dev/pandas/issues/6479))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improve performance of `CustomBusinessDay` ([GH 6584](https://github.com/pandas-dev/pandas/issues/6584))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: improve performance of slice indexing on Series with string keys ([GH 6341](https://github.com/pandas-dev/pandas/issues/6341),
+    [GH 6372](https://github.com/pandas-dev/pandas/issues/6372))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvement for `DataFrame.from_records` when reading a specified
+    number of rows from an iterable ([GH 6700](https://github.com/pandas-dev/pandas/issues/6700))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvements in timedelta conversions for integer dtypes ([GH 6754](https://github.com/pandas-dev/pandas/issues/6754))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improved performance of compatible pickles ([GH 6899](https://github.com/pandas-dev/pandas/issues/6899))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improve performance in certain reindexing operations by optimizing `take_2d`
+    ([GH 6749](https://github.com/pandas-dev/pandas/issues/6749))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`GroupBy.count()` is now implemented in Cython and is much faster for large
+    numbers of groups ([GH 7016](https://github.com/pandas-dev/pandas/issues/7016)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Experimental
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are no experimental changes in 0.14.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Bug fixes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bug in Series ValueError when index doesn’t match data ([GH 6532](https://github.com/pandas-dev/pandas/issues/6532))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Prevent segfault due to MultiIndex not being supported in HDFStore table format
+    ([GH 1848](https://github.com/pandas-dev/pandas/issues/1848))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `pd.DataFrame.sort_index` where mergesort wasn’t stable when `ascending=False`
+    ([GH 6399](https://github.com/pandas-dev/pandas/issues/6399))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `pd.tseries.frequencies.to_offset` when argument has leading zeros ([GH
+    6391](https://github.com/pandas-dev/pandas/issues/6391))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in version string gen. for dev versions with shallow clones / install from
+    tarball ([GH 6127](https://github.com/pandas-dev/pandas/issues/6127))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Inconsistent tz parsing `Timestamp` / `to_datetime` for current year ([GH 5958](https://github.com/pandas-dev/pandas/issues/5958))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Indexing bugs with reordered indexes ([GH 6252](https://github.com/pandas-dev/pandas/issues/6252),
+    [GH 6254](https://github.com/pandas-dev/pandas/issues/6254))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `.xs` with a Series multiindex ([GH 6258](https://github.com/pandas-dev/pandas/issues/6258),
+    [GH 5684](https://github.com/pandas-dev/pandas/issues/5684))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in conversion of a string types to a DatetimeIndex with a specified frequency
+    ([GH 6273](https://github.com/pandas-dev/pandas/issues/6273), [GH 6274](https://github.com/pandas-dev/pandas/issues/6274))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `eval` where type-promotion failed for large expressions ([GH 6205](https://github.com/pandas-dev/pandas/issues/6205))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in interpolate with `inplace=True` ([GH 6281](https://github.com/pandas-dev/pandas/issues/6281))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`HDFStore.remove` now handles start and stop ([GH 6177](https://github.com/pandas-dev/pandas/issues/6177))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`HDFStore.select_as_multiple` handles start and stop the same way as `select`
+    ([GH 6177](https://github.com/pandas-dev/pandas/issues/6177))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`HDFStore.select_as_coordinates` and `select_column` works with a `where` clause
+    that results in filters ([GH 6177](https://github.com/pandas-dev/pandas/issues/6177))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression in join of non_unique_indexes ([GH 6329](https://github.com/pandas-dev/pandas/issues/6329))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Issue with groupby `agg` with a single function and a mixed-type frame ([GH
+    6337](https://github.com/pandas-dev/pandas/issues/6337))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.replace()` when passing a non- `bool` `to_replace` argument
+    ([GH 6332](https://github.com/pandas-dev/pandas/issues/6332))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raise when trying to align on different levels of a MultiIndex assignment ([GH
+    3738](https://github.com/pandas-dev/pandas/issues/3738))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setting complex dtypes via boolean indexing ([GH 6345](https://github.com/pandas-dev/pandas/issues/6345))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in TimeGrouper/resample when presented with a non-monotonic DatetimeIndex
+    that would return invalid results. ([GH 4161](https://github.com/pandas-dev/pandas/issues/4161))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in index name propagation in TimeGrouper/resample ([GH 4161](https://github.com/pandas-dev/pandas/issues/4161))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: TimeGrouper has a more compatible API to the rest of the groupers (e.g. `groups`
+    was missing) ([GH 3881](https://github.com/pandas-dev/pandas/issues/3881))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in multiple grouping with a TimeGrouper depending on target column order
+    ([GH 6764](https://github.com/pandas-dev/pandas/issues/6764))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `pd.eval` when parsing strings with possible tokens like `'&'` ([GH 6351](https://github.com/pandas-dev/pandas/issues/6351))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug correctly handle placements of `-inf` in Panels when dividing by integer
+    0 ([GH 6178](https://github.com/pandas-dev/pandas/issues/6178))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.shift` with `axis=1` was raising ([GH 6371](https://github.com/pandas-dev/pandas/issues/6371))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Disabled clipboard tests until release time (run locally with `nosetests -A
+    disabled`) ([GH 6048](https://github.com/pandas-dev/pandas/issues/6048)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.replace()` when passing a nested `dict` that contained keys
+    not in the values to be replaced ([GH 6342](https://github.com/pandas-dev/pandas/issues/6342))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`str.match` ignored the na flag ([GH 6609](https://github.com/pandas-dev/pandas/issues/6609)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in take with duplicate columns that were not consolidated ([GH 6240](https://github.com/pandas-dev/pandas/issues/6240))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in interpolate changing dtypes ([GH 6290](https://github.com/pandas-dev/pandas/issues/6290))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.get`, was using a buggy access method ([GH 6383](https://github.com/pandas-dev/pandas/issues/6383))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in hdfstore queries of the form `where=[('date', '>=', datetime(2013,1,1)),
+    ('date', '<=', datetime(2014,1,1))]` ([GH 6313](https://github.com/pandas-dev/pandas/issues/6313))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.dropna` with duplicate indices ([GH 6355](https://github.com/pandas-dev/pandas/issues/6355))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression in chained getitem indexing with embedded list-like from 0.12 ([GH
+    6394](https://github.com/pandas-dev/pandas/issues/6394))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Float64Index` with nans not comparing correctly ([GH 6401](https://github.com/pandas-dev/pandas/issues/6401))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`eval`/`query` expressions with strings containing the `@` character will now
+    work ([GH 6366](https://github.com/pandas-dev/pandas/issues/6366)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.reindex` when specifying a `method` with some nan values was
+    inconsistent (noted on a resample) ([GH 6418](https://github.com/pandas-dev/pandas/issues/6418))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in [`DataFrame.replace()`](../reference/api/pandas.DataFrame.replace.html#pandas.DataFrame.replace
+    "pandas.DataFrame.replace") where nested dicts were erroneously depending on the
+    order of dictionary keys and values ([GH 5338](https://github.com/pandas-dev/pandas/issues/5338)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance issue in concatenating with empty objects ([GH 3259](https://github.com/pandas-dev/pandas/issues/3259))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Clarify sorting of `sym_diff` on `Index` objects with `NaN` values ([GH 6444](https://github.com/pandas-dev/pandas/issues/6444))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression in `MultiIndex.from_product` with a `DatetimeIndex` as input ([GH
+    6439](https://github.com/pandas-dev/pandas/issues/6439))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `str.extract` when passed a non-default index ([GH 6348](https://github.com/pandas-dev/pandas/issues/6348))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `str.split` when passed `pat=None` and `n=1` ([GH 6466](https://github.com/pandas-dev/pandas/issues/6466))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `io.data.DataReader` when passed `"F-F_Momentum_Factor"` and `data_source="famafrench"`
+    ([GH 6460](https://github.com/pandas-dev/pandas/issues/6460))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `sum` of a `timedelta64[ns]` series ([GH 6462](https://github.com/pandas-dev/pandas/issues/6462))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `resample` with a timezone and certain offsets ([GH 6397](https://github.com/pandas-dev/pandas/issues/6397))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `iat/iloc` with duplicate indices on a Series ([GH 6493](https://github.com/pandas-dev/pandas/issues/6493))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `read_html` where nan’s were incorrectly being used to indicate missing
+    values in text. Should use the empty string for consistency with the rest of pandas
+    ([GH 5129](https://github.com/pandas-dev/pandas/issues/5129)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `read_html` tests where redirected invalid URLs would make one test fail
+    ([GH 6445](https://github.com/pandas-dev/pandas/issues/6445)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in multi-axis indexing using `.loc` on non-unique indices ([GH 6504](https://github.com/pandas-dev/pandas/issues/6504))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug that caused _ref_locs corruption when slice indexing across columns axis
+    of a DataFrame ([GH 6525](https://github.com/pandas-dev/pandas/issues/6525))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression from 0.13 in the treatment of numpy `datetime64` non-ns dtypes in
+    Series creation ([GH 6529](https://github.com/pandas-dev/pandas/issues/6529))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.names` attribute of MultiIndexes passed to `set_index` are now preserved
+    ([GH 6459](https://github.com/pandas-dev/pandas/issues/6459)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setitem with a duplicate index and an alignable rhs ([GH 6541](https://github.com/pandas-dev/pandas/issues/6541))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setitem with `.loc` on mixed integer Indexes ([GH 6546](https://github.com/pandas-dev/pandas/issues/6546))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `pd.read_stata` which would use the wrong data types and missing values
+    ([GH 6327](https://github.com/pandas-dev/pandas/issues/6327))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.to_stata` that lead to data loss in certain cases, and could
+    be exported using the wrong data types and missing values ([GH 6335](https://github.com/pandas-dev/pandas/issues/6335))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`StataWriter` replaces missing values in string columns by empty string ([GH
+    6802](https://github.com/pandas-dev/pandas/issues/6802))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Inconsistent types in `Timestamp` addition/subtraction ([GH 6543](https://github.com/pandas-dev/pandas/issues/6543))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in preserving frequency across Timestamp addition/subtraction ([GH 4547](https://github.com/pandas-dev/pandas/issues/4547))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in empty list lookup caused `IndexError` exceptions ([GH 6536](https://github.com/pandas-dev/pandas/issues/6536),
+    [GH 6551](https://github.com/pandas-dev/pandas/issues/6551))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Series.quantile` raising on an `object` dtype ([GH 6555](https://github.com/pandas-dev/pandas/issues/6555))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `.xs` with a `nan` in level when dropped ([GH 6574](https://github.com/pandas-dev/pandas/issues/6574))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in fillna with `method='bfill/ffill'` and `datetime64[ns]` dtype ([GH 6587](https://github.com/pandas-dev/pandas/issues/6587))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in sql writing with mixed dtypes possibly leading to data loss ([GH 6509](https://github.com/pandas-dev/pandas/issues/6509))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.pop` ([GH 6600](https://github.com/pandas-dev/pandas/issues/6600))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `iloc` indexing when positional indexer matched `Int64Index` of the corresponding
+    axis and no reordering happened ([GH 6612](https://github.com/pandas-dev/pandas/issues/6612))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `fillna` with `limit` and `value` specified
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.to_stata` when columns have non-string names ([GH 4558](https://github.com/pandas-dev/pandas/issues/4558))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in compat with `np.compress`, surfaced in ([GH 6658](https://github.com/pandas-dev/pandas/issues/6658))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in binary operations with a rhs of a Series not aligning ([GH 6681](https://github.com/pandas-dev/pandas/issues/6681))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.to_stata` which incorrectly handles nan values and ignores
+    `with_index` keyword argument ([GH 6685](https://github.com/pandas-dev/pandas/issues/6685))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in resample with extra bins when using an evenly divisible frequency ([GH
+    4076](https://github.com/pandas-dev/pandas/issues/4076))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in consistency of groupby aggregation when passing a custom function ([GH
+    6715](https://github.com/pandas-dev/pandas/issues/6715))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in resample when `how=None` resample freq is the same as the axis frequency
+    ([GH 5955](https://github.com/pandas-dev/pandas/issues/5955))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in downcasting inference with empty arrays ([GH 6733](https://github.com/pandas-dev/pandas/issues/6733))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `obj.blocks` on sparse containers dropping all but the last items of
+    same for dtype ([GH 6748](https://github.com/pandas-dev/pandas/issues/6748))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in unpickling `NaT (NaTType)` ([GH 4606](https://github.com/pandas-dev/pandas/issues/4606))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.replace()` where regex meta characters were being treated
+    as regex even when `regex=False` ([GH 6777](https://github.com/pandas-dev/pandas/issues/6777)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in timedelta ops on 32-bit platforms ([GH 6808](https://github.com/pandas-dev/pandas/issues/6808))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setting a tz-aware index directly via `.index` ([GH 6785](https://github.com/pandas-dev/pandas/issues/6785))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in expressions.py where numexpr would try to evaluate arithmetic ops ([GH
+    6762](https://github.com/pandas-dev/pandas/issues/6762)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in Makefile where it didn’t remove Cython generated C files with `make clean`
+    ([GH 6768](https://github.com/pandas-dev/pandas/issues/6768))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug with numpy < 1.7.2 when reading long strings from `HDFStore` ([GH 6166](https://github.com/pandas-dev/pandas/issues/6166))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame._reduce` where non bool-like (0/1) integers were being converted
+    into bools. ([GH 6806](https://github.com/pandas-dev/pandas/issues/6806))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression from 0.13 with `fillna` and a Series on datetime-like ([GH 6344](https://github.com/pandas-dev/pandas/issues/6344))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in adding `np.timedelta64` to `DatetimeIndex` with timezone outputs incorrect
+    results ([GH 6818](https://github.com/pandas-dev/pandas/issues/6818))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.replace()` where changing a dtype through replacement would
+    only replace the first occurrence of a value ([GH 6689](https://github.com/pandas-dev/pandas/issues/6689))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Better error message when passing a frequency of ‘MS’ in `Period` construction
+    (GH5332)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.__unicode__` when `max_rows=None` and the Series has more than
+    1000 rows. ([GH 6863](https://github.com/pandas-dev/pandas/issues/6863))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `groupby.get_group` where a datelike wasn’t always accepted ([GH 5267](https://github.com/pandas-dev/pandas/issues/5267))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `groupBy.get_group` created by `TimeGrouper` raises `AttributeError`
+    ([GH 6914](https://github.com/pandas-dev/pandas/issues/6914))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DatetimeIndex.tz_localize` and `DatetimeIndex.tz_convert` converting
+    `NaT` incorrectly ([GH 5546](https://github.com/pandas-dev/pandas/issues/5546))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in arithmetic operations affecting `NaT` ([GH 6873](https://github.com/pandas-dev/pandas/issues/6873))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.str.extract` where the resulting `Series` from a single group
+    match wasn’t renamed to the group name
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.to_csv` where setting `index=False` ignored the `header` kwarg
+    ([GH 6186](https://github.com/pandas-dev/pandas/issues/6186))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.plot` and `Series.plot`, where the legend behave inconsistently
+    when plotting to the same axes repeatedly ([GH 6678](https://github.com/pandas-dev/pandas/issues/6678))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Internal tests for patching `__finalize__` / bug in merge not finalizing ([GH
+    6923](https://github.com/pandas-dev/pandas/issues/6923), [GH 6927](https://github.com/pandas-dev/pandas/issues/6927))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: accept `TextFileReader` in `concat`, which was affecting a common user idiom
+    ([GH 6583](https://github.com/pandas-dev/pandas/issues/6583))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in C parser with leading white space ([GH 3374](https://github.com/pandas-dev/pandas/issues/3374))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in C parser with `delim_whitespace=True` and `\r`-delimited lines
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in python parser with explicit MultiIndex in row following column header
+    ([GH 6893](https://github.com/pandas-dev/pandas/issues/6893))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.rank` and `DataFrame.rank` that caused small floats (<1e-13)
+    to all receive the same rank ([GH 6886](https://github.com/pandas-dev/pandas/issues/6886))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.apply` with functions that used `*args` or `**kwargs` and
+    returned an empty result ([GH 6952](https://github.com/pandas-dev/pandas/issues/6952))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in sum/mean on 32-bit platforms on overflows ([GH 6915](https://github.com/pandas-dev/pandas/issues/6915))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Moved `Panel.shift` to `NDFrame.slice_shift` and fixed to respect multiple dtypes.
+    ([GH 6959](https://github.com/pandas-dev/pandas/issues/6959))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in enabling `subplots=True` in `DataFrame.plot` only has single column raises
+    `TypeError`, and `Series.plot` raises `AttributeError` ([GH 6951](https://github.com/pandas-dev/pandas/issues/6951))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.plot` draws unnecessary axes when enabling `subplots` and
+    `kind=scatter` ([GH 6951](https://github.com/pandas-dev/pandas/issues/6951))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `read_csv` from a filesystem with non-utf-8 encoding ([GH 6807](https://github.com/pandas-dev/pandas/issues/6807))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `iloc` when setting / aligning ([GH 6766](https://github.com/pandas-dev/pandas/issues/6766))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug causing UnicodeEncodeError when get_dummies called with unicode values and
+    a prefix ([GH 6885](https://github.com/pandas-dev/pandas/issues/6885))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in timeseries-with-frequency plot cursor display ([GH 5453](https://github.com/pandas-dev/pandas/issues/5453))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug surfaced in `groupby.plot` when using a `Float64Index` ([GH 7025](https://github.com/pandas-dev/pandas/issues/7025))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stopped tests from failing if options data isn’t able to be downloaded from
+    Yahoo ([GH 7034](https://github.com/pandas-dev/pandas/issues/7034))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `parallel_coordinates` and `radviz` where reordering of class column
+    caused possible color/class mismatch ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `radviz` and `andrews_curves` where multiple values of ‘color’ were being
+    passed to plotting method ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Float64Index.isin()` where containing `nan` s would make indices claim
+    that they contained all the things ([GH 7066](https://github.com/pandas-dev/pandas/issues/7066)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.boxplot` where it failed to use the axis passed as the `ax`
+    argument ([GH 3578](https://github.com/pandas-dev/pandas/issues/3578))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in the `XlsxWriter` and `XlwtWriter` implementations that resulted in datetime
+    columns being formatted without the time ([GH 7075](https://github.com/pandas-dev/pandas/issues/7075))
+    were being passed to plotting method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_fwf()`](../reference/api/pandas.read_fwf.html#pandas.read_fwf "pandas.read_fwf")
+    treats `None` in `colspec` like regular python slices. It now reads from the beginning
+    or until the end of the line when `colspec` contains a `None` (previously raised
+    a `TypeError`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in cache coherence with chained indexing and slicing; add `_is_view` property
+    to `NDFrame` to correctly predict views; mark `is_copy` on `xs` only if its an
+    actual copy (and not a view) ([GH 7084](https://github.com/pandas-dev/pandas/issues/7084))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in DatetimeIndex creation from string ndarray with `dayfirst=True` ([GH
+    5917](https://github.com/pandas-dev/pandas/issues/5917))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `MultiIndex.from_arrays` created from `DatetimeIndex` doesn’t preserve
+    `freq` and `tz` ([GH 7090](https://github.com/pandas-dev/pandas/issues/7090))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `unstack` raises `ValueError` when `MultiIndex` contains `PeriodIndex`
+    ([GH 4342](https://github.com/pandas-dev/pandas/issues/4342))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `boxplot` and `hist` draws unnecessary axes ([GH 6769](https://github.com/pandas-dev/pandas/issues/6769))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression in `groupby.nth()` for out-of-bounds indexers ([GH 6621](https://github.com/pandas-dev/pandas/issues/6621))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `quantile` with datetime values ([GH 6965](https://github.com/pandas-dev/pandas/issues/6965))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Dataframe.set_index`, `reindex` and `pivot` don’t preserve `DatetimeIndex`
+    and `PeriodIndex` attributes ([GH 3950](https://github.com/pandas-dev/pandas/issues/3950),
+    [GH 5878](https://github.com/pandas-dev/pandas/issues/5878), [GH 6631](https://github.com/pandas-dev/pandas/issues/6631))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `MultiIndex.get_level_values` doesn’t preserve `DatetimeIndex` and `PeriodIndex`
+    attributes ([GH 7092](https://github.com/pandas-dev/pandas/issues/7092))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Groupby` doesn’t preserve `tz` ([GH 3950](https://github.com/pandas-dev/pandas/issues/3950))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `PeriodIndex` partial string slicing ([GH 6716](https://github.com/pandas-dev/pandas/issues/6716))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in the HTML repr of a truncated Series or DataFrame not showing the class
+    name with the `large_repr` set to ‘info’ ([GH 7105](https://github.com/pandas-dev/pandas/issues/7105))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DatetimeIndex` specifying `freq` raises `ValueError` when passed value
+    is too short ([GH 7098](https://github.com/pandas-dev/pandas/issues/7098))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fixed a bug with the `info` repr not honoring the `display.max_info_columns`
+    setting ([GH 6939](https://github.com/pandas-dev/pandas/issues/6939))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug `PeriodIndex` string slicing with out of bounds values ([GH 5407](https://github.com/pandas-dev/pandas/issues/5407))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fixed a memory error in the hashtable implementation/factorizer on resizing
+    of large tables ([GH 7157](https://github.com/pandas-dev/pandas/issues/7157))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `isnull` when applied to 0-dimensional object arrays ([GH 7176](https://github.com/pandas-dev/pandas/issues/7176))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `query`/`eval` where global constants were not looked up correctly ([GH
+    7178](https://github.com/pandas-dev/pandas/issues/7178))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in recognizing out-of-bounds positional list indexers with `iloc` and a
+    multi-axis tuple indexer ([GH 7189](https://github.com/pandas-dev/pandas/issues/7189))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setitem with a single value, MultiIndex and integer indices ([GH 7190](https://github.com/pandas-dev/pandas/issues/7190),
+    [GH 7218](https://github.com/pandas-dev/pandas/issues/7218))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in expressions evaluation with reversed ops, showing in series-dataframe
+    ops ([GH 7198](https://github.com/pandas-dev/pandas/issues/7198), [GH 7192](https://github.com/pandas-dev/pandas/issues/7192))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in multi-axis indexing with > 2 ndim and a MultiIndex ([GH 7199](https://github.com/pandas-dev/pandas/issues/7199))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Fix a bug where invalid eval/query operations would blow the stack ([GH 5198](https://github.com/pandas-dev/pandas/issues/5198))  ##
+    Contributors'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A total of 94 people contributed patches to this release. People with a “+”
+    by their names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acanthostega +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adam Marcus +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alex Gaudio
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alex Rothberg
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: AllenDowney +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andrew Rosenfeld +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andy Hayden
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Antoine Mazières +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Benedikt Sauer
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brad Buran
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christopher Whelan
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Clark Fitzgerald
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: DSM
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dale Jung
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dan Allan
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dan Birken
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Daniel Waeber
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Jung +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Stephens +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Douglas McNeil
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Garrett Drapala
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gouthaman Balaraman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guillaume Poulin +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jacob Howard +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jacob Schaer
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jason Sexauer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeff Reback
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeff Tratner
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeffrey Starr +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John David Reaver +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John McNamara
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John W. O’Brien
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jonathan Chambers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joris Van den Bossche
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Julia Evans
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Júlio +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: K.-Michael Aye
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Katie Atkinson +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kelsey Jordahl
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kevin Sheppard +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matt Wittmann +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matthias Kuhn +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Max Grender-Jones +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Michael E. Gruen +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mike Kelly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nipun Batra +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Noah Spies +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PKEuS
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Patrick O’Keeffe
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Phillip Cloud
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pietro Battiston +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Randy Carnevale +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robert Gibboni +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Skipper Seabold
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SplashDance +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stephan Hoyer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tim Cera +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tobias Brandt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Todd Jennings +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tom Augspurger
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: TomAugspurger
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yaroslav Halchenko
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: agijsberts +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: akittredge
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ankostis +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: anomrake
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: anton-d +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: bashtage +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: benjamin +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: bwignall
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: cgohlke +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: chebee7i +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: clham +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: danielballan
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: hshimizu77 +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: hugo +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: immerrr
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ischwabacher +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jaimefrio +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jreback
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jsexauer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: kdiether +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: michaelws +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: mikebailey +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ojdo +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: onesandzeroes +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: phaebz +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ribonoous +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: rockg
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: sinhrks +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: unutbu
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: westurner
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: y-p
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'zach powers  ## API changes'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`read_excel` uses 0 as the default sheet ([GH 6573](https://github.com/pandas-dev/pandas/issues/6573))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`iloc` will now accept out-of-bounds indexers for slices, e.g. a value that
+    exceeds the length of the object being indexed. These will be excluded. This will
+    make pandas conform more with python/numpy indexing of out-of-bounds values. A
+    single indexer that is out-of-bounds and drops the dimensions of the object will
+    still raise `IndexError` ([GH 6296](https://github.com/pandas-dev/pandas/issues/6296),
+    [GH 6299](https://github.com/pandas-dev/pandas/issues/6299)). This could result
+    in an empty axis (e.g. an empty DataFrame being returned)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: These are out-of-bounds selections
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Slicing with negative start, stop & step values handles corner cases better
+    ([GH 6531](https://github.com/pandas-dev/pandas/issues/6531)):'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`df.iloc[:-len(df)]` is now empty'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`df.iloc[len(df)::-1]` now enumerates all elements in reverse'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The [`DataFrame.interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") keyword `downcast` default has been changed from
+    `infer` to `None`. This is to preserve the original dtype unless explicitly requested
+    otherwise ([GH 6290](https://github.com/pandas-dev/pandas/issues/6290)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When converting a dataframe to HTML it used to return `Empty DataFrame`. This
+    special case has been removed, instead a header with the column names is returned
+    ([GH 6062](https://github.com/pandas-dev/pandas/issues/6062)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Series` and `Index` now internally share more common operations, e.g. `factorize(),nunique(),value_counts()`
+    are now supported on `Index` types as well. The `Series.weekday` property from
+    is removed from Series for API consistency. Using a `DatetimeIndex/PeriodIndex`
+    method on a Series will now raise a `TypeError`. ([GH 4551](https://github.com/pandas-dev/pandas/issues/4551),
+    [GH 4056](https://github.com/pandas-dev/pandas/issues/4056), [GH 5519](https://github.com/pandas-dev/pandas/issues/5519),
+    [GH 6380](https://github.com/pandas-dev/pandas/issues/6380), [GH 7206](https://github.com/pandas-dev/pandas/issues/7206)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add `is_month_start`, `is_month_end`, `is_quarter_start`, `is_quarter_end`,
+    `is_year_start`, `is_year_end` accessors for `DateTimeIndex` / `Timestamp` which
+    return a boolean array of whether the timestamp(s) are at the start/end of the
+    month/quarter/year defined by the frequency of the `DateTimeIndex` / `Timestamp`
+    ([GH 4565](https://github.com/pandas-dev/pandas/issues/4565), [GH 6998](https://github.com/pandas-dev/pandas/issues/6998))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Local variable usage has changed in [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")/[`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval")/[`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") ([GH 5987](https://github.com/pandas-dev/pandas/issues/5987)).
+    For the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") methods, two things have changed
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Column names are now given precedence over locals
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Local variables must be referred to explicitly. This means that even if you
+    have a local variable that is *not* a column you must still refer to it with the
+    `'@'` prefix.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can have an expression like `df.query('@a < a')` with no complaints from
+    `pandas` about ambiguity of the name `a`.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The top-level [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") function does not allow you use the `'@'` prefix and provides you
+    with an error message telling you so.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`NameResolutionError` was removed because it isn’t necessary anymore.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Define and document the order of column vs index names in query/eval ([GH 6676](https://github.com/pandas-dev/pandas/issues/6676))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`concat` will now concatenate mixed Series and DataFrames using the Series
+    name or numbering columns as needed ([GH 2385](https://github.com/pandas-dev/pandas/issues/2385)).
+    See [the docs](../user_guide/merging.html#merging-mixed-ndims)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Slicing and advanced/boolean indexing operations on `Index` classes as well
+    as [`Index.delete()`](../reference/api/pandas.Index.delete.html#pandas.Index.delete
+    "pandas.Index.delete") and [`Index.drop()`](../reference/api/pandas.Index.drop.html#pandas.Index.drop
+    "pandas.Index.drop") methods will no longer change the type of the resulting index
+    ([GH 6440](https://github.com/pandas-dev/pandas/issues/6440), [GH 7040](https://github.com/pandas-dev/pandas/issues/7040))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Previously, the above operation would return `Int64Index`. If you’d like to
+    do this manually, use [`Index.astype()`](../reference/api/pandas.Index.astype.html#pandas.Index.astype
+    "pandas.Index.astype")
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`set_index` no longer converts MultiIndexes to an Index of tuples. For example,
+    the old behavior returned an Index in this case ([GH 6459](https://github.com/pandas-dev/pandas/issues/6459)):'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This also applies when passing multiple indices to `set_index`:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`pairwise` keyword was added to the statistical moment functions `rolling_cov`,
+    `rolling_corr`, `ewmcov`, `ewmcorr`, `expanding_cov`, `expanding_corr` to allow
+    the calculation of moving window covariance and correlation matrices ([GH 4950](https://github.com/pandas-dev/pandas/issues/4950)).
+    See [Computing rolling pairwise covariances and correlations](../user_guide/window.html#window-corr-pairwise)
+    in the docs.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`Series.iteritems()` is now lazy (returns an iterator rather than a list).
+    This was the documented behavior prior to 0.14\. ([GH 6760](https://github.com/pandas-dev/pandas/issues/6760))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Added `nunique` and `value_counts` functions to `Index` for counting unique
+    elements. ([GH 6734](https://github.com/pandas-dev/pandas/issues/6734))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`stack` and `unstack` now raise a `ValueError` when the `level` keyword refers
+    to a non-unique item in the `Index` (previously raised a `KeyError`). ([GH 6738](https://github.com/pandas-dev/pandas/issues/6738))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: drop unused order argument from `Series.sort`; args now are in the same order
+    as `Series.order`; add `na_position` arg to conform to `Series.order` ([GH 6847](https://github.com/pandas-dev/pandas/issues/6847))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: default sorting algorithm for `Series.order` is now `quicksort`, to conform
+    with `Series.sort` (and numpy defaults)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: add `inplace` keyword to `Series.order/sort` to make them inverses ([GH 6859](https://github.com/pandas-dev/pandas/issues/6859))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.sort` now places NaNs at the beginning or end of the sort according
+    to the `na_position` parameter. ([GH 3917](https://github.com/pandas-dev/pandas/issues/3917))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: accept `TextFileReader` in `concat`, which was affecting a common user idiom
+    ([GH 6583](https://github.com/pandas-dev/pandas/issues/6583)), this was a regression
+    from 0.13.1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Added `factorize` functions to `Index` and `Series` to get indexer and unique
+    values ([GH 7090](https://github.com/pandas-dev/pandas/issues/7090))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`describe` on a DataFrame with a mix of Timestamp and string like objects returns
+    a different Index ([GH 7088](https://github.com/pandas-dev/pandas/issues/7088)).
+    Previously the index was unintentionally sorted.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Arithmetic operations with **only** `bool` dtypes now give a warning indicating
+    that they are evaluated in Python space for `+`, `-`, and `*` operations and raise
+    for all others ([GH 7011](https://github.com/pandas-dev/pandas/issues/7011), [GH
+    6762](https://github.com/pandas-dev/pandas/issues/6762), [GH 7015](https://github.com/pandas-dev/pandas/issues/7015),
+    [GH 7210](https://github.com/pandas-dev/pandas/issues/7210))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: In `HDFStore`, `select_as_multiple` will always raise a `KeyError`, when a key
+    or the selector is not found ([GH 6177](https://github.com/pandas-dev/pandas/issues/6177))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`df[''col''] = value` and `df.loc[:,''col''] = value` are now completely equivalent;
+    previously the `.loc` would not necessarily coerce the dtype of the resultant
+    series ([GH 6149](https://github.com/pandas-dev/pandas/issues/6149))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`dtypes` and `ftypes` now return a series with `dtype=object` on empty containers
+    ([GH 5740](https://github.com/pandas-dev/pandas/issues/5740))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`df.to_csv` will now return a string of the CSV data if neither a target path
+    nor a buffer is provided ([GH 6061](https://github.com/pandas-dev/pandas/issues/6061))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pd.infer_freq()` will now raise a `TypeError` if given an invalid `Series/Index`
+    type ([GH 6407](https://github.com/pandas-dev/pandas/issues/6407), [GH 6463](https://github.com/pandas-dev/pandas/issues/6463))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A tuple passed to `DataFame.sort_index` will be interpreted as the levels of
+    the index, rather than requiring a list of tuple ([GH 4370](https://github.com/pandas-dev/pandas/issues/4370))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: all offset operations now return `Timestamp` types (rather than datetime), Business/Week
+    frequencies were incorrect ([GH 4069](https://github.com/pandas-dev/pandas/issues/4069))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`to_excel` now converts `np.inf` into a string representation, customizable
+    by the `inf_rep` keyword argument (Excel has no native inf representation) ([GH
+    6782](https://github.com/pandas-dev/pandas/issues/6782))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Replace `pandas.compat.scipy.scoreatpercentile` with `numpy.percentile` ([GH
+    6810](https://github.com/pandas-dev/pandas/issues/6810))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.quantile` on a `datetime[ns]` series now returns `Timestamp` instead of `np.datetime64`
+    objects ([GH 6810](https://github.com/pandas-dev/pandas/issues/6810))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: change `AssertionError` to `TypeError` for invalid types passed to `concat`
+    ([GH 6583](https://github.com/pandas-dev/pandas/issues/6583))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raise a `TypeError` when `DataFrame` is passed an iterator as the `data` argument
+    ([GH 5357](https://github.com/pandas-dev/pandas/issues/5357))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Display changes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The default way of printing large DataFrames has changed. DataFrames exceeding
+    `max_rows` and/or `max_columns` are now displayed in a centrally truncated view,
+    consistent with the printing of a [`pandas.Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") ([GH 5603](https://github.com/pandas-dev/pandas/issues/5603)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In previous versions, a DataFrame was truncated once the dimension constraints
+    were reached and an ellipse (…) signaled that part of the data was cut off.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![The previous look of truncate.](../Images/784f79e22b13d8ec61c873e5e284a20d.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: In the current version, large DataFrames are centrally truncated, showing a
+    preview of head and tail in both dimensions.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![The new look.](../Images/1f7004c5604d4fcd32bea2cde4c92614.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: allow option `'truncate'` for `display.show_dimensions` to only show the dimensions
+    if the frame is truncated ([GH 6547](https://github.com/pandas-dev/pandas/issues/6547)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The default for `display.show_dimensions` will now be `truncate`. This is consistent
+    with how Series display length.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Regression in the display of a MultiIndexed Series with `display.max_rows` is
+    less than the length of the series ([GH 7101](https://github.com/pandas-dev/pandas/issues/7101))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fixed a bug in the HTML repr of a truncated Series or DataFrame not showing
+    the class name with the `large_repr` set to ‘info’ ([GH 7105](https://github.com/pandas-dev/pandas/issues/7105))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `verbose` keyword in `DataFrame.info()`, which controls whether to shorten
+    the `info` representation, is now `None` by default. This will follow the global
+    setting in `display.max_info_columns`. The global setting can be overridden with
+    `verbose=True` or `verbose=False`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fixed a bug with the `info` repr not honoring the `display.max_info_columns`
+    setting ([GH 6939](https://github.com/pandas-dev/pandas/issues/6939))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Offset/freq info now in Timestamp __repr__ ([GH 4553](https://github.com/pandas-dev/pandas/issues/4553))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Text parsing API changes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv "pandas.read_csv")/[`read_table()`](../reference/api/pandas.read_table.html#pandas.read_table
+    "pandas.read_table") will now be noisier w.r.t invalid options rather than falling
+    back to the `PythonParser`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Raise `ValueError` when `sep` specified with `delim_whitespace=True` in [`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")/[`read_table()`](../reference/api/pandas.read_table.html#pandas.read_table
+    "pandas.read_table") ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raise `ValueError` when `engine='c'` specified with unsupported options in [`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")/[`read_table()`](../reference/api/pandas.read_table.html#pandas.read_table
+    "pandas.read_table") ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raise `ValueError` when fallback to python parser causes options to be ignored
+    ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Produce `ParserWarning` on fallback to python parser when no options are ignored
+    ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Translate `sep='\s+'` to `delim_whitespace=True` in [`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")/[`read_table()`](../reference/api/pandas.read_table.html#pandas.read_table
+    "pandas.read_table") if no other C-unsupported options specified ([GH 6607](https://github.com/pandas-dev/pandas/issues/6607))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## GroupBy API changes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More consistent behavior for some groupby methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'groupby `head` and `tail` now act more like `filter` rather than an aggregation:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'groupby head and tail respect column selection:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: groupby `nth` now reduces by default; filtering can be achieved by passing `as_index=False`.
+    With an optional `dropna` argument to ignore NaN. See [the docs](../user_guide/groupby.html#groupby-nth).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Reducing
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Filtering
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: groupby will now not return the grouped column for non-cython functions ([GH
+    5610](https://github.com/pandas-dev/pandas/issues/5610), [GH 5614](https://github.com/pandas-dev/pandas/issues/5614),
+    [GH 6732](https://github.com/pandas-dev/pandas/issues/6732)), as its already the
+    index
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: passing `as_index` will leave the grouped column in-place (this is not change
+    in 0.14.0)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Allow specification of a more complex groupby via `pd.Grouper`, such as grouping
+    by a Time and a string field simultaneously. See [the docs](../user_guide/groupby.html#groupby-specify).
+    ([GH 3794](https://github.com/pandas-dev/pandas/issues/3794))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Better propagation/preservation of Series names when performing groupby operations:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`SeriesGroupBy.agg` will ensure that the name attribute of the original series
+    is propagated to the result ([GH 6265](https://github.com/pandas-dev/pandas/issues/6265)).'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the function provided to `GroupBy.apply` returns a named series, the name
+    of the series will be kept as the name of the column index of the DataFrame returned
+    by `GroupBy.apply` ([GH 6124](https://github.com/pandas-dev/pandas/issues/6124)).
+    This facilitates `DataFrame.stack` operations where the name of the column index
+    is used as the name of the inserted column containing the pivoted data.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## SQL'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The SQL reading and writing functions now support more database flavors through
+    SQLAlchemy ([GH 2717](https://github.com/pandas-dev/pandas/issues/2717), [GH 4163](https://github.com/pandas-dev/pandas/issues/4163),
+    [GH 5950](https://github.com/pandas-dev/pandas/issues/5950), [GH 6292](https://github.com/pandas-dev/pandas/issues/6292)).
+    All databases supported by SQLAlchemy can be used, such as PostgreSQL, MySQL,
+    Oracle, Microsoft SQL server (see documentation of SQLAlchemy on [included dialects](https://sqlalchemy.readthedocs.io/en/latest/dialects/index.html)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The functionality of providing DBAPI connection objects will only be supported
+    for sqlite3 in the future. The `'mysql'` flavor is deprecated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The new functions [`read_sql_query()`](../reference/api/pandas.read_sql_query.html#pandas.read_sql_query
+    "pandas.read_sql_query") and [`read_sql_table()`](../reference/api/pandas.read_sql_table.html#pandas.read_sql_table
+    "pandas.read_sql_table") are introduced. The function [`read_sql()`](../reference/api/pandas.read_sql.html#pandas.read_sql
+    "pandas.read_sql") is kept as a convenience wrapper around the other two and will
+    delegate to specific function depending on the provided input (database table
+    name or sql query).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In practice, you have to provide a SQLAlchemy `engine` to the sql functions.
+    To connect with SQLAlchemy you use the `create_engine()` function to create an
+    engine object from database URI. You only need to create the engine once per database
+    you are connecting to. For an in-memory sqlite database:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This `engine` can then be used to write or read data to/from this database:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can read data from a database by specifying the table name:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or by specifying a sql query:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Some other enhancements to the sql functions include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: support for writing the index. This can be controlled with the `index` keyword
+    (default is True).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: specify the column label to use when writing the index with `index_label`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: specify string columns to parse as datetimes with the `parse_dates` keyword
+    in [`read_sql_query()`](../reference/api/pandas.read_sql_query.html#pandas.read_sql_query
+    "pandas.read_sql_query") and [`read_sql_table()`](../reference/api/pandas.read_sql_table.html#pandas.read_sql_table
+    "pandas.read_sql_table").
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some of the existing functions or function aliases have been deprecated and
+    will be removed in future versions. This includes: `tquery`, `uquery`, `read_frame`,
+    `frame_query`, `write_frame`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: The support for the ‘mysql’ flavor when using DBAPI connection objects has been
+    deprecated. MySQL will be further supported with SQLAlchemy engines ([GH 6900](https://github.com/pandas-dev/pandas/issues/6900)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Multi-indexing using slicers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In 0.14.0 we added a new way to slice MultiIndexed objects. You can slice a
+    MultiIndex by providing multiple indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can provide any of the selectors as if you are indexing by label, see [Selection
+    by Label](../user_guide/indexing.html#indexing-label), including slices, lists
+    of labels, labels, and boolean indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use `slice(None)` to select all the contents of *that* level. You do
+    not need to specify all the *deeper* levels, they will be implied as `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As usual, **both sides** of the slicers are included as this is label indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [the docs](../user_guide/advanced.html#advanced-mi-slicers) See also issues
+    ([GH 6134](https://github.com/pandas-dev/pandas/issues/6134), [GH 4036](https://github.com/pandas-dev/pandas/issues/4036),
+    [GH 3057](https://github.com/pandas-dev/pandas/issues/3057), [GH 2598](https://github.com/pandas-dev/pandas/issues/2598),
+    [GH 5641](https://github.com/pandas-dev/pandas/issues/5641), [GH 7106](https://github.com/pandas-dev/pandas/issues/7106))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should specify all axes in the `.loc` specifier, meaning the indexer for
+    the **index** and for the **columns**. Their are some ambiguous cases where the
+    passed indexer could be mis-interpreted as indexing *both* axes, rather than into
+    say the MultiIndex for the rows.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'You should do this:'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You will need to make sure that the selection axes are fully lexsorted!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic MultiIndex slicing using slices, lists, and labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use a `pd.IndexSlice` to shortcut the creation of these slices
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is possible to perform quite complicated selections using this method on
+    multiple axes at the same time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using a boolean indexer you can provide selection related to the *values*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also specify the `axis` argument to `.loc` to interpret the passed slicers
+    on a single axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: Furthermore you can *set* the values using these methods
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use a right-hand-side of an alignable object as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Plotting'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hexagonal bin plots from `DataFrame.plot` with `kind='hexbin'` ([GH 5478](https://github.com/pandas-dev/pandas/issues/5478)),
+    See [the docs](../user_guide/visualization.html#visualization-hexbin).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.plot` and `Series.plot` now supports area plot with specifying `kind=''area''`
+    ([GH 6656](https://github.com/pandas-dev/pandas/issues/6656)), See [the docs](../user_guide/visualization.html#visualization-area-plot)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pie plots from `Series.plot` and `DataFrame.plot` with `kind='pie'` ([GH 6976](https://github.com/pandas-dev/pandas/issues/6976)),
+    See [the docs](../user_guide/visualization.html#visualization-pie).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Plotting with Error Bars is now supported in the `.plot` method of `DataFrame`
+    and `Series` objects ([GH 3796](https://github.com/pandas-dev/pandas/issues/3796),
+    [GH 6834](https://github.com/pandas-dev/pandas/issues/6834)), See [the docs](../user_guide/visualization.html#visualization-errorbars).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.plot` and `Series.plot` now support a `table` keyword for plotting
+    `matplotlib.Table`, See [the docs](../user_guide/visualization.html#visualization-table).
+    The `table` keyword can receive the following values.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`False`: Do nothing (default).'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`True`: Draw a table using the `DataFrame` or `Series` called `plot` method.
+    Data will be transposed to meet matplotlib’s default layout.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame` or `Series`: Draw matplotlib.table using the passed data. The data
+    will be drawn as displayed in print method (not transposed automatically). Also,
+    helper function `pandas.tools.plotting.table` is added to create a table from
+    `DataFrame` and `Series`, and add it to an `matplotlib.Axes`.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`plot(legend=''reverse'')` will now reverse the order of legend labels for
+    most plot kinds. ([GH 6014](https://github.com/pandas-dev/pandas/issues/6014))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Line plot and area plot can be stacked by `stacked=True` ([GH 6656](https://github.com/pandas-dev/pandas/issues/6656))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Following keywords are now acceptable for [`DataFrame.plot()`](../reference/api/pandas.DataFrame.plot.html#pandas.DataFrame.plot
+    "pandas.DataFrame.plot") with `kind=''bar''` and `kind=''barh''`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`width`: Specify the bar width. In previous versions, static value 0.5 was
+    passed to matplotlib and it cannot be overwritten. ([GH 6604](https://github.com/pandas-dev/pandas/issues/6604))'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`align`: Specify the bar alignment. Default is `center` (different from matplotlib).
+    In previous versions, pandas passes `align=''edge''` to matplotlib and adjust
+    the location to `center` by itself, and it results `align` keyword is not applied
+    as expected. ([GH 4525](https://github.com/pandas-dev/pandas/issues/4525))'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`position`: Specify relative alignments for bar plot layout. From 0 (left/bottom-end)
+    to 1(right/top-end). Default is 0.5 (center). ([GH 6604](https://github.com/pandas-dev/pandas/issues/6604))'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Because of the default `align` value changes, coordinates of bar plots are now
+    located on integer values (0.0, 1.0, 2.0 …). This is intended to make bar plot
+    be located on the same coordinates as line plot. However, bar plot may differs
+    unexpectedly when you manually adjust the bar location or drawing area, such as
+    using `set_xlim`, `set_ylim`, etc. In this cases, please modify your script to
+    meet with new coordinates.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The `parallel_coordinates()` function now takes argument `color` instead of
+    `colors`. A `FutureWarning` is raised to alert that the old `colors` argument
+    will not be supported in a future release. ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `parallel_coordinates()` and `andrews_curves()` functions now take positional
+    argument `frame` instead of `data`. A `FutureWarning` is raised if the old `data`
+    argument is used by name. ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame.boxplot()`](../reference/api/pandas.DataFrame.boxplot.html#pandas.DataFrame.boxplot
+    "pandas.DataFrame.boxplot") now supports `layout` keyword ([GH 6769](https://github.com/pandas-dev/pandas/issues/6769))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame.boxplot()`](../reference/api/pandas.DataFrame.boxplot.html#pandas.DataFrame.boxplot
+    "pandas.DataFrame.boxplot") has a new keyword argument, `return_type`. It accepts
+    `''dict''`, `''axes''`, or `''both''`, in which case a namedtuple with the matplotlib
+    axes and a dict of matplotlib Lines is returned.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Prior version deprecations/changes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are prior version deprecations that are taking effect as of 0.14.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remove `DateRange` in favor of [`DatetimeIndex`](../reference/api/pandas.DatetimeIndex.html#pandas.DatetimeIndex
+    "pandas.DatetimeIndex") ([GH 6816](https://github.com/pandas-dev/pandas/issues/6816))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `column` keyword from `DataFrame.sort` ([GH 4370](https://github.com/pandas-dev/pandas/issues/4370))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `precision` keyword from [`set_eng_float_format()`](../reference/api/pandas.set_eng_float_format.html#pandas.set_eng_float_format
+    "pandas.set_eng_float_format") ([GH 395](https://github.com/pandas-dev/pandas/issues/395))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `force_unicode` keyword from [`DataFrame.to_string()`](../reference/api/pandas.DataFrame.to_string.html#pandas.DataFrame.to_string
+    "pandas.DataFrame.to_string"), [`DataFrame.to_latex()`](../reference/api/pandas.DataFrame.to_latex.html#pandas.DataFrame.to_latex
+    "pandas.DataFrame.to_latex"), and [`DataFrame.to_html()`](../reference/api/pandas.DataFrame.to_html.html#pandas.DataFrame.to_html
+    "pandas.DataFrame.to_html"); these function encode in unicode by default ([GH
+    2224](https://github.com/pandas-dev/pandas/issues/2224), [GH 2225](https://github.com/pandas-dev/pandas/issues/2225))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `nanRep` keyword from [`DataFrame.to_csv()`](../reference/api/pandas.DataFrame.to_csv.html#pandas.DataFrame.to_csv
+    "pandas.DataFrame.to_csv") and [`DataFrame.to_string()`](../reference/api/pandas.DataFrame.to_string.html#pandas.DataFrame.to_string
+    "pandas.DataFrame.to_string") ([GH 275](https://github.com/pandas-dev/pandas/issues/275))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `unique` keyword from `HDFStore.select_column()` ([GH 3256](https://github.com/pandas-dev/pandas/issues/3256))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `inferTimeRule` keyword from `Timestamp.offset()` ([GH 391](https://github.com/pandas-dev/pandas/issues/391))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `name` keyword from `get_data_yahoo()` and `get_data_google()` ( [commit
+    b921d1a](https://github.com/pandas-dev/pandas/commit/b921d1a2) )
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `offset` keyword from [`DatetimeIndex`](../reference/api/pandas.DatetimeIndex.html#pandas.DatetimeIndex
+    "pandas.DatetimeIndex") constructor ( [commit 3136390](https://github.com/pandas-dev/pandas/commit/3136390)
+    )
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove `time_rule` from several rolling-moment statistical functions, such as
+    `rolling_sum()` ([GH 1042](https://github.com/pandas-dev/pandas/issues/1042))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Removed neg `-` boolean operations on numpy arrays in favor of inv `~`, as this
+    is going to be deprecated in numpy 1.9 ([GH 6960](https://github.com/pandas-dev/pandas/issues/6960))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Deprecations'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`pivot_table()`](../reference/api/pandas.pivot_table.html#pandas.pivot_table
+    "pandas.pivot_table")/[`DataFrame.pivot_table()`](../reference/api/pandas.DataFrame.pivot_table.html#pandas.DataFrame.pivot_table
+    "pandas.DataFrame.pivot_table") and [`crosstab()`](../reference/api/pandas.crosstab.html#pandas.crosstab
+    "pandas.crosstab") functions now take arguments `index` and `columns` instead
+    of `rows` and `cols`. A `FutureWarning` is raised to alert that the old `rows`
+    and `cols` arguments will not be supported in a future release ([GH 5505](https://github.com/pandas-dev/pandas/issues/5505))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The [`DataFrame.drop_duplicates()`](../reference/api/pandas.DataFrame.drop_duplicates.html#pandas.DataFrame.drop_duplicates
+    "pandas.DataFrame.drop_duplicates") and [`DataFrame.duplicated()`](../reference/api/pandas.DataFrame.duplicated.html#pandas.DataFrame.duplicated
+    "pandas.DataFrame.duplicated") methods now take argument `subset` instead of `cols`
+    to better align with [`DataFrame.dropna()`](../reference/api/pandas.DataFrame.dropna.html#pandas.DataFrame.dropna
+    "pandas.DataFrame.dropna"). A `FutureWarning` is raised to alert that the old
+    `cols` arguments will not be supported in a future release ([GH 6680](https://github.com/pandas-dev/pandas/issues/6680))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The [`DataFrame.to_csv()`](../reference/api/pandas.DataFrame.to_csv.html#pandas.DataFrame.to_csv
+    "pandas.DataFrame.to_csv") and [`DataFrame.to_excel()`](../reference/api/pandas.DataFrame.to_excel.html#pandas.DataFrame.to_excel
+    "pandas.DataFrame.to_excel") functions now takes argument `columns` instead of
+    `cols`. A `FutureWarning` is raised to alert that the old `cols` arguments will
+    not be supported in a future release ([GH 6645](https://github.com/pandas-dev/pandas/issues/6645))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Indexers will warn `FutureWarning` when used with a scalar indexer and a non-floating
+    point Index ([GH 4892](https://github.com/pandas-dev/pandas/issues/4892), [GH
+    6960](https://github.com/pandas-dev/pandas/issues/6960))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Numpy 1.9 compat w.r.t. deprecation warnings ([GH 6960](https://github.com/pandas-dev/pandas/issues/6960))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Panel.shift()` now has a function signature that matches [`DataFrame.shift()`](../reference/api/pandas.DataFrame.shift.html#pandas.DataFrame.shift
+    "pandas.DataFrame.shift"). The old positional argument `lags` has been changed
+    to a keyword argument `periods` with a default value of 1\. A `FutureWarning`
+    is raised if the old argument `lags` is used by name. ([GH 6910](https://github.com/pandas-dev/pandas/issues/6910))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `order` keyword argument of [`factorize()`](../reference/api/pandas.factorize.html#pandas.factorize
+    "pandas.factorize") will be removed. ([GH 6926](https://github.com/pandas-dev/pandas/issues/6926)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Remove the `copy` keyword from [`DataFrame.xs()`](../reference/api/pandas.DataFrame.xs.html#pandas.DataFrame.xs
+    "pandas.DataFrame.xs"), `Panel.major_xs()`, `Panel.minor_xs()`. A view will be
+    returned if possible, otherwise a copy will be made. Previously the user could
+    think that `copy=False` would ALWAYS return a view. ([GH 6894](https://github.com/pandas-dev/pandas/issues/6894))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `parallel_coordinates()` function now takes argument `color` instead of
+    `colors`. A `FutureWarning` is raised to alert that the old `colors` argument
+    will not be supported in a future release. ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `parallel_coordinates()` and `andrews_curves()` functions now take positional
+    argument `frame` instead of `data`. A `FutureWarning` is raised if the old `data`
+    argument is used by name. ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The support for the ‘mysql’ flavor when using DBAPI connection objects has been
+    deprecated. MySQL will be further supported with SQLAlchemy engines ([GH 6900](https://github.com/pandas-dev/pandas/issues/6900)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following `io.sql` functions have been deprecated: `tquery`, `uquery`,
+    `read_frame`, `frame_query`, `write_frame`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `percentile_width` keyword argument in [`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
+    "pandas.DataFrame.describe") has been deprecated. Use the `percentiles` keyword
+    instead, which takes a list of percentiles to display. The default output is unchanged.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The default return type of `boxplot()` will change from a dict to a matplotlib
+    Axes in a future release. You can use the future behavior now by passing `return_type='axes'`
+    to boxplot.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Known issues'
+  prefs: []
+  type: TYPE_NORMAL
+- en: OpenPyXL 2.0.0 breaks backwards compatibility ([GH 7169](https://github.com/pandas-dev/pandas/issues/7169))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Enhancements'
+  prefs: []
+  type: TYPE_NORMAL
+- en: DataFrame and Series will create a MultiIndex object if passed a tuples dict,
+    See [the docs](../user_guide/dsintro.html#basics-dataframe-from-dict-of-tuples)
+    ([GH 3323](https://github.com/pandas-dev/pandas/issues/3323))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Added the `sym_diff` method to `Index` ([GH 5543](https://github.com/pandas-dev/pandas/issues/5543))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.to_latex` now takes a longtable keyword, which if True will return
+    a table in a longtable environment. ([GH 6617](https://github.com/pandas-dev/pandas/issues/6617))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add option to turn off escaping in `DataFrame.to_latex` ([GH 6472](https://github.com/pandas-dev/pandas/issues/6472))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pd.read_clipboard` will, if the keyword `sep` is unspecified, try to detect
+    data copied from a spreadsheet and parse accordingly. ([GH 6223](https://github.com/pandas-dev/pandas/issues/6223))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joining a singly-indexed DataFrame with a MultiIndexed DataFrame ([GH 3662](https://github.com/pandas-dev/pandas/issues/3662))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See [the docs](../user_guide/merging.html#merging-join-on-mi). Joining MultiIndex
+    DataFrames on both the left and right is not yet supported ATM.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`quotechar`, `doublequote`, and `escapechar` can now be specified when using
+    `DataFrame.to_csv` ([GH 5414](https://github.com/pandas-dev/pandas/issues/5414),
+    [GH 4528](https://github.com/pandas-dev/pandas/issues/4528))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Partially sort by only the specified levels of a MultiIndex with the `sort_remaining`
+    boolean kwarg. ([GH 3984](https://github.com/pandas-dev/pandas/issues/3984))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Added `to_julian_date` to `TimeStamp` and `DatetimeIndex`. The Julian Date is
+    used primarily in astronomy and represents the number of days from noon, January
+    1, 4713 BC. Because nanoseconds are used to define the time in pandas the actual
+    range of dates that you can use is 1678 AD to 2262 AD. ([GH 4041](https://github.com/pandas-dev/pandas/issues/4041))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.to_stata` will now check data for compatibility with Stata data
+    types and will upcast when needed. When it is not possible to losslessly upcast,
+    a warning is issued ([GH 6327](https://github.com/pandas-dev/pandas/issues/6327))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.to_stata` and `StataWriter` will accept keyword arguments time_stamp
+    and data_label which allow the time stamp and dataset label to be set when creating
+    a file. ([GH 6545](https://github.com/pandas-dev/pandas/issues/6545))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pandas.io.gbq` now handles reading unicode strings properly. ([GH 5940](https://github.com/pandas-dev/pandas/issues/5940))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Holidays Calendars](../user_guide/timeseries.html#timeseries-holiday) are
+    now available and can be used with the `CustomBusinessDay` offset ([GH 6719](https://github.com/pandas-dev/pandas/issues/6719))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Float64Index` is now backed by a `float64` dtype ndarray instead of an `object`
+    dtype array ([GH 6471](https://github.com/pandas-dev/pandas/issues/6471)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Implemented `Panel.pct_change` ([GH 6904](https://github.com/pandas-dev/pandas/issues/6904))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Added `how` option to rolling-moment functions to dictate how to handle resampling;
+    `rolling_max()` defaults to max, `rolling_min()` defaults to min, and all others
+    default to mean ([GH 6297](https://github.com/pandas-dev/pandas/issues/6297))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`CustomBusinessMonthBegin` and `CustomBusinessMonthEnd` are now available ([GH
+    6866](https://github.com/pandas-dev/pandas/issues/6866))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Series.quantile()`](../reference/api/pandas.Series.quantile.html#pandas.Series.quantile
+    "pandas.Series.quantile") and [`DataFrame.quantile()`](../reference/api/pandas.DataFrame.quantile.html#pandas.DataFrame.quantile
+    "pandas.DataFrame.quantile") now accept an array of quantiles.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
+    "pandas.DataFrame.describe") now accepts an array of percentiles to include in
+    the summary statistics ([GH 4196](https://github.com/pandas-dev/pandas/issues/4196))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pivot_table` can now accept `Grouper` by `index` and `columns` keywords ([GH
+    6913](https://github.com/pandas-dev/pandas/issues/6913))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '[PRE68]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Arrays of strings can be wrapped to a specified width (`str.wrap`) ([GH 6999](https://github.com/pandas-dev/pandas/issues/6999))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add [`nsmallest()`](../reference/api/pandas.Series.nsmallest.html#pandas.Series.nsmallest
+    "pandas.Series.nsmallest") and [`Series.nlargest()`](../reference/api/pandas.Series.nlargest.html#pandas.Series.nlargest
+    "pandas.Series.nlargest") methods to Series, See [the docs](../user_guide/basics.html#basics-nsorted)
+    ([GH 3960](https://github.com/pandas-dev/pandas/issues/3960))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`PeriodIndex` fully supports partial string indexing like `DatetimeIndex` ([GH
+    7043](https://github.com/pandas-dev/pandas/issues/7043))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`read_excel` can now read milliseconds in Excel dates and times with xlrd >=
+    0.9.3\. ([GH 5945](https://github.com/pandas-dev/pandas/issues/5945))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pd.stats.moments.rolling_var` now uses Welford’s method for increased numerical
+    stability ([GH 6817](https://github.com/pandas-dev/pandas/issues/6817))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: pd.expanding_apply and pd.rolling_apply now take args and kwargs that are passed
+    on to the func ([GH 6289](https://github.com/pandas-dev/pandas/issues/6289))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.rank()` now has a percentage rank option ([GH 5971](https://github.com/pandas-dev/pandas/issues/5971))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Series.rank()` now has a percentage rank option ([GH 5971](https://github.com/pandas-dev/pandas/issues/5971))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Series.rank()` and `DataFrame.rank()` now accept `method=''dense''` for ranks
+    without gaps ([GH 6514](https://github.com/pandas-dev/pandas/issues/6514))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support passing `encoding` with xlwt ([GH 3710](https://github.com/pandas-dev/pandas/issues/3710))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Refactor Block classes removing `Block.items` attributes to avoid duplication
+    in item handling ([GH 6745](https://github.com/pandas-dev/pandas/issues/6745),
+    [GH 6988](https://github.com/pandas-dev/pandas/issues/6988)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Testing statements updated to use specialized asserts ([GH 6175](https://github.com/pandas-dev/pandas/issues/6175))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Performance'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvement when converting `DatetimeIndex` to floating ordinals
+    using `DatetimeConverter` ([GH 6636](https://github.com/pandas-dev/pandas/issues/6636))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvement for `DataFrame.shift` ([GH 5609](https://github.com/pandas-dev/pandas/issues/5609))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvement in indexing into a MultiIndexed Series ([GH 5567](https://github.com/pandas-dev/pandas/issues/5567))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvements in single-dtyped indexing ([GH 6484](https://github.com/pandas-dev/pandas/issues/6484))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improve performance of DataFrame construction with certain offsets, by removing
+    faulty caching (e.g. MonthEnd,BusinessMonthEnd), ([GH 6479](https://github.com/pandas-dev/pandas/issues/6479))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improve performance of `CustomBusinessDay` ([GH 6584](https://github.com/pandas-dev/pandas/issues/6584))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: improve performance of slice indexing on Series with string keys ([GH 6341](https://github.com/pandas-dev/pandas/issues/6341),
+    [GH 6372](https://github.com/pandas-dev/pandas/issues/6372))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvement for `DataFrame.from_records` when reading a specified
+    number of rows from an iterable ([GH 6700](https://github.com/pandas-dev/pandas/issues/6700))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance improvements in timedelta conversions for integer dtypes ([GH 6754](https://github.com/pandas-dev/pandas/issues/6754))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improved performance of compatible pickles ([GH 6899](https://github.com/pandas-dev/pandas/issues/6899))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improve performance in certain reindexing operations by optimizing `take_2d`
+    ([GH 6749](https://github.com/pandas-dev/pandas/issues/6749))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`GroupBy.count()` is now implemented in Cython and is much faster for large
+    numbers of groups ([GH 7016](https://github.com/pandas-dev/pandas/issues/7016)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Experimental
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are no experimental changes in 0.14.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Bug fixes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bug in Series ValueError when index doesn’t match data ([GH 6532](https://github.com/pandas-dev/pandas/issues/6532))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Prevent segfault due to MultiIndex not being supported in HDFStore table format
+    ([GH 1848](https://github.com/pandas-dev/pandas/issues/1848))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `pd.DataFrame.sort_index` where mergesort wasn’t stable when `ascending=False`
+    ([GH 6399](https://github.com/pandas-dev/pandas/issues/6399))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `pd.tseries.frequencies.to_offset` when argument has leading zeros ([GH
+    6391](https://github.com/pandas-dev/pandas/issues/6391))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in version string gen. for dev versions with shallow clones / install from
+    tarball ([GH 6127](https://github.com/pandas-dev/pandas/issues/6127))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Inconsistent tz parsing `Timestamp` / `to_datetime` for current year ([GH 5958](https://github.com/pandas-dev/pandas/issues/5958))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Indexing bugs with reordered indexes ([GH 6252](https://github.com/pandas-dev/pandas/issues/6252),
+    [GH 6254](https://github.com/pandas-dev/pandas/issues/6254))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `.xs` with a Series multiindex ([GH 6258](https://github.com/pandas-dev/pandas/issues/6258),
+    [GH 5684](https://github.com/pandas-dev/pandas/issues/5684))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in conversion of a string types to a DatetimeIndex with a specified frequency
+    ([GH 6273](https://github.com/pandas-dev/pandas/issues/6273), [GH 6274](https://github.com/pandas-dev/pandas/issues/6274))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `eval` where type-promotion failed for large expressions ([GH 6205](https://github.com/pandas-dev/pandas/issues/6205))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in interpolate with `inplace=True` ([GH 6281](https://github.com/pandas-dev/pandas/issues/6281))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`HDFStore.remove` now handles start and stop ([GH 6177](https://github.com/pandas-dev/pandas/issues/6177))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`HDFStore.select_as_multiple` handles start and stop the same way as `select`
+    ([GH 6177](https://github.com/pandas-dev/pandas/issues/6177))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`HDFStore.select_as_coordinates` and `select_column` works with a `where` clause
+    that results in filters ([GH 6177](https://github.com/pandas-dev/pandas/issues/6177))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression in join of non_unique_indexes ([GH 6329](https://github.com/pandas-dev/pandas/issues/6329))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Issue with groupby `agg` with a single function and a mixed-type frame ([GH
+    6337](https://github.com/pandas-dev/pandas/issues/6337))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.replace()` when passing a non- `bool` `to_replace` argument
+    ([GH 6332](https://github.com/pandas-dev/pandas/issues/6332))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raise when trying to align on different levels of a MultiIndex assignment ([GH
+    3738](https://github.com/pandas-dev/pandas/issues/3738))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setting complex dtypes via boolean indexing ([GH 6345](https://github.com/pandas-dev/pandas/issues/6345))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in TimeGrouper/resample when presented with a non-monotonic DatetimeIndex
+    that would return invalid results. ([GH 4161](https://github.com/pandas-dev/pandas/issues/4161))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in index name propagation in TimeGrouper/resample ([GH 4161](https://github.com/pandas-dev/pandas/issues/4161))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: TimeGrouper has a more compatible API to the rest of the groupers (e.g. `groups`
+    was missing) ([GH 3881](https://github.com/pandas-dev/pandas/issues/3881))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in multiple grouping with a TimeGrouper depending on target column order
+    ([GH 6764](https://github.com/pandas-dev/pandas/issues/6764))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `pd.eval` when parsing strings with possible tokens like `'&'` ([GH 6351](https://github.com/pandas-dev/pandas/issues/6351))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug correctly handle placements of `-inf` in Panels when dividing by integer
+    0 ([GH 6178](https://github.com/pandas-dev/pandas/issues/6178))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`DataFrame.shift` with `axis=1` was raising ([GH 6371](https://github.com/pandas-dev/pandas/issues/6371))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Disabled clipboard tests until release time (run locally with `nosetests -A
+    disabled`) ([GH 6048](https://github.com/pandas-dev/pandas/issues/6048)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.replace()` when passing a nested `dict` that contained keys
+    not in the values to be replaced ([GH 6342](https://github.com/pandas-dev/pandas/issues/6342))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`str.match` ignored the na flag ([GH 6609](https://github.com/pandas-dev/pandas/issues/6609)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in take with duplicate columns that were not consolidated ([GH 6240](https://github.com/pandas-dev/pandas/issues/6240))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in interpolate changing dtypes ([GH 6290](https://github.com/pandas-dev/pandas/issues/6290))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.get`, was using a buggy access method ([GH 6383](https://github.com/pandas-dev/pandas/issues/6383))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in hdfstore queries of the form `where=[('date', '>=', datetime(2013,1,1)),
+    ('date', '<=', datetime(2014,1,1))]` ([GH 6313](https://github.com/pandas-dev/pandas/issues/6313))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.dropna` with duplicate indices ([GH 6355](https://github.com/pandas-dev/pandas/issues/6355))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression in chained getitem indexing with embedded list-like from 0.12 ([GH
+    6394](https://github.com/pandas-dev/pandas/issues/6394))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Float64Index` with nans not comparing correctly ([GH 6401](https://github.com/pandas-dev/pandas/issues/6401))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`eval`/`query` expressions with strings containing the `@` character will now
+    work ([GH 6366](https://github.com/pandas-dev/pandas/issues/6366)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.reindex` when specifying a `method` with some nan values was
+    inconsistent (noted on a resample) ([GH 6418](https://github.com/pandas-dev/pandas/issues/6418))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in [`DataFrame.replace()`](../reference/api/pandas.DataFrame.replace.html#pandas.DataFrame.replace
+    "pandas.DataFrame.replace") where nested dicts were erroneously depending on the
+    order of dictionary keys and values ([GH 5338](https://github.com/pandas-dev/pandas/issues/5338)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performance issue in concatenating with empty objects ([GH 3259](https://github.com/pandas-dev/pandas/issues/3259))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Clarify sorting of `sym_diff` on `Index` objects with `NaN` values ([GH 6444](https://github.com/pandas-dev/pandas/issues/6444))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression in `MultiIndex.from_product` with a `DatetimeIndex` as input ([GH
+    6439](https://github.com/pandas-dev/pandas/issues/6439))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `str.extract` when passed a non-default index ([GH 6348](https://github.com/pandas-dev/pandas/issues/6348))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `str.split` when passed `pat=None` and `n=1` ([GH 6466](https://github.com/pandas-dev/pandas/issues/6466))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `io.data.DataReader` when passed `"F-F_Momentum_Factor"` and `data_source="famafrench"`
+    ([GH 6460](https://github.com/pandas-dev/pandas/issues/6460))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `sum` of a `timedelta64[ns]` series ([GH 6462](https://github.com/pandas-dev/pandas/issues/6462))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `resample` with a timezone and certain offsets ([GH 6397](https://github.com/pandas-dev/pandas/issues/6397))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `iat/iloc` with duplicate indices on a Series ([GH 6493](https://github.com/pandas-dev/pandas/issues/6493))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `read_html` where nan’s were incorrectly being used to indicate missing
+    values in text. Should use the empty string for consistency with the rest of pandas
+    ([GH 5129](https://github.com/pandas-dev/pandas/issues/5129)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `read_html` tests where redirected invalid URLs would make one test fail
+    ([GH 6445](https://github.com/pandas-dev/pandas/issues/6445)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in multi-axis indexing using `.loc` on non-unique indices ([GH 6504](https://github.com/pandas-dev/pandas/issues/6504))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug that caused _ref_locs corruption when slice indexing across columns axis
+    of a DataFrame ([GH 6525](https://github.com/pandas-dev/pandas/issues/6525))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression from 0.13 in the treatment of numpy `datetime64` non-ns dtypes in
+    Series creation ([GH 6529](https://github.com/pandas-dev/pandas/issues/6529))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.names` attribute of MultiIndexes passed to `set_index` are now preserved
+    ([GH 6459](https://github.com/pandas-dev/pandas/issues/6459)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setitem with a duplicate index and an alignable rhs ([GH 6541](https://github.com/pandas-dev/pandas/issues/6541))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setitem with `.loc` on mixed integer Indexes ([GH 6546](https://github.com/pandas-dev/pandas/issues/6546))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `pd.read_stata` which would use the wrong data types and missing values
+    ([GH 6327](https://github.com/pandas-dev/pandas/issues/6327))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.to_stata` that lead to data loss in certain cases, and could
+    be exported using the wrong data types and missing values ([GH 6335](https://github.com/pandas-dev/pandas/issues/6335))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`StataWriter` replaces missing values in string columns by empty string ([GH
+    6802](https://github.com/pandas-dev/pandas/issues/6802))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Inconsistent types in `Timestamp` addition/subtraction ([GH 6543](https://github.com/pandas-dev/pandas/issues/6543))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in preserving frequency across Timestamp addition/subtraction ([GH 4547](https://github.com/pandas-dev/pandas/issues/4547))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in empty list lookup caused `IndexError` exceptions ([GH 6536](https://github.com/pandas-dev/pandas/issues/6536),
+    [GH 6551](https://github.com/pandas-dev/pandas/issues/6551))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Series.quantile` raising on an `object` dtype ([GH 6555](https://github.com/pandas-dev/pandas/issues/6555))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `.xs` with a `nan` in level when dropped ([GH 6574](https://github.com/pandas-dev/pandas/issues/6574))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in fillna with `method='bfill/ffill'` and `datetime64[ns]` dtype ([GH 6587](https://github.com/pandas-dev/pandas/issues/6587))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in sql writing with mixed dtypes possibly leading to data loss ([GH 6509](https://github.com/pandas-dev/pandas/issues/6509))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.pop` ([GH 6600](https://github.com/pandas-dev/pandas/issues/6600))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `iloc` indexing when positional indexer matched `Int64Index` of the corresponding
+    axis and no reordering happened ([GH 6612](https://github.com/pandas-dev/pandas/issues/6612))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `fillna` with `limit` and `value` specified
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.to_stata` when columns have non-string names ([GH 4558](https://github.com/pandas-dev/pandas/issues/4558))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in compat with `np.compress`, surfaced in ([GH 6658](https://github.com/pandas-dev/pandas/issues/6658))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in binary operations with a rhs of a Series not aligning ([GH 6681](https://github.com/pandas-dev/pandas/issues/6681))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.to_stata` which incorrectly handles nan values and ignores
+    `with_index` keyword argument ([GH 6685](https://github.com/pandas-dev/pandas/issues/6685))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in resample with extra bins when using an evenly divisible frequency ([GH
+    4076](https://github.com/pandas-dev/pandas/issues/4076))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in consistency of groupby aggregation when passing a custom function ([GH
+    6715](https://github.com/pandas-dev/pandas/issues/6715))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in resample when `how=None` resample freq is the same as the axis frequency
+    ([GH 5955](https://github.com/pandas-dev/pandas/issues/5955))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in downcasting inference with empty arrays ([GH 6733](https://github.com/pandas-dev/pandas/issues/6733))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `obj.blocks` on sparse containers dropping all but the last items of
+    same for dtype ([GH 6748](https://github.com/pandas-dev/pandas/issues/6748))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in unpickling `NaT (NaTType)` ([GH 4606](https://github.com/pandas-dev/pandas/issues/4606))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.replace()` where regex meta characters were being treated
+    as regex even when `regex=False` ([GH 6777](https://github.com/pandas-dev/pandas/issues/6777)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in timedelta ops on 32-bit platforms ([GH 6808](https://github.com/pandas-dev/pandas/issues/6808))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setting a tz-aware index directly via `.index` ([GH 6785](https://github.com/pandas-dev/pandas/issues/6785))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in expressions.py where numexpr would try to evaluate arithmetic ops ([GH
+    6762](https://github.com/pandas-dev/pandas/issues/6762)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in Makefile where it didn’t remove Cython generated C files with `make clean`
+    ([GH 6768](https://github.com/pandas-dev/pandas/issues/6768))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug with numpy < 1.7.2 when reading long strings from `HDFStore` ([GH 6166](https://github.com/pandas-dev/pandas/issues/6166))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame._reduce` where non bool-like (0/1) integers were being converted
+    into bools. ([GH 6806](https://github.com/pandas-dev/pandas/issues/6806))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression from 0.13 with `fillna` and a Series on datetime-like ([GH 6344](https://github.com/pandas-dev/pandas/issues/6344))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in adding `np.timedelta64` to `DatetimeIndex` with timezone outputs incorrect
+    results ([GH 6818](https://github.com/pandas-dev/pandas/issues/6818))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.replace()` where changing a dtype through replacement would
+    only replace the first occurrence of a value ([GH 6689](https://github.com/pandas-dev/pandas/issues/6689))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Better error message when passing a frequency of ‘MS’ in `Period` construction
+    (GH5332)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.__unicode__` when `max_rows=None` and the Series has more than
+    1000 rows. ([GH 6863](https://github.com/pandas-dev/pandas/issues/6863))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `groupby.get_group` where a datelike wasn’t always accepted ([GH 5267](https://github.com/pandas-dev/pandas/issues/5267))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `groupBy.get_group` created by `TimeGrouper` raises `AttributeError`
+    ([GH 6914](https://github.com/pandas-dev/pandas/issues/6914))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DatetimeIndex.tz_localize` and `DatetimeIndex.tz_convert` converting
+    `NaT` incorrectly ([GH 5546](https://github.com/pandas-dev/pandas/issues/5546))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in arithmetic operations affecting `NaT` ([GH 6873](https://github.com/pandas-dev/pandas/issues/6873))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.str.extract` where the resulting `Series` from a single group
+    match wasn’t renamed to the group name
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.to_csv` where setting `index=False` ignored the `header` kwarg
+    ([GH 6186](https://github.com/pandas-dev/pandas/issues/6186))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.plot` and `Series.plot`, where the legend behave inconsistently
+    when plotting to the same axes repeatedly ([GH 6678](https://github.com/pandas-dev/pandas/issues/6678))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Internal tests for patching `__finalize__` / bug in merge not finalizing ([GH
+    6923](https://github.com/pandas-dev/pandas/issues/6923), [GH 6927](https://github.com/pandas-dev/pandas/issues/6927))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: accept `TextFileReader` in `concat`, which was affecting a common user idiom
+    ([GH 6583](https://github.com/pandas-dev/pandas/issues/6583))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in C parser with leading white space ([GH 3374](https://github.com/pandas-dev/pandas/issues/3374))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in C parser with `delim_whitespace=True` and `\r`-delimited lines
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in python parser with explicit MultiIndex in row following column header
+    ([GH 6893](https://github.com/pandas-dev/pandas/issues/6893))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Series.rank` and `DataFrame.rank` that caused small floats (<1e-13)
+    to all receive the same rank ([GH 6886](https://github.com/pandas-dev/pandas/issues/6886))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.apply` with functions that used `*args` or `**kwargs` and
+    returned an empty result ([GH 6952](https://github.com/pandas-dev/pandas/issues/6952))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in sum/mean on 32-bit platforms on overflows ([GH 6915](https://github.com/pandas-dev/pandas/issues/6915))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Moved `Panel.shift` to `NDFrame.slice_shift` and fixed to respect multiple dtypes.
+    ([GH 6959](https://github.com/pandas-dev/pandas/issues/6959))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in enabling `subplots=True` in `DataFrame.plot` only has single column raises
+    `TypeError`, and `Series.plot` raises `AttributeError` ([GH 6951](https://github.com/pandas-dev/pandas/issues/6951))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.plot` draws unnecessary axes when enabling `subplots` and
+    `kind=scatter` ([GH 6951](https://github.com/pandas-dev/pandas/issues/6951))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `read_csv` from a filesystem with non-utf-8 encoding ([GH 6807](https://github.com/pandas-dev/pandas/issues/6807))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `iloc` when setting / aligning ([GH 6766](https://github.com/pandas-dev/pandas/issues/6766))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug causing UnicodeEncodeError when get_dummies called with unicode values and
+    a prefix ([GH 6885](https://github.com/pandas-dev/pandas/issues/6885))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in timeseries-with-frequency plot cursor display ([GH 5453](https://github.com/pandas-dev/pandas/issues/5453))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug surfaced in `groupby.plot` when using a `Float64Index` ([GH 7025](https://github.com/pandas-dev/pandas/issues/7025))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stopped tests from failing if options data isn’t able to be downloaded from
+    Yahoo ([GH 7034](https://github.com/pandas-dev/pandas/issues/7034))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `parallel_coordinates` and `radviz` where reordering of class column
+    caused possible color/class mismatch ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `radviz` and `andrews_curves` where multiple values of ‘color’ were being
+    passed to plotting method ([GH 6956](https://github.com/pandas-dev/pandas/issues/6956))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Float64Index.isin()` where containing `nan` s would make indices claim
+    that they contained all the things ([GH 7066](https://github.com/pandas-dev/pandas/issues/7066)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DataFrame.boxplot` where it failed to use the axis passed as the `ax`
+    argument ([GH 3578](https://github.com/pandas-dev/pandas/issues/3578))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in the `XlsxWriter` and `XlwtWriter` implementations that resulted in datetime
+    columns being formatted without the time ([GH 7075](https://github.com/pandas-dev/pandas/issues/7075))
+    were being passed to plotting method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_fwf()`](../reference/api/pandas.read_fwf.html#pandas.read_fwf "pandas.read_fwf")
+    treats `None` in `colspec` like regular python slices. It now reads from the beginning
+    or until the end of the line when `colspec` contains a `None` (previously raised
+    a `TypeError`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in cache coherence with chained indexing and slicing; add `_is_view` property
+    to `NDFrame` to correctly predict views; mark `is_copy` on `xs` only if its an
+    actual copy (and not a view) ([GH 7084](https://github.com/pandas-dev/pandas/issues/7084))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in DatetimeIndex creation from string ndarray with `dayfirst=True` ([GH
+    5917](https://github.com/pandas-dev/pandas/issues/5917))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `MultiIndex.from_arrays` created from `DatetimeIndex` doesn’t preserve
+    `freq` and `tz` ([GH 7090](https://github.com/pandas-dev/pandas/issues/7090))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `unstack` raises `ValueError` when `MultiIndex` contains `PeriodIndex`
+    ([GH 4342](https://github.com/pandas-dev/pandas/issues/4342))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `boxplot` and `hist` draws unnecessary axes ([GH 6769](https://github.com/pandas-dev/pandas/issues/6769))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression in `groupby.nth()` for out-of-bounds indexers ([GH 6621](https://github.com/pandas-dev/pandas/issues/6621))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `quantile` with datetime values ([GH 6965](https://github.com/pandas-dev/pandas/issues/6965))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Dataframe.set_index`, `reindex` and `pivot` don’t preserve `DatetimeIndex`
+    and `PeriodIndex` attributes ([GH 3950](https://github.com/pandas-dev/pandas/issues/3950),
+    [GH 5878](https://github.com/pandas-dev/pandas/issues/5878), [GH 6631](https://github.com/pandas-dev/pandas/issues/6631))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `MultiIndex.get_level_values` doesn’t preserve `DatetimeIndex` and `PeriodIndex`
+    attributes ([GH 7092](https://github.com/pandas-dev/pandas/issues/7092))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `Groupby` doesn’t preserve `tz` ([GH 3950](https://github.com/pandas-dev/pandas/issues/3950))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `PeriodIndex` partial string slicing ([GH 6716](https://github.com/pandas-dev/pandas/issues/6716))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in the HTML repr of a truncated Series or DataFrame not showing the class
+    name with the `large_repr` set to ‘info’ ([GH 7105](https://github.com/pandas-dev/pandas/issues/7105))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `DatetimeIndex` specifying `freq` raises `ValueError` when passed value
+    is too short ([GH 7098](https://github.com/pandas-dev/pandas/issues/7098))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fixed a bug with the `info` repr not honoring the `display.max_info_columns`
+    setting ([GH 6939](https://github.com/pandas-dev/pandas/issues/6939))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug `PeriodIndex` string slicing with out of bounds values ([GH 5407](https://github.com/pandas-dev/pandas/issues/5407))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fixed a memory error in the hashtable implementation/factorizer on resizing
+    of large tables ([GH 7157](https://github.com/pandas-dev/pandas/issues/7157))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `isnull` when applied to 0-dimensional object arrays ([GH 7176](https://github.com/pandas-dev/pandas/issues/7176))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in `query`/`eval` where global constants were not looked up correctly ([GH
+    7178](https://github.com/pandas-dev/pandas/issues/7178))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in recognizing out-of-bounds positional list indexers with `iloc` and a
+    multi-axis tuple indexer ([GH 7189](https://github.com/pandas-dev/pandas/issues/7189))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in setitem with a single value, MultiIndex and integer indices ([GH 7190](https://github.com/pandas-dev/pandas/issues/7190),
+    [GH 7218](https://github.com/pandas-dev/pandas/issues/7218))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in expressions evaluation with reversed ops, showing in series-dataframe
+    ops ([GH 7198](https://github.com/pandas-dev/pandas/issues/7198), [GH 7192](https://github.com/pandas-dev/pandas/issues/7192))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bug in multi-axis indexing with > 2 ndim and a MultiIndex ([GH 7199](https://github.com/pandas-dev/pandas/issues/7199))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fix a bug where invalid eval/query operations would blow the stack ([GH 5198](https://github.com/pandas-dev/pandas/issues/5198))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Contributors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of 94 people contributed patches to this release. People with a “+”
+    by their names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acanthostega +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adam Marcus +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alex Gaudio
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alex Rothberg
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: AllenDowney +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andrew Rosenfeld +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andy Hayden
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Antoine Mazières +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Benedikt Sauer
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brad Buran
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christopher Whelan
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Clark Fitzgerald
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: DSM
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dale Jung
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dan Allan
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dan Birken
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Daniel Waeber
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Jung +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Stephens +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Douglas McNeil
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Garrett Drapala
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gouthaman Balaraman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guillaume Poulin +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jacob Howard +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jacob Schaer
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jason Sexauer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeff Reback
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeff Tratner
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeffrey Starr +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John David Reaver +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John McNamara
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John W. O’Brien
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jonathan Chambers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joris Van den Bossche
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Julia Evans
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Júlio +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: K.-Michael Aye
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Katie Atkinson +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kelsey Jordahl
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kevin Sheppard +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matt Wittmann +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matthias Kuhn +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Max Grender-Jones +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Michael E. Gruen +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mike Kelly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nipun Batra +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Noah Spies +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PKEuS
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Patrick O’Keeffe
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Phillip Cloud
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pietro Battiston +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Randy Carnevale +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robert Gibboni +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Skipper Seabold
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SplashDance +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stephan Hoyer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tim Cera +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tobias Brandt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Todd Jennings +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tom Augspurger
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: TomAugspurger
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yaroslav Halchenko
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: agijsberts +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: akittredge
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ankostis +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: anomrake
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: anton-d +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: bashtage +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: benjamin +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: bwignall
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: cgohlke +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: chebee7i +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: clham +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: danielballan
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: hshimizu77 +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: hugo +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: immerrr
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ischwabacher +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jaimefrio +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jreback
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jsexauer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: kdiether +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: michaelws +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: mikebailey +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ojdo +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: onesandzeroes +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: phaebz +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ribonoous +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: rockg
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: sinhrks +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: unutbu
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: westurner
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: y-p
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: zach powers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

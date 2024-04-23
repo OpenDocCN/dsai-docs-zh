@@ -1,0 +1,2169 @@
+- en: Enhancing performance
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/enhancingperf.html](https://pandas.pydata.org/docs/user_guide/enhancingperf.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: In this part of the tutorial, we will investigate how to speed up certain functions
+    operating on pandas [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") using Cython, Numba and [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval"). Generally, using Cython and Numba can offer a larger speedup than
+    using [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    but will require a lot more code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to following the steps in this tutorial, users interested in enhancing
+    performance are highly encouraged to install the [recommended dependencies](../getting_started/install.html#install-recommended-dependencies)
+    for pandas. These dependencies are often not installed by default, but will offer
+    speed improvements if present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Cython (writing C extensions for pandas)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For many use cases writing pandas in pure Python and NumPy is sufficient. In
+    some computationally heavy applications however, it can be possible to achieve
+    sizable speed-ups by offloading work to [cython](https://cython.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This tutorial assumes you have refactored as much as possible in Python, for
+    example by trying to remove for-loops and making use of NumPy vectorization. It’s
+    always worth optimising in Python first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This tutorial walks through a “typical” process of cythonizing a slow computation.
+    We use an [example from the Cython documentation](https://docs.cython.org/en/latest/src/quickstart/cythonize.html)
+    but in the context of pandas. Our final cythonized solution is around 100 times
+    faster than the pure Python solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Pure Python'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") to which we want to apply a function row-wise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here’s the function in pure Python:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We achieve our result by using [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply") (row-wise):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let’s take a look and see where the time is spent during this operation using
+    the [prun ipython magic function](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By far the majority of time is spend inside either `integrate_f` or `f`, hence
+    we’ll concentrate our efforts cythonizing these two functions.  ### Plain Cython'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First we’re going to need to import the Cython magic function to IPython:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, let’s simply copy our functions over to Cython:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This has improved the performance compared to the pure Python approach by one-third.  ###
+    Declaring C types'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can annotate the function variables and return types as well as use `cdef`
+    and `cpdef` to improve performance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Annotating the functions with C types yields an over ten times performance
+    improvement compared to the original Python implementation.  ### Using ndarray'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When re-profiling, time is spent creating a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") from each row, and calling `__getitem__` from both the index
+    and the series (three times for each row). These Python function calls are expensive
+    and can be improved by passing an `np.ndarray`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: This implementation creates an array of zeros and inserts the result of `integrate_f_typed`
+    applied over each row. Looping over an `ndarray` is faster in Cython than looping
+    over a [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since `apply_integrate_f` is typed to accept an `np.ndarray`, [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy") calls are needed to utilize this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Performance has improved from the prior implementation by almost ten times.  ###
+    Disabling compiler directives'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The majority of the time is now spent in `apply_integrate_f`. Disabling Cython’s
+    `boundscheck` and `wraparound` checks can yield more performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, a loop indexer `i` accessing an invalid location in an array would
+    cause a segfault because memory access isn’t checked. For more about `boundscheck`
+    and `wraparound`, see the Cython docs on [compiler directives](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives).  ##
+    Numba (JIT compilation)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An alternative to statically compiling Cython code is to use a dynamic just-in-time
+    (JIT) compiler with [Numba](https://numba.pydata.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numba allows you to write a pure Python function which can be JIT compiled to
+    native machine instructions, similar in performance to C, C++ and Fortran, by
+    decorating your function with `@jit`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numba works by generating optimized machine code using the LLVM compiler infrastructure
+    at import time, runtime, or statically (using the included pycc tool). Numba supports
+    compilation of Python to run on either CPU or GPU hardware and is designed to
+    integrate with the Python scientific software stack.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `@jit` compilation will add overhead to the runtime of the function, so
+    performance benefits may not be realized especially when using small data sets.
+    Consider [caching](https://numba.readthedocs.io/en/stable/developer/caching.html)
+    your function to avoid compilation overhead each time your function is run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numba can be used in 2 ways with pandas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specify the `engine="numba"` keyword in select pandas methods
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Define your own Python function decorated with `@jit` and pass the underlying
+    NumPy array of [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    (using [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy")) into the function
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: pandas Numba Engine
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If Numba is installed, one can specify `engine="numba"` in select pandas methods
+    to execute the method using Numba. Methods that support `engine="numba"` will
+    also have an `engine_kwargs` keyword that accepts a dictionary that allows one
+    to specify `"nogil"`, `"nopython"` and `"parallel"` keys with boolean values to
+    pass into the `@jit` decorator. If `engine_kwargs` is not specified, it defaults
+    to `{"nogil": False, "nopython": True, "parallel": False}` unless otherwise specified.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In terms of performance, **the first time a function is run using the Numba
+    engine will be slow** as Numba will have some function compilation overhead. However,
+    the JIT compiled functions are cached, and subsequent calls will be fast. In general,
+    the Numba engine is performant with a larger amount of data points (e.g. 1+ million).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: If your compute hardware contains multiple CPUs, the largest performance gain
+    can be realized by setting `parallel` to `True` to leverage more than 1 CPU. Internally,
+    pandas leverages numba to parallelize computations over the columns of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"); therefore, this performance benefit is only beneficial for
+    a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    with a large number of columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Custom Function Examples
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A custom Python function decorated with `@jit` can be used with pandas objects
+    by passing their NumPy array representations with [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, using Numba was faster than Cython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numba can also be used to write vectorized functions that do not require the
+    user to explicitly loop over the observations of a vector; a vectorized function
+    will be applied to each row automatically. Consider the following example of doubling
+    each observation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Caveats
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Numba is best at accelerating functions that apply numerical functions to NumPy
+    arrays. If you try to `@jit` a function that contains unsupported [Python](https://numba.readthedocs.io/en/stable/reference/pysupported.html)
+    or [NumPy](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)
+    code, compilation will revert [object mode](https://numba.readthedocs.io/en/stable/glossary.html#term-object-mode)
+    which will mostly likely not speed up your function. If you would prefer that
+    Numba throw an error if it cannot compile a function in a way that speeds up your
+    code, pass Numba the argument `nopython=True` (e.g. `@jit(nopython=True)`). For
+    more on troubleshooting Numba modes, see the [Numba troubleshooting page](https://numba.pydata.org/numba-doc/latest/user/troubleshoot.html#the-compiled-code-is-too-slow).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using `parallel=True` (e.g. `@jit(parallel=True)`) may result in a `SIGABRT`
+    if the threading layer leads to unsafe behavior. You can first [specify a safe
+    threading layer](https://numba.readthedocs.io/en/stable/user/threading-layer.html#selecting-a-threading-layer-for-safe-parallel-execution)
+    before running a JIT function with `parallel=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Generally if the you encounter a segfault (`SIGSEGV`) while using Numba, please
+    report the issue to the [Numba issue tracker.](https://github.com/numba/numba/issues/new/choose)  ##
+    Expression evaluation via [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The top-level function [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") implements performant expression evaluation of [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). Expression evaluation allows operations to be expressed as
+    strings and can potentially provide a performance improvement by evaluate arithmetic
+    and boolean expression all at once for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should not use [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") for simple expressions or for expressions involving small DataFrames.
+    In fact, [`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    is many orders of magnitude slower for smaller expressions or objects than plain
+    Python. A good rule of thumb is to only use [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") when you have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with more than 10,000 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Supported syntax
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'These operations are supported by [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arithmetic operations except for the left shift (`<<`) and right shift (`>>`)
+    operators, e.g., `df + 2 * pi / s ** 4 % 42 - the_golden_ratio`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Comparison operations, including chained comparisons, e.g., `2 < df < df2`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Boolean operations, e.g., `df < df2 and df3 < df4 or not df_bool`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`list` and `tuple` literals, e.g., `[1, 2]` or `(1, 2)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Attribute access, e.g., `df.a`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Subscript expressions, e.g., `df[0]`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simple variable evaluation, e.g., `pd.eval("df")` (this is not very useful)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Math functions: `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`, `sinh`,
+    `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`, `arccosh`, `arcsinh`, `arctanh`,
+    `abs`, `arctan2` and `log10`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following Python syntax is **not** allowed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expressions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Function calls other than math functions.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`is`/`is not` operations'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`if` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`lambda` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`list`/`set`/`dict` comprehensions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Literal `dict` and `set` expressions
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`yield` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Generator expressions
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Boolean expressions consisting of only scalar values
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Statements
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Neither [simple](https://docs.python.org/3/reference/simple_stmts.html) or [compound](https://docs.python.org/3/reference/compound_stmts.html)
+    statements are allowed. This includes `for`, `while`, and `if`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Local variables
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You must *explicitly reference* any local variable that you want to use in an
+    expression by placing the `@` character in front of the name. This mechanism is
+    the same for both [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") and [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval"). For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you don’t prefix the local variable with `@`, pandas will raise an exception
+    telling you the variable is undefined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When using [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") and [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query"), this allows you to have a local variable and a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") column with the same name in an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    will raise an exception if you cannot use the `@` prefix because it isn’t defined
+    in that context.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, you should simply refer to the variables like you would in standard
+    Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    parsers'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are two different expression syntax parsers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The default `'pandas'` parser allows a more intuitive syntax for expressing
+    query-like operations (comparisons, conjunctions and disjunctions). In particular,
+    the precedence of the `&` and `|` operators is made equal to the precedence of
+    the corresponding boolean operations `and` and `or`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, the above conjunction can be written without parentheses. Alternatively,
+    you can use the `'python'` parser to enforce strict Python semantics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same expression can be “anded” together with the word [`and`](https://docs.python.org/3/reference/expressions.html#and
+    "(in Python v3.12)") as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`and`](https://docs.python.org/3/reference/expressions.html#and "(in Python
+    v3.12)") and [`or`](https://docs.python.org/3/reference/expressions.html#or "(in
+    Python v3.12)") operators here have the same precedence that they would in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    engines'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are two different expression engines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `'numexpr'` engine is the more performant engine that can yield performance
+    improvements compared to standard Python syntax for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). This engine requires the optional dependency `numexpr` to
+    be installed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `'python'` engine is generally *not* useful except for testing other evaluation
+    engines against it. You will achieve **no** performance benefits using [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") with `engine='python'` and may incur a performance hit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to the top level [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") function you can also evaluate an expression in the “context” of
+    a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any expression that is a valid [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") expression is also a valid [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") expression, with the added benefit that you don’t have
+    to prefix the name of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") to the column(s) you’re interested in evaluating.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition, you can perform assignment of columns within an expression. This
+    allows for *formulaic evaluation*. The assignment target can be a new column name
+    or an existing column name, and it must be a valid Python identifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: A copy of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with the new or modified columns is returned, and the original
+    frame is unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiple column assignments can be performed by using a multi-line string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent in standard Python would be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval") performance
+    comparison'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    works well with expressions containing large arrays.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    arithmetic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    comparison:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    arithmetic with unaligned axes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Operations such as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: should be performed in Python. An exception will be raised if you try to perform
+    any boolean/bitwise operations with scalar operands that are not of type `bool`
+    or `np.bool_`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here is a plot showing the running time of [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") as function of the size of the frame involved in the computation.
+    The two lines are two different engines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: You will only see the performance benefits of using the `numexpr` engine with
+    [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    if your [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") has more than approximately 100,000 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This plot was created using a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with 3 columns each containing floating point values generated
+    using `numpy.random.randn()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expression evaluation limitations with `numexpr`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Expressions that would result in an object dtype or involve datetime operations
+    because of `NaT` must be evaluated in Python space, but part of an expression
+    can still be evaluated with `numexpr`. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The numeric part of the comparison (`nums == 1`) will be evaluated by `numexpr`
+    and the object part of the comparison (`"strings == ''a''`) will be evaluated
+    by Python.  ## Cython (writing C extensions for pandas)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For many use cases writing pandas in pure Python and NumPy is sufficient. In
+    some computationally heavy applications however, it can be possible to achieve
+    sizable speed-ups by offloading work to [cython](https://cython.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This tutorial assumes you have refactored as much as possible in Python, for
+    example by trying to remove for-loops and making use of NumPy vectorization. It’s
+    always worth optimising in Python first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This tutorial walks through a “typical” process of cythonizing a slow computation.
+    We use an [example from the Cython documentation](https://docs.cython.org/en/latest/src/quickstart/cythonize.html)
+    but in the context of pandas. Our final cythonized solution is around 100 times
+    faster than the pure Python solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Pure Python'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") to which we want to apply a function row-wise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here’s the function in pure Python:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We achieve our result by using [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply") (row-wise):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let’s take a look and see where the time is spent during this operation using
+    the [prun ipython magic function](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By far the majority of time is spend inside either `integrate_f` or `f`, hence
+    we’ll concentrate our efforts cythonizing these two functions.  ### Plain Cython'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First we’re going to need to import the Cython magic function to IPython:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, let’s simply copy our functions over to Cython:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This has improved the performance compared to the pure Python approach by one-third.  ###
+    Declaring C types'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can annotate the function variables and return types as well as use `cdef`
+    and `cpdef` to improve performance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Annotating the functions with C types yields an over ten times performance
+    improvement compared to the original Python implementation.  ### Using ndarray'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When re-profiling, time is spent creating a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") from each row, and calling `__getitem__` from both the index
+    and the series (three times for each row). These Python function calls are expensive
+    and can be improved by passing an `np.ndarray`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: This implementation creates an array of zeros and inserts the result of `integrate_f_typed`
+    applied over each row. Looping over an `ndarray` is faster in Cython than looping
+    over a [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since `apply_integrate_f` is typed to accept an `np.ndarray`, [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy") calls are needed to utilize this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Performance has improved from the prior implementation by almost ten times.  ###
+    Disabling compiler directives'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The majority of the time is now spent in `apply_integrate_f`. Disabling Cython’s
+    `boundscheck` and `wraparound` checks can yield more performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, a loop indexer `i` accessing an invalid location in an array would
+    cause a segfault because memory access isn’t checked. For more about `boundscheck`
+    and `wraparound`, see the Cython docs on [compiler directives](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives).  ###
+    Pure Python'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") to which we want to apply a function row-wise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here’s the function in pure Python:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We achieve our result by using [`DataFrame.apply()`](../reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply
+    "pandas.DataFrame.apply") (row-wise):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let’s take a look and see where the time is spent during this operation using
+    the [prun ipython magic function](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-prun):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: By far the majority of time is spend inside either `integrate_f` or `f`, hence
+    we’ll concentrate our efforts cythonizing these two functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Plain Cython'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First we’re going to need to import the Cython magic function to IPython:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, let’s simply copy our functions over to Cython:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: This has improved the performance compared to the pure Python approach by one-third.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Declaring C types'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can annotate the function variables and return types as well as use `cdef`
+    and `cpdef` to improve performance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: Annotating the functions with C types yields an over ten times performance improvement
+    compared to the original Python implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Using ndarray'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When re-profiling, time is spent creating a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") from each row, and calling `__getitem__` from both the index
+    and the series (three times for each row). These Python function calls are expensive
+    and can be improved by passing an `np.ndarray`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: This implementation creates an array of zeros and inserts the result of `integrate_f_typed`
+    applied over each row. Looping over an `ndarray` is faster in Cython than looping
+    over a [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since `apply_integrate_f` is typed to accept an `np.ndarray`, [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy") calls are needed to utilize this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Performance has improved from the prior implementation by almost ten times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Disabling compiler directives'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The majority of the time is now spent in `apply_integrate_f`. Disabling Cython’s
+    `boundscheck` and `wraparound` checks can yield more performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, a loop indexer `i` accessing an invalid location in an array would
+    cause a segfault because memory access isn’t checked. For more about `boundscheck`
+    and `wraparound`, see the Cython docs on [compiler directives](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Numba (JIT compilation)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An alternative to statically compiling Cython code is to use a dynamic just-in-time
+    (JIT) compiler with [Numba](https://numba.pydata.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numba allows you to write a pure Python function which can be JIT compiled to
+    native machine instructions, similar in performance to C, C++ and Fortran, by
+    decorating your function with `@jit`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numba works by generating optimized machine code using the LLVM compiler infrastructure
+    at import time, runtime, or statically (using the included pycc tool). Numba supports
+    compilation of Python to run on either CPU or GPU hardware and is designed to
+    integrate with the Python scientific software stack.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `@jit` compilation will add overhead to the runtime of the function, so
+    performance benefits may not be realized especially when using small data sets.
+    Consider [caching](https://numba.readthedocs.io/en/stable/developer/caching.html)
+    your function to avoid compilation overhead each time your function is run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numba can be used in 2 ways with pandas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specify the `engine="numba"` keyword in select pandas methods
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Define your own Python function decorated with `@jit` and pass the underlying
+    NumPy array of [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    (using [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy")) into the function
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: pandas Numba Engine
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If Numba is installed, one can specify `engine="numba"` in select pandas methods
+    to execute the method using Numba. Methods that support `engine="numba"` will
+    also have an `engine_kwargs` keyword that accepts a dictionary that allows one
+    to specify `"nogil"`, `"nopython"` and `"parallel"` keys with boolean values to
+    pass into the `@jit` decorator. If `engine_kwargs` is not specified, it defaults
+    to `{"nogil": False, "nopython": True, "parallel": False}` unless otherwise specified.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In terms of performance, **the first time a function is run using the Numba
+    engine will be slow** as Numba will have some function compilation overhead. However,
+    the JIT compiled functions are cached, and subsequent calls will be fast. In general,
+    the Numba engine is performant with a larger amount of data points (e.g. 1+ million).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: If your compute hardware contains multiple CPUs, the largest performance gain
+    can be realized by setting `parallel` to `True` to leverage more than 1 CPU. Internally,
+    pandas leverages numba to parallelize computations over the columns of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"); therefore, this performance benefit is only beneficial for
+    a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    with a large number of columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: Custom Function Examples
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A custom Python function decorated with `@jit` can be used with pandas objects
+    by passing their NumPy array representations with [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, using Numba was faster than Cython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numba can also be used to write vectorized functions that do not require the
+    user to explicitly loop over the observations of a vector; a vectorized function
+    will be applied to each row automatically. Consider the following example of doubling
+    each observation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: Caveats
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Numba is best at accelerating functions that apply numerical functions to NumPy
+    arrays. If you try to `@jit` a function that contains unsupported [Python](https://numba.readthedocs.io/en/stable/reference/pysupported.html)
+    or [NumPy](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)
+    code, compilation will revert [object mode](https://numba.readthedocs.io/en/stable/glossary.html#term-object-mode)
+    which will mostly likely not speed up your function. If you would prefer that
+    Numba throw an error if it cannot compile a function in a way that speeds up your
+    code, pass Numba the argument `nopython=True` (e.g. `@jit(nopython=True)`). For
+    more on troubleshooting Numba modes, see the [Numba troubleshooting page](https://numba.pydata.org/numba-doc/latest/user/troubleshoot.html#the-compiled-code-is-too-slow).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using `parallel=True` (e.g. `@jit(parallel=True)`) may result in a `SIGABRT`
+    if the threading layer leads to unsafe behavior. You can first [specify a safe
+    threading layer](https://numba.readthedocs.io/en/stable/user/threading-layer.html#selecting-a-threading-layer-for-safe-parallel-execution)
+    before running a JIT function with `parallel=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generally if the you encounter a segfault (`SIGSEGV`) while using Numba, please
+    report the issue to the [Numba issue tracker.](https://github.com/numba/numba/issues/new/choose)
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas Numba Engine
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If Numba is installed, one can specify `engine="numba"` in select pandas methods
+    to execute the method using Numba. Methods that support `engine="numba"` will
+    also have an `engine_kwargs` keyword that accepts a dictionary that allows one
+    to specify `"nogil"`, `"nopython"` and `"parallel"` keys with boolean values to
+    pass into the `@jit` decorator. If `engine_kwargs` is not specified, it defaults
+    to `{"nogil": False, "nopython": True, "parallel": False}` unless otherwise specified.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In terms of performance, **the first time a function is run using the Numba
+    engine will be slow** as Numba will have some function compilation overhead. However,
+    the JIT compiled functions are cached, and subsequent calls will be fast. In general,
+    the Numba engine is performant with a larger amount of data points (e.g. 1+ million).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: If your compute hardware contains multiple CPUs, the largest performance gain
+    can be realized by setting `parallel` to `True` to leverage more than 1 CPU. Internally,
+    pandas leverages numba to parallelize computations over the columns of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"); therefore, this performance benefit is only beneficial for
+    a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    with a large number of columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Custom Function Examples
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A custom Python function decorated with `@jit` can be used with pandas objects
+    by passing their NumPy array representations with [`Series.to_numpy()`](../reference/api/pandas.Series.to_numpy.html#pandas.Series.to_numpy
+    "pandas.Series.to_numpy").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, using Numba was faster than Cython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numba can also be used to write vectorized functions that do not require the
+    user to explicitly loop over the observations of a vector; a vectorized function
+    will be applied to each row automatically. Consider the following example of doubling
+    each observation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: Caveats
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Numba is best at accelerating functions that apply numerical functions to NumPy
+    arrays. If you try to `@jit` a function that contains unsupported [Python](https://numba.readthedocs.io/en/stable/reference/pysupported.html)
+    or [NumPy](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)
+    code, compilation will revert [object mode](https://numba.readthedocs.io/en/stable/glossary.html#term-object-mode)
+    which will mostly likely not speed up your function. If you would prefer that
+    Numba throw an error if it cannot compile a function in a way that speeds up your
+    code, pass Numba the argument `nopython=True` (e.g. `@jit(nopython=True)`). For
+    more on troubleshooting Numba modes, see the [Numba troubleshooting page](https://numba.pydata.org/numba-doc/latest/user/troubleshoot.html#the-compiled-code-is-too-slow).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using `parallel=True` (e.g. `@jit(parallel=True)`) may result in a `SIGABRT`
+    if the threading layer leads to unsafe behavior. You can first [specify a safe
+    threading layer](https://numba.readthedocs.io/en/stable/user/threading-layer.html#selecting-a-threading-layer-for-safe-parallel-execution)
+    before running a JIT function with `parallel=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generally if the you encounter a segfault (`SIGSEGV`) while using Numba, please
+    report the issue to the [Numba issue tracker.](https://github.com/numba/numba/issues/new/choose)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Expression evaluation via [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The top-level function [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") implements performant expression evaluation of [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). Expression evaluation allows operations to be expressed as
+    strings and can potentially provide a performance improvement by evaluate arithmetic
+    and boolean expression all at once for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should not use [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") for simple expressions or for expressions involving small DataFrames.
+    In fact, [`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    is many orders of magnitude slower for smaller expressions or objects than plain
+    Python. A good rule of thumb is to only use [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") when you have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with more than 10,000 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Supported syntax
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'These operations are supported by [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arithmetic operations except for the left shift (`<<`) and right shift (`>>`)
+    operators, e.g., `df + 2 * pi / s ** 4 % 42 - the_golden_ratio`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Comparison operations, including chained comparisons, e.g., `2 < df < df2`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Boolean operations, e.g., `df < df2 and df3 < df4 or not df_bool`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`list` and `tuple` literals, e.g., `[1, 2]` or `(1, 2)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Attribute access, e.g., `df.a`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Subscript expressions, e.g., `df[0]`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simple variable evaluation, e.g., `pd.eval("df")` (this is not very useful)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Math functions: `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`, `sinh`,
+    `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`, `arccosh`, `arcsinh`, `arctanh`,
+    `abs`, `arctan2` and `log10`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following Python syntax is **not** allowed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expressions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Function calls other than math functions.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`is`/`is not` operations'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`if` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`lambda` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`list`/`set`/`dict` comprehensions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Literal `dict` and `set` expressions
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`yield` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Generator expressions
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Boolean expressions consisting of only scalar values
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Statements
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Neither [simple](https://docs.python.org/3/reference/simple_stmts.html) or [compound](https://docs.python.org/3/reference/compound_stmts.html)
+    statements are allowed. This includes `for`, `while`, and `if`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Local variables
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You must *explicitly reference* any local variable that you want to use in an
+    expression by placing the `@` character in front of the name. This mechanism is
+    the same for both [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") and [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval"). For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you don’t prefix the local variable with `@`, pandas will raise an exception
+    telling you the variable is undefined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When using [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") and [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query"), this allows you to have a local variable and a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") column with the same name in an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    will raise an exception if you cannot use the `@` prefix because it isn’t defined
+    in that context.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, you should simply refer to the variables like you would in standard
+    Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    parsers'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are two different expression syntax parsers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The default `'pandas'` parser allows a more intuitive syntax for expressing
+    query-like operations (comparisons, conjunctions and disjunctions). In particular,
+    the precedence of the `&` and `|` operators is made equal to the precedence of
+    the corresponding boolean operations `and` and `or`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, the above conjunction can be written without parentheses. Alternatively,
+    you can use the `'python'` parser to enforce strict Python semantics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same expression can be “anded” together with the word [`and`](https://docs.python.org/3/reference/expressions.html#and
+    "(in Python v3.12)") as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`and`](https://docs.python.org/3/reference/expressions.html#and "(in Python
+    v3.12)") and [`or`](https://docs.python.org/3/reference/expressions.html#or "(in
+    Python v3.12)") operators here have the same precedence that they would in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    engines'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are two different expression engines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `'numexpr'` engine is the more performant engine that can yield performance
+    improvements compared to standard Python syntax for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). This engine requires the optional dependency `numexpr` to
+    be installed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `'python'` engine is generally *not* useful except for testing other evaluation
+    engines against it. You will achieve **no** performance benefits using [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") with `engine='python'` and may incur a performance hit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to the top level [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") function you can also evaluate an expression in the “context” of
+    a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any expression that is a valid [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") expression is also a valid [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") expression, with the added benefit that you don’t have
+    to prefix the name of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") to the column(s) you’re interested in evaluating.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition, you can perform assignment of columns within an expression. This
+    allows for *formulaic evaluation*. The assignment target can be a new column name
+    or an existing column name, and it must be a valid Python identifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: A copy of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with the new or modified columns is returned, and the original
+    frame is unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiple column assignments can be performed by using a multi-line string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent in standard Python would be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval") performance
+    comparison'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    works well with expressions containing large arrays.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    arithmetic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    comparison:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    arithmetic with unaligned axes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Operations such as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: should be performed in Python. An exception will be raised if you try to perform
+    any boolean/bitwise operations with scalar operands that are not of type `bool`
+    or `np.bool_`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here is a plot showing the running time of [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") as function of the size of the frame involved in the computation.
+    The two lines are two different engines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: You will only see the performance benefits of using the `numexpr` engine with
+    [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    if your [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") has more than approximately 100,000 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This plot was created using a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with 3 columns each containing floating point values generated
+    using `numpy.random.randn()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expression evaluation limitations with `numexpr`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Expressions that would result in an object dtype or involve datetime operations
+    because of `NaT` must be evaluated in Python space, but part of an expression
+    can still be evaluated with `numexpr`. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: The numeric part of the comparison (`nums == 1`) will be evaluated by `numexpr`
+    and the object part of the comparison (`"strings == 'a'`) will be evaluated by
+    Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Supported syntax
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'These operations are supported by [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arithmetic operations except for the left shift (`<<`) and right shift (`>>`)
+    operators, e.g., `df + 2 * pi / s ** 4 % 42 - the_golden_ratio`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Comparison operations, including chained comparisons, e.g., `2 < df < df2`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Boolean operations, e.g., `df < df2 and df3 < df4 or not df_bool`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`list` and `tuple` literals, e.g., `[1, 2]` or `(1, 2)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Attribute access, e.g., `df.a`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Subscript expressions, e.g., `df[0]`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simple variable evaluation, e.g., `pd.eval("df")` (this is not very useful)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Math functions: `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`, `sinh`,
+    `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`, `arccosh`, `arcsinh`, `arctanh`,
+    `abs`, `arctan2` and `log10`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following Python syntax is **not** allowed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expressions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Function calls other than math functions.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`is`/`is not` operations'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`if` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`lambda` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`list`/`set`/`dict` comprehensions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Literal `dict` and `set` expressions
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`yield` expressions'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Generator expressions
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Boolean expressions consisting of only scalar values
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Statements
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Neither [simple](https://docs.python.org/3/reference/simple_stmts.html) or [compound](https://docs.python.org/3/reference/compound_stmts.html)
+    statements are allowed. This includes `for`, `while`, and `if`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Local variables
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You must *explicitly reference* any local variable that you want to use in an
+    expression by placing the `@` character in front of the name. This mechanism is
+    the same for both [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") and [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval"). For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you don’t prefix the local variable with `@`, pandas will raise an exception
+    telling you the variable is undefined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When using [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") and [`DataFrame.query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query"), this allows you to have a local variable and a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") column with the same name in an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    will raise an exception if you cannot use the `@` prefix because it isn’t defined
+    in that context.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, you should simply refer to the variables like you would in standard
+    Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    parsers'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are two different expression syntax parsers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The default `'pandas'` parser allows a more intuitive syntax for expressing
+    query-like operations (comparisons, conjunctions and disjunctions). In particular,
+    the precedence of the `&` and `|` operators is made equal to the precedence of
+    the corresponding boolean operations `and` and `or`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, the above conjunction can be written without parentheses. Alternatively,
+    you can use the `'python'` parser to enforce strict Python semantics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same expression can be “anded” together with the word [`and`](https://docs.python.org/3/reference/expressions.html#and
+    "(in Python v3.12)") as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`and`](https://docs.python.org/3/reference/expressions.html#and "(in Python
+    v3.12)") and [`or`](https://docs.python.org/3/reference/expressions.html#or "(in
+    Python v3.12)") operators here have the same precedence that they would in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    engines'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are two different expression engines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `'numexpr'` engine is the more performant engine that can yield performance
+    improvements compared to standard Python syntax for large [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). This engine requires the optional dependency `numexpr` to
+    be installed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `'python'` engine is generally *not* useful except for testing other evaluation
+    engines against it. You will achieve **no** performance benefits using [`eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") with `engine='python'` and may incur a performance hit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to the top level [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") function you can also evaluate an expression in the “context” of
+    a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any expression that is a valid [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") expression is also a valid [`DataFrame.eval()`](../reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    "pandas.DataFrame.eval") expression, with the added benefit that you don’t have
+    to prefix the name of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") to the column(s) you’re interested in evaluating.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition, you can perform assignment of columns within an expression. This
+    allows for *formulaic evaluation*. The assignment target can be a new column name
+    or an existing column name, and it must be a valid Python identifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: A copy of the [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with the new or modified columns is returned, and the original
+    frame is unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiple column assignments can be performed by using a multi-line string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent in standard Python would be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval") performance
+    comparison'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    works well with expressions containing large arrays.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    arithmetic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    comparison:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    arithmetic with unaligned axes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Operations such as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: should be performed in Python. An exception will be raised if you try to perform
+    any boolean/bitwise operations with scalar operands that are not of type `bool`
+    or `np.bool_`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here is a plot showing the running time of [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval
+    "pandas.eval") as function of the size of the frame involved in the computation.
+    The two lines are two different engines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../_images/eval-perf.png](../Images/92dd7fd9182879819c8c1a6616f061ec.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: You will only see the performance benefits of using the `numexpr` engine with
+    [`pandas.eval()`](../reference/api/pandas.eval.html#pandas.eval "pandas.eval")
+    if your [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") has more than approximately 100,000 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This plot was created using a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with 3 columns each containing floating point values generated
+    using `numpy.random.randn()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expression evaluation limitations with `numexpr`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Expressions that would result in an object dtype or involve datetime operations
+    because of `NaT` must be evaluated in Python space, but part of an expression
+    can still be evaluated with `numexpr`. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: The numeric part of the comparison (`nums == 1`) will be evaluated by `numexpr`
+    and the object part of the comparison (`"strings == 'a'`) will be evaluated by
+    Python.
+  prefs: []
+  type: TYPE_NORMAL

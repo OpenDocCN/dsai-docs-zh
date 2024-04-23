@@ -1,0 +1,883 @@
+- en: Version 0.10.0 (December 17, 2012)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/whatsnew/v0.10.0.html](https://pandas.pydata.org/docs/whatsnew/v0.10.0.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This is a major release from 0.9.1 and includes many new features and enhancements
+    along with a large number of bug fixes. There are also a number of important API
+    changes that long-time pandas users should pay close attention to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: File parsing new features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The delimited file parsing engine (the guts of `read_csv` and `read_table`)
+    has been rewritten from the ground up and now uses a fraction the amount of memory
+    while parsing, while being 40% or more faster in most use cases (in some cases
+    much faster).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are also many new features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Much-improved Unicode handling via the `encoding` option.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Column filtering (`usecols`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dtype specification (`dtype` argument)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ability to specify strings to be recognized as True/False
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ability to yield NumPy record arrays (`as_recarray`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: High performance `delim_whitespace` option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Decimal format (e.g. European format) specification
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Easier CSV dialect options: `escapechar`, `lineterminator`, `quotechar`, etc.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: More robust handling of many exceptional kinds of files observed in the wild
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: API changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**Deprecated DataFrame BINOP TimeSeries special case behavior**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The default behavior of binary operations between a DataFrame and a Series
+    has always been to align on the DataFrame’s columns and broadcast down the rows,
+    **except** in the special case that the DataFrame contains time series. Since
+    there are now method for each binary operator enabling you to specify how you
+    want to broadcast, we are phasing out this special case (Zen of Python: *Special
+    cases aren’t special enough to break the rules*). Here’s what I’m talking about:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: You will get a deprecation warning in the 0.10.x series, and the deprecated
+    functionality will be removed in 0.11 or later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Altered resample default behavior**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The default time series `resample` binning behavior of daily `D` and *higher*
+    frequencies has been changed to `closed=''left'', label=''left''`. Lower nfrequencies
+    are unaffected. The prior defaults were causing a great deal of confusion for
+    users, especially resampling data to daily frequency (which labeled the aggregated
+    group with the end of the interval: the next day).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Infinity and negative infinity are no longer treated as NA by `isnull` and
+    `notnull`. That they ever were was a relic of early pandas. This behavior can
+    be re-enabled globally by the `mode.use_inf_as_null` option:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Methods with the `inplace` option now all return `None` instead of the calling
+    object. E.g. code written like `df = df.fillna(0, inplace=True)` may stop working.
+    To fix, simply delete the unnecessary variable assignment.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pandas.merge` no longer sorts the group keys (`sort=False`) by default. This
+    was done for performance reasons: the group-key sorting is often one of the more
+    expensive parts of the computation and is often unnecessary.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The default column names for a file with no header have been changed to the
+    integers `0` through `N - 1`. This is to create consistency with the DataFrame
+    constructor with no columns specified. The v0.9.0 behavior (names `X0`, `X1`,
+    …) can be reproduced by specifying `prefix=''X''`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Values like `''Yes''` and `''No''` are not interpreted as boolean by default,
+    though this can be controlled by new `true_values` and `false_values` arguments:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The file parsers will not recognize non-string values arising from a converter
+    function as NA if passed in the `na_values` argument. It’s better to do post-processing
+    using the `replace` function instead.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Calling `fillna` on Series or DataFrame with no arguments is no longer valid
+    code. You must either specify a fill value or an interpolation method:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Convenience methods `ffill` and `bfill` have been added:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Series.apply` will now operate on a returned value from the applied function,
+    that is itself a series, and possibly upcast the result to a DataFrame'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'New API functions for working with pandas options ([GH 2097](https://github.com/pandas-dev/pandas/issues/2097)):'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_option` / `set_option` - get/set the value of an option. Partial names
+    are accepted. - `reset_option` - reset one or more options to their default value.
+    Partial names are accepted. - `describe_option` - print a description of one or
+    more options. When called with no arguments. print all registered options.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Note: `set_printoptions`/ `reset_printoptions` are now deprecated (but functioning),
+    the print options now live under “display.XYZ”. For example:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: to_string() methods now always return unicode strings ([GH 2224](https://github.com/pandas-dev/pandas/issues/2224)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Wide DataFrame printing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Instead of printing the summary information, pandas now splits the string representation
+    across multiple rows by default:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The old behavior of printing out summary information can be achieved via the
+    ‘expand_frame_repr’ print option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The width of each line can be changed via ‘line_width’ (80 by default):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Updated PyTables support
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Docs](../user_guide/io.html#io-hdf5) for PyTables `Table` format & several
+    enhancements to the api. Here is a taste of what to expect.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Enhancements**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: added ability to hierarchical keys
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_PRE
+- en: added mixed-dtype support!
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_PRE
+- en: performance improvements on table writing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: support for arbitrarily indexed dimensions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`SparseSeries` now has a `density` property ([GH 2384](https://github.com/pandas-dev/pandas/issues/2384))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: enable `Series.str.strip/lstrip/rstrip` methods to take an input argument to
+    strip arbitrary characters ([GH 2411](https://github.com/pandas-dev/pandas/issues/2411))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: implement `value_vars` in `melt` to limit values to certain columns and add
+    `melt` to pandas namespace ([GH 2412](https://github.com/pandas-dev/pandas/issues/2412))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Bug Fixes**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: added `Term` method of specifying where conditions ([GH 1996](https://github.com/pandas-dev/pandas/issues/1996)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`del store[''df'']` now call `store.remove(''df'')` for store deletion'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: deleting of consecutive rows is much faster than before
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`min_itemsize` parameter can be specified in table creation to force a minimum
+    size for indexing columns (the previous implementation would set the column size
+    based on the first append)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: indexing support via `create_table_index` (requires PyTables >= 2.3) ([GH 698](https://github.com/pandas-dev/pandas/issues/698)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: appending on a store would fail if the table was not first created via `put`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: fixed issue with missing attributes after loading a pickled dataframe (GH2431)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'minor change to select and remove: require a table ONLY if where is also provided
+    (and not None)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Compatibility**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.10 of `HDFStore` is backwards compatible for reading tables created in a prior
+    version of pandas, however, query terms using the prior (undocumented) methodology
+    are unsupported. You must read in the entire file and write it out using the new
+    format to take advantage of the updates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: N dimensional panels (experimental)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Adding experimental support for Panel4D and factory functions to create n-dimensional
+    named panels. Here is a taste of what to expect.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the [full release notes](index.html#release) or issue tracker on GitHub
+    for a complete list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Contributors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of 26 people contributed patches to this release. People with a “+”
+    by their names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A. Flaxman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Abraham Flaxman
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adam Obeng +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brenda Moon +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chang She
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chris Mulligan +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dieter Vandenbussche
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Donald Curtis +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jay Bourque +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeff Reback +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Justin C Johnson +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: K.-Michael Aye
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Keith Hughitt +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ken Van Haren +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Laurent Gautier +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Luke Lee +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin Blais
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tobias Brandt +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wes McKinney
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wouter Overmeire
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: alex arsenovic +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jreback +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: locojaydev +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: timmie
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: y-p
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: zach powers +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: File parsing new features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The delimited file parsing engine (the guts of `read_csv` and `read_table`)
+    has been rewritten from the ground up and now uses a fraction the amount of memory
+    while parsing, while being 40% or more faster in most use cases (in some cases
+    much faster).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are also many new features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Much-improved Unicode handling via the `encoding` option.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Column filtering (`usecols`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dtype specification (`dtype` argument)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ability to specify strings to be recognized as True/False
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ability to yield NumPy record arrays (`as_recarray`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: High performance `delim_whitespace` option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Decimal format (e.g. European format) specification
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Easier CSV dialect options: `escapechar`, `lineterminator`, `quotechar`, etc.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: More robust handling of many exceptional kinds of files observed in the wild
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: API changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**Deprecated DataFrame BINOP TimeSeries special case behavior**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The default behavior of binary operations between a DataFrame and a Series
+    has always been to align on the DataFrame’s columns and broadcast down the rows,
+    **except** in the special case that the DataFrame contains time series. Since
+    there are now method for each binary operator enabling you to specify how you
+    want to broadcast, we are phasing out this special case (Zen of Python: *Special
+    cases aren’t special enough to break the rules*). Here’s what I’m talking about:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: You will get a deprecation warning in the 0.10.x series, and the deprecated
+    functionality will be removed in 0.11 or later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Altered resample default behavior**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The default time series `resample` binning behavior of daily `D` and *higher*
+    frequencies has been changed to `closed=''left'', label=''left''`. Lower nfrequencies
+    are unaffected. The prior defaults were causing a great deal of confusion for
+    users, especially resampling data to daily frequency (which labeled the aggregated
+    group with the end of the interval: the next day).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Infinity and negative infinity are no longer treated as NA by `isnull` and
+    `notnull`. That they ever were was a relic of early pandas. This behavior can
+    be re-enabled globally by the `mode.use_inf_as_null` option:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Methods with the `inplace` option now all return `None` instead of the calling
+    object. E.g. code written like `df = df.fillna(0, inplace=True)` may stop working.
+    To fix, simply delete the unnecessary variable assignment.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pandas.merge` no longer sorts the group keys (`sort=False`) by default. This
+    was done for performance reasons: the group-key sorting is often one of the more
+    expensive parts of the computation and is often unnecessary.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The default column names for a file with no header have been changed to the
+    integers `0` through `N - 1`. This is to create consistency with the DataFrame
+    constructor with no columns specified. The v0.9.0 behavior (names `X0`, `X1`,
+    …) can be reproduced by specifying `prefix=''X''`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Values like `''Yes''` and `''No''` are not interpreted as boolean by default,
+    though this can be controlled by new `true_values` and `false_values` arguments:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: The file parsers will not recognize non-string values arising from a converter
+    function as NA if passed in the `na_values` argument. It’s better to do post-processing
+    using the `replace` function instead.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Calling `fillna` on Series or DataFrame with no arguments is no longer valid
+    code. You must either specify a fill value or an interpolation method:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Convenience methods `ffill` and `bfill` have been added:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Series.apply` will now operate on a returned value from the applied function,
+    that is itself a series, and possibly upcast the result to a DataFrame'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'New API functions for working with pandas options ([GH 2097](https://github.com/pandas-dev/pandas/issues/2097)):'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_option` / `set_option` - get/set the value of an option. Partial names
+    are accepted. - `reset_option` - reset one or more options to their default value.
+    Partial names are accepted. - `describe_option` - print a description of one or
+    more options. When called with no arguments. print all registered options.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Note: `set_printoptions`/ `reset_printoptions` are now deprecated (but functioning),
+    the print options now live under “display.XYZ”. For example:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: to_string() methods now always return unicode strings ([GH 2224](https://github.com/pandas-dev/pandas/issues/2224)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Wide DataFrame printing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Instead of printing the summary information, pandas now splits the string representation
+    across multiple rows by default:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The old behavior of printing out summary information can be achieved via the
+    ‘expand_frame_repr’ print option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The width of each line can be changed via ‘line_width’ (80 by default):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Updated PyTables support
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Docs](../user_guide/io.html#io-hdf5) for PyTables `Table` format & several
+    enhancements to the api. Here is a taste of what to expect.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Enhancements**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: added ability to hierarchical keys
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_PRE
+- en: added mixed-dtype support!
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_PRE
+- en: performance improvements on table writing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: support for arbitrarily indexed dimensions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`SparseSeries` now has a `density` property ([GH 2384](https://github.com/pandas-dev/pandas/issues/2384))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: enable `Series.str.strip/lstrip/rstrip` methods to take an input argument to
+    strip arbitrary characters ([GH 2411](https://github.com/pandas-dev/pandas/issues/2411))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: implement `value_vars` in `melt` to limit values to certain columns and add
+    `melt` to pandas namespace ([GH 2412](https://github.com/pandas-dev/pandas/issues/2412))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Bug Fixes**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: added `Term` method of specifying where conditions ([GH 1996](https://github.com/pandas-dev/pandas/issues/1996)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`del store[''df'']` now call `store.remove(''df'')` for store deletion'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: deleting of consecutive rows is much faster than before
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`min_itemsize` parameter can be specified in table creation to force a minimum
+    size for indexing columns (the previous implementation would set the column size
+    based on the first append)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: indexing support via `create_table_index` (requires PyTables >= 2.3) ([GH 698](https://github.com/pandas-dev/pandas/issues/698)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: appending on a store would fail if the table was not first created via `put`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: fixed issue with missing attributes after loading a pickled dataframe (GH2431)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'minor change to select and remove: require a table ONLY if where is also provided
+    (and not None)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Compatibility**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.10 of `HDFStore` is backwards compatible for reading tables created in a prior
+    version of pandas, however, query terms using the prior (undocumented) methodology
+    are unsupported. You must read in the entire file and write it out using the new
+    format to take advantage of the updates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: N dimensional panels (experimental)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Adding experimental support for Panel4D and factory functions to create n-dimensional
+    named panels. Here is a taste of what to expect.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the [full release notes](index.html#release) or issue tracker on GitHub
+    for a complete list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Contributors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of 26 people contributed patches to this release. People with a “+”
+    by their names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A. Flaxman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Abraham Flaxman
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adam Obeng +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brenda Moon +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chang She
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chris Mulligan +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dieter Vandenbussche
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Donald Curtis +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jay Bourque +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeff Reback +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Justin C Johnson +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: K.-Michael Aye
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Keith Hughitt +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ken Van Haren +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Laurent Gautier +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Luke Lee +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin Blais
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tobias Brandt +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wes McKinney
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wouter Overmeire
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: alex arsenovic +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jreback +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: locojaydev +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: timmie
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: y-p
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: zach powers +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

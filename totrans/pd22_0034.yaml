@@ -1,0 +1,1648 @@
+- en: Working with missing data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/missing_data.html](https://pandas.pydata.org/docs/user_guide/missing_data.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## Values considered “missing”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas uses different sentinel values to represent a missing (also referred
+    to as NA) depending on the data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`numpy.nan` for NumPy data types. The disadvantage of using NumPy data types
+    is that the original data type will be coerced to `np.float64` or `object`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`NaT`](../reference/api/pandas.NaT.html#pandas.NaT "pandas.NaT") for NumPy
+    `np.datetime64`, `np.timedelta64`, and [`PeriodDtype`](../reference/api/pandas.PeriodDtype.html#pandas.PeriodDtype
+    "pandas.PeriodDtype"). For typing applications, use `api.types.NaTType`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") for [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype"), [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype
+    "pandas.Int64Dtype") (and other bit widths), `Float64Dtype`(and other bit widths),
+    :class:`BooleanDtype` and [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype"). These types will maintain the original data type of the
+    data. For typing applications, use `api.types.NAType`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: To detect these missing value, use the [`isna()`](../reference/api/pandas.isna.html#pandas.isna
+    "pandas.isna") or [`notna()`](../reference/api/pandas.notna.html#pandas.notna
+    "pandas.notna") methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`isna()`](../reference/api/pandas.isna.html#pandas.isna "pandas.isna") or
+    [`notna()`](../reference/api/pandas.notna.html#pandas.notna "pandas.notna") will
+    also consider `None` a missing value.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Equality compaisons between `np.nan`, [`NaT`](../reference/api/pandas.NaT.html#pandas.NaT
+    "pandas.NaT"), and [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    do not act like `None`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Therefore, an equality comparison between a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with one of these missing values does not provide the same information
+    as [`isna()`](../reference/api/pandas.isna.html#pandas.isna "pandas.isna") or
+    [`notna()`](../reference/api/pandas.notna.html#pandas.notna "pandas.notna").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") semantics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Experimental: the behaviour of `NA`` can still change without warning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting from pandas 1.0, an experimental [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") value (singleton) is available to represent scalar missing values.
+    The goal of [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") is provide
+    a “missing” indicator that can be used consistently across data types (instead
+    of `np.nan`, `None` or `pd.NaT` depending on the data type).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, when having missing values in a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with the nullable integer dtype, it will use [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Currently, pandas does not yet use those data types using [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") by default a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"), so you need to specify the dtype explicitly. An easy way to
+    convert to those dtypes is explained in the [conversion section](#missing-data-na-conversion).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Propagation in arithmetic and comparison operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In general, missing values *propagate* in operations involving [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"). When one of the operands is unknown, the outcome of the operation
+    is also unknown.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    propagates in arithmetic operations, similarly to `np.nan`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are a few special cases when the result is known, even when one of the
+    operands is `NA`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: In equality and comparison operations, [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") also propagates. This deviates from the behaviour of `np.nan`, where
+    comparisons with `np.nan` always return `False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: To check if a value is equal to [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"), use [`isna()`](../reference/api/pandas.isna.html#pandas.isna "pandas.isna")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: An exception on this basic propagation rule are *reductions* (such as the mean
+    or the minimum), where pandas defaults to skipping missing values. See the [calculation
+    section](#missing-data-calculations) for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logical operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For logical operations, [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    follows the rules of the [three-valued logic](https://en.wikipedia.org/wiki/Three-valued_logic)
+    (or *Kleene logic*, similarly to R, SQL and Julia). This logic means to only propagate
+    missing values when it is logically required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, for the logical “or” operation (`|`), if one of the operands is
+    `True`, we already know the result will be `True`, regardless of the other value
+    (so regardless the missing value would be `True` or `False`). In this case, [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") does not propagate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On the other hand, if one of the operands is `False`, the result depends on
+    the value of the other operand. Therefore, in this case [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") propagates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The behaviour of the logical “and” operation (`&`) can be derived using similar
+    logic (where now [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    will not propagate if one of the operands is already `False`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`NA` in a boolean context'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Since the actual value of an NA is unknown, it is ambiguous to convert NA to
+    a boolean value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This also means that [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    cannot be used in a context where it is evaluated to a boolean, such as `if condition:
+    ...` where `condition` can potentially be [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"). In such cases, [`isna()`](../reference/api/pandas.isna.html#pandas.isna
+    "pandas.isna") can be used to check for [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") or `condition` being [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") can be avoided, for example by filling missing values beforehand.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A similar situation occurs when using [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") objects in `if` statements, see [Using if/truth statements
+    with pandas](gotchas.html#gotchas-truth).
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy ufuncs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`pandas.NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") implements
+    NumPy’s `__array_ufunc__` protocol. Most ufuncs work with `NA`, and generally
+    return `NA`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Currently, ufuncs involving an ndarray and `NA` will return an object-dtype
+    filled with NA values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: The return type here may change to return a different array type in the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [DataFrame interoperability with NumPy functions](dsintro.html#dsintro-numpy-interop)
+    for more on ufuncs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#### Conversion'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") using `np.nan`, [`Series.convert_dtypes()`](../reference/api/pandas.Series.convert_dtypes.html#pandas.Series.convert_dtypes
+    "pandas.Series.convert_dtypes") and [`DataFrame.convert_dtypes()`](../reference/api/pandas.DataFrame.convert_dtypes.html#pandas.DataFrame.convert_dtypes
+    "pandas.DataFrame.convert_dtypes") in [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") that can convert data to use the data types that use [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") such as [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype
+    "pandas.Int64Dtype") or [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype"). This is especially helpful after reading in data sets from
+    IO methods where data types were inferred.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, while the dtypes of all columns are changed, we show the results
+    for the first 10 columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]  ## Inserting missing data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can insert missing values by simply assigning to a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). The missing value sentinel used will be chosen based on the
+    dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For `object` types, pandas will use the value given:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]  ## Calculations with missing data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing values propagate through arithmetic operations between pandas objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: The descriptive statistics and computational methods discussed in the [data
+    structure overview](basics.html#basics-stats) (and listed [here](../reference/series.html#api-series-stats)
+    and [here](../reference/frame.html#api-dataframe-stats)) are all account for missing
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When summing data, NA values or empty data will be treated as zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: When taking the product, NA values or empty data will be treated as 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cumulative methods like [`cumsum()`](../reference/api/pandas.DataFrame.cumsum.html#pandas.DataFrame.cumsum
+    "pandas.DataFrame.cumsum") and [`cumprod()`](../reference/api/pandas.DataFrame.cumprod.html#pandas.DataFrame.cumprod
+    "pandas.DataFrame.cumprod") ignore NA values by default preserve them in the result.
+    This behavior can be changed with `skipna`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cumulative methods like [`cumsum()`](../reference/api/pandas.DataFrame.cumsum.html#pandas.DataFrame.cumsum
+    "pandas.DataFrame.cumsum") and [`cumprod()`](../reference/api/pandas.DataFrame.cumprod.html#pandas.DataFrame.cumprod
+    "pandas.DataFrame.cumprod") ignore NA values by default, but preserve them in
+    the resulting arrays. To override this behaviour and include NA values, use `skipna=False`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE25]  ## Dropping missing data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dropna()`](../reference/api/pandas.DataFrame.dropna.html#pandas.DataFrame.dropna
+    "pandas.DataFrame.dropna") dropa rows or columns with missing data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Filling missing data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '### Filling by value'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`fillna()`](../reference/api/pandas.DataFrame.fillna.html#pandas.DataFrame.fillna
+    "pandas.DataFrame.fillna") replaces NA values with non-NA data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replace NA with a scalar value
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fill gaps forward or backward
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Limit the number of NA values filled
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: NA values can be replaced with corresponding value from a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") where the index and column aligns between the original object
+    and the filled object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") can also be used to fill NA values.Same result as above.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]  ### Interpolation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`DataFrame.interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") and [`Series.interpolate()`](../reference/api/pandas.Series.interpolate.html#pandas.Series.interpolate
+    "pandas.Series.interpolate") fills NA values using various interpolation methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/series_before_interpolate.png](../Images/23fad97a74daa24425af2bb6acf7d5f3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/series_interpolate.png](../Images/15b6cc8149ecf5621177af8cce0b801f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Interpolation relative to a [`Timestamp`](../reference/api/pandas.Timestamp.html#pandas.Timestamp
+    "pandas.Timestamp") in the [`DatetimeIndex`](../reference/api/pandas.DatetimeIndex.html#pandas.DatetimeIndex
+    "pandas.DatetimeIndex") is available by setting `method="time"`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For a floating-point index, use `method=''values''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have [scipy](https://scipy.org/) installed, you can pass the name of
+    a 1-d interpolation routine to `method`. as specified in the scipy interpolation
+    [documentation](https://docs.scipy.org/doc/scipy/reference/interpolate.html#univariate-interpolation)
+    and reference [guide](https://docs.scipy.org/doc/scipy/tutorial/interpolate.html).
+    The appropriate interpolation method will depend on the data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are dealing with a time series that is growing at an increasing rate,
+    use `method='barycentric'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have values approximating a cumulative distribution function, use `method='pchip'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To fill missing values with goal of smooth plotting use `method='akima'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When interpolating via a polynomial or spline approximation, you must also
+    specify the degree or order of the approximation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Comparing several methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/compare_interpolations.png](../Images/5d2740529ed00c79d12be34ea861ac51.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Interpolating new observations from expanding data with [`Series.reindex()`](../reference/api/pandas.Series.reindex.html#pandas.Series.reindex
+    "pandas.Series.reindex").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '#### Interpolation limits'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") accepts a `limit` keyword argument to limit the
+    number of consecutive `NaN` values filled since the last valid observation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `NaN` values are filled in a `forward` direction. Use `limit_direction`
+    parameter to fill `backward` or from `both` directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `NaN` values are filled whether they are surrounded by existing
+    valid values or outside existing valid values. The `limit_area` parameter restricts
+    filling to either inside or outside values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]  ### Replacing values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Series.replace()`](../reference/api/pandas.Series.replace.html#pandas.Series.replace
+    "pandas.Series.replace") and [`DataFrame.replace()`](../reference/api/pandas.DataFrame.replace.html#pandas.DataFrame.replace
+    "pandas.DataFrame.replace") can be used similar to [`Series.fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
+    "pandas.Series.fillna") and [`DataFrame.fillna()`](../reference/api/pandas.DataFrame.fillna.html#pandas.DataFrame.fillna
+    "pandas.DataFrame.fillna") to replace or insert missing values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacing more than one value is possible by passing a list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacing using a mapping dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '#### Regular expression replacement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python strings prefixed with the `r` character such as `r'hello world'` are
+    [“raw” strings](https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals).
+    They have different semantics regarding backslashes than strings without this
+    prefix. Backslashes in raw strings will be interpreted as an escaped backslash,
+    e.g., `r'\' == '\\'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replace the ‘.’ with `NaN`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace the ‘.’ with `NaN` with regular expression that removes surrounding
+    whitespace
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace with a list of regexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace with a regex in a mapping dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pass nested dictionaries of regular expressions that use the `regex` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pass a list of regular expressions that will replace matches with a scalar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: All of the regular expression examples can also be passed with the `to_replace`
+    argument as the `regex` argument. In this case the `value` argument must be passed
+    explicitly by name or `regex` must be a nested dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: A regular expression object from `re.compile` is a valid input as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Values considered “missing”
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: pandas uses different sentinel values to represent a missing (also referred
+    to as NA) depending on the data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`numpy.nan` for NumPy data types. The disadvantage of using NumPy data types
+    is that the original data type will be coerced to `np.float64` or `object`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`NaT`](../reference/api/pandas.NaT.html#pandas.NaT "pandas.NaT") for NumPy
+    `np.datetime64`, `np.timedelta64`, and [`PeriodDtype`](../reference/api/pandas.PeriodDtype.html#pandas.PeriodDtype
+    "pandas.PeriodDtype"). For typing applications, use `api.types.NaTType`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") for [`StringDtype`](../reference/api/pandas.StringDtype.html#pandas.StringDtype
+    "pandas.StringDtype"), [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype
+    "pandas.Int64Dtype") (and other bit widths), `Float64Dtype`(and other bit widths),
+    :class:`BooleanDtype` and [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype"). These types will maintain the original data type of the
+    data. For typing applications, use `api.types.NAType`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: To detect these missing value, use the [`isna()`](../reference/api/pandas.isna.html#pandas.isna
+    "pandas.isna") or [`notna()`](../reference/api/pandas.notna.html#pandas.notna
+    "pandas.notna") methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`isna()`](../reference/api/pandas.isna.html#pandas.isna "pandas.isna") or
+    [`notna()`](../reference/api/pandas.notna.html#pandas.notna "pandas.notna") will
+    also consider `None` a missing value.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Equality compaisons between `np.nan`, [`NaT`](../reference/api/pandas.NaT.html#pandas.NaT
+    "pandas.NaT"), and [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    do not act like `None`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: Therefore, an equality comparison between a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with one of these missing values does not provide the same information
+    as [`isna()`](../reference/api/pandas.isna.html#pandas.isna "pandas.isna") or
+    [`notna()`](../reference/api/pandas.notna.html#pandas.notna "pandas.notna").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") semantics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Experimental: the behaviour of `NA`` can still change without warning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting from pandas 1.0, an experimental [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") value (singleton) is available to represent scalar missing values.
+    The goal of [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") is provide
+    a “missing” indicator that can be used consistently across data types (instead
+    of `np.nan`, `None` or `pd.NaT` depending on the data type).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, when having missing values in a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") with the nullable integer dtype, it will use [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: Currently, pandas does not yet use those data types using [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") by default a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"), so you need to specify the dtype explicitly. An easy way to
+    convert to those dtypes is explained in the [conversion section](#missing-data-na-conversion).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Propagation in arithmetic and comparison operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In general, missing values *propagate* in operations involving [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"). When one of the operands is unknown, the outcome of the operation
+    is also unknown.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    propagates in arithmetic operations, similarly to `np.nan`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are a few special cases when the result is known, even when one of the
+    operands is `NA`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: In equality and comparison operations, [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") also propagates. This deviates from the behaviour of `np.nan`, where
+    comparisons with `np.nan` always return `False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: To check if a value is equal to [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"), use [`isna()`](../reference/api/pandas.isna.html#pandas.isna "pandas.isna")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: An exception on this basic propagation rule are *reductions* (such as the mean
+    or the minimum), where pandas defaults to skipping missing values. See the [calculation
+    section](#missing-data-calculations) for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logical operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For logical operations, [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    follows the rules of the [three-valued logic](https://en.wikipedia.org/wiki/Three-valued_logic)
+    (or *Kleene logic*, similarly to R, SQL and Julia). This logic means to only propagate
+    missing values when it is logically required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, for the logical “or” operation (`|`), if one of the operands is
+    `True`, we already know the result will be `True`, regardless of the other value
+    (so regardless the missing value would be `True` or `False`). In this case, [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") does not propagate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On the other hand, if one of the operands is `False`, the result depends on
+    the value of the other operand. Therefore, in this case [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") propagates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The behaviour of the logical “and” operation (`&`) can be derived using similar
+    logic (where now [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    will not propagate if one of the operands is already `False`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`NA` in a boolean context'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Since the actual value of an NA is unknown, it is ambiguous to convert NA to
+    a boolean value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This also means that [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    cannot be used in a context where it is evaluated to a boolean, such as `if condition:
+    ...` where `condition` can potentially be [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"). In such cases, [`isna()`](../reference/api/pandas.isna.html#pandas.isna
+    "pandas.isna") can be used to check for [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") or `condition` being [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") can be avoided, for example by filling missing values beforehand.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A similar situation occurs when using [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") objects in `if` statements, see [Using if/truth statements
+    with pandas](gotchas.html#gotchas-truth).
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy ufuncs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`pandas.NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") implements
+    NumPy’s `__array_ufunc__` protocol. Most ufuncs work with `NA`, and generally
+    return `NA`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Currently, ufuncs involving an ndarray and `NA` will return an object-dtype
+    filled with NA values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: The return type here may change to return a different array type in the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [DataFrame interoperability with NumPy functions](dsintro.html#dsintro-numpy-interop)
+    for more on ufuncs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#### Conversion'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") using `np.nan`, [`Series.convert_dtypes()`](../reference/api/pandas.Series.convert_dtypes.html#pandas.Series.convert_dtypes
+    "pandas.Series.convert_dtypes") and [`DataFrame.convert_dtypes()`](../reference/api/pandas.DataFrame.convert_dtypes.html#pandas.DataFrame.convert_dtypes
+    "pandas.DataFrame.convert_dtypes") in [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") that can convert data to use the data types that use [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") such as [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype
+    "pandas.Int64Dtype") or [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype"). This is especially helpful after reading in data sets from
+    IO methods where data types were inferred.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, while the dtypes of all columns are changed, we show the results
+    for the first 10 columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: Propagation in arithmetic and comparison operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In general, missing values *propagate* in operations involving [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"). When one of the operands is unknown, the outcome of the operation
+    is also unknown.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    propagates in arithmetic operations, similarly to `np.nan`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are a few special cases when the result is known, even when one of the
+    operands is `NA`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: In equality and comparison operations, [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") also propagates. This deviates from the behaviour of `np.nan`, where
+    comparisons with `np.nan` always return `False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: To check if a value is equal to [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"), use [`isna()`](../reference/api/pandas.isna.html#pandas.isna "pandas.isna")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: An exception on this basic propagation rule are *reductions* (such as the mean
+    or the minimum), where pandas defaults to skipping missing values. See the [calculation
+    section](#missing-data-calculations) for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logical operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For logical operations, [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    follows the rules of the [three-valued logic](https://en.wikipedia.org/wiki/Three-valued_logic)
+    (or *Kleene logic*, similarly to R, SQL and Julia). This logic means to only propagate
+    missing values when it is logically required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, for the logical “or” operation (`|`), if one of the operands is
+    `True`, we already know the result will be `True`, regardless of the other value
+    (so regardless the missing value would be `True` or `False`). In this case, [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") does not propagate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On the other hand, if one of the operands is `False`, the result depends on
+    the value of the other operand. Therefore, in this case [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") propagates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The behaviour of the logical “and” operation (`&`) can be derived using similar
+    logic (where now [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    will not propagate if one of the operands is already `False`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`NA` in a boolean context'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Since the actual value of an NA is unknown, it is ambiguous to convert NA to
+    a boolean value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This also means that [`NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA")
+    cannot be used in a context where it is evaluated to a boolean, such as `if condition:
+    ...` where `condition` can potentially be [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA"). In such cases, [`isna()`](../reference/api/pandas.isna.html#pandas.isna
+    "pandas.isna") can be used to check for [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") or `condition` being [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") can be avoided, for example by filling missing values beforehand.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A similar situation occurs when using [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") objects in `if` statements, see [Using if/truth statements
+    with pandas](gotchas.html#gotchas-truth).
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy ufuncs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`pandas.NA`](../reference/api/pandas.NA.html#pandas.NA "pandas.NA") implements
+    NumPy’s `__array_ufunc__` protocol. Most ufuncs work with `NA`, and generally
+    return `NA`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Currently, ufuncs involving an ndarray and `NA` will return an object-dtype
+    filled with NA values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: The return type here may change to return a different array type in the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [DataFrame interoperability with NumPy functions](dsintro.html#dsintro-numpy-interop)
+    for more on ufuncs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#### Conversion'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") using `np.nan`, [`Series.convert_dtypes()`](../reference/api/pandas.Series.convert_dtypes.html#pandas.Series.convert_dtypes
+    "pandas.Series.convert_dtypes") and [`DataFrame.convert_dtypes()`](../reference/api/pandas.DataFrame.convert_dtypes.html#pandas.DataFrame.convert_dtypes
+    "pandas.DataFrame.convert_dtypes") in [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") that can convert data to use the data types that use [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") such as [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype
+    "pandas.Int64Dtype") or [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype"). This is especially helpful after reading in data sets from
+    IO methods where data types were inferred.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, while the dtypes of all columns are changed, we show the results
+    for the first 10 columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]  #### Conversion'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") using `np.nan`, [`Series.convert_dtypes()`](../reference/api/pandas.Series.convert_dtypes.html#pandas.Series.convert_dtypes
+    "pandas.Series.convert_dtypes") and [`DataFrame.convert_dtypes()`](../reference/api/pandas.DataFrame.convert_dtypes.html#pandas.DataFrame.convert_dtypes
+    "pandas.DataFrame.convert_dtypes") in [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") that can convert data to use the data types that use [`NA`](../reference/api/pandas.NA.html#pandas.NA
+    "pandas.NA") such as [`Int64Dtype`](../reference/api/pandas.Int64Dtype.html#pandas.Int64Dtype
+    "pandas.Int64Dtype") or [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype"). This is especially helpful after reading in data sets from
+    IO methods where data types were inferred.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, while the dtypes of all columns are changed, we show the results
+    for the first 10 columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Inserting missing data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can insert missing values by simply assigning to a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). The missing value sentinel used will be chosen based on the
+    dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For `object` types, pandas will use the value given:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Calculations with missing data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing values propagate through arithmetic operations between pandas objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: The descriptive statistics and computational methods discussed in the [data
+    structure overview](basics.html#basics-stats) (and listed [here](../reference/series.html#api-series-stats)
+    and [here](../reference/frame.html#api-dataframe-stats)) are all account for missing
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When summing data, NA values or empty data will be treated as zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: When taking the product, NA values or empty data will be treated as 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cumulative methods like [`cumsum()`](../reference/api/pandas.DataFrame.cumsum.html#pandas.DataFrame.cumsum
+    "pandas.DataFrame.cumsum") and [`cumprod()`](../reference/api/pandas.DataFrame.cumprod.html#pandas.DataFrame.cumprod
+    "pandas.DataFrame.cumprod") ignore NA values by default preserve them in the result.
+    This behavior can be changed with `skipna`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cumulative methods like [`cumsum()`](../reference/api/pandas.DataFrame.cumsum.html#pandas.DataFrame.cumsum
+    "pandas.DataFrame.cumsum") and [`cumprod()`](../reference/api/pandas.DataFrame.cumprod.html#pandas.DataFrame.cumprod
+    "pandas.DataFrame.cumprod") ignore NA values by default, but preserve them in
+    the resulting arrays. To override this behaviour and include NA values, use `skipna=False`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Dropping missing data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dropna()`](../reference/api/pandas.DataFrame.dropna.html#pandas.DataFrame.dropna
+    "pandas.DataFrame.dropna") dropa rows or columns with missing data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: Filling missing data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '### Filling by value'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`fillna()`](../reference/api/pandas.DataFrame.fillna.html#pandas.DataFrame.fillna
+    "pandas.DataFrame.fillna") replaces NA values with non-NA data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replace NA with a scalar value
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fill gaps forward or backward
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: Limit the number of NA values filled
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: NA values can be replaced with corresponding value from a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") where the index and column aligns between the original object
+    and the filled object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") can also be used to fill NA values.Same result as above.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]  ### Interpolation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`DataFrame.interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") and [`Series.interpolate()`](../reference/api/pandas.Series.interpolate.html#pandas.Series.interpolate
+    "pandas.Series.interpolate") fills NA values using various interpolation methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/series_before_interpolate.png](../Images/23fad97a74daa24425af2bb6acf7d5f3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/series_interpolate.png](../Images/15b6cc8149ecf5621177af8cce0b801f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Interpolation relative to a [`Timestamp`](../reference/api/pandas.Timestamp.html#pandas.Timestamp
+    "pandas.Timestamp") in the [`DatetimeIndex`](../reference/api/pandas.DatetimeIndex.html#pandas.DatetimeIndex
+    "pandas.DatetimeIndex") is available by setting `method="time"`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For a floating-point index, use `method=''values''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have [scipy](https://scipy.org/) installed, you can pass the name of
+    a 1-d interpolation routine to `method`. as specified in the scipy interpolation
+    [documentation](https://docs.scipy.org/doc/scipy/reference/interpolate.html#univariate-interpolation)
+    and reference [guide](https://docs.scipy.org/doc/scipy/tutorial/interpolate.html).
+    The appropriate interpolation method will depend on the data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are dealing with a time series that is growing at an increasing rate,
+    use `method='barycentric'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have values approximating a cumulative distribution function, use `method='pchip'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To fill missing values with goal of smooth plotting use `method='akima'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When interpolating via a polynomial or spline approximation, you must also
+    specify the degree or order of the approximation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: Comparing several methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/compare_interpolations.png](../Images/5d2740529ed00c79d12be34ea861ac51.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Interpolating new observations from expanding data with [`Series.reindex()`](../reference/api/pandas.Series.reindex.html#pandas.Series.reindex
+    "pandas.Series.reindex").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: '#### Interpolation limits'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") accepts a `limit` keyword argument to limit the
+    number of consecutive `NaN` values filled since the last valid observation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `NaN` values are filled in a `forward` direction. Use `limit_direction`
+    parameter to fill `backward` or from `both` directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `NaN` values are filled whether they are surrounded by existing
+    valid values or outside existing valid values. The `limit_area` parameter restricts
+    filling to either inside or outside values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]  ### Replacing values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Series.replace()`](../reference/api/pandas.Series.replace.html#pandas.Series.replace
+    "pandas.Series.replace") and [`DataFrame.replace()`](../reference/api/pandas.DataFrame.replace.html#pandas.DataFrame.replace
+    "pandas.DataFrame.replace") can be used similar to [`Series.fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
+    "pandas.Series.fillna") and [`DataFrame.fillna()`](../reference/api/pandas.DataFrame.fillna.html#pandas.DataFrame.fillna
+    "pandas.DataFrame.fillna") to replace or insert missing values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacing more than one value is possible by passing a list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacing using a mapping dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: '#### Regular expression replacement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python strings prefixed with the `r` character such as `r'hello world'` are
+    [“raw” strings](https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals).
+    They have different semantics regarding backslashes than strings without this
+    prefix. Backslashes in raw strings will be interpreted as an escaped backslash,
+    e.g., `r'\' == '\\'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replace the ‘.’ with `NaN`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace the ‘.’ with `NaN` with regular expression that removes surrounding
+    whitespace
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace with a list of regexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace with a regex in a mapping dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pass nested dictionaries of regular expressions that use the `regex` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pass a list of regular expressions that will replace matches with a scalar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: All of the regular expression examples can also be passed with the `to_replace`
+    argument as the `regex` argument. In this case the `value` argument must be passed
+    explicitly by name or `regex` must be a nested dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A regular expression object from `re.compile` is a valid input as well.  ###
+    Filling by value'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`fillna()`](../reference/api/pandas.DataFrame.fillna.html#pandas.DataFrame.fillna
+    "pandas.DataFrame.fillna") replaces NA values with non-NA data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replace NA with a scalar value
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fill gaps forward or backward
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: Limit the number of NA values filled
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: NA values can be replaced with corresponding value from a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") where the index and column aligns between the original object
+    and the filled object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") can also be used to fill NA values.Same result as above.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Interpolation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`DataFrame.interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") and [`Series.interpolate()`](../reference/api/pandas.Series.interpolate.html#pandas.Series.interpolate
+    "pandas.Series.interpolate") fills NA values using various interpolation methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/series_before_interpolate.png](../Images/23fad97a74daa24425af2bb6acf7d5f3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/series_interpolate.png](../Images/15b6cc8149ecf5621177af8cce0b801f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Interpolation relative to a [`Timestamp`](../reference/api/pandas.Timestamp.html#pandas.Timestamp
+    "pandas.Timestamp") in the [`DatetimeIndex`](../reference/api/pandas.DatetimeIndex.html#pandas.DatetimeIndex
+    "pandas.DatetimeIndex") is available by setting `method="time"`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For a floating-point index, use `method=''values''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have [scipy](https://scipy.org/) installed, you can pass the name of
+    a 1-d interpolation routine to `method`. as specified in the scipy interpolation
+    [documentation](https://docs.scipy.org/doc/scipy/reference/interpolate.html#univariate-interpolation)
+    and reference [guide](https://docs.scipy.org/doc/scipy/tutorial/interpolate.html).
+    The appropriate interpolation method will depend on the data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are dealing with a time series that is growing at an increasing rate,
+    use `method='barycentric'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have values approximating a cumulative distribution function, use `method='pchip'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To fill missing values with goal of smooth plotting use `method='akima'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When interpolating via a polynomial or spline approximation, you must also
+    specify the degree or order of the approximation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: Comparing several methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/compare_interpolations.png](../Images/5d2740529ed00c79d12be34ea861ac51.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Interpolating new observations from expanding data with [`Series.reindex()`](../reference/api/pandas.Series.reindex.html#pandas.Series.reindex
+    "pandas.Series.reindex").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: '#### Interpolation limits'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") accepts a `limit` keyword argument to limit the
+    number of consecutive `NaN` values filled since the last valid observation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `NaN` values are filled in a `forward` direction. Use `limit_direction`
+    parameter to fill `backward` or from `both` directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `NaN` values are filled whether they are surrounded by existing
+    valid values or outside existing valid values. The `limit_area` parameter restricts
+    filling to either inside or outside values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]  #### Interpolation limits'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`interpolate()`](../reference/api/pandas.DataFrame.interpolate.html#pandas.DataFrame.interpolate
+    "pandas.DataFrame.interpolate") accepts a `limit` keyword argument to limit the
+    number of consecutive `NaN` values filled since the last valid observation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `NaN` values are filled in a `forward` direction. Use `limit_direction`
+    parameter to fill `backward` or from `both` directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `NaN` values are filled whether they are surrounded by existing
+    valid values or outside existing valid values. The `limit_area` parameter restricts
+    filling to either inside or outside values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Replacing values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Series.replace()`](../reference/api/pandas.Series.replace.html#pandas.Series.replace
+    "pandas.Series.replace") and [`DataFrame.replace()`](../reference/api/pandas.DataFrame.replace.html#pandas.DataFrame.replace
+    "pandas.DataFrame.replace") can be used similar to [`Series.fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
+    "pandas.Series.fillna") and [`DataFrame.fillna()`](../reference/api/pandas.DataFrame.fillna.html#pandas.DataFrame.fillna
+    "pandas.DataFrame.fillna") to replace or insert missing values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacing more than one value is possible by passing a list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacing using a mapping dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: '#### Regular expression replacement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python strings prefixed with the `r` character such as `r'hello world'` are
+    [“raw” strings](https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals).
+    They have different semantics regarding backslashes than strings without this
+    prefix. Backslashes in raw strings will be interpreted as an escaped backslash,
+    e.g., `r'\' == '\\'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replace the ‘.’ with `NaN`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace the ‘.’ with `NaN` with regular expression that removes surrounding
+    whitespace
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace with a list of regexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace with a regex in a mapping dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pass nested dictionaries of regular expressions that use the `regex` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pass a list of regular expressions that will replace matches with a scalar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: All of the regular expression examples can also be passed with the `to_replace`
+    argument as the `regex` argument. In this case the `value` argument must be passed
+    explicitly by name or `regex` must be a nested dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A regular expression object from `re.compile` is a valid input as well.  ####
+    Regular expression replacement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python strings prefixed with the `r` character such as `r'hello world'` are
+    [“raw” strings](https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals).
+    They have different semantics regarding backslashes than strings without this
+    prefix. Backslashes in raw strings will be interpreted as an escaped backslash,
+    e.g., `r'\' == '\\'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replace the ‘.’ with `NaN`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace the ‘.’ with `NaN` with regular expression that removes surrounding
+    whitespace
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace with a list of regexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace with a regex in a mapping dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pass nested dictionaries of regular expressions that use the `regex` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pass a list of regular expressions that will replace matches with a scalar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: All of the regular expression examples can also be passed with the `to_replace`
+    argument as the `regex` argument. In this case the `value` argument must be passed
+    explicitly by name or `regex` must be a nested dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: A regular expression object from `re.compile` is a valid input as well.
+  prefs: []
+  type: TYPE_NORMAL

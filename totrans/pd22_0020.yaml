@@ -1,0 +1,1819 @@
+- en: Comparison with Stata
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/getting_started/comparison/comparison_with_stata.html](https://pandas.pydata.org/docs/getting_started/comparison/comparison_with_stata.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: For potential users coming from [Stata](https://en.wikipedia.org/wiki/Stata)
+    this page is meant to demonstrate how different Stata operations would be performed
+    in pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re new to pandas, you might want to first read through [10 Minutes to
+    pandas](../../user_guide/10min.html#min) to familiarize yourself with the library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As is customary, we import pandas and NumPy as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data structures
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: General terminology translation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| pandas | Stata |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `DataFrame` | data set |'
+  prefs: []
+  type: TYPE_TB
+- en: '| column | variable |'
+  prefs: []
+  type: TYPE_TB
+- en: '| row | observation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| groupby | bysort |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NaN` | `.` |'
+  prefs: []
+  type: TYPE_TB
+- en: '`DataFrame`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A `DataFrame` in pandas is analogous to a Stata data set – a two-dimensional
+    data source with labeled columns that can be of different types. As will be shown
+    in this document, almost any operation that can be applied to a data set in Stata
+    can also be accomplished in pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Series`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A `Series` is the data structure that represents one column of a `DataFrame`.
+    Stata doesn’t have a separate data structure for a single column, but in general,
+    working with a `Series` is analogous to referencing a column of a data set in
+    Stata.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Index`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Every `DataFrame` and `Series` has an `Index` – labels on the *rows* of the
+    data. Stata does not have an exactly analogous concept. In Stata, a data set’s
+    rows are essentially unlabeled, other than an implicit integer index that can
+    be accessed with `_n`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In pandas, if no index is specified, an integer index is also used by default
+    (first row = 0, second row = 1, and so on). While using a labeled `Index` or `MultiIndex`
+    can enable sophisticated analyses and is ultimately an important part of pandas
+    to understand, for this comparison we will essentially ignore the `Index` and
+    just treat the `DataFrame` as a collection of columns. Please see the [indexing
+    documentation](../../user_guide/indexing.html#indexing) for much more on how to
+    use an `Index` effectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Copies vs. in place operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Most pandas operations return copies of the `Series`/`DataFrame`. To make the
+    changes “stick”, you’ll need to either assign to a new variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: 'or overwrite the original one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You will see an `inplace=True` or `copy=False` keyword argument available for
+    some methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is an active discussion about deprecating and removing `inplace` and `copy`
+    for most methods (e.g. `dropna`) except for a very small subset of methods (including
+    `replace`). Both keywords won’t be necessary anymore in the context of Copy-on-Write.
+    The proposal can be found [here](https://github.com/pandas-dev/pandas/pull/51466).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data input / output
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Constructing a DataFrame from values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A Stata data set can be built from specified values by placing the data after
+    an `input` statement and specifying the column names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pandas `DataFrame` can be constructed in many different ways, but for a small
+    number of values, it is often convenient to specify it as a Python dictionary,
+    where the keys are the column names and the values are the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reading external data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Like Stata, pandas provides utilities for reading in data from many formats.
+    The `tips` data set, found within the pandas tests ([csv](https://raw.githubusercontent.com/pandas-dev/pandas/main/pandas/tests/io/data/csv/tips.csv))
+    will be used in many of the following examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stata provides `import delimited` to read csv data into a data set in memory.
+    If the `tips.csv` file is in the current working directory, we can import it as
+    follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The pandas method is [`read_csv()`](../../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv"), which works similarly. Additionally, it will automatically
+    download the data set if presented with a url.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Like `import delimited`, [`read_csv()`](../../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv") can take a number of parameters to specify how the data should
+    be parsed. For example, if the data were instead tab delimited, did not have column
+    names, and existed in the current working directory, the pandas command would
+    be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas can also read Stata data sets in `.dta` format with the [`read_stata()`](../../reference/api/pandas.read_stata.html#pandas.read_stata
+    "pandas.read_stata") function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: In addition to text/csv and Stata files, pandas supports a variety of other
+    data formats such as Excel, SAS, HDF5, Parquet, and SQL databases. These are all
+    read via a `pd.read_*` function. See the [IO documentation](../../user_guide/io.html#io)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limiting output
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: By default, pandas will truncate output of large `DataFrame`s to show the first
+    and last rows. This can be overridden by [changing the pandas options](../../user_guide/options.html#options),
+    or using [`DataFrame.head()`](../../reference/api/pandas.DataFrame.head.html#pandas.DataFrame.head
+    "pandas.DataFrame.head") or [`DataFrame.tail()`](../../reference/api/pandas.DataFrame.tail.html#pandas.DataFrame.tail
+    "pandas.DataFrame.tail").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The equivalent in Stata would be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Exporting data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The inverse of `import delimited` in Stata is `export delimited`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Similarly in pandas, the opposite of `read_csv` is [`DataFrame.to_csv()`](../../reference/api/pandas.DataFrame.to_csv.html#pandas.DataFrame.to_csv
+    "pandas.DataFrame.to_csv").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas can also export to Stata file format with the [`DataFrame.to_stata()`](../../reference/api/pandas.DataFrame.to_stata.html#pandas.DataFrame.to_stata
+    "pandas.DataFrame.to_stata") method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data operations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Operations on columns
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, arbitrary math expressions can be used with the `generate` and `replace`
+    commands on new or existing columns. The `drop` command drops the column from
+    the data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides vectorized operations by specifying the individual `Series`
+    in the `DataFrame`. New columns can be assigned in the same way. The [`DataFrame.drop()`](../../reference/api/pandas.DataFrame.drop.html#pandas.DataFrame.drop
+    "pandas.DataFrame.drop") method drops a column from the `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Filtering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Filtering in Stata is done with an `if` clause on one or more columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: DataFrames can be filtered in multiple ways; the most intuitive of which is
+    using [boolean indexing](../../user_guide/indexing.html#indexing-boolean).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: The above statement is simply passing a `Series` of `True`/`False` objects to
+    the DataFrame, returning all rows with `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: If/then logic
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, an `if` clause can also be used to create new columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: The same operation in pandas can be accomplished using the `where` method from
+    `numpy`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Date functionality
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata provides a variety of functions to do operations on date/datetime columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent pandas operations are shown below. In addition to these functions,
+    pandas supports other Time Series features not available in Stata (such as time
+    zone handling and custom offsets) – see the [timeseries documentation](../../user_guide/timeseries.html#timeseries)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selection of columns
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata provides keywords to select, drop, and rename columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: The same operations are expressed in pandas below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keep certain columns
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Drop a column
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rename a column
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sorting by values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Sorting in Stata is accomplished via `sort`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas has a [`DataFrame.sort_values()`](../../reference/api/pandas.DataFrame.sort_values.html#pandas.DataFrame.sort_values
+    "pandas.DataFrame.sort_values") method, which takes a list of columns to sort
+    by.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: String processing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Finding length of string
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata determines the length of a character string with the `strlen()` and `ustrlen()`
+    functions for ASCII and Unicode strings, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can find the length of a character string with [`Series.str.len()`](../../reference/api/pandas.Series.str.len.html#pandas.Series.str.len
+    "pandas.Series.str.len"). In Python 3, all strings are Unicode strings. `len`
+    includes trailing blanks. Use `len` and `rstrip` to exclude trailing blanks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finding position of substring
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata determines the position of a character in a string with the `strpos()`
+    function. This takes the string defined by the first argument and searches for
+    the first position of the substring you supply as the second argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can find the position of a character in a column of strings with the [`Series.str.find()`](../../reference/api/pandas.Series.str.find.html#pandas.Series.str.find
+    "pandas.Series.str.find") method. `find` searches for the first position of the
+    substring. If the substring is found, the method returns its position. If not
+    found, it returns `-1`. Keep in mind that Python indexes are zero-based.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extracting substring by position
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata extracts a substring from a string based on its position with the `substr()`
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: With pandas you can use `[]` notation to extract a substring from a string by
+    position locations. Keep in mind that Python indexes are zero-based.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extracting nth word
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Stata `word()` function returns the nth word from a string. The first argument
+    is the string you want to parse and the second argument specifies which word you
+    want to extract.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: The simplest way to extract words in pandas is to split the strings by spaces,
+    then reference the word by index. Note there are more powerful approaches should
+    you need them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Changing case
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Stata `strupper()`, `strlower()`, `strproper()`, `ustrupper()`, `ustrlower()`,
+    and `ustrtitle()` functions change the case of ASCII and Unicode strings, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent pandas methods are [`Series.str.upper()`](../../reference/api/pandas.Series.str.upper.html#pandas.Series.str.upper
+    "pandas.Series.str.upper"), [`Series.str.lower()`](../../reference/api/pandas.Series.str.lower.html#pandas.Series.str.lower
+    "pandas.Series.str.lower"), and [`Series.str.title()`](../../reference/api/pandas.Series.str.title.html#pandas.Series.str.title
+    "pandas.Series.str.title").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Merging
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The following tables will be used in the merge examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: In Stata, to perform a merge, one data set must be in memory and the other must
+    be referenced as a file name on disk. In contrast, Python must have both `DataFrames`
+    already in memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, Stata performs an outer join, where all observations from both data
+    sets are left in memory after the merge. One can keep only observations from the
+    initial data set, the merged data set, or the intersection of the two by using
+    the values created in the `_merge` variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas DataFrames have a [`merge()`](../../reference/api/pandas.DataFrame.merge.html#pandas.DataFrame.merge
+    "pandas.DataFrame.merge") method, which provides similar functionality. The data
+    does not have to be sorted ahead of time, and different join types are accomplished
+    via the `how` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Missing data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Both pandas and Stata have a representation for missing data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas represents missing data with the special float value `NaN` (not a number).
+    Many of the semantics are the same; for example missing data propagates through
+    numeric operations, and is ignored by default for aggregations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: One difference is that missing data cannot be compared to its sentinel value.
+    For example, in Stata you could do this to filter missing values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: In pandas, [`Series.isna()`](../../reference/api/pandas.Series.isna.html#pandas.Series.isna
+    "pandas.Series.isna") and [`Series.notna()`](../../reference/api/pandas.Series.notna.html#pandas.Series.notna
+    "pandas.Series.notna") can be used to filter the rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'pandas provides [a variety of methods to work with missing data](../../user_guide/missing_data.html#missing-data).
+    Here are some examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Drop rows with missing values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Forward fill from previous rows
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace missing values with a specified value
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Using the mean:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: GroupBy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Aggregation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata’s `collapse` can be used to group by one or more key variables and compute
+    aggregations on numeric columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides a flexible `groupby` mechanism that allows similar aggregations.
+    See the [groupby documentation](../../user_guide/groupby.html#groupby) for more
+    details and examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: Transformation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, if the group aggregations need to be used with the original data set,
+    one would usually use `bysort` with `egen()`. For example, to subtract the mean
+    for each observation by smoker group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides a [Transformation](../../user_guide/groupby.html#groupby-transform)
+    mechanism that allows these type of operations to be succinctly expressed in one
+    operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: By group processing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to aggregation, pandas `groupby` can be used to replicate most other
+    `bysort` processing from Stata. For example, the following example lists the first
+    observation in the current sort order by sex/smoker group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In pandas this would be written as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other considerations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Disk vs memory
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: pandas and Stata both operate exclusively in memory. This means that the size
+    of data able to be loaded in pandas is limited by your machine’s memory. If out
+    of core processing is needed, one possibility is the [dask.dataframe](https://docs.dask.org/en/latest/dataframe.html)
+    library, which provides a subset of pandas functionality for an on-disk `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data structures
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: General terminology translation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| pandas | Stata |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `DataFrame` | data set |'
+  prefs: []
+  type: TYPE_TB
+- en: '| column | variable |'
+  prefs: []
+  type: TYPE_TB
+- en: '| row | observation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| groupby | bysort |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NaN` | `.` |'
+  prefs: []
+  type: TYPE_TB
+- en: '`DataFrame`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A `DataFrame` in pandas is analogous to a Stata data set – a two-dimensional
+    data source with labeled columns that can be of different types. As will be shown
+    in this document, almost any operation that can be applied to a data set in Stata
+    can also be accomplished in pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Series`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A `Series` is the data structure that represents one column of a `DataFrame`.
+    Stata doesn’t have a separate data structure for a single column, but in general,
+    working with a `Series` is analogous to referencing a column of a data set in
+    Stata.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Index`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Every `DataFrame` and `Series` has an `Index` – labels on the *rows* of the
+    data. Stata does not have an exactly analogous concept. In Stata, a data set’s
+    rows are essentially unlabeled, other than an implicit integer index that can
+    be accessed with `_n`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In pandas, if no index is specified, an integer index is also used by default
+    (first row = 0, second row = 1, and so on). While using a labeled `Index` or `MultiIndex`
+    can enable sophisticated analyses and is ultimately an important part of pandas
+    to understand, for this comparison we will essentially ignore the `Index` and
+    just treat the `DataFrame` as a collection of columns. Please see the [indexing
+    documentation](../../user_guide/indexing.html#indexing) for much more on how to
+    use an `Index` effectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Copies vs. in place operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Most pandas operations return copies of the `Series`/`DataFrame`. To make the
+    changes “stick”, you’ll need to either assign to a new variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: 'or overwrite the original one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You will see an `inplace=True` or `copy=False` keyword argument available for
+    some methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is an active discussion about deprecating and removing `inplace` and `copy`
+    for most methods (e.g. `dropna`) except for a very small subset of methods (including
+    `replace`). Both keywords won’t be necessary anymore in the context of Copy-on-Write.
+    The proposal can be found [here](https://github.com/pandas-dev/pandas/pull/51466).
+  prefs: []
+  type: TYPE_NORMAL
+- en: General terminology translation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| pandas | Stata |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `DataFrame` | data set |'
+  prefs: []
+  type: TYPE_TB
+- en: '| column | variable |'
+  prefs: []
+  type: TYPE_TB
+- en: '| row | observation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| groupby | bysort |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NaN` | `.` |'
+  prefs: []
+  type: TYPE_TB
+- en: '`DataFrame`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A `DataFrame` in pandas is analogous to a Stata data set – a two-dimensional
+    data source with labeled columns that can be of different types. As will be shown
+    in this document, almost any operation that can be applied to a data set in Stata
+    can also be accomplished in pandas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Series`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A `Series` is the data structure that represents one column of a `DataFrame`.
+    Stata doesn’t have a separate data structure for a single column, but in general,
+    working with a `Series` is analogous to referencing a column of a data set in
+    Stata.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Index`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Every `DataFrame` and `Series` has an `Index` – labels on the *rows* of the
+    data. Stata does not have an exactly analogous concept. In Stata, a data set’s
+    rows are essentially unlabeled, other than an implicit integer index that can
+    be accessed with `_n`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In pandas, if no index is specified, an integer index is also used by default
+    (first row = 0, second row = 1, and so on). While using a labeled `Index` or `MultiIndex`
+    can enable sophisticated analyses and is ultimately an important part of pandas
+    to understand, for this comparison we will essentially ignore the `Index` and
+    just treat the `DataFrame` as a collection of columns. Please see the [indexing
+    documentation](../../user_guide/indexing.html#indexing) for much more on how to
+    use an `Index` effectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Copies vs. in place operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Most pandas operations return copies of the `Series`/`DataFrame`. To make the
+    changes “stick”, you’ll need to either assign to a new variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: 'or overwrite the original one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You will see an `inplace=True` or `copy=False` keyword argument available for
+    some methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is an active discussion about deprecating and removing `inplace` and `copy`
+    for most methods (e.g. `dropna`) except for a very small subset of methods (including
+    `replace`). Both keywords won’t be necessary anymore in the context of Copy-on-Write.
+    The proposal can be found [here](https://github.com/pandas-dev/pandas/pull/51466).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data input / output
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Constructing a DataFrame from values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A Stata data set can be built from specified values by placing the data after
+    an `input` statement and specifying the column names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pandas `DataFrame` can be constructed in many different ways, but for a small
+    number of values, it is often convenient to specify it as a Python dictionary,
+    where the keys are the column names and the values are the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reading external data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Like Stata, pandas provides utilities for reading in data from many formats.
+    The `tips` data set, found within the pandas tests ([csv](https://raw.githubusercontent.com/pandas-dev/pandas/main/pandas/tests/io/data/csv/tips.csv))
+    will be used in many of the following examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stata provides `import delimited` to read csv data into a data set in memory.
+    If the `tips.csv` file is in the current working directory, we can import it as
+    follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: The pandas method is [`read_csv()`](../../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv"), which works similarly. Additionally, it will automatically
+    download the data set if presented with a url.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Like `import delimited`, [`read_csv()`](../../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv") can take a number of parameters to specify how the data should
+    be parsed. For example, if the data were instead tab delimited, did not have column
+    names, and existed in the current working directory, the pandas command would
+    be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas can also read Stata data sets in `.dta` format with the [`read_stata()`](../../reference/api/pandas.read_stata.html#pandas.read_stata
+    "pandas.read_stata") function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: In addition to text/csv and Stata files, pandas supports a variety of other
+    data formats such as Excel, SAS, HDF5, Parquet, and SQL databases. These are all
+    read via a `pd.read_*` function. See the [IO documentation](../../user_guide/io.html#io)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limiting output
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: By default, pandas will truncate output of large `DataFrame`s to show the first
+    and last rows. This can be overridden by [changing the pandas options](../../user_guide/options.html#options),
+    or using [`DataFrame.head()`](../../reference/api/pandas.DataFrame.head.html#pandas.DataFrame.head
+    "pandas.DataFrame.head") or [`DataFrame.tail()`](../../reference/api/pandas.DataFrame.tail.html#pandas.DataFrame.tail
+    "pandas.DataFrame.tail").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The equivalent in Stata would be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Exporting data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The inverse of `import delimited` in Stata is `export delimited`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Similarly in pandas, the opposite of `read_csv` is [`DataFrame.to_csv()`](../../reference/api/pandas.DataFrame.to_csv.html#pandas.DataFrame.to_csv
+    "pandas.DataFrame.to_csv").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas can also export to Stata file format with the [`DataFrame.to_stata()`](../../reference/api/pandas.DataFrame.to_stata.html#pandas.DataFrame.to_stata
+    "pandas.DataFrame.to_stata") method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: Constructing a DataFrame from values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A Stata data set can be built from specified values by placing the data after
+    an `input` statement and specifying the column names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pandas `DataFrame` can be constructed in many different ways, but for a small
+    number of values, it is often convenient to specify it as a Python dictionary,
+    where the keys are the column names and the values are the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reading external data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Like Stata, pandas provides utilities for reading in data from many formats.
+    The `tips` data set, found within the pandas tests ([csv](https://raw.githubusercontent.com/pandas-dev/pandas/main/pandas/tests/io/data/csv/tips.csv))
+    will be used in many of the following examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stata provides `import delimited` to read csv data into a data set in memory.
+    If the `tips.csv` file is in the current working directory, we can import it as
+    follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: The pandas method is [`read_csv()`](../../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv"), which works similarly. Additionally, it will automatically
+    download the data set if presented with a url.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Like `import delimited`, [`read_csv()`](../../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv") can take a number of parameters to specify how the data should
+    be parsed. For example, if the data were instead tab delimited, did not have column
+    names, and existed in the current working directory, the pandas command would
+    be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas can also read Stata data sets in `.dta` format with the [`read_stata()`](../../reference/api/pandas.read_stata.html#pandas.read_stata
+    "pandas.read_stata") function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: In addition to text/csv and Stata files, pandas supports a variety of other
+    data formats such as Excel, SAS, HDF5, Parquet, and SQL databases. These are all
+    read via a `pd.read_*` function. See the [IO documentation](../../user_guide/io.html#io)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limiting output
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: By default, pandas will truncate output of large `DataFrame`s to show the first
+    and last rows. This can be overridden by [changing the pandas options](../../user_guide/options.html#options),
+    or using [`DataFrame.head()`](../../reference/api/pandas.DataFrame.head.html#pandas.DataFrame.head
+    "pandas.DataFrame.head") or [`DataFrame.tail()`](../../reference/api/pandas.DataFrame.tail.html#pandas.DataFrame.tail
+    "pandas.DataFrame.tail").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The equivalent in Stata would be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: Exporting data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The inverse of `import delimited` in Stata is `export delimited`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Similarly in pandas, the opposite of `read_csv` is [`DataFrame.to_csv()`](../../reference/api/pandas.DataFrame.to_csv.html#pandas.DataFrame.to_csv
+    "pandas.DataFrame.to_csv").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas can also export to Stata file format with the [`DataFrame.to_stata()`](../../reference/api/pandas.DataFrame.to_stata.html#pandas.DataFrame.to_stata
+    "pandas.DataFrame.to_stata") method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data operations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Operations on columns
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, arbitrary math expressions can be used with the `generate` and `replace`
+    commands on new or existing columns. The `drop` command drops the column from
+    the data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides vectorized operations by specifying the individual `Series`
+    in the `DataFrame`. New columns can be assigned in the same way. The [`DataFrame.drop()`](../../reference/api/pandas.DataFrame.drop.html#pandas.DataFrame.drop
+    "pandas.DataFrame.drop") method drops a column from the `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: Filtering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Filtering in Stata is done with an `if` clause on one or more columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: DataFrames can be filtered in multiple ways; the most intuitive of which is
+    using [boolean indexing](../../user_guide/indexing.html#indexing-boolean).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: The above statement is simply passing a `Series` of `True`/`False` objects to
+    the DataFrame, returning all rows with `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: If/then logic
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, an `if` clause can also be used to create new columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: The same operation in pandas can be accomplished using the `where` method from
+    `numpy`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: Date functionality
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata provides a variety of functions to do operations on date/datetime columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent pandas operations are shown below. In addition to these functions,
+    pandas supports other Time Series features not available in Stata (such as time
+    zone handling and custom offsets) – see the [timeseries documentation](../../user_guide/timeseries.html#timeseries)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selection of columns
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata provides keywords to select, drop, and rename columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: The same operations are expressed in pandas below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keep certain columns
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: Drop a column
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rename a column
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sorting by values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Sorting in Stata is accomplished via `sort`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas has a [`DataFrame.sort_values()`](../../reference/api/pandas.DataFrame.sort_values.html#pandas.DataFrame.sort_values
+    "pandas.DataFrame.sort_values") method, which takes a list of columns to sort
+    by.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: Operations on columns
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, arbitrary math expressions can be used with the `generate` and `replace`
+    commands on new or existing columns. The `drop` command drops the column from
+    the data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides vectorized operations by specifying the individual `Series`
+    in the `DataFrame`. New columns can be assigned in the same way. The [`DataFrame.drop()`](../../reference/api/pandas.DataFrame.drop.html#pandas.DataFrame.drop
+    "pandas.DataFrame.drop") method drops a column from the `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: Filtering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Filtering in Stata is done with an `if` clause on one or more columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: DataFrames can be filtered in multiple ways; the most intuitive of which is
+    using [boolean indexing](../../user_guide/indexing.html#indexing-boolean).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: The above statement is simply passing a `Series` of `True`/`False` objects to
+    the DataFrame, returning all rows with `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: If/then logic
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, an `if` clause can also be used to create new columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: The same operation in pandas can be accomplished using the `where` method from
+    `numpy`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: Date functionality
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata provides a variety of functions to do operations on date/datetime columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent pandas operations are shown below. In addition to these functions,
+    pandas supports other Time Series features not available in Stata (such as time
+    zone handling and custom offsets) – see the [timeseries documentation](../../user_guide/timeseries.html#timeseries)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selection of columns
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata provides keywords to select, drop, and rename columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: The same operations are expressed in pandas below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keep certain columns
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: Drop a column
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rename a column
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: Keep certain columns
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: Drop a column
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rename a column
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sorting by values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Sorting in Stata is accomplished via `sort`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas has a [`DataFrame.sort_values()`](../../reference/api/pandas.DataFrame.sort_values.html#pandas.DataFrame.sort_values
+    "pandas.DataFrame.sort_values") method, which takes a list of columns to sort
+    by.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: String processing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Finding length of string
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata determines the length of a character string with the `strlen()` and `ustrlen()`
+    functions for ASCII and Unicode strings, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can find the length of a character string with [`Series.str.len()`](../../reference/api/pandas.Series.str.len.html#pandas.Series.str.len
+    "pandas.Series.str.len"). In Python 3, all strings are Unicode strings. `len`
+    includes trailing blanks. Use `len` and `rstrip` to exclude trailing blanks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finding position of substring
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata determines the position of a character in a string with the `strpos()`
+    function. This takes the string defined by the first argument and searches for
+    the first position of the substring you supply as the second argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can find the position of a character in a column of strings with the [`Series.str.find()`](../../reference/api/pandas.Series.str.find.html#pandas.Series.str.find
+    "pandas.Series.str.find") method. `find` searches for the first position of the
+    substring. If the substring is found, the method returns its position. If not
+    found, it returns `-1`. Keep in mind that Python indexes are zero-based.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extracting substring by position
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata extracts a substring from a string based on its position with the `substr()`
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: With pandas you can use `[]` notation to extract a substring from a string by
+    position locations. Keep in mind that Python indexes are zero-based.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extracting nth word
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Stata `word()` function returns the nth word from a string. The first argument
+    is the string you want to parse and the second argument specifies which word you
+    want to extract.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: The simplest way to extract words in pandas is to split the strings by spaces,
+    then reference the word by index. Note there are more powerful approaches should
+    you need them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: Changing case
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Stata `strupper()`, `strlower()`, `strproper()`, `ustrupper()`, `ustrlower()`,
+    and `ustrtitle()` functions change the case of ASCII and Unicode strings, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent pandas methods are [`Series.str.upper()`](../../reference/api/pandas.Series.str.upper.html#pandas.Series.str.upper
+    "pandas.Series.str.upper"), [`Series.str.lower()`](../../reference/api/pandas.Series.str.lower.html#pandas.Series.str.lower
+    "pandas.Series.str.lower"), and [`Series.str.title()`](../../reference/api/pandas.Series.str.title.html#pandas.Series.str.title
+    "pandas.Series.str.title").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finding length of string
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata determines the length of a character string with the `strlen()` and `ustrlen()`
+    functions for ASCII and Unicode strings, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can find the length of a character string with [`Series.str.len()`](../../reference/api/pandas.Series.str.len.html#pandas.Series.str.len
+    "pandas.Series.str.len"). In Python 3, all strings are Unicode strings. `len`
+    includes trailing blanks. Use `len` and `rstrip` to exclude trailing blanks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finding position of substring
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata determines the position of a character in a string with the `strpos()`
+    function. This takes the string defined by the first argument and searches for
+    the first position of the substring you supply as the second argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can find the position of a character in a column of strings with the [`Series.str.find()`](../../reference/api/pandas.Series.str.find.html#pandas.Series.str.find
+    "pandas.Series.str.find") method. `find` searches for the first position of the
+    substring. If the substring is found, the method returns its position. If not
+    found, it returns `-1`. Keep in mind that Python indexes are zero-based.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extracting substring by position
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata extracts a substring from a string based on its position with the `substr()`
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: With pandas you can use `[]` notation to extract a substring from a string by
+    position locations. Keep in mind that Python indexes are zero-based.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extracting nth word
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Stata `word()` function returns the nth word from a string. The first argument
+    is the string you want to parse and the second argument specifies which word you
+    want to extract.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: The simplest way to extract words in pandas is to split the strings by spaces,
+    then reference the word by index. Note there are more powerful approaches should
+    you need them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: Changing case
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Stata `strupper()`, `strlower()`, `strproper()`, `ustrupper()`, `ustrlower()`,
+    and `ustrtitle()` functions change the case of ASCII and Unicode strings, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: The equivalent pandas methods are [`Series.str.upper()`](../../reference/api/pandas.Series.str.upper.html#pandas.Series.str.upper
+    "pandas.Series.str.upper"), [`Series.str.lower()`](../../reference/api/pandas.Series.str.lower.html#pandas.Series.str.lower
+    "pandas.Series.str.lower"), and [`Series.str.title()`](../../reference/api/pandas.Series.str.title.html#pandas.Series.str.title
+    "pandas.Series.str.title").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: Merging
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The following tables will be used in the merge examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: In Stata, to perform a merge, one data set must be in memory and the other must
+    be referenced as a file name on disk. In contrast, Python must have both `DataFrames`
+    already in memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, Stata performs an outer join, where all observations from both data
+    sets are left in memory after the merge. One can keep only observations from the
+    initial data set, the merged data set, or the intersection of the two by using
+    the values created in the `_merge` variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas DataFrames have a [`merge()`](../../reference/api/pandas.DataFrame.merge.html#pandas.DataFrame.merge
+    "pandas.DataFrame.merge") method, which provides similar functionality. The data
+    does not have to be sorted ahead of time, and different join types are accomplished
+    via the `how` keyword.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: Missing data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Both pandas and Stata have a representation for missing data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas represents missing data with the special float value `NaN` (not a number).
+    Many of the semantics are the same; for example missing data propagates through
+    numeric operations, and is ignored by default for aggregations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: One difference is that missing data cannot be compared to its sentinel value.
+    For example, in Stata you could do this to filter missing values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: In pandas, [`Series.isna()`](../../reference/api/pandas.Series.isna.html#pandas.Series.isna
+    "pandas.Series.isna") and [`Series.notna()`](../../reference/api/pandas.Series.notna.html#pandas.Series.notna
+    "pandas.Series.notna") can be used to filter the rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'pandas provides [a variety of methods to work with missing data](../../user_guide/missing_data.html#missing-data).
+    Here are some examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Drop rows with missing values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: Forward fill from previous rows
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace missing values with a specified value
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Using the mean:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: Drop rows with missing values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: Forward fill from previous rows
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace missing values with a specified value
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Using the mean:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: GroupBy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Aggregation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata’s `collapse` can be used to group by one or more key variables and compute
+    aggregations on numeric columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides a flexible `groupby` mechanism that allows similar aggregations.
+    See the [groupby documentation](../../user_guide/groupby.html#groupby) for more
+    details and examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: Transformation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, if the group aggregations need to be used with the original data set,
+    one would usually use `bysort` with `egen()`. For example, to subtract the mean
+    for each observation by smoker group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides a [Transformation](../../user_guide/groupby.html#groupby-transform)
+    mechanism that allows these type of operations to be succinctly expressed in one
+    operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: By group processing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to aggregation, pandas `groupby` can be used to replicate most other
+    `bysort` processing from Stata. For example, the following example lists the first
+    observation in the current sort order by sex/smoker group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In pandas this would be written as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: Aggregation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Stata’s `collapse` can be used to group by one or more key variables and compute
+    aggregations on numeric columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides a flexible `groupby` mechanism that allows similar aggregations.
+    See the [groupby documentation](../../user_guide/groupby.html#groupby) for more
+    details and examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE155]'
+  prefs: []
+  type: TYPE_PRE
+- en: Transformation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Stata, if the group aggregations need to be used with the original data set,
+    one would usually use `bysort` with `egen()`. For example, to subtract the mean
+    for each observation by smoker group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides a [Transformation](../../user_guide/groupby.html#groupby-transform)
+    mechanism that allows these type of operations to be succinctly expressed in one
+    operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: By group processing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to aggregation, pandas `groupby` can be used to replicate most other
+    `bysort` processing from Stata. For example, the following example lists the first
+    observation in the current sort order by sex/smoker group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In pandas this would be written as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other considerations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Disk vs memory
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: pandas and Stata both operate exclusively in memory. This means that the size
+    of data able to be loaded in pandas is limited by your machine’s memory. If out
+    of core processing is needed, one possibility is the [dask.dataframe](https://docs.dask.org/en/latest/dataframe.html)
+    library, which provides a subset of pandas functionality for an on-disk `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Disk vs memory
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: pandas and Stata both operate exclusively in memory. This means that the size
+    of data able to be loaded in pandas is limited by your machine’s memory. If out
+    of core processing is needed, one possibility is the [dask.dataframe](https://docs.dask.org/en/latest/dataframe.html)
+    library, which provides a subset of pandas functionality for an on-disk `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL

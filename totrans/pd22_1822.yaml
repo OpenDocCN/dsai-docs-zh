@@ -1,0 +1,382 @@
+- en: pandas.api.extensions.ExtensionArray
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/reference/api/pandas.api.extensions.ExtensionArray.html](https://pandas.pydata.org/docs/reference/api/pandas.api.extensions.ExtensionArray.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Abstract base class for custom 1-D array types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas will recognize instances of this class as proper arrays with a custom
+    type and will not attempt to coerce them to objects. They may be stored directly
+    inside a `DataFrame` or `Series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The interface includes the following abstract methods that must be implemented
+    by subclasses:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: _from_sequence
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: _from_factorized
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: __getitem__
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: __len__
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: __eq__
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: dtype
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: nbytes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: isna
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: take
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: copy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: _concat_same_type
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: interpolate
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'A default repr displaying the type, (truncated) data, length, and dtype is
+    provided. It can be customized or replaced by by overriding:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '__repr__ : A default repr for the ExtensionArray.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '_formatter : Print scalars inside a Series or DataFrame.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Some methods require casting the ExtensionArray to an ndarray of Python objects
+    with `self.astype(object)`, which may be expensive. When performance is a concern,
+    we highly recommend overriding the following methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fillna
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: _pad_or_backfill
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: dropna
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: unique
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: factorize / _values_for_factorize
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: argsort, argmax, argmin / _values_for_argsort
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: searchsorted
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: map
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The remaining methods implemented on this class should be performant, as they
+    only compose abstract methods. Still, a more efficient implementation may be available,
+    and these methods can be overridden.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One can implement methods to handle array accumulations or reductions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: _accumulate
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: _reduce
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: One can implement methods to handle parsing from strings that will be used in
+    methods such as `pandas.io.parsers.read_csv`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: _from_sequence_of_strings
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This class does not inherit from ‘abc.ABCMeta’ for performance reasons. Methods
+    and properties required by the interface raise `pandas.errors.AbstractMethodError`
+    and no `register` method is provided for registering virtual subclasses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ExtensionArrays are limited to 1 dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: They may be backed by none, one, or many NumPy arrays. For example, `pandas.Categorical`
+    is an extension array backed by two arrays, one for codes and one for categories.
+    An array of IPv6 address may be backed by a NumPy structured array with two fields,
+    one for the lower 64 bits and one for the upper 64 bits. Or they may be backed
+    by some other storage type, like Python lists. Pandas makes no assumptions on
+    how the data are stored, just that it can be converted to a NumPy array. The ExtensionArray
+    interface does not impose any rules on how this data is stored. However, currently,
+    the backing data cannot be stored in attributes called `.values` or `._values`
+    to ensure full compatibility with pandas internals. But other names as `.data`,
+    `._data`, `._items`, … can be freely used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If implementing NumPy’s `__array_ufunc__` interface, pandas expects that
+  prefs: []
+  type: TYPE_NORMAL
+- en: You defer by returning `NotImplemented` when any Series are present in inputs.
+    Pandas will extract the arrays and call the ufunc again.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: You define a `_HANDLED_TYPES` tuple as an attribute on the class. Pandas inspect
+    this to determine whether the ufunc is valid for the types present.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: See [NumPy universal functions](../../development/extending.html#extending-extension-ufunc)
+    for more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, ExtensionArrays are not hashable. Immutable subclasses may override
+    this behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Please see the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[pandas-dev/pandas](https://github.com/pandas-dev/pandas/blob/main/pandas/tests/extension/list/array.py)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Attributes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`dtype`](pandas.api.extensions.ExtensionArray.dtype.html#pandas.api.extensions.ExtensionArray.dtype
+    "pandas.api.extensions.ExtensionArray.dtype") | An instance of ExtensionDtype.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`nbytes`](pandas.api.extensions.ExtensionArray.nbytes.html#pandas.api.extensions.ExtensionArray.nbytes
+    "pandas.api.extensions.ExtensionArray.nbytes") | The number of bytes needed to
+    store this object in memory. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`ndim`](pandas.api.extensions.ExtensionArray.ndim.html#pandas.api.extensions.ExtensionArray.ndim
+    "pandas.api.extensions.ExtensionArray.ndim") | Extension Arrays are only allowed
+    to be 1-dimensional. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`shape`](pandas.api.extensions.ExtensionArray.shape.html#pandas.api.extensions.ExtensionArray.shape
+    "pandas.api.extensions.ExtensionArray.shape") | Return a tuple of the array dimensions.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Methods
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`argsort`](pandas.api.extensions.ExtensionArray.argsort.html#pandas.api.extensions.ExtensionArray.argsort
+    "pandas.api.extensions.ExtensionArray.argsort")(*[, ascending, kind, na_position])
+    | Return the indices that would sort this array. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`astype`](pandas.api.extensions.ExtensionArray.astype.html#pandas.api.extensions.ExtensionArray.astype
+    "pandas.api.extensions.ExtensionArray.astype")(dtype[, copy]) | Cast to a NumPy
+    array or ExtensionArray with ''dtype''. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`copy`](pandas.api.extensions.ExtensionArray.copy.html#pandas.api.extensions.ExtensionArray.copy
+    "pandas.api.extensions.ExtensionArray.copy")() | Return a copy of the array. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`dropna`](pandas.api.extensions.ExtensionArray.dropna.html#pandas.api.extensions.ExtensionArray.dropna
+    "pandas.api.extensions.ExtensionArray.dropna")() | Return ExtensionArray without
+    NA values. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`duplicated`](pandas.api.extensions.ExtensionArray.duplicated.html#pandas.api.extensions.ExtensionArray.duplicated
+    "pandas.api.extensions.ExtensionArray.duplicated")([keep]) | Return boolean ndarray
+    denoting duplicate values. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`factorize`](pandas.api.extensions.ExtensionArray.factorize.html#pandas.api.extensions.ExtensionArray.factorize
+    "pandas.api.extensions.ExtensionArray.factorize")([use_na_sentinel]) | Encode
+    the extension array as an enumerated type. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`fillna`](pandas.api.extensions.ExtensionArray.fillna.html#pandas.api.extensions.ExtensionArray.fillna
+    "pandas.api.extensions.ExtensionArray.fillna")([value, method, limit, copy]) |
+    Fill NA/NaN values using the specified method. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`equals`](pandas.api.extensions.ExtensionArray.equals.html#pandas.api.extensions.ExtensionArray.equals
+    "pandas.api.extensions.ExtensionArray.equals")(other) | Return if another array
+    is equivalent to this array. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`insert`](pandas.api.extensions.ExtensionArray.insert.html#pandas.api.extensions.ExtensionArray.insert
+    "pandas.api.extensions.ExtensionArray.insert")(loc, item) | Insert an item at
+    the given position. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`interpolate`](pandas.api.extensions.ExtensionArray.interpolate.html#pandas.api.extensions.ExtensionArray.interpolate
+    "pandas.api.extensions.ExtensionArray.interpolate")(*, method, axis, index, limit, ...)
+    | See DataFrame.interpolate.__doc__. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isin`](pandas.api.extensions.ExtensionArray.isin.html#pandas.api.extensions.ExtensionArray.isin
+    "pandas.api.extensions.ExtensionArray.isin")(values) | Pointwise comparison for
+    set containment in the given values. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`isna`](pandas.api.extensions.ExtensionArray.isna.html#pandas.api.extensions.ExtensionArray.isna
+    "pandas.api.extensions.ExtensionArray.isna")() | A 1-D array indicating if each
+    value is missing. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`ravel`](pandas.api.extensions.ExtensionArray.ravel.html#pandas.api.extensions.ExtensionArray.ravel
+    "pandas.api.extensions.ExtensionArray.ravel")([order]) | Return a flattened view
+    on this array. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`repeat`](pandas.api.extensions.ExtensionArray.repeat.html#pandas.api.extensions.ExtensionArray.repeat
+    "pandas.api.extensions.ExtensionArray.repeat")(repeats[, axis]) | Repeat elements
+    of a ExtensionArray. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`searchsorted`](pandas.api.extensions.ExtensionArray.searchsorted.html#pandas.api.extensions.ExtensionArray.searchsorted
+    "pandas.api.extensions.ExtensionArray.searchsorted")(value[, side, sorter]) |
+    Find indices where elements should be inserted to maintain order. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`shift`](pandas.api.extensions.ExtensionArray.shift.html#pandas.api.extensions.ExtensionArray.shift
+    "pandas.api.extensions.ExtensionArray.shift")([periods, fill_value]) | Shift values
+    by desired number. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`take`](pandas.api.extensions.ExtensionArray.take.html#pandas.api.extensions.ExtensionArray.take
+    "pandas.api.extensions.ExtensionArray.take")(indices, *[, allow_fill, fill_value])
+    | Take elements from an array. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`tolist`](pandas.api.extensions.ExtensionArray.tolist.html#pandas.api.extensions.ExtensionArray.tolist
+    "pandas.api.extensions.ExtensionArray.tolist")() | Return a list of the values.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`unique`](pandas.api.extensions.ExtensionArray.unique.html#pandas.api.extensions.ExtensionArray.unique
+    "pandas.api.extensions.ExtensionArray.unique")() | Compute the ExtensionArray
+    of unique values. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`view`](pandas.api.extensions.ExtensionArray.view.html#pandas.api.extensions.ExtensionArray.view
+    "pandas.api.extensions.ExtensionArray.view")([dtype]) | Return a view on the array.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_accumulate`](pandas.api.extensions.ExtensionArray._accumulate.html#pandas.api.extensions.ExtensionArray._accumulate
+    "pandas.api.extensions.ExtensionArray._accumulate")(name, *[, skipna]) | Return
+    an ExtensionArray performing an accumulation operation. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_concat_same_type`](pandas.api.extensions.ExtensionArray._concat_same_type.html#pandas.api.extensions.ExtensionArray._concat_same_type
+    "pandas.api.extensions.ExtensionArray._concat_same_type")(to_concat) | Concatenate
+    multiple array of this dtype. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_explode`](pandas.api.extensions.ExtensionArray._explode.html#pandas.api.extensions.ExtensionArray._explode
+    "pandas.api.extensions.ExtensionArray._explode")() | Transform each element of
+    list-like to a row. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_formatter`](pandas.api.extensions.ExtensionArray._formatter.html#pandas.api.extensions.ExtensionArray._formatter
+    "pandas.api.extensions.ExtensionArray._formatter")([boxed]) | Formatting function
+    for scalar values. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_from_factorized`](pandas.api.extensions.ExtensionArray._from_factorized.html#pandas.api.extensions.ExtensionArray._from_factorized
+    "pandas.api.extensions.ExtensionArray._from_factorized")(values, original) | Reconstruct
+    an ExtensionArray after factorization. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_from_sequence`](pandas.api.extensions.ExtensionArray._from_sequence.html#pandas.api.extensions.ExtensionArray._from_sequence
+    "pandas.api.extensions.ExtensionArray._from_sequence")(scalars, *[, dtype, copy])
+    | Construct a new ExtensionArray from a sequence of scalars. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_from_sequence_of_strings`](pandas.api.extensions.ExtensionArray._from_sequence_of_strings.html#pandas.api.extensions.ExtensionArray._from_sequence_of_strings
+    "pandas.api.extensions.ExtensionArray._from_sequence_of_strings")(strings, *[, ...])
+    | Construct a new ExtensionArray from a sequence of strings. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_hash_pandas_object`](pandas.api.extensions.ExtensionArray._hash_pandas_object.html#pandas.api.extensions.ExtensionArray._hash_pandas_object
+    "pandas.api.extensions.ExtensionArray._hash_pandas_object")(*, encoding, hash_key, ...)
+    | Hook for hash_pandas_object. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_pad_or_backfill`](pandas.api.extensions.ExtensionArray._pad_or_backfill.html#pandas.api.extensions.ExtensionArray._pad_or_backfill
+    "pandas.api.extensions.ExtensionArray._pad_or_backfill")(*, method[, limit, ...])
+    | Pad or backfill values, used by Series/DataFrame ffill and bfill. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_reduce`](pandas.api.extensions.ExtensionArray._reduce.html#pandas.api.extensions.ExtensionArray._reduce
+    "pandas.api.extensions.ExtensionArray._reduce")(name, *[, skipna, keepdims]) |
+    Return a scalar result of performing the reduction operation. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_values_for_argsort`](pandas.api.extensions.ExtensionArray._values_for_argsort.html#pandas.api.extensions.ExtensionArray._values_for_argsort
+    "pandas.api.extensions.ExtensionArray._values_for_argsort")() | Return values
+    for sorting. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`_values_for_factorize`](pandas.api.extensions.ExtensionArray._values_for_factorize.html#pandas.api.extensions.ExtensionArray._values_for_factorize
+    "pandas.api.extensions.ExtensionArray._values_for_factorize")() | Return an array
+    and missing value suitable for factorization. |'
+  prefs: []
+  type: TYPE_TB

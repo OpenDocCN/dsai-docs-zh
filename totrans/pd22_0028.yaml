@@ -1,0 +1,4170 @@
+- en: Indexing and selecting data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/indexing.html](https://pandas.pydata.org/docs/user_guide/indexing.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'The axis labeling information in pandas objects serves many purposes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Identifies data (i.e. provides *metadata*) using known indicators, important
+    for analysis, visualization, and interactive console display.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enables automatic and explicit data alignment.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Allows intuitive getting and setting of subsets of the data set.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'In this section, we will focus on the final point: namely, how to slice, dice,
+    and generally get and set subsets of pandas objects. The primary focus will be
+    on Series and DataFrame as they have received more development attention in this
+    area.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Python and NumPy indexing operators `[]` and attribute operator `.` provide
+    quick and easy access to pandas data structures across a wide range of use cases.
+    This makes interactive work intuitive, as there’s little new to learn if you already
+    know how to deal with Python dictionaries and NumPy arrays. However, since the
+    type of the data to be accessed isn’t known in advance, directly using standard
+    operators has some optimization limits. For production code, we recommended that
+    you take advantage of the optimized pandas data access methods exposed in this
+    chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether a copy or a reference is returned for a setting operation, may depend
+    on the context. This is sometimes called `chained assignment` and should be avoided.
+    See [Returning a View versus Copy](#indexing-view-versus-copy).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [MultiIndex / Advanced Indexing](advanced.html#advanced) for `MultiIndex`
+    and more advanced indexing documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [cookbook](cookbook.html#cookbook-selection) for some advanced strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Different choices for indexing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Object selection has had a number of user-requested additions in order to support
+    more explicit location based indexing. pandas now supports three types of multi-axis
+    indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`.loc` is primarily label based, but may also be used with a boolean array.
+    `.loc` will raise `KeyError` when the items are not found. Allowed inputs are:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A single label, e.g. `5` or `'a'` (Note that `5` is interpreted as a *label*
+    of the index. This use is **not** an integer position along the index.).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A list or array of labels `['a', 'b', 'c']`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A slice object with labels `'a':'f'` (Note that contrary to usual Python slices,
+    **both** the start and the stop are included, when present in the index! See [Slicing
+    with labels](#indexing-slicing-with-labels) and [Endpoints are inclusive](advanced.html#advanced-endpoints-are-inclusive).)
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A boolean array (any `NA` values will be treated as `False`).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A `callable` function with one argument (the calling Series or DataFrame) and
+    that returns valid output for indexing (one of the above).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A tuple of row (and column) indices whose elements are one of the above inputs.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See more at [Selection by Label](#indexing-label).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`.iloc` is primarily integer position based (from `0` to `length-1` of the
+    axis), but may also be used with a boolean array. `.iloc` will raise `IndexError`
+    if a requested indexer is out-of-bounds, except *slice* indexers which allow out-of-bounds
+    indexing. (this conforms with Python/NumPy *slice* semantics). Allowed inputs
+    are:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: An integer e.g. `5`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A list or array of integers `[4, 3, 0]`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A slice object with ints `1:7`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A boolean array (any `NA` values will be treated as `False`).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A `callable` function with one argument (the calling Series or DataFrame) and
+    that returns valid output for indexing (one of the above).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A tuple of row (and column) indices whose elements are one of the above inputs.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See more at [Selection by Position](#indexing-integer), [Advanced Indexing](advanced.html#advanced)
+    and [Advanced Hierarchical](advanced.html#advanced-advanced-hierarchical).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`.loc`, `.iloc`, and also `[]` indexing can accept a `callable` as indexer.
+    See more at [Selection By Callable](#indexing-callable).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Destructuring tuple keys into row (and column) indexes occurs *before* callables
+    are applied, so you cannot return a tuple from a callable to index both rows and
+    columns.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Getting values from an object with multi-axes selection uses the following notation
+    (using `.loc` as an example, but the following applies to `.iloc` as well). Any
+    of the axes accessors may be the null slice `:`. Axes left out of the specification
+    are assumed to be `:`, e.g. `p.loc['a']` is equivalent to `p.loc['a', :]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object Type | Indexers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Series | `s.loc[indexer]` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DataFrame | `df.loc[row_indexer,column_indexer]` |  ## Basics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As mentioned when introducing the data structures in the [last section](basics.html#basics),
+    the primary function of indexing with `[]` (a.k.a. `__getitem__` for those familiar
+    with implementing class behavior in Python) is selecting out lower-dimensional
+    slices. The following table shows return type values when indexing pandas objects
+    with `[]`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object Type | Selection | Return Value Type |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Series | `series[label]` | scalar value |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DataFrame | `frame[colname]` | `Series` corresponding to colname |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Here we construct a simple time series data set to use for illustrating the
+    indexing functionality:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: None of the indexing functionality is time series specific unless specifically
+    stated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Thus, as per above, we have the most basic indexing using `[]`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can pass a list of columns to `[]` to select columns in that order. If
+    a column is not contained in the DataFrame, an exception will be raised. Multiple
+    columns can also be set in this manner:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: You may find this useful for applying a transform (in-place) to a subset of
+    the columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas aligns all AXES when setting `Series` and `DataFrame` from `.loc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This will **not** modify `df` because the column alignment is before value assignment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The correct way to swap column values is by using raw values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, pandas does not align AXES when setting `Series` and `DataFrame` from
+    `.iloc` because `.iloc` operates by position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This will modify `df` because the column alignment is not done before value
+    assignment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Attribute access
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You may access an index on a `Series` or column on a `DataFrame` directly as
+    an attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use this access only if the index element is a valid Python identifier,
+    e.g. `s.1` is not allowed. See [here for an explanation of valid identifiers](https://docs.python.org/3/reference/lexical_analysis.html#identifiers).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The attribute will not be available if it conflicts with an existing method
+    name, e.g. `s.min` is not allowed, but `s['min']` is possible.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Similarly, the attribute will not be available if it conflicts with any of
+    the following list: `index`, `major_axis`, `minor_axis`, `items`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In any of these cases, standard indexing will still work, e.g. `s['1']`, `s['min']`,
+    and `s['index']` will access the corresponding element or column.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If you are using the IPython environment, you may also use tab-completion to
+    see these accessible attributes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can also assign a `dict` to a row of a `DataFrame`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can use attribute access to modify an existing element of a Series or column
+    of a DataFrame, but be careful; if you try to use attribute access to create a
+    new column, it creates a new attribute rather than a new column and will this
+    raise a `UserWarning`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Slicing ranges
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The most robust and consistent way of slicing ranges along arbitrary axes is
+    described in the [Selection by Position](#indexing-integer) section detailing
+    the `.iloc` method. For now, we explain the semantics of slicing using the `[]`
+    operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With Series, the syntax works exactly as with an ndarray, returning a slice
+    of the values and the corresponding labels:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that setting works as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: With DataFrame, slicing inside of `[]` **slices the rows**. This is provided
+    largely as a convenience since it is such a common operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Selection by label'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether a copy or a reference is returned for a setting operation, may depend
+    on the context. This is sometimes called `chained assignment` and should be avoided.
+    See [Returning a View versus Copy](#indexing-view-versus-copy).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`.loc` is strict when you present slicers that are not compatible (or convertible)
+    with the index type. For example using integers in a `DatetimeIndex`. These will
+    raise a `TypeError`.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: String likes in slicing *can* be convertible to the type of the index and lead
+    to natural slicing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides a suite of methods in order to have **purely label based indexing**.
+    This is a strict inclusion based protocol. Every label asked for must be in the
+    index, or a `KeyError` will be raised. When slicing, both the start bound **AND**
+    the stop bound are *included*, if present in the index. Integers are valid labels,
+    but they refer to the label **and not the position**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `.loc` attribute is the primary access method. The following are valid
+    inputs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A single label, e.g. `5` or `'a'` (Note that `5` is interpreted as a *label*
+    of the index. This use is **not** an integer position along the index.).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A list or array of labels `['a', 'b', 'c']`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A slice object with labels `'a':'f'` (Note that contrary to usual Python slices,
+    **both** the start and the stop are included, when present in the index! See [Slicing
+    with labels](#indexing-slicing-with-labels).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A boolean array.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A `callable`, see [Selection By Callable](#indexing-callable).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that setting works as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With a DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Accessing via label slices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting a cross section using a label (equivalent to `df.xs(''a'')`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting values with a boolean array:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'NA values in a boolean array propagate as `False`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting a value explicitly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Slicing with labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When using `.loc` with slices, if both the start and the stop labels are present
+    in the index, then elements *located* between the two (including them) are returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If at least one of the two is absent, but the index is sorted, and can be compared
+    against start and stop labels, then slicing will still work as expected, by selecting
+    labels which *rank* between the two:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, if at least one of the two is absent *and* the index is not sorted,
+    an error will be raised (since doing otherwise would be computationally expensive,
+    as well as potentially ambiguous for mixed type indexes). For instance, in the
+    above example, `s.loc[1:6]` would raise `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the rationale behind this behavior, see [Endpoints are inclusive](advanced.html#advanced-endpoints-are-inclusive).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also, if the index has duplicate labels *and* either the start or the stop label
+    is duplicated, an error will be raised. For instance, in the above example, `s.loc[2:5]`
+    would raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For more information about duplicate labels, see [Duplicate Labels](duplicates.html#duplicates).  ##
+    Selection by position'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether a copy or a reference is returned for a setting operation, may depend
+    on the context. This is sometimes called `chained assignment` and should be avoided.
+    See [Returning a View versus Copy](#indexing-view-versus-copy).
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas provides a suite of methods in order to get **purely integer based indexing**.
+    The semantics follow closely Python and NumPy slicing. These are `0-based` indexing.
+    When slicing, the start bound is *included*, while the upper bound is *excluded*.
+    Trying to use a non-integer, even a **valid** label will raise an `IndexError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `.iloc` attribute is the primary access method. The following are valid
+    inputs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An integer e.g. `5`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A list or array of integers `[4, 3, 0]`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A slice object with ints `1:7`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A boolean array.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A `callable`, see [Selection By Callable](#indexing-callable).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A tuple of row (and column) indexes, whose elements are one of the above types.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that setting works as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With a DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Select via integer slicing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Select via integer list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting a cross section using an integer position (equiv to `df.xs(1)`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Out of range slice indexes are handled gracefully just as in Python/NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that using slices that go out of bounds can result in an empty axis (e.g.
+    an empty DataFrame being returned).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: A single indexer that is out of bounds will raise an `IndexError`. A list of
+    indexers where any element is out of bounds will raise an `IndexError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE39]  ## Selection by callable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`.loc`, `.iloc`, and also `[]` indexing can accept a `callable` as indexer.
+    The `callable` must be a function with one argument (the calling Series or DataFrame)
+    that returns valid output for indexing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: For `.iloc` indexing, returning a tuple from the callable is not supported,
+    since tuple destructuring for row and column indexes occurs *before* applying
+    callables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use callable indexing in `Series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using these methods / indexers, you can chain data selection operations without
+    using a temporary variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]  ## Combining positional and label-based indexing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you wish to get the 0th and the 2nd elements from the index in the ‘A’ column,
+    you can do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can also be expressed using `.iloc`, by explicitly getting locations on
+    the indexers, and using *positional* indexing to select things.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting *multiple* indexers, using `.get_indexer`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reindexing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The idiomatic way to achieve selecting potentially not-found elements is via
+    `.reindex()`. See also the section on [reindexing](basics.html#basics-reindexing).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternatively, if you want to select only *valid* keys, the following is idiomatic
+    and efficient; it is guaranteed to preserve the dtype of the selection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Having a duplicated index will raise for a `.reindex()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generally, you can intersect the desired labels with the current axis, and then
+    reindex.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, this would *still* raise if your resulting index is duplicated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]  ## Selecting random samples'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A random selection of rows or columns from a Series or DataFrame with the [`sample()`](../reference/api/pandas.DataFrame.sample.html#pandas.DataFrame.sample
+    "pandas.DataFrame.sample") method. The method will sample rows by default, and
+    accepts a specific number of rows/columns to return, or a fraction of rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default, `sample` will return each row at most once, but one can also sample
+    with replacement using the `replace` option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default, each row has an equal probability of being selected, but if you
+    want rows to have different probabilities, you can pass the `sample` function
+    sampling weights as `weights`. These weights can be a list, a NumPy array, or
+    a Series, but they must be of the same length as the object you are sampling.
+    Missing values will be treated as a weight of zero, and inf values are not allowed.
+    If weights do not sum to 1, they will be re-normalized by dividing all weights
+    by the sum of the weights. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: When applied to a DataFrame, you can use a column of the DataFrame as sampling
+    weights (provided you are sampling rows and not columns) by simply passing the
+    name of the column as a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`sample` also allows users to sample columns instead of rows using the `axis`
+    argument.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, one can also set a seed for `sample`’s random number generator using
+    the `random_state` argument, which will accept either an integer (as a seed) or
+    a NumPy RandomState object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setting with enlargement
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `.loc/[]` operations can perform enlargement when setting a non-existent
+    key for that axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the `Series` case this is effectively an appending operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: A `DataFrame` can be enlarged on either axis via `.loc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is like an `append` operation on the `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Fast scalar value getting and setting'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since indexing with `[]` must handle a lot of cases (single-label access, slicing,
+    boolean indexing, etc.), it has a bit of overhead in order to figure out what
+    you’re asking for. If you only want to access a scalar value, the fastest way
+    is to use the `at` and `iat` methods, which are implemented on all of the data
+    structures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly to `loc`, `at` provides **label** based scalar lookups, while, `iat`
+    provides **integer** based lookups analogously to `iloc`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also set using these same indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`at` may enlarge the object in-place as above if the indexer is missing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: Boolean indexing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Another common operation is the use of boolean vectors to filter the data.
+    The operators are: `|` for `or`, `&` for `and`, and `~` for `not`. These **must**
+    be grouped by using parentheses, since by default Python will evaluate an expression
+    such as `df[''A''] > 2 & df[''B''] < 3` as `df[''A''] > (2 & df[''B'']) < 3`,
+    while the desired evaluation order is `(df[''A''] > 2) & (df[''B''] < 3)`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using a boolean vector to index a Series works exactly as in a NumPy ndarray:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You may select rows from a DataFrame using a boolean vector the same length
+    as the DataFrame’s index (for example, something derived from one of the columns
+    of the DataFrame):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'List comprehensions and the `map` method of Series can also be used to produce
+    more complex criteria:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: With the choice methods [Selection by Label](#indexing-label), [Selection by
+    Position](#indexing-integer), and [Advanced Indexing](advanced.html#advanced)
+    you may select along more than one axis using boolean vectors combined with other
+    indexing expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`iloc` supports two kinds of boolean indexing. If the indexer is a boolean
+    `Series`, an error will be raised. For instance, in the following example, `df.iloc[s.values,
+    1]` is ok. The boolean indexer is an array. But `df.iloc[s, 1]` would raise `ValueError`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Indexing with isin'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider the [`isin()`](../reference/api/pandas.Series.isin.html#pandas.Series.isin
+    "pandas.Series.isin") method of `Series`, which returns a boolean vector that
+    is true wherever the `Series` elements exist in the passed list. This allows you
+    to select rows where one or more columns have values you want:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same method is available for `Index` objects and is useful for the cases
+    when you don’t know which of the sought labels are in fact present:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In addition to that, `MultiIndex` allows selecting a separate level to use
+    in the membership check:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: DataFrame also has an [`isin()`](../reference/api/pandas.DataFrame.isin.html#pandas.DataFrame.isin
+    "pandas.DataFrame.isin") method. When calling `isin`, pass a set of values as
+    either an array or dict. If values is an array, `isin` returns a DataFrame of
+    booleans that is the same shape as the original DataFrame, with True wherever
+    the element is in the sequence of values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: Oftentimes you’ll want to match certain values with certain columns. Just make
+    values a `dict` where the key is the column, and the value is a list of items
+    you want to check for.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To return the DataFrame of booleans where the values are *not* in the original
+    DataFrame, use the `~` operator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Combine DataFrame’s `isin` with the `any()` and `all()` methods to quickly
+    select subsets of your data that meet a given criteria. To select a row where
+    each column meets its own criterion:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]  ## The [`where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") Method and Masking'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Selecting values from a Series with a boolean vector generally returns a subset
+    of the data. To guarantee that selection output has the same shape as the original
+    data, you can use the `where` method in `Series` and `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To return only the selected rows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To return a Series of the same shape as the original:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting values from a DataFrame with a boolean criterion now also preserves
+    input data shape. `where` is used under the hood as the implementation. The code
+    below is equivalent to `df.where(df < 0)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: In addition, `where` takes an optional `other` argument for replacement of values
+    where the condition is False, in the returned copy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You may wish to set values based on some boolean criteria. This can be done
+    intuitively like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`where` returns a modified copy of the data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The signature for [`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") differs from [`numpy.where()`](https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where
+    "(in NumPy v1.26)"). Roughly `df1.where(m, df2)` is equivalent to `np.where(m,
+    df1, df2)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Alignment**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Furthermore, `where` aligns the input boolean condition (ndarray or DataFrame),
+    such that partial selection with setting is possible. This is analogous to partial
+    setting via `.loc` (but on the contents rather than the axis labels).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: Where can also accept `axis` and `level` parameters to align the input when
+    performing the `where`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is equivalent to (but faster than) the following.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`where` can accept a callable as condition and `other` arguments. The function
+    must be with one argument (the calling Series or DataFrame) and that returns valid
+    output as condition and `other` argument.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: Mask
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`mask()`](../reference/api/pandas.DataFrame.mask.html#pandas.DataFrame.mask
+    "pandas.DataFrame.mask") is the inverse boolean operation of `where`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]  ## Setting with enlargement conditionally using `numpy()`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An alternative to [`where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") is to use [`numpy.where()`](https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where
+    "(in NumPy v1.26)"). Combined with setting a new column, you can use it to enlarge
+    a DataFrame where the values are determined conditionally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider you have two choices to choose from in the following DataFrame. And
+    you want to set a new column color to ‘green’ when the second column has ‘Z’.
+    You can do the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have multiple conditions, you can use [`numpy.select()`](https://numpy.org/doc/stable/reference/generated/numpy.select.html#numpy.select
+    "(in NumPy v1.26)") to achieve that. Say corresponding to three conditions there
+    are three choice of colors, with a fourth color as a fallback, you can do the
+    following.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]  ## The [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Method'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    objects have a [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") method that allows selection using an expression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can get the value of the frame where column `b` has values between the
+    values of columns `a` and `c`. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: Do the same thing but fall back on a named index if there is no column with
+    the name `a`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If instead you don’t want to or cannot name your index, you can use the name
+    `index` in your query expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the name of your index overlaps with a column name, the column name is given
+    precedence. For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can still use the index in a query expression by using the special identifier
+    ‘index’:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: If for some reason you have a column named `index`, then you can refer to the
+    index as `ilevel_0` as well, but at this point you should consider renaming your
+    columns to something less ambiguous.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex "pandas.MultiIndex")
+    [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Syntax'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can also use the levels of a `DataFrame` with a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") as if they were columns in the frame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the levels of the `MultiIndex` are unnamed, you can refer to them using
+    special names:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: The convention is `ilevel_0`, which means “index level 0” for the 0th level
+    of the `index`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Use Cases'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A use case for [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") is when you have a collection of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") objects that have a subset of column names (or index levels/names)
+    in common. You can pass the same query to both frames *without* having to specify
+    which frame you’re interested in querying
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Python versus pandas Syntax Comparison'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Full numpy-like syntax:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Slightly nicer by removing the parentheses (comparison operators bind tighter
+    than `&` and `|`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Use English instead of symbols:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Pretty close to how you might write it on paper:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `in` and `not in` operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") also supports special use of Python’s `in` and `not
+    in` comparison operators, providing a succinct syntax for calling the `isin` method
+    of a `Series` or `DataFrame`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can combine this with other expressions for very succinct queries:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that `in` and `not in` are evaluated in Python, since `numexpr` has no
+    equivalent of this operation. However, **only the** `in`/`not in` **expression
+    itself** is evaluated in vanilla Python. For example, in the expression
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`(b + c + d)` is evaluated by `numexpr` and *then* the `in` operation is evaluated
+    in plain Python. In general, any operations that can be evaluated using `numexpr`
+    will be.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Special use of the `==` operator with `list` objects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Comparing a `list` of values to a column using `==`/`!=` works similarly to
+    `in`/`not in`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: Boolean operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You can negate boolean expressions with the word `not` or the `~` operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Of course, expressions can be arbitrarily complex too:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: Performance of [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`DataFrame.query()` using `numexpr` is slightly faster than Python for large
+    frames.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../_images/query-perf.png](../Images/5c9dcf2ea447b26d588f19d23146ea2a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: You will only see the performance benefits of using the `numexpr` engine with
+    `DataFrame.query()` if your frame has more than approximately 100,000 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This plot was created using a `DataFrame` with 3 columns each containing floating
+    point values generated using `numpy.random.randn()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: Duplicate data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'If you want to identify and remove duplicate rows in a DataFrame, there are
+    two methods that will help: `duplicated` and `drop_duplicates`. Each takes as
+    an argument the columns to use to identify duplicated rows.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`duplicated` returns a boolean vector whose length is the number of rows, and
+    which indicates whether a row is duplicated.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`drop_duplicates` removes duplicate rows.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: By default, the first observed row of a duplicate set is considered unique,
+    but each method has a `keep` parameter to specify targets to be kept.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`keep=''first''` (default): mark / drop duplicates except for the first occurrence.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`keep=''last''`: mark / drop duplicates except for the last occurrence.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`keep=False`: mark / drop all duplicates.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also, you can pass a list of columns to identify duplications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: To drop duplicates by index value, use `Index.duplicated` then perform slicing.
+    The same set of options are available for the `keep` parameter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Dictionary-like [`get()`](../reference/api/pandas.DataFrame.get.html#pandas.DataFrame.get
+    "pandas.DataFrame.get") method'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each of Series or DataFrame have a `get` method which can return a default value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]  ## Looking up values by index/column labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sometimes you want to extract a set of values given a sequence of row labels
+    and column labels, this can be achieved by `pandas.factorize` and NumPy indexing.
+    For instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Formerly this could be achieved with the dedicated `DataFrame.lookup` method
+    which was deprecated in version 1.2.0 and removed in version 2.0.0.  ## Index
+    objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pandas [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index")
+    class and its subclasses can be viewed as implementing an *ordered multiset*.
+    Duplicates are allowed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index") also
+    provides the infrastructure necessary for lookups, data alignment, and reindexing.
+    The easiest way to create an [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index") directly is to pass a `list` or other sequence to [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or using numbers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If no dtype is given, `Index` tries to infer the dtype from the data. It is
+    also possible to give an explicit dtype when instantiating an [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also pass a `name` to be stored in the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The name, if set, will be shown in the console display:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Setting metadata'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexes are “mostly immutable”, but it is possible to set and change their `name`
+    attribute. You can use the `rename`, `set_names` to set these attributes directly,
+    and they default to returning a copy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [Advanced Indexing](advanced.html#advanced) for usage of MultiIndexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`set_names`, `set_levels`, and `set_codes` also take an optional `level` argument'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]  ### Set operations on Index objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The two main operations are `union` and `intersection`. Difference is provided
+    via the `.difference()` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also available is the `symmetric_difference` operation, which returns elements
+    that appear in either `idx1` or `idx2`, but not in both. This is equivalent to
+    the Index created by `idx1.difference(idx2).union(idx2.difference(idx1))`, with
+    duplicates dropped.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The resulting index from a set operation will be sorted in ascending order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When performing [`Index.union()`](../reference/api/pandas.Index.union.html#pandas.Index.union
+    "pandas.Index.union") between indexes with different dtypes, the indexes must
+    be cast to a common dtype. Typically, though not always, this is object dtype.
+    The exception is when performing a union between integer and float data. In this
+    case, the integer values are converted to float
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]  ### Missing values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Important
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even though `Index` can hold missing values (`NaN`), it should be avoided if
+    you do not want any unexpected results. For example, some operations exclude missing
+    values implicitly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Index.fillna` fills missing values with specified scalar value.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: Set / reset index
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Occasionally you will load or create a data set into a DataFrame and want to
+    add an index after you’ve already done so. There are a couple of different ways.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Set an index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DataFrame has a [`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
+    "pandas.DataFrame.set_index") method which takes a column name (for a regular
+    `Index`) or a list of column names (for a `MultiIndex`). To create a new, re-indexed
+    DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `append` keyword option allow you to keep the existing index and append
+    the given columns to a MultiIndex:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other options in `set_index` allow you not drop the index columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reset the index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As a convenience, there is a new function on DataFrame called [`reset_index()`](../reference/api/pandas.DataFrame.reset_index.html#pandas.DataFrame.reset_index
+    "pandas.DataFrame.reset_index") which transfers the index values into the DataFrame’s
+    columns and sets a simple integer index. This is the inverse operation of [`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
+    "pandas.DataFrame.set_index").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: The output is more similar to a SQL table or a record array. The names for the
+    columns derived from the index are the ones stored in the `names` attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can use the `level` keyword to remove only a portion of the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`reset_index` takes an optional parameter `drop` which if true simply discards
+    the index, instead of putting index values in the DataFrame’s columns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding an ad hoc index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can assign a custom index to the `index` attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Returning a view versus a copy'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
+    in pandas 3.0\. This means than chained indexing will never work. As a consequence,
+    the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
+    for more context. We recommend turning Copy-on-Write on to leverage the improvements
+    with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`` pd.options.mode.copy_on_write = True ``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: even before pandas 3.0 is available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When setting values in a pandas object, care must be taken to avoid what is
+    called `chained indexing`. Here is an example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Compare these two access methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: These both yield the same results, so which should you use? It is instructive
+    to understand the order of operations on these and why method 2 (`.loc`) is much
+    preferred over method 1 (chained `[]`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`dfmi[''one'']` selects the first level of the columns and returns a DataFrame
+    that is singly-indexed. Then another Python operation `dfmi_with_one[''second'']`
+    selects the series indexed by `''second''`. This is indicated by the variable
+    `dfmi_with_one` because pandas sees these operations as separate events. e.g.
+    separate calls to `__getitem__`, so it has to treat them as linear operations,
+    they happen one after another.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Contrast this to `df.loc[:,('one','second')]` which passes a nested tuple of
+    `(slice(None),('one','second'))` to a single call to `__getitem__`. This allows
+    pandas to deal with this as a single entity. Furthermore this order of operations
+    *can* be significantly faster, and allows one to index *both* axes if so desired.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why does assignment fail when using chained indexing?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
+    in pandas 3.0\. This means than chained indexing will never work. As a consequence,
+    the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
+    for more context. We recommend turning Copy-on-Write on to leverage the improvements
+    with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`` pd.options.mode.copy_on_write = True ``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: even before pandas 3.0 is available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The problem in the previous section is just a performance issue. What’s up with
+    the `SettingWithCopy` warning? We don’t **usually** throw warnings around when
+    you do something that might cost a few extra milliseconds!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But it turns out that assigning to the product of chained indexing has inherently
+    unpredictable results. To see this, think about how the Python interpreter executes
+    this code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But this code is handled differently:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: See that `__getitem__` in there? Outside of simple cases, it’s very hard to
+    predict whether it will return a view or a copy (it depends on the memory layout
+    of the array, about which pandas makes no guarantees), and therefore whether the
+    `__setitem__` will modify `dfmi` or a temporary object that gets thrown out immediately
+    afterward. **That’s** what `SettingWithCopy` is warning you about!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may be wondering whether we should be concerned about the `loc` property
+    in the first example. But `dfmi.loc` is guaranteed to be `dfmi` itself with modified
+    indexing behavior, so `dfmi.loc.__getitem__` / `dfmi.loc.__setitem__` operate
+    on `dfmi` directly. Of course, `dfmi.loc.__getitem__(idx)` may be a view or a
+    copy of `dfmi`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sometimes a `SettingWithCopy` warning will arise at times when there’s no obvious
+    chained indexing going on. **These** are the bugs that `SettingWithCopy` is designed
+    to catch! pandas is probably trying to warn you that you’ve done this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: Yikes!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Evaluation order matters'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
+    in pandas 3.0\. This means than chained indexing will never work. As a consequence,
+    the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
+    for more context. We recommend turning Copy-on-Write on to leverage the improvements
+    with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`` pd.options.mode.copy_on_write = True ``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: even before pandas 3.0 is available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you use chained indexing, the order and type of the indexing operation
+    partially determine whether the result is a slice into the original object, or
+    a copy of the slice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas has the `SettingWithCopyWarning` because assigning to a copy of a slice
+    is frequently not intentional, but a mistake caused by chained indexing returning
+    a copy where a slice was expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you would like pandas to be more or less trusting about assignment to a
+    chained indexing expression, you can set the [option](options.html#options) `mode.chained_assignment`
+    to one of these values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`''warn''`, the default, means a `SettingWithCopyWarning` is printed.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`''raise''` means pandas will raise a `SettingWithCopyError` you have to deal
+    with.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`None` will suppress the warnings entirely.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: This however is operating on a copy and will not work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: A chained assignment can also crop up in setting in a mixed dtype frame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: These setting rules apply to all of `.loc/.iloc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the recommended access method using `.loc` for multiple items
+    (using `mask`) and a single item using a fixed index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following *can* work at times, but it is not guaranteed to, and therefore
+    should be avoided:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Last, the subsequent example will **not** work at all, and so should be avoided:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The chained assignment warnings / exceptions are aiming to inform the user
+    of a possibly invalid assignment. There may be false positives; situations where
+    a chained assignment is inadvertently reported.  ## Different choices for indexing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Object selection has had a number of user-requested additions in order to support
+    more explicit location based indexing. pandas now supports three types of multi-axis
+    indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`.loc` is primarily label based, but may also be used with a boolean array.
+    `.loc` will raise `KeyError` when the items are not found. Allowed inputs are:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A single label, e.g. `5` or `'a'` (Note that `5` is interpreted as a *label*
+    of the index. This use is **not** an integer position along the index.).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A list or array of labels `['a', 'b', 'c']`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A slice object with labels `'a':'f'` (Note that contrary to usual Python slices,
+    **both** the start and the stop are included, when present in the index! See [Slicing
+    with labels](#indexing-slicing-with-labels) and [Endpoints are inclusive](advanced.html#advanced-endpoints-are-inclusive).)
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A boolean array (any `NA` values will be treated as `False`).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A `callable` function with one argument (the calling Series or DataFrame) and
+    that returns valid output for indexing (one of the above).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A tuple of row (and column) indices whose elements are one of the above inputs.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See more at [Selection by Label](#indexing-label).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`.iloc` is primarily integer position based (from `0` to `length-1` of the
+    axis), but may also be used with a boolean array. `.iloc` will raise `IndexError`
+    if a requested indexer is out-of-bounds, except *slice* indexers which allow out-of-bounds
+    indexing. (this conforms with Python/NumPy *slice* semantics). Allowed inputs
+    are:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: An integer e.g. `5`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A list or array of integers `[4, 3, 0]`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A slice object with ints `1:7`.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A boolean array (any `NA` values will be treated as `False`).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A `callable` function with one argument (the calling Series or DataFrame) and
+    that returns valid output for indexing (one of the above).
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A tuple of row (and column) indices whose elements are one of the above inputs.
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See more at [Selection by Position](#indexing-integer), [Advanced Indexing](advanced.html#advanced)
+    and [Advanced Hierarchical](advanced.html#advanced-advanced-hierarchical).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`.loc`, `.iloc`, and also `[]` indexing can accept a `callable` as indexer.
+    See more at [Selection By Callable](#indexing-callable).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Destructuring tuple keys into row (and column) indexes occurs *before* callables
+    are applied, so you cannot return a tuple from a callable to index both rows and
+    columns.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Getting values from an object with multi-axes selection uses the following notation
+    (using `.loc` as an example, but the following applies to `.iloc` as well). Any
+    of the axes accessors may be the null slice `:`. Axes left out of the specification
+    are assumed to be `:`, e.g. `p.loc['a']` is equivalent to `p.loc['a', :]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object Type | Indexers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Series | `s.loc[indexer]` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DataFrame | `df.loc[row_indexer,column_indexer]` |'
+  prefs: []
+  type: TYPE_TB
+- en: '## Basics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As mentioned when introducing the data structures in the [last section](basics.html#basics),
+    the primary function of indexing with `[]` (a.k.a. `__getitem__` for those familiar
+    with implementing class behavior in Python) is selecting out lower-dimensional
+    slices. The following table shows return type values when indexing pandas objects
+    with `[]`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object Type | Selection | Return Value Type |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Series | `series[label]` | scalar value |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DataFrame | `frame[colname]` | `Series` corresponding to colname |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Here we construct a simple time series data set to use for illustrating the
+    indexing functionality:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: None of the indexing functionality is time series specific unless specifically
+    stated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Thus, as per above, we have the most basic indexing using `[]`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can pass a list of columns to `[]` to select columns in that order. If
+    a column is not contained in the DataFrame, an exception will be raised. Multiple
+    columns can also be set in this manner:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: You may find this useful for applying a transform (in-place) to a subset of
+    the columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas aligns all AXES when setting `Series` and `DataFrame` from `.loc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This will **not** modify `df` because the column alignment is before value assignment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The correct way to swap column values is by using raw values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, pandas does not align AXES when setting `Series` and `DataFrame` from
+    `.iloc` because `.iloc` operates by position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This will modify `df` because the column alignment is not done before value
+    assignment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: Attribute access
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You may access an index on a `Series` or column on a `DataFrame` directly as
+    an attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use this access only if the index element is a valid Python identifier,
+    e.g. `s.1` is not allowed. See [here for an explanation of valid identifiers](https://docs.python.org/3/reference/lexical_analysis.html#identifiers).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The attribute will not be available if it conflicts with an existing method
+    name, e.g. `s.min` is not allowed, but `s['min']` is possible.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Similarly, the attribute will not be available if it conflicts with any of
+    the following list: `index`, `major_axis`, `minor_axis`, `items`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In any of these cases, standard indexing will still work, e.g. `s['1']`, `s['min']`,
+    and `s['index']` will access the corresponding element or column.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If you are using the IPython environment, you may also use tab-completion to
+    see these accessible attributes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can also assign a `dict` to a row of a `DataFrame`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can use attribute access to modify an existing element of a Series or column
+    of a DataFrame, but be careful; if you try to use attribute access to create a
+    new column, it creates a new attribute rather than a new column and will this
+    raise a `UserWarning`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: Slicing ranges
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The most robust and consistent way of slicing ranges along arbitrary axes is
+    described in the [Selection by Position](#indexing-integer) section detailing
+    the `.iloc` method. For now, we explain the semantics of slicing using the `[]`
+    operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With Series, the syntax works exactly as with an ndarray, returning a slice
+    of the values and the corresponding labels:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that setting works as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: With DataFrame, slicing inside of `[]` **slices the rows**. This is provided
+    largely as a convenience since it is such a common operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Selection by label'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether a copy or a reference is returned for a setting operation, may depend
+    on the context. This is sometimes called `chained assignment` and should be avoided.
+    See [Returning a View versus Copy](#indexing-view-versus-copy).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`.loc` is strict when you present slicers that are not compatible (or convertible)
+    with the index type. For example using integers in a `DatetimeIndex`. These will
+    raise a `TypeError`.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE154]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: String likes in slicing *can* be convertible to the type of the index and lead
+    to natural slicing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE155]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas provides a suite of methods in order to have **purely label based indexing**.
+    This is a strict inclusion based protocol. Every label asked for must be in the
+    index, or a `KeyError` will be raised. When slicing, both the start bound **AND**
+    the stop bound are *included*, if present in the index. Integers are valid labels,
+    but they refer to the label **and not the position**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `.loc` attribute is the primary access method. The following are valid
+    inputs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A single label, e.g. `5` or `'a'` (Note that `5` is interpreted as a *label*
+    of the index. This use is **not** an integer position along the index.).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A list or array of labels `['a', 'b', 'c']`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A slice object with labels `'a':'f'` (Note that contrary to usual Python slices,
+    **both** the start and the stop are included, when present in the index! See [Slicing
+    with labels](#indexing-slicing-with-labels).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A boolean array.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A `callable`, see [Selection By Callable](#indexing-callable).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that setting works as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With a DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Accessing via label slices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting a cross section using a label (equivalent to `df.xs(''a'')`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE160]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting values with a boolean array:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE161]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'NA values in a boolean array propagate as `False`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE162]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting a value explicitly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE163]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Slicing with labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When using `.loc` with slices, if both the start and the stop labels are present
+    in the index, then elements *located* between the two (including them) are returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE164]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If at least one of the two is absent, but the index is sorted, and can be compared
+    against start and stop labels, then slicing will still work as expected, by selecting
+    labels which *rank* between the two:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE165]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, if at least one of the two is absent *and* the index is not sorted,
+    an error will be raised (since doing otherwise would be computationally expensive,
+    as well as potentially ambiguous for mixed type indexes). For instance, in the
+    above example, `s.loc[1:6]` would raise `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the rationale behind this behavior, see [Endpoints are inclusive](advanced.html#advanced-endpoints-are-inclusive).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE166]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also, if the index has duplicate labels *and* either the start or the stop label
+    is duplicated, an error will be raised. For instance, in the above example, `s.loc[2:5]`
+    would raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For more information about duplicate labels, see [Duplicate Labels](duplicates.html#duplicates).  ###
+    Slicing with labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When using `.loc` with slices, if both the start and the stop labels are present
+    in the index, then elements *located* between the two (including them) are returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE167]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If at least one of the two is absent, but the index is sorted, and can be compared
+    against start and stop labels, then slicing will still work as expected, by selecting
+    labels which *rank* between the two:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE168]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, if at least one of the two is absent *and* the index is not sorted,
+    an error will be raised (since doing otherwise would be computationally expensive,
+    as well as potentially ambiguous for mixed type indexes). For instance, in the
+    above example, `s.loc[1:6]` would raise `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the rationale behind this behavior, see [Endpoints are inclusive](advanced.html#advanced-endpoints-are-inclusive).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE169]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also, if the index has duplicate labels *and* either the start or the stop label
+    is duplicated, an error will be raised. For instance, in the above example, `s.loc[2:5]`
+    would raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more information about duplicate labels, see [Duplicate Labels](duplicates.html#duplicates).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Selection by position'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether a copy or a reference is returned for a setting operation, may depend
+    on the context. This is sometimes called `chained assignment` and should be avoided.
+    See [Returning a View versus Copy](#indexing-view-versus-copy).
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas provides a suite of methods in order to get **purely integer based indexing**.
+    The semantics follow closely Python and NumPy slicing. These are `0-based` indexing.
+    When slicing, the start bound is *included*, while the upper bound is *excluded*.
+    Trying to use a non-integer, even a **valid** label will raise an `IndexError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `.iloc` attribute is the primary access method. The following are valid
+    inputs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An integer e.g. `5`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A list or array of integers `[4, 3, 0]`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A slice object with ints `1:7`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A boolean array.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A `callable`, see [Selection By Callable](#indexing-callable).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A tuple of row (and column) indexes, whose elements are one of the above types.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE170]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that setting works as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE171]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With a DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE172]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Select via integer slicing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE173]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Select via integer list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE174]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE175]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE176]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE177]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting a cross section using an integer position (equiv to `df.xs(1)`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE178]'
+  prefs: []
+  type: TYPE_PRE
+- en: Out of range slice indexes are handled gracefully just as in Python/NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE179]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that using slices that go out of bounds can result in an empty axis (e.g.
+    an empty DataFrame being returned).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE180]'
+  prefs: []
+  type: TYPE_PRE
+- en: A single indexer that is out of bounds will raise an `IndexError`. A list of
+    indexers where any element is out of bounds will raise an `IndexError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE181]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE182]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Selection by callable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`.loc`, `.iloc`, and also `[]` indexing can accept a `callable` as indexer.
+    The `callable` must be a function with one argument (the calling Series or DataFrame)
+    that returns valid output for indexing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: For `.iloc` indexing, returning a tuple from the callable is not supported,
+    since tuple destructuring for row and column indexes occurs *before* applying
+    callables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE183]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use callable indexing in `Series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE184]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using these methods / indexers, you can chain data selection operations without
+    using a temporary variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE185]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Combining positional and label-based indexing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you wish to get the 0th and the 2nd elements from the index in the ‘A’ column,
+    you can do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE186]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can also be expressed using `.iloc`, by explicitly getting locations on
+    the indexers, and using *positional* indexing to select things.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE187]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For getting *multiple* indexers, using `.get_indexer`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE188]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reindexing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The idiomatic way to achieve selecting potentially not-found elements is via
+    `.reindex()`. See also the section on [reindexing](basics.html#basics-reindexing).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE189]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternatively, if you want to select only *valid* keys, the following is idiomatic
+    and efficient; it is guaranteed to preserve the dtype of the selection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE190]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Having a duplicated index will raise for a `.reindex()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE191]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generally, you can intersect the desired labels with the current axis, and then
+    reindex.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE192]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, this would *still* raise if your resulting index is duplicated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE193]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reindexing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The idiomatic way to achieve selecting potentially not-found elements is via
+    `.reindex()`. See also the section on [reindexing](basics.html#basics-reindexing).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE194]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternatively, if you want to select only *valid* keys, the following is idiomatic
+    and efficient; it is guaranteed to preserve the dtype of the selection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE195]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Having a duplicated index will raise for a `.reindex()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE196]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generally, you can intersect the desired labels with the current axis, and then
+    reindex.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE197]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, this would *still* raise if your resulting index is duplicated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE198]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Selecting random samples'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A random selection of rows or columns from a Series or DataFrame with the [`sample()`](../reference/api/pandas.DataFrame.sample.html#pandas.DataFrame.sample
+    "pandas.DataFrame.sample") method. The method will sample rows by default, and
+    accepts a specific number of rows/columns to return, or a fraction of rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE199]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default, `sample` will return each row at most once, but one can also sample
+    with replacement using the `replace` option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE200]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default, each row has an equal probability of being selected, but if you
+    want rows to have different probabilities, you can pass the `sample` function
+    sampling weights as `weights`. These weights can be a list, a NumPy array, or
+    a Series, but they must be of the same length as the object you are sampling.
+    Missing values will be treated as a weight of zero, and inf values are not allowed.
+    If weights do not sum to 1, they will be re-normalized by dividing all weights
+    by the sum of the weights. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE201]'
+  prefs: []
+  type: TYPE_PRE
+- en: When applied to a DataFrame, you can use a column of the DataFrame as sampling
+    weights (provided you are sampling rows and not columns) by simply passing the
+    name of the column as a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE202]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`sample` also allows users to sample columns instead of rows using the `axis`
+    argument.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE203]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, one can also set a seed for `sample`’s random number generator using
+    the `random_state` argument, which will accept either an integer (as a seed) or
+    a NumPy RandomState object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE204]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setting with enlargement
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `.loc/[]` operations can perform enlargement when setting a non-existent
+    key for that axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the `Series` case this is effectively an appending operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE205]'
+  prefs: []
+  type: TYPE_PRE
+- en: A `DataFrame` can be enlarged on either axis via `.loc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE206]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is like an `append` operation on the `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE207]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Fast scalar value getting and setting'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since indexing with `[]` must handle a lot of cases (single-label access, slicing,
+    boolean indexing, etc.), it has a bit of overhead in order to figure out what
+    you’re asking for. If you only want to access a scalar value, the fastest way
+    is to use the `at` and `iat` methods, which are implemented on all of the data
+    structures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly to `loc`, `at` provides **label** based scalar lookups, while, `iat`
+    provides **integer** based lookups analogously to `iloc`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE208]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also set using these same indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE209]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`at` may enlarge the object in-place as above if the indexer is missing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE210]'
+  prefs: []
+  type: TYPE_PRE
+- en: Boolean indexing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Another common operation is the use of boolean vectors to filter the data.
+    The operators are: `|` for `or`, `&` for `and`, and `~` for `not`. These **must**
+    be grouped by using parentheses, since by default Python will evaluate an expression
+    such as `df[''A''] > 2 & df[''B''] < 3` as `df[''A''] > (2 & df[''B'']) < 3`,
+    while the desired evaluation order is `(df[''A''] > 2) & (df[''B''] < 3)`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using a boolean vector to index a Series works exactly as in a NumPy ndarray:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE211]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You may select rows from a DataFrame using a boolean vector the same length
+    as the DataFrame’s index (for example, something derived from one of the columns
+    of the DataFrame):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE212]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'List comprehensions and the `map` method of Series can also be used to produce
+    more complex criteria:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE213]'
+  prefs: []
+  type: TYPE_PRE
+- en: With the choice methods [Selection by Label](#indexing-label), [Selection by
+    Position](#indexing-integer), and [Advanced Indexing](advanced.html#advanced)
+    you may select along more than one axis using boolean vectors combined with other
+    indexing expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE214]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`iloc` supports two kinds of boolean indexing. If the indexer is a boolean
+    `Series`, an error will be raised. For instance, in the following example, `df.iloc[s.values,
+    1]` is ok. The boolean indexer is an array. But `df.iloc[s, 1]` would raise `ValueError`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE215]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Indexing with isin'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider the [`isin()`](../reference/api/pandas.Series.isin.html#pandas.Series.isin
+    "pandas.Series.isin") method of `Series`, which returns a boolean vector that
+    is true wherever the `Series` elements exist in the passed list. This allows you
+    to select rows where one or more columns have values you want:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE216]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same method is available for `Index` objects and is useful for the cases
+    when you don’t know which of the sought labels are in fact present:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE217]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In addition to that, `MultiIndex` allows selecting a separate level to use
+    in the membership check:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE218]'
+  prefs: []
+  type: TYPE_PRE
+- en: DataFrame also has an [`isin()`](../reference/api/pandas.DataFrame.isin.html#pandas.DataFrame.isin
+    "pandas.DataFrame.isin") method. When calling `isin`, pass a set of values as
+    either an array or dict. If values is an array, `isin` returns a DataFrame of
+    booleans that is the same shape as the original DataFrame, with True wherever
+    the element is in the sequence of values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE219]'
+  prefs: []
+  type: TYPE_PRE
+- en: Oftentimes you’ll want to match certain values with certain columns. Just make
+    values a `dict` where the key is the column, and the value is a list of items
+    you want to check for.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE220]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To return the DataFrame of booleans where the values are *not* in the original
+    DataFrame, use the `~` operator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE221]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Combine DataFrame’s `isin` with the `any()` and `all()` methods to quickly
+    select subsets of your data that meet a given criteria. To select a row where
+    each column meets its own criterion:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE222]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## The [`where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") Method and Masking'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Selecting values from a Series with a boolean vector generally returns a subset
+    of the data. To guarantee that selection output has the same shape as the original
+    data, you can use the `where` method in `Series` and `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To return only the selected rows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE223]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To return a Series of the same shape as the original:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE224]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting values from a DataFrame with a boolean criterion now also preserves
+    input data shape. `where` is used under the hood as the implementation. The code
+    below is equivalent to `df.where(df < 0)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE225]'
+  prefs: []
+  type: TYPE_PRE
+- en: In addition, `where` takes an optional `other` argument for replacement of values
+    where the condition is False, in the returned copy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE226]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You may wish to set values based on some boolean criteria. This can be done
+    intuitively like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE227]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`where` returns a modified copy of the data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The signature for [`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") differs from [`numpy.where()`](https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where
+    "(in NumPy v1.26)"). Roughly `df1.where(m, df2)` is equivalent to `np.where(m,
+    df1, df2)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE228]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Alignment**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Furthermore, `where` aligns the input boolean condition (ndarray or DataFrame),
+    such that partial selection with setting is possible. This is analogous to partial
+    setting via `.loc` (but on the contents rather than the axis labels).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE229]'
+  prefs: []
+  type: TYPE_PRE
+- en: Where can also accept `axis` and `level` parameters to align the input when
+    performing the `where`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE230]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is equivalent to (but faster than) the following.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE231]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`where` can accept a callable as condition and `other` arguments. The function
+    must be with one argument (the calling Series or DataFrame) and that returns valid
+    output as condition and `other` argument.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE232]'
+  prefs: []
+  type: TYPE_PRE
+- en: Mask
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`mask()`](../reference/api/pandas.DataFrame.mask.html#pandas.DataFrame.mask
+    "pandas.DataFrame.mask") is the inverse boolean operation of `where`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE233]'
+  prefs: []
+  type: TYPE_PRE
+- en: Mask
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`mask()`](../reference/api/pandas.DataFrame.mask.html#pandas.DataFrame.mask
+    "pandas.DataFrame.mask") is the inverse boolean operation of `where`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE234]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Setting with enlargement conditionally using `numpy()`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An alternative to [`where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") is to use [`numpy.where()`](https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where
+    "(in NumPy v1.26)"). Combined with setting a new column, you can use it to enlarge
+    a DataFrame where the values are determined conditionally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider you have two choices to choose from in the following DataFrame. And
+    you want to set a new column color to ‘green’ when the second column has ‘Z’.
+    You can do the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE235]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you have multiple conditions, you can use [`numpy.select()`](https://numpy.org/doc/stable/reference/generated/numpy.select.html#numpy.select
+    "(in NumPy v1.26)") to achieve that. Say corresponding to three conditions there
+    are three choice of colors, with a fourth color as a fallback, you can do the
+    following.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE236]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## The [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Method'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    objects have a [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") method that allows selection using an expression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can get the value of the frame where column `b` has values between the
+    values of columns `a` and `c`. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE237]'
+  prefs: []
+  type: TYPE_PRE
+- en: Do the same thing but fall back on a named index if there is no column with
+    the name `a`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE238]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If instead you don’t want to or cannot name your index, you can use the name
+    `index` in your query expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE239]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the name of your index overlaps with a column name, the column name is given
+    precedence. For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE240]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can still use the index in a query expression by using the special identifier
+    ‘index’:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE241]'
+  prefs: []
+  type: TYPE_PRE
+- en: If for some reason you have a column named `index`, then you can refer to the
+    index as `ilevel_0` as well, but at this point you should consider renaming your
+    columns to something less ambiguous.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex "pandas.MultiIndex")
+    [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Syntax'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can also use the levels of a `DataFrame` with a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") as if they were columns in the frame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE242]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the levels of the `MultiIndex` are unnamed, you can refer to them using
+    special names:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE243]'
+  prefs: []
+  type: TYPE_PRE
+- en: The convention is `ilevel_0`, which means “index level 0” for the 0th level
+    of the `index`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Use Cases'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A use case for [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") is when you have a collection of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") objects that have a subset of column names (or index levels/names)
+    in common. You can pass the same query to both frames *without* having to specify
+    which frame you’re interested in querying
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE244]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Python versus pandas Syntax Comparison'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Full numpy-like syntax:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE245]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Slightly nicer by removing the parentheses (comparison operators bind tighter
+    than `&` and `|`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE246]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Use English instead of symbols:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE247]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Pretty close to how you might write it on paper:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE248]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `in` and `not in` operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") also supports special use of Python’s `in` and `not
+    in` comparison operators, providing a succinct syntax for calling the `isin` method
+    of a `Series` or `DataFrame`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE249]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can combine this with other expressions for very succinct queries:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE250]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that `in` and `not in` are evaluated in Python, since `numexpr` has no
+    equivalent of this operation. However, **only the** `in`/`not in` **expression
+    itself** is evaluated in vanilla Python. For example, in the expression
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE251]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`(b + c + d)` is evaluated by `numexpr` and *then* the `in` operation is evaluated
+    in plain Python. In general, any operations that can be evaluated using `numexpr`
+    will be.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Special use of the `==` operator with `list` objects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Comparing a `list` of values to a column using `==`/`!=` works similarly to
+    `in`/`not in`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE252]'
+  prefs: []
+  type: TYPE_PRE
+- en: Boolean operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You can negate boolean expressions with the word `not` or the `~` operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE253]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Of course, expressions can be arbitrarily complex too:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE254]'
+  prefs: []
+  type: TYPE_PRE
+- en: Performance of [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`DataFrame.query()` using `numexpr` is slightly faster than Python for large
+    frames.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../_images/query-perf.png](../Images/5c9dcf2ea447b26d588f19d23146ea2a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: You will only see the performance benefits of using the `numexpr` engine with
+    `DataFrame.query()` if your frame has more than approximately 100,000 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This plot was created using a `DataFrame` with 3 columns each containing floating
+    point values generated using `numpy.random.randn()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE255]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex "pandas.MultiIndex")
+    [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Syntax'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can also use the levels of a `DataFrame` with a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") as if they were columns in the frame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE256]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the levels of the `MultiIndex` are unnamed, you can refer to them using
+    special names:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE257]'
+  prefs: []
+  type: TYPE_PRE
+- en: The convention is `ilevel_0`, which means “index level 0” for the 0th level
+    of the `index`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Use Cases'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A use case for [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") is when you have a collection of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") objects that have a subset of column names (or index levels/names)
+    in common. You can pass the same query to both frames *without* having to specify
+    which frame you’re interested in querying
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE258]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Python versus pandas Syntax Comparison'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Full numpy-like syntax:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE259]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Slightly nicer by removing the parentheses (comparison operators bind tighter
+    than `&` and `|`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE260]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Use English instead of symbols:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE261]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Pretty close to how you might write it on paper:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE262]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `in` and `not in` operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") also supports special use of Python’s `in` and `not
+    in` comparison operators, providing a succinct syntax for calling the `isin` method
+    of a `Series` or `DataFrame`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE263]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can combine this with other expressions for very succinct queries:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE264]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that `in` and `not in` are evaluated in Python, since `numexpr` has no
+    equivalent of this operation. However, **only the** `in`/`not in` **expression
+    itself** is evaluated in vanilla Python. For example, in the expression
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE265]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`(b + c + d)` is evaluated by `numexpr` and *then* the `in` operation is evaluated
+    in plain Python. In general, any operations that can be evaluated using `numexpr`
+    will be.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Special use of the `==` operator with `list` objects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Comparing a `list` of values to a column using `==`/`!=` works similarly to
+    `in`/`not in`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE266]'
+  prefs: []
+  type: TYPE_PRE
+- en: Boolean operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You can negate boolean expressions with the word `not` or the `~` operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE267]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Of course, expressions can be arbitrarily complex too:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE268]'
+  prefs: []
+  type: TYPE_PRE
+- en: Performance of [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`DataFrame.query()` using `numexpr` is slightly faster than Python for large
+    frames.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../_images/query-perf.png](../Images/5c9dcf2ea447b26d588f19d23146ea2a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: You will only see the performance benefits of using the `numexpr` engine with
+    `DataFrame.query()` if your frame has more than approximately 100,000 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This plot was created using a `DataFrame` with 3 columns each containing floating
+    point values generated using `numpy.random.randn()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE269]'
+  prefs: []
+  type: TYPE_PRE
+- en: Duplicate data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'If you want to identify and remove duplicate rows in a DataFrame, there are
+    two methods that will help: `duplicated` and `drop_duplicates`. Each takes as
+    an argument the columns to use to identify duplicated rows.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`duplicated` returns a boolean vector whose length is the number of rows, and
+    which indicates whether a row is duplicated.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`drop_duplicates` removes duplicate rows.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: By default, the first observed row of a duplicate set is considered unique,
+    but each method has a `keep` parameter to specify targets to be kept.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`keep=''first''` (default): mark / drop duplicates except for the first occurrence.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`keep=''last''`: mark / drop duplicates except for the last occurrence.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`keep=False`: mark / drop all duplicates.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE270]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also, you can pass a list of columns to identify duplications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE271]'
+  prefs: []
+  type: TYPE_PRE
+- en: To drop duplicates by index value, use `Index.duplicated` then perform slicing.
+    The same set of options are available for the `keep` parameter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE272]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Dictionary-like [`get()`](../reference/api/pandas.DataFrame.get.html#pandas.DataFrame.get
+    "pandas.DataFrame.get") method'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each of Series or DataFrame have a `get` method which can return a default value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE273]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Looking up values by index/column labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sometimes you want to extract a set of values given a sequence of row labels
+    and column labels, this can be achieved by `pandas.factorize` and NumPy indexing.
+    For instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE274]'
+  prefs: []
+  type: TYPE_PRE
+- en: Formerly this could be achieved with the dedicated `DataFrame.lookup` method
+    which was deprecated in version 1.2.0 and removed in version 2.0.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Index objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pandas [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index")
+    class and its subclasses can be viewed as implementing an *ordered multiset*.
+    Duplicates are allowed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index") also
+    provides the infrastructure necessary for lookups, data alignment, and reindexing.
+    The easiest way to create an [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index") directly is to pass a `list` or other sequence to [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE275]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or using numbers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE276]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If no dtype is given, `Index` tries to infer the dtype from the data. It is
+    also possible to give an explicit dtype when instantiating an [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE277]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also pass a `name` to be stored in the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE278]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The name, if set, will be shown in the console display:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE279]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Setting metadata'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexes are “mostly immutable”, but it is possible to set and change their `name`
+    attribute. You can use the `rename`, `set_names` to set these attributes directly,
+    and they default to returning a copy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [Advanced Indexing](advanced.html#advanced) for usage of MultiIndexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE280]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`set_names`, `set_levels`, and `set_codes` also take an optional `level` argument'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE281]  ### Set operations on Index objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The two main operations are `union` and `intersection`. Difference is provided
+    via the `.difference()` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE282]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also available is the `symmetric_difference` operation, which returns elements
+    that appear in either `idx1` or `idx2`, but not in both. This is equivalent to
+    the Index created by `idx1.difference(idx2).union(idx2.difference(idx1))`, with
+    duplicates dropped.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE283]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The resulting index from a set operation will be sorted in ascending order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When performing [`Index.union()`](../reference/api/pandas.Index.union.html#pandas.Index.union
+    "pandas.Index.union") between indexes with different dtypes, the indexes must
+    be cast to a common dtype. Typically, though not always, this is object dtype.
+    The exception is when performing a union between integer and float data. In this
+    case, the integer values are converted to float
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE284]  ### Missing values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Important
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even though `Index` can hold missing values (`NaN`), it should be avoided if
+    you do not want any unexpected results. For example, some operations exclude missing
+    values implicitly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Index.fillna` fills missing values with specified scalar value.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE285]  ### Setting metadata'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexes are “mostly immutable”, but it is possible to set and change their `name`
+    attribute. You can use the `rename`, `set_names` to set these attributes directly,
+    and they default to returning a copy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [Advanced Indexing](advanced.html#advanced) for usage of MultiIndexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE286]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`set_names`, `set_levels`, and `set_codes` also take an optional `level` argument'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE287]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Set operations on Index objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The two main operations are `union` and `intersection`. Difference is provided
+    via the `.difference()` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE288]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also available is the `symmetric_difference` operation, which returns elements
+    that appear in either `idx1` or `idx2`, but not in both. This is equivalent to
+    the Index created by `idx1.difference(idx2).union(idx2.difference(idx1))`, with
+    duplicates dropped.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE289]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The resulting index from a set operation will be sorted in ascending order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When performing [`Index.union()`](../reference/api/pandas.Index.union.html#pandas.Index.union
+    "pandas.Index.union") between indexes with different dtypes, the indexes must
+    be cast to a common dtype. Typically, though not always, this is object dtype.
+    The exception is when performing a union between integer and float data. In this
+    case, the integer values are converted to float
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE290]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Missing values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Important
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even though `Index` can hold missing values (`NaN`), it should be avoided if
+    you do not want any unexpected results. For example, some operations exclude missing
+    values implicitly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Index.fillna` fills missing values with specified scalar value.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE291]'
+  prefs: []
+  type: TYPE_PRE
+- en: Set / reset index
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Occasionally you will load or create a data set into a DataFrame and want to
+    add an index after you’ve already done so. There are a couple of different ways.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Set an index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DataFrame has a [`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
+    "pandas.DataFrame.set_index") method which takes a column name (for a regular
+    `Index`) or a list of column names (for a `MultiIndex`). To create a new, re-indexed
+    DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE292]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `append` keyword option allow you to keep the existing index and append
+    the given columns to a MultiIndex:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE293]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other options in `set_index` allow you not drop the index columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE294]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reset the index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As a convenience, there is a new function on DataFrame called [`reset_index()`](../reference/api/pandas.DataFrame.reset_index.html#pandas.DataFrame.reset_index
+    "pandas.DataFrame.reset_index") which transfers the index values into the DataFrame’s
+    columns and sets a simple integer index. This is the inverse operation of [`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
+    "pandas.DataFrame.set_index").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE295]'
+  prefs: []
+  type: TYPE_PRE
+- en: The output is more similar to a SQL table or a record array. The names for the
+    columns derived from the index are the ones stored in the `names` attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can use the `level` keyword to remove only a portion of the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE296]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`reset_index` takes an optional parameter `drop` which if true simply discards
+    the index, instead of putting index values in the DataFrame’s columns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding an ad hoc index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can assign a custom index to the `index` attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE297]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Set an index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DataFrame has a [`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
+    "pandas.DataFrame.set_index") method which takes a column name (for a regular
+    `Index`) or a list of column names (for a `MultiIndex`). To create a new, re-indexed
+    DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE298]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `append` keyword option allow you to keep the existing index and append
+    the given columns to a MultiIndex:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE299]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other options in `set_index` allow you not drop the index columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE300]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reset the index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As a convenience, there is a new function on DataFrame called [`reset_index()`](../reference/api/pandas.DataFrame.reset_index.html#pandas.DataFrame.reset_index
+    "pandas.DataFrame.reset_index") which transfers the index values into the DataFrame’s
+    columns and sets a simple integer index. This is the inverse operation of [`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
+    "pandas.DataFrame.set_index").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE301]'
+  prefs: []
+  type: TYPE_PRE
+- en: The output is more similar to a SQL table or a record array. The names for the
+    columns derived from the index are the ones stored in the `names` attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can use the `level` keyword to remove only a portion of the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE302]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`reset_index` takes an optional parameter `drop` which if true simply discards
+    the index, instead of putting index values in the DataFrame’s columns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding an ad hoc index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can assign a custom index to the `index` attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE303]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Returning a view versus a copy'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
+    in pandas 3.0\. This means than chained indexing will never work. As a consequence,
+    the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
+    for more context. We recommend turning Copy-on-Write on to leverage the improvements
+    with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`` pd.options.mode.copy_on_write = True ``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: even before pandas 3.0 is available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When setting values in a pandas object, care must be taken to avoid what is
+    called `chained indexing`. Here is an example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE304]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Compare these two access methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE305]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE306]'
+  prefs: []
+  type: TYPE_PRE
+- en: These both yield the same results, so which should you use? It is instructive
+    to understand the order of operations on these and why method 2 (`.loc`) is much
+    preferred over method 1 (chained `[]`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`dfmi[''one'']` selects the first level of the columns and returns a DataFrame
+    that is singly-indexed. Then another Python operation `dfmi_with_one[''second'']`
+    selects the series indexed by `''second''`. This is indicated by the variable
+    `dfmi_with_one` because pandas sees these operations as separate events. e.g.
+    separate calls to `__getitem__`, so it has to treat them as linear operations,
+    they happen one after another.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Contrast this to `df.loc[:,('one','second')]` which passes a nested tuple of
+    `(slice(None),('one','second'))` to a single call to `__getitem__`. This allows
+    pandas to deal with this as a single entity. Furthermore this order of operations
+    *can* be significantly faster, and allows one to index *both* axes if so desired.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why does assignment fail when using chained indexing?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
+    in pandas 3.0\. This means than chained indexing will never work. As a consequence,
+    the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
+    for more context. We recommend turning Copy-on-Write on to leverage the improvements
+    with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`` pd.options.mode.copy_on_write = True ``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: even before pandas 3.0 is available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The problem in the previous section is just a performance issue. What’s up with
+    the `SettingWithCopy` warning? We don’t **usually** throw warnings around when
+    you do something that might cost a few extra milliseconds!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But it turns out that assigning to the product of chained indexing has inherently
+    unpredictable results. To see this, think about how the Python interpreter executes
+    this code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE307]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But this code is handled differently:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE308]'
+  prefs: []
+  type: TYPE_PRE
+- en: See that `__getitem__` in there? Outside of simple cases, it’s very hard to
+    predict whether it will return a view or a copy (it depends on the memory layout
+    of the array, about which pandas makes no guarantees), and therefore whether the
+    `__setitem__` will modify `dfmi` or a temporary object that gets thrown out immediately
+    afterward. **That’s** what `SettingWithCopy` is warning you about!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may be wondering whether we should be concerned about the `loc` property
+    in the first example. But `dfmi.loc` is guaranteed to be `dfmi` itself with modified
+    indexing behavior, so `dfmi.loc.__getitem__` / `dfmi.loc.__setitem__` operate
+    on `dfmi` directly. Of course, `dfmi.loc.__getitem__(idx)` may be a view or a
+    copy of `dfmi`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sometimes a `SettingWithCopy` warning will arise at times when there’s no obvious
+    chained indexing going on. **These** are the bugs that `SettingWithCopy` is designed
+    to catch! pandas is probably trying to warn you that you’ve done this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE309]'
+  prefs: []
+  type: TYPE_PRE
+- en: Yikes!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Evaluation order matters'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
+    in pandas 3.0\. This means than chained indexing will never work. As a consequence,
+    the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
+    for more context. We recommend turning Copy-on-Write on to leverage the improvements
+    with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`` pd.options.mode.copy_on_write = True ``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: even before pandas 3.0 is available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you use chained indexing, the order and type of the indexing operation
+    partially determine whether the result is a slice into the original object, or
+    a copy of the slice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas has the `SettingWithCopyWarning` because assigning to a copy of a slice
+    is frequently not intentional, but a mistake caused by chained indexing returning
+    a copy where a slice was expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you would like pandas to be more or less trusting about assignment to a
+    chained indexing expression, you can set the [option](options.html#options) `mode.chained_assignment`
+    to one of these values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`''warn''`, the default, means a `SettingWithCopyWarning` is printed.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`''raise''` means pandas will raise a `SettingWithCopyError` you have to deal
+    with.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`None` will suppress the warnings entirely.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE310]'
+  prefs: []
+  type: TYPE_PRE
+- en: This however is operating on a copy and will not work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE311]'
+  prefs: []
+  type: TYPE_PRE
+- en: A chained assignment can also crop up in setting in a mixed dtype frame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: These setting rules apply to all of `.loc/.iloc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the recommended access method using `.loc` for multiple items
+    (using `mask`) and a single item using a fixed index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE312]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following *can* work at times, but it is not guaranteed to, and therefore
+    should be avoided:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE313]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Last, the subsequent example will **not** work at all, and so should be avoided:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE314]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: The chained assignment warnings / exceptions are aiming to inform the user of
+    a possibly invalid assignment. There may be false positives; situations where
+    a chained assignment is inadvertently reported.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why does assignment fail when using chained indexing?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
+    in pandas 3.0\. This means than chained indexing will never work. As a consequence,
+    the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
+    for more context. We recommend turning Copy-on-Write on to leverage the improvements
+    with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`` pd.options.mode.copy_on_write = True ``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: even before pandas 3.0 is available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The problem in the previous section is just a performance issue. What’s up with
+    the `SettingWithCopy` warning? We don’t **usually** throw warnings around when
+    you do something that might cost a few extra milliseconds!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But it turns out that assigning to the product of chained indexing has inherently
+    unpredictable results. To see this, think about how the Python interpreter executes
+    this code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE315]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But this code is handled differently:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE316]'
+  prefs: []
+  type: TYPE_PRE
+- en: See that `__getitem__` in there? Outside of simple cases, it’s very hard to
+    predict whether it will return a view or a copy (it depends on the memory layout
+    of the array, about which pandas makes no guarantees), and therefore whether the
+    `__setitem__` will modify `dfmi` or a temporary object that gets thrown out immediately
+    afterward. **That’s** what `SettingWithCopy` is warning you about!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may be wondering whether we should be concerned about the `loc` property
+    in the first example. But `dfmi.loc` is guaranteed to be `dfmi` itself with modified
+    indexing behavior, so `dfmi.loc.__getitem__` / `dfmi.loc.__setitem__` operate
+    on `dfmi` directly. Of course, `dfmi.loc.__getitem__(idx)` may be a view or a
+    copy of `dfmi`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sometimes a `SettingWithCopy` warning will arise at times when there’s no obvious
+    chained indexing going on. **These** are the bugs that `SettingWithCopy` is designed
+    to catch! pandas is probably trying to warn you that you’ve done this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE317]'
+  prefs: []
+  type: TYPE_PRE
+- en: Yikes!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Evaluation order matters'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
+    in pandas 3.0\. This means than chained indexing will never work. As a consequence,
+    the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
+    for more context. We recommend turning Copy-on-Write on to leverage the improvements
+    with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`` pd.options.mode.copy_on_write = True ``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: even before pandas 3.0 is available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you use chained indexing, the order and type of the indexing operation
+    partially determine whether the result is a slice into the original object, or
+    a copy of the slice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas has the `SettingWithCopyWarning` because assigning to a copy of a slice
+    is frequently not intentional, but a mistake caused by chained indexing returning
+    a copy where a slice was expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you would like pandas to be more or less trusting about assignment to a
+    chained indexing expression, you can set the [option](options.html#options) `mode.chained_assignment`
+    to one of these values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`''warn''`, the default, means a `SettingWithCopyWarning` is printed.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`''raise''` means pandas will raise a `SettingWithCopyError` you have to deal
+    with.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`None` will suppress the warnings entirely.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE318]'
+  prefs: []
+  type: TYPE_PRE
+- en: This however is operating on a copy and will not work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE319]'
+  prefs: []
+  type: TYPE_PRE
+- en: A chained assignment can also crop up in setting in a mixed dtype frame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: These setting rules apply to all of `.loc/.iloc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the recommended access method using `.loc` for multiple items
+    (using `mask`) and a single item using a fixed index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE320]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following *can* work at times, but it is not guaranteed to, and therefore
+    should be avoided:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE321]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Last, the subsequent example will **not** work at all, and so should be avoided:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE322]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: The chained assignment warnings / exceptions are aiming to inform the user of
+    a possibly invalid assignment. There may be false positives; situations where
+    a chained assignment is inadvertently reported.
+  prefs: []
+  type: TYPE_NORMAL

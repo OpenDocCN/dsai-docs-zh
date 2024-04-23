@@ -1,0 +1,1347 @@
+- en: Windowing operations
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/window.html](https://pandas.pydata.org/docs/user_guide/window.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: pandas contains a compact set of APIs for performing windowing operations -
+    an operation that performs an aggregation over a sliding partition of values.
+    The API functions similarly to the `groupby` API in that [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") and [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") call the windowing method with necessary parameters and then
+    subsequently call the aggregation function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The windows are comprised by looking back the length of the window from the
+    current observation. The result above can be derived by taking the sum of the
+    following windowed partitions of data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Overview'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'pandas supports 4 types of windowing operations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Rolling window: Generic fixed or variable sliding window over the values.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Weighted window: Weighted, non-rectangular window supplied by the `scipy.signal`
+    library.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Expanding window: Accumulating window over the values.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Exponentially Weighted window: Accumulating and exponentially weighted window
+    over the values.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '| Concept | Method | Returned Object | Supports time-based windows | Supports
+    chained groupby | Supports table method | Supports online operations |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Rolling window | `rolling` | `pandas.typing.api.Rolling` | Yes | Yes | Yes
+    (as of version 1.3) | No |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Weighted window | `rolling` | `pandas.typing.api.Window` | No | No | No |
+    No |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Expanding window | `expanding` | `pandas.typing.api.Expanding` | No | Yes
+    | Yes (as of version 1.3) | No |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Exponentially Weighted window | `ewm` | `pandas.typing.api.ExponentialMovingWindow`
+    | No | Yes (as of version 1.2) | No | Yes (as of version 1.3) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'As noted above, some operations support specifying a window based on a time
+    offset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, some methods support chaining a `groupby` operation with a windowing
+    operation which will first group the data by the specified keys and then perform
+    a windowing operation per group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Windowing operations currently only support numeric data (integer and float)
+    and will always return `float64` values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some windowing aggregation, `mean`, `sum`, `var` and `std` methods may suffer
+    from numerical imprecision due to the underlying windowing algorithms accumulating
+    sums. When values differ with magnitude \(1/np.finfo(np.double).eps\) this results
+    in truncation. It must be noted, that large values may have an impact on windows,
+    which do not include these values. [Kahan summation](https://en.wikipedia.org/wiki/Kahan_summation_algorithm)
+    is used to compute the rolling sums to preserve accuracy as much as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.3.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some windowing operations also support the `method='table'` option in the constructor
+    which performs the windowing operation over an entire [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") instead of a single column or row at a time. This can provide
+    a useful performance benefit for a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with many columns or rows (with the corresponding `axis` argument)
+    or the ability to utilize other columns during the windowing operation. The `method='table'`
+    option can only be used if `engine='numba'` is specified in the corresponding
+    method call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, a [weighted mean](https://en.wikipedia.org/wiki/Weighted_arithmetic_mean)
+    calculation can be calculated with `apply()` by specifying a separate column of
+    weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: New in version 1.3.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some windowing operations also support an `online` method after constructing
+    a windowing object which returns a new object that supports passing in new [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects to continue the windowing calculation with the new values
+    (i.e. online calculations).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The methods on this new windowing objects must call the aggregation method first
+    to “prime” the initial state of the online calculation. Then, new [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects can be passed in the `update` argument to continue the
+    windowing calculation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: All windowing operations support a `min_periods` argument that dictates the
+    minimum amount of non-`np.nan` values a window must have; otherwise, the resulting
+    value is `np.nan`. `min_periods` defaults to 1 for time-based windows and `window`
+    for fixed windows
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, all windowing operations supports the `aggregate` method for returning
+    a result of multiple aggregations applied to a window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]  ## Rolling window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generic rolling windows support specifying windows as a fixed number of observations
+    or variable number of observations based on an offset. If a time based offset
+    is provided, the corresponding time based index must be monotonic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: For all supported aggregation functions, see [Rolling window functions](../reference/window.html#api-functions-rolling).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Centering windows'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default the labels are set to the right edge of the window, but a `center`
+    keyword is available so the labels can be set at the center.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can also be applied to datetime-like indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.3.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]  ### Rolling window endpoints'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The inclusion of the interval endpoints in rolling window calculations can
+    be specified with the `closed` parameter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Value | Behavior |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''right''` | close right endpoint |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''left''` | close left endpoint |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''both''` | close both endpoints |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''neither''` | open endpoints |'
+  prefs: []
+  type: TYPE_TB
+- en: For example, having the right endpoint open is useful in many problems that
+    require that there is no contamination from present information back to past information.
+    This allows the rolling window to compute statistics “up to that point in time”,
+    but not including that point in time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]  ### Custom window rolling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to accepting an integer or offset as a `window` argument, `rolling`
+    also accepts a `BaseIndexer` subclass that allows a user to define a custom method
+    for calculating window bounds. The `BaseIndexer` subclass will need to define
+    a `get_window_bounds` method that returns a tuple of two arrays, the first being
+    the starting indices of the windows and second being the ending indices of the
+    windows. Additionally, `num_values`, `min_periods`, `center`, `closed` and `step`
+    will automatically be passed to `get_window_bounds` and the defined method must
+    always accept these arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, if we have the following [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and we want to use an expanding window where `use_expanding` is `True` otherwise
+    a window of size 1, we can create the following `BaseIndexer` subclass:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can view other examples of `BaseIndexer` subclasses [here](https://github.com/pandas-dev/pandas/blob/main/pandas/core/indexers/objects.py)
+  prefs: []
+  type: TYPE_NORMAL
+- en: One subclass of note within those examples is the `VariableOffsetWindowIndexer`
+    that allows rolling operations over a non-fixed offset like a `BusinessDay`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For some problems knowledge of the future is available for analysis. For example,
+    this occurs when each data point is a full time series read from an experiment,
+    and the task is to extract underlying conditions. In these cases it can be useful
+    to perform forward-looking rolling window computations. [`FixedForwardWindowIndexer`](../reference/api/pandas.api.indexers.FixedForwardWindowIndexer.html#pandas.api.indexers.FixedForwardWindowIndexer
+    "pandas.api.indexers.FixedForwardWindowIndexer") class is available for this purpose.
+    This [`BaseIndexer`](../reference/api/pandas.api.indexers.BaseIndexer.html#pandas.api.indexers.BaseIndexer
+    "pandas.api.indexers.BaseIndexer") subclass implements a closed fixed-width forward-looking
+    rolling window, and we can use it as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can also achieve this by using slicing, applying rolling aggregation, and
+    then flipping the result as shown in example below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]  ### Rolling apply'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `apply()` function takes an extra `func` argument and performs generic rolling
+    computations. The `func` argument should be a single function that produces a
+    single value from an ndarray input. `raw` specifies whether the windows are cast
+    as [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    objects (`raw=False`) or ndarray objects (`raw=True`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]  ### Numba engine'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, `apply()` can leverage [Numba](https://numba.pydata.org/) if installed
+    as an optional dependency. The apply aggregation can be executed using Numba by
+    specifying `engine='numba'` and `engine_kwargs` arguments (`raw` must also be
+    set to `True`). See [enhancing performance with Numba](enhancingperf.html#enhancingperf-numba)
+    for general usage of the arguments and performance considerations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numba will be applied in potentially two routines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `func` is a standard Python function, the engine will [JIT](https://numba.pydata.org/numba-doc/latest/user/overview.html)
+    the passed function. `func` can also be a JITed function in which case the engine
+    will not JIT the function again.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The engine will JIT the for loop where the apply function is applied to each
+    window.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The `engine_kwargs` argument is a dictionary of keyword arguments that will
+    be passed into the [numba.jit decorator](https://numba.pydata.org/numba-doc/latest/reference/jit-compilation.html#numba.jit).
+    These keyword arguments will be applied to *both* the passed function (if a standard
+    Python function) and the apply for loop over each window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.3.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`mean`, `median`, `max`, `min`, and `sum` also support the `engine` and `engine_kwargs`
+    arguments.  ### Binary window functions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`cov()` and `corr()` can compute moving window statistics about two [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or any combination of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")/[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")/[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). Here is the behavior in each case:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'two [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series"):
+    compute the statistic for the pairing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")/[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"): compute the statistics for each column of the DataFrame with
+    the passed Series, thus returning a DataFrame.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")/[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"): by default compute the statistic for matching column names,
+    returning a DataFrame. If the keyword argument `pairwise=True` is passed then
+    computes the statistic for each pair of columns, returning a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") whose values are the dates in question (see [the next section](#window-corr-pairwise)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]  ### Computing rolling pairwise covariances and correlations'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In financial data analysis and other fields it’s common to compute covariance
+    and correlation matrices for a collection of time series. Often one is also interested
+    in moving-window covariance and correlation matrices. This can be done by passing
+    the `pairwise` keyword argument, which in the case of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") inputs will yield a MultiIndexed [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") whose `index` are the dates in question. In the case of a
+    single DataFrame argument the `pairwise` argument can even be omitted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing values are ignored and each entry is computed using the pairwise complete
+    observations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assuming the missing data are missing at random this results in an estimate
+    for the covariance matrix which is unbiased. However, for many applications this
+    estimate may not be acceptable because the estimated covariance matrix is not
+    guaranteed to be positive semi-definite. This could lead to estimated correlations
+    having absolute values which are greater than one, and/or a non-invertible covariance
+    matrix. See [Estimation of covariance matrices](https://en.wikipedia.org/w/index.php?title=Estimation_of_covariance_matrices)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]  ## Weighted window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `win_type` argument in `.rolling` generates a weighted windows that are
+    commonly used in filtering and spectral estimation. `win_type` must be string
+    that corresponds to a [scipy.signal window function](https://docs.scipy.org/doc/scipy/reference/signal.windows.html#module-scipy.signal.windows).
+    Scipy must be installed in order to use these windows, and supplementary arguments
+    that the Scipy window methods take must be specified in the aggregation function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For all supported aggregation functions, see [Weighted window functions](../reference/window.html#api-functions-window).  ##
+    Expanding window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An expanding window yields the value of an aggregation statistic with all the
+    data available up to that point in time. Since these calculations are a special
+    case of rolling statistics, they are implemented in pandas such that the following
+    two calls are equivalent:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For all supported aggregation functions, see [Expanding window functions](../reference/window.html#api-functions-expanding).  ##
+    Exponentially weighted window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An exponentially weighted window is similar to an expanding window but with
+    each prior point being exponentially weighted down relative to the current point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, a weighted moving average is calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \frac{\sum_{i=0}^t w_i x_{t-i}}{\sum_{i=0}^t w_i},\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(x_t\) is the input, \(y_t\) is the result and the \(w_i\) are the weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For all supported aggregation functions, see [Exponentially-weighted window
+    functions](../reference/window.html#api-functions-ewm).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The EW functions support two variants of exponential weights. The default, `adjust=True`,
+    uses the weights \(w_i = (1 - \alpha)^i\) which gives
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \frac{x_t + (1 - \alpha)x_{t-1} + (1 - \alpha)^2 x_{t-2} + ... + (1
+    - \alpha)^t x_{0}}{1 + (1 - \alpha) + (1 - \alpha)^2 + ... + (1 - \alpha)^t}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: When `adjust=False` is specified, moving averages are calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}y_0 &= x_0 \\ y_t &= (1 - \alpha) y_{t-1} + \alpha x_t,\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: which is equivalent to using weights
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}w_i = \begin{cases} \alpha (1 - \alpha)^i & \text{if } i < t
+    \\ (1 - \alpha)^i & \text{if } i = t. \end{cases}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: These equations are sometimes written in terms of \(\alpha' = 1 - \alpha\),
+    e.g.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \alpha' y_{t-1} + (1 - \alpha') x_t.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The difference between the above two variants arises because we are dealing
+    with series which have finite history. Consider a series of infinite history,
+    with `adjust=True`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \frac{x_t + (1 - \alpha)x_{t-1} + (1 - \alpha)^2 x_{t-2} + ...} {1 +
+    (1 - \alpha) + (1 - \alpha)^2 + ...}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Noting that the denominator is a geometric series with initial term equal to
+    1 and a ratio of \(1 - \alpha\) we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}y_t &= \frac{x_t + (1 - \alpha)x_{t-1} + (1 - \alpha)^2 x_{t-2}
+    + ...} {\frac{1}{1 - (1 - \alpha)}}\\ &= [x_t + (1 - \alpha)x_{t-1} + (1 - \alpha)^2
+    x_{t-2} + ...] \alpha \\ &= \alpha x_t + [(1-\alpha)x_{t-1} + (1 - \alpha)^2 x_{t-2}
+    + ...]\alpha \\ &= \alpha x_t + (1 - \alpha)[x_{t-1} + (1 - \alpha) x_{t-2} +
+    ...]\alpha\\ &= \alpha x_t + (1 - \alpha) y_{t-1}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: which is the same expression as `adjust=False` above and therefore shows the
+    equivalence of the two variants for infinite series. When `adjust=False`, we have
+    \(y_0 = x_0\) and \(y_t = \alpha x_t + (1 - \alpha) y_{t-1}\). Therefore, there
+    is an assumption that \(x_0\) is not an ordinary value but rather an exponentially
+    weighted moment of the infinite series up to that point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One must have \(0 < \alpha \leq 1\), and while it is possible to pass \(\alpha\)
+    directly, it’s often easier to think about either the **span**, **center of mass
+    (com)** or **half-life** of an EW moment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\alpha = \begin{cases} \frac{2}{s + 1}, & \text{for span}\ s
+    \geq 1\\ \frac{1}{1 + c}, & \text{for center of mass}\ c \geq 0\\ 1 - \exp^{\frac{\log
+    0.5}{h}}, & \text{for half-life}\ h > 0 \end{cases}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One must specify precisely one of **span**, **center of mass**, **half-life**
+    and **alpha** to the EW functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Span** corresponds to what is commonly called an “N-day EW moving average”.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Center of mass** has a more physical interpretation and can be thought of
+    in terms of span: \(c = (s - 1) / 2\).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Half-life** is the period of time for the exponential weight to reduce to
+    one half.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Alpha** specifies the smoothing factor directly.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can also specify `halflife` in terms of a timedelta convertible unit to
+    specify the amount of time it takes for an observation to decay to half its value
+    when also specifying a sequence of `times`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following formula is used to compute exponentially weighted mean with an
+    input vector of times:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \frac{\sum_{i=0}^t 0.5^\frac{t_{t} - t_{i}}{\lambda} x_{t-i}}{\sum_{i=0}^t
+    0.5^\frac{t_{t} - t_{i}}{\lambda}},\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: ExponentialMovingWindow also has an `ignore_na` argument, which determines how
+    intermediate null values affect the calculation of the weights. When `ignore_na=False`
+    (the default), weights are calculated based on absolute positions, so that intermediate
+    null values affect the result. When `ignore_na=True`, weights are calculated by
+    ignoring intermediate null values. For example, assuming `adjust=True`, if `ignore_na=False`,
+    the weighted average of `3, NaN, 5` would be calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\frac{(1-\alpha)^2 \cdot 3 + 1 \cdot 5}{(1-\alpha)^2 + 1}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whereas if `ignore_na=True`, the weighted average would be calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\frac{(1-\alpha) \cdot 3 + 1 \cdot 5}{(1-\alpha) + 1}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `var()`, `std()`, and `cov()` functions have a `bias` argument, specifying
+    whether the result should contain biased or unbiased statistics. For example,
+    if `bias=True`, `ewmvar(x)` is calculated as `ewmvar(x) = ewma(x**2) - ewma(x)**2`;
+    whereas if `bias=False` (the default), the biased variance statistics are scaled
+    by debiasing factors
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\frac{\left(\sum_{i=0}^t w_i\right)^2}{\left(\sum_{i=0}^t w_i\right)^2 - \sum_{i=0}^t
+    w_i^2}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(For \(w_i = 1\), this reduces to the usual \(N / (N - 1)\) factor, with \(N
+    = t + 1\).) See [Weighted Sample Variance](https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance)
+    on Wikipedia for further details.  ## Overview'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'pandas supports 4 types of windowing operations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Rolling window: Generic fixed or variable sliding window over the values.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Weighted window: Weighted, non-rectangular window supplied by the `scipy.signal`
+    library.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Expanding window: Accumulating window over the values.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Exponentially Weighted window: Accumulating and exponentially weighted window
+    over the values.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '| Concept | Method | Returned Object | Supports time-based windows | Supports
+    chained groupby | Supports table method | Supports online operations |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Rolling window | `rolling` | `pandas.typing.api.Rolling` | Yes | Yes | Yes
+    (as of version 1.3) | No |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Weighted window | `rolling` | `pandas.typing.api.Window` | No | No | No |
+    No |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Expanding window | `expanding` | `pandas.typing.api.Expanding` | No | Yes
+    | Yes (as of version 1.3) | No |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Exponentially Weighted window | `ewm` | `pandas.typing.api.ExponentialMovingWindow`
+    | No | Yes (as of version 1.2) | No | Yes (as of version 1.3) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'As noted above, some operations support specifying a window based on a time
+    offset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, some methods support chaining a `groupby` operation with a windowing
+    operation which will first group the data by the specified keys and then perform
+    a windowing operation per group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Windowing operations currently only support numeric data (integer and float)
+    and will always return `float64` values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some windowing aggregation, `mean`, `sum`, `var` and `std` methods may suffer
+    from numerical imprecision due to the underlying windowing algorithms accumulating
+    sums. When values differ with magnitude \(1/np.finfo(np.double).eps\) this results
+    in truncation. It must be noted, that large values may have an impact on windows,
+    which do not include these values. [Kahan summation](https://en.wikipedia.org/wiki/Kahan_summation_algorithm)
+    is used to compute the rolling sums to preserve accuracy as much as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.3.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some windowing operations also support the `method='table'` option in the constructor
+    which performs the windowing operation over an entire [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") instead of a single column or row at a time. This can provide
+    a useful performance benefit for a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with many columns or rows (with the corresponding `axis` argument)
+    or the ability to utilize other columns during the windowing operation. The `method='table'`
+    option can only be used if `engine='numba'` is specified in the corresponding
+    method call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, a [weighted mean](https://en.wikipedia.org/wiki/Weighted_arithmetic_mean)
+    calculation can be calculated with `apply()` by specifying a separate column of
+    weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: New in version 1.3.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some windowing operations also support an `online` method after constructing
+    a windowing object which returns a new object that supports passing in new [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects to continue the windowing calculation with the new values
+    (i.e. online calculations).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The methods on this new windowing objects must call the aggregation method first
+    to “prime” the initial state of the online calculation. Then, new [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") or [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects can be passed in the `update` argument to continue the
+    windowing calculation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: All windowing operations support a `min_periods` argument that dictates the
+    minimum amount of non-`np.nan` values a window must have; otherwise, the resulting
+    value is `np.nan`. `min_periods` defaults to 1 for time-based windows and `window`
+    for fixed windows
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, all windowing operations supports the `aggregate` method for returning
+    a result of multiple aggregations applied to a window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Rolling window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generic rolling windows support specifying windows as a fixed number of observations
+    or variable number of observations based on an offset. If a time based offset
+    is provided, the corresponding time based index must be monotonic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: For all supported aggregation functions, see [Rolling window functions](../reference/window.html#api-functions-rolling).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Centering windows'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default the labels are set to the right edge of the window, but a `center`
+    keyword is available so the labels can be set at the center.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can also be applied to datetime-like indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.3.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]  ### Rolling window endpoints'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The inclusion of the interval endpoints in rolling window calculations can
+    be specified with the `closed` parameter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Value | Behavior |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''right''` | close right endpoint |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''left''` | close left endpoint |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''both''` | close both endpoints |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''neither''` | open endpoints |'
+  prefs: []
+  type: TYPE_TB
+- en: For example, having the right endpoint open is useful in many problems that
+    require that there is no contamination from present information back to past information.
+    This allows the rolling window to compute statistics “up to that point in time”,
+    but not including that point in time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]  ### Custom window rolling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to accepting an integer or offset as a `window` argument, `rolling`
+    also accepts a `BaseIndexer` subclass that allows a user to define a custom method
+    for calculating window bounds. The `BaseIndexer` subclass will need to define
+    a `get_window_bounds` method that returns a tuple of two arrays, the first being
+    the starting indices of the windows and second being the ending indices of the
+    windows. Additionally, `num_values`, `min_periods`, `center`, `closed` and `step`
+    will automatically be passed to `get_window_bounds` and the defined method must
+    always accept these arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, if we have the following [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and we want to use an expanding window where `use_expanding` is `True` otherwise
+    a window of size 1, we can create the following `BaseIndexer` subclass:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can view other examples of `BaseIndexer` subclasses [here](https://github.com/pandas-dev/pandas/blob/main/pandas/core/indexers/objects.py)
+  prefs: []
+  type: TYPE_NORMAL
+- en: One subclass of note within those examples is the `VariableOffsetWindowIndexer`
+    that allows rolling operations over a non-fixed offset like a `BusinessDay`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For some problems knowledge of the future is available for analysis. For example,
+    this occurs when each data point is a full time series read from an experiment,
+    and the task is to extract underlying conditions. In these cases it can be useful
+    to perform forward-looking rolling window computations. [`FixedForwardWindowIndexer`](../reference/api/pandas.api.indexers.FixedForwardWindowIndexer.html#pandas.api.indexers.FixedForwardWindowIndexer
+    "pandas.api.indexers.FixedForwardWindowIndexer") class is available for this purpose.
+    This [`BaseIndexer`](../reference/api/pandas.api.indexers.BaseIndexer.html#pandas.api.indexers.BaseIndexer
+    "pandas.api.indexers.BaseIndexer") subclass implements a closed fixed-width forward-looking
+    rolling window, and we can use it as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can also achieve this by using slicing, applying rolling aggregation, and
+    then flipping the result as shown in example below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]  ### Rolling apply'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `apply()` function takes an extra `func` argument and performs generic rolling
+    computations. The `func` argument should be a single function that produces a
+    single value from an ndarray input. `raw` specifies whether the windows are cast
+    as [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    objects (`raw=False`) or ndarray objects (`raw=True`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]  ### Numba engine'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, `apply()` can leverage [Numba](https://numba.pydata.org/) if installed
+    as an optional dependency. The apply aggregation can be executed using Numba by
+    specifying `engine='numba'` and `engine_kwargs` arguments (`raw` must also be
+    set to `True`). See [enhancing performance with Numba](enhancingperf.html#enhancingperf-numba)
+    for general usage of the arguments and performance considerations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numba will be applied in potentially two routines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `func` is a standard Python function, the engine will [JIT](https://numba.pydata.org/numba-doc/latest/user/overview.html)
+    the passed function. `func` can also be a JITed function in which case the engine
+    will not JIT the function again.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The engine will JIT the for loop where the apply function is applied to each
+    window.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The `engine_kwargs` argument is a dictionary of keyword arguments that will
+    be passed into the [numba.jit decorator](https://numba.pydata.org/numba-doc/latest/reference/jit-compilation.html#numba.jit).
+    These keyword arguments will be applied to *both* the passed function (if a standard
+    Python function) and the apply for loop over each window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.3.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`mean`, `median`, `max`, `min`, and `sum` also support the `engine` and `engine_kwargs`
+    arguments.  ### Binary window functions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`cov()` and `corr()` can compute moving window statistics about two [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or any combination of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")/[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")/[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). Here is the behavior in each case:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'two [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series"):
+    compute the statistic for the pairing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")/[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"): compute the statistics for each column of the DataFrame with
+    the passed Series, thus returning a DataFrame.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")/[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"): by default compute the statistic for matching column names,
+    returning a DataFrame. If the keyword argument `pairwise=True` is passed then
+    computes the statistic for each pair of columns, returning a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") whose values are the dates in question (see [the next section](#window-corr-pairwise)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]  ### Computing rolling pairwise covariances and correlations'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In financial data analysis and other fields it’s common to compute covariance
+    and correlation matrices for a collection of time series. Often one is also interested
+    in moving-window covariance and correlation matrices. This can be done by passing
+    the `pairwise` keyword argument, which in the case of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") inputs will yield a MultiIndexed [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") whose `index` are the dates in question. In the case of a
+    single DataFrame argument the `pairwise` argument can even be omitted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing values are ignored and each entry is computed using the pairwise complete
+    observations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assuming the missing data are missing at random this results in an estimate
+    for the covariance matrix which is unbiased. However, for many applications this
+    estimate may not be acceptable because the estimated covariance matrix is not
+    guaranteed to be positive semi-definite. This could lead to estimated correlations
+    having absolute values which are greater than one, and/or a non-invertible covariance
+    matrix. See [Estimation of covariance matrices](https://en.wikipedia.org/w/index.php?title=Estimation_of_covariance_matrices)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]  ### Centering windows'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default the labels are set to the right edge of the window, but a `center`
+    keyword is available so the labels can be set at the center.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can also be applied to datetime-like indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.3.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Rolling window endpoints'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The inclusion of the interval endpoints in rolling window calculations can
+    be specified with the `closed` parameter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Value | Behavior |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''right''` | close right endpoint |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''left''` | close left endpoint |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''both''` | close both endpoints |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `''neither''` | open endpoints |'
+  prefs: []
+  type: TYPE_TB
+- en: For example, having the right endpoint open is useful in many problems that
+    require that there is no contamination from present information back to past information.
+    This allows the rolling window to compute statistics “up to that point in time”,
+    but not including that point in time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Custom window rolling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to accepting an integer or offset as a `window` argument, `rolling`
+    also accepts a `BaseIndexer` subclass that allows a user to define a custom method
+    for calculating window bounds. The `BaseIndexer` subclass will need to define
+    a `get_window_bounds` method that returns a tuple of two arrays, the first being
+    the starting indices of the windows and second being the ending indices of the
+    windows. Additionally, `num_values`, `min_periods`, `center`, `closed` and `step`
+    will automatically be passed to `get_window_bounds` and the defined method must
+    always accept these arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, if we have the following [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and we want to use an expanding window where `use_expanding` is `True` otherwise
+    a window of size 1, we can create the following `BaseIndexer` subclass:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can view other examples of `BaseIndexer` subclasses [here](https://github.com/pandas-dev/pandas/blob/main/pandas/core/indexers/objects.py)
+  prefs: []
+  type: TYPE_NORMAL
+- en: One subclass of note within those examples is the `VariableOffsetWindowIndexer`
+    that allows rolling operations over a non-fixed offset like a `BusinessDay`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For some problems knowledge of the future is available for analysis. For example,
+    this occurs when each data point is a full time series read from an experiment,
+    and the task is to extract underlying conditions. In these cases it can be useful
+    to perform forward-looking rolling window computations. [`FixedForwardWindowIndexer`](../reference/api/pandas.api.indexers.FixedForwardWindowIndexer.html#pandas.api.indexers.FixedForwardWindowIndexer
+    "pandas.api.indexers.FixedForwardWindowIndexer") class is available for this purpose.
+    This [`BaseIndexer`](../reference/api/pandas.api.indexers.BaseIndexer.html#pandas.api.indexers.BaseIndexer
+    "pandas.api.indexers.BaseIndexer") subclass implements a closed fixed-width forward-looking
+    rolling window, and we can use it as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can also achieve this by using slicing, applying rolling aggregation, and
+    then flipping the result as shown in example below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Rolling apply'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `apply()` function takes an extra `func` argument and performs generic rolling
+    computations. The `func` argument should be a single function that produces a
+    single value from an ndarray input. `raw` specifies whether the windows are cast
+    as [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series")
+    objects (`raw=False`) or ndarray objects (`raw=True`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Numba engine'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, `apply()` can leverage [Numba](https://numba.pydata.org/) if installed
+    as an optional dependency. The apply aggregation can be executed using Numba by
+    specifying `engine='numba'` and `engine_kwargs` arguments (`raw` must also be
+    set to `True`). See [enhancing performance with Numba](enhancingperf.html#enhancingperf-numba)
+    for general usage of the arguments and performance considerations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numba will be applied in potentially two routines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `func` is a standard Python function, the engine will [JIT](https://numba.pydata.org/numba-doc/latest/user/overview.html)
+    the passed function. `func` can also be a JITed function in which case the engine
+    will not JIT the function again.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The engine will JIT the for loop where the apply function is applied to each
+    window.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The `engine_kwargs` argument is a dictionary of keyword arguments that will
+    be passed into the [numba.jit decorator](https://numba.pydata.org/numba-doc/latest/reference/jit-compilation.html#numba.jit).
+    These keyword arguments will be applied to *both* the passed function (if a standard
+    Python function) and the apply for loop over each window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New in version 1.3.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`mean`, `median`, `max`, `min`, and `sum` also support the `engine` and `engine_kwargs`
+    arguments.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Binary window functions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`cov()` and `corr()` can compute moving window statistics about two [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or any combination of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")/[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")/[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"). Here is the behavior in each case:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'two [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series"):
+    compute the statistic for the pairing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")/[`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"): compute the statistics for each column of the DataFrame with
+    the passed Series, thus returning a DataFrame.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")/[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"): by default compute the statistic for matching column names,
+    returning a DataFrame. If the keyword argument `pairwise=True` is passed then
+    computes the statistic for each pair of columns, returning a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") with a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") whose values are the dates in question (see [the next section](#window-corr-pairwise)).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Computing rolling pairwise covariances and correlations'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In financial data analysis and other fields it’s common to compute covariance
+    and correlation matrices for a collection of time series. Often one is also interested
+    in moving-window covariance and correlation matrices. This can be done by passing
+    the `pairwise` keyword argument, which in the case of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") inputs will yield a MultiIndexed [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") whose `index` are the dates in question. In the case of a
+    single DataFrame argument the `pairwise` argument can even be omitted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing values are ignored and each entry is computed using the pairwise complete
+    observations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assuming the missing data are missing at random this results in an estimate
+    for the covariance matrix which is unbiased. However, for many applications this
+    estimate may not be acceptable because the estimated covariance matrix is not
+    guaranteed to be positive semi-definite. This could lead to estimated correlations
+    having absolute values which are greater than one, and/or a non-invertible covariance
+    matrix. See [Estimation of covariance matrices](https://en.wikipedia.org/w/index.php?title=Estimation_of_covariance_matrices)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Weighted window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `win_type` argument in `.rolling` generates a weighted windows that are
+    commonly used in filtering and spectral estimation. `win_type` must be string
+    that corresponds to a [scipy.signal window function](https://docs.scipy.org/doc/scipy/reference/signal.windows.html#module-scipy.signal.windows).
+    Scipy must be installed in order to use these windows, and supplementary arguments
+    that the Scipy window methods take must be specified in the aggregation function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: For all supported aggregation functions, see [Weighted window functions](../reference/window.html#api-functions-window).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Expanding window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An expanding window yields the value of an aggregation statistic with all the
+    data available up to that point in time. Since these calculations are a special
+    case of rolling statistics, they are implemented in pandas such that the following
+    two calls are equivalent:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: For all supported aggregation functions, see [Expanding window functions](../reference/window.html#api-functions-expanding).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Exponentially weighted window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An exponentially weighted window is similar to an expanding window but with
+    each prior point being exponentially weighted down relative to the current point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, a weighted moving average is calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \frac{\sum_{i=0}^t w_i x_{t-i}}{\sum_{i=0}^t w_i},\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(x_t\) is the input, \(y_t\) is the result and the \(w_i\) are the weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For all supported aggregation functions, see [Exponentially-weighted window
+    functions](../reference/window.html#api-functions-ewm).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The EW functions support two variants of exponential weights. The default, `adjust=True`,
+    uses the weights \(w_i = (1 - \alpha)^i\) which gives
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \frac{x_t + (1 - \alpha)x_{t-1} + (1 - \alpha)^2 x_{t-2} + ... + (1
+    - \alpha)^t x_{0}}{1 + (1 - \alpha) + (1 - \alpha)^2 + ... + (1 - \alpha)^t}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: When `adjust=False` is specified, moving averages are calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}y_0 &= x_0 \\ y_t &= (1 - \alpha) y_{t-1} + \alpha x_t,\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: which is equivalent to using weights
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}w_i = \begin{cases} \alpha (1 - \alpha)^i & \text{if } i < t
+    \\ (1 - \alpha)^i & \text{if } i = t. \end{cases}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: These equations are sometimes written in terms of \(\alpha' = 1 - \alpha\),
+    e.g.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \alpha' y_{t-1} + (1 - \alpha') x_t.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The difference between the above two variants arises because we are dealing
+    with series which have finite history. Consider a series of infinite history,
+    with `adjust=True`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \frac{x_t + (1 - \alpha)x_{t-1} + (1 - \alpha)^2 x_{t-2} + ...} {1 +
+    (1 - \alpha) + (1 - \alpha)^2 + ...}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Noting that the denominator is a geometric series with initial term equal to
+    1 and a ratio of \(1 - \alpha\) we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}y_t &= \frac{x_t + (1 - \alpha)x_{t-1} + (1 - \alpha)^2 x_{t-2}
+    + ...} {\frac{1}{1 - (1 - \alpha)}}\\ &= [x_t + (1 - \alpha)x_{t-1} + (1 - \alpha)^2
+    x_{t-2} + ...] \alpha \\ &= \alpha x_t + [(1-\alpha)x_{t-1} + (1 - \alpha)^2 x_{t-2}
+    + ...]\alpha \\ &= \alpha x_t + (1 - \alpha)[x_{t-1} + (1 - \alpha) x_{t-2} +
+    ...]\alpha\\ &= \alpha x_t + (1 - \alpha) y_{t-1}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: which is the same expression as `adjust=False` above and therefore shows the
+    equivalence of the two variants for infinite series. When `adjust=False`, we have
+    \(y_0 = x_0\) and \(y_t = \alpha x_t + (1 - \alpha) y_{t-1}\). Therefore, there
+    is an assumption that \(x_0\) is not an ordinary value but rather an exponentially
+    weighted moment of the infinite series up to that point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One must have \(0 < \alpha \leq 1\), and while it is possible to pass \(\alpha\)
+    directly, it’s often easier to think about either the **span**, **center of mass
+    (com)** or **half-life** of an EW moment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\alpha = \begin{cases} \frac{2}{s + 1}, & \text{for span}\ s
+    \geq 1\\ \frac{1}{1 + c}, & \text{for center of mass}\ c \geq 0\\ 1 - \exp^{\frac{\log
+    0.5}{h}}, & \text{for half-life}\ h > 0 \end{cases}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One must specify precisely one of **span**, **center of mass**, **half-life**
+    and **alpha** to the EW functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Span** corresponds to what is commonly called an “N-day EW moving average”.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Center of mass** has a more physical interpretation and can be thought of
+    in terms of span: \(c = (s - 1) / 2\).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Half-life** is the period of time for the exponential weight to reduce to
+    one half.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Alpha** specifies the smoothing factor directly.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can also specify `halflife` in terms of a timedelta convertible unit to
+    specify the amount of time it takes for an observation to decay to half its value
+    when also specifying a sequence of `times`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following formula is used to compute exponentially weighted mean with an
+    input vector of times:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y_t = \frac{\sum_{i=0}^t 0.5^\frac{t_{t} - t_{i}}{\lambda} x_{t-i}}{\sum_{i=0}^t
+    0.5^\frac{t_{t} - t_{i}}{\lambda}},\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: ExponentialMovingWindow also has an `ignore_na` argument, which determines how
+    intermediate null values affect the calculation of the weights. When `ignore_na=False`
+    (the default), weights are calculated based on absolute positions, so that intermediate
+    null values affect the result. When `ignore_na=True`, weights are calculated by
+    ignoring intermediate null values. For example, assuming `adjust=True`, if `ignore_na=False`,
+    the weighted average of `3, NaN, 5` would be calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\frac{(1-\alpha)^2 \cdot 3 + 1 \cdot 5}{(1-\alpha)^2 + 1}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whereas if `ignore_na=True`, the weighted average would be calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\frac{(1-\alpha) \cdot 3 + 1 \cdot 5}{(1-\alpha) + 1}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `var()`, `std()`, and `cov()` functions have a `bias` argument, specifying
+    whether the result should contain biased or unbiased statistics. For example,
+    if `bias=True`, `ewmvar(x)` is calculated as `ewmvar(x) = ewma(x**2) - ewma(x)**2`;
+    whereas if `bias=False` (the default), the biased variance statistics are scaled
+    by debiasing factors
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\frac{\left(\sum_{i=0}^t w_i\right)^2}{\left(\sum_{i=0}^t w_i\right)^2 - \sum_{i=0}^t
+    w_i^2}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: (For \(w_i = 1\), this reduces to the usual \(N / (N - 1)\) factor, with \(N
+    = t + 1\).) See [Weighted Sample Variance](https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance)
+    on Wikipedia for further details.
+  prefs: []
+  type: TYPE_NORMAL

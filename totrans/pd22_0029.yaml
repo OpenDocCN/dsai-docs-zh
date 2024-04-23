@@ -1,0 +1,2667 @@
+- en: MultiIndex / advanced indexing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/advanced.html](https://pandas.pydata.org/docs/user_guide/advanced.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This section covers [indexing with a MultiIndex](#advanced-hierarchical) and
+    [other advanced indexing features](#advanced-index-types).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [Indexing and Selecting Data](indexing.html#indexing) for general indexing
+    documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether a copy or a reference is returned for a setting operation may depend
+    on the context. This is sometimes called `chained assignment` and should be avoided.
+    See [Returning a View versus Copy](indexing.html#indexing-view-versus-copy).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [cookbook](cookbook.html#cookbook-selection) for some advanced strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Hierarchical indexing (MultiIndex)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hierarchical / Multi-level indexing is very exciting as it opens the door to
+    some quite sophisticated data analysis and manipulation, especially for working
+    with higher dimensional data. In essence, it enables you to store and manipulate
+    data with an arbitrary number of dimensions in lower dimensional data structures
+    like `Series` (1d) and `DataFrame` (2d).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we will show what exactly we mean by “hierarchical” indexing
+    and how it integrates with all of the pandas indexing functionality described
+    above and in prior sections. Later, when discussing [group by](groupby.html#groupby)
+    and [pivoting and reshaping data](reshaping.html#reshaping), we’ll show non-trivial
+    applications to illustrate how it aids in structuring data for analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [cookbook](cookbook.html#cookbook-multi-index) for some advanced strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating a MultiIndex (hierarchical index) object
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") object is the hierarchical analogue of the standard [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index") object which typically stores the axis labels in pandas objects.
+    You can think of `MultiIndex` as an array of tuples where each tuple is unique.
+    A `MultiIndex` can be created from a list of arrays (using [`MultiIndex.from_arrays()`](../reference/api/pandas.MultiIndex.from_arrays.html#pandas.MultiIndex.from_arrays
+    "pandas.MultiIndex.from_arrays")), an array of tuples (using [`MultiIndex.from_tuples()`](../reference/api/pandas.MultiIndex.from_tuples.html#pandas.MultiIndex.from_tuples
+    "pandas.MultiIndex.from_tuples")), a crossed set of iterables (using [`MultiIndex.from_product()`](../reference/api/pandas.MultiIndex.from_product.html#pandas.MultiIndex.from_product
+    "pandas.MultiIndex.from_product")), or a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") (using [`MultiIndex.from_frame()`](../reference/api/pandas.MultiIndex.from_frame.html#pandas.MultiIndex.from_frame
+    "pandas.MultiIndex.from_frame")). The `Index` constructor will attempt to return
+    a `MultiIndex` when it is passed a list of tuples. The following examples demonstrate
+    different ways to initialize MultiIndexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When you want every pairing of the elements in two iterables, it can be easier
+    to use the [`MultiIndex.from_product()`](../reference/api/pandas.MultiIndex.from_product.html#pandas.MultiIndex.from_product
+    "pandas.MultiIndex.from_product") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also construct a `MultiIndex` from a `DataFrame` directly, using the
+    method [`MultiIndex.from_frame()`](../reference/api/pandas.MultiIndex.from_frame.html#pandas.MultiIndex.from_frame
+    "pandas.MultiIndex.from_frame"). This is a complementary method to [`MultiIndex.to_frame()`](../reference/api/pandas.MultiIndex.to_frame.html#pandas.MultiIndex.to_frame
+    "pandas.MultiIndex.to_frame").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As a convenience, you can pass a list of arrays directly into `Series` or `DataFrame`
+    to construct a `MultiIndex` automatically:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All of the `MultiIndex` constructors accept a `names` argument which stores
+    string names for the levels themselves. If no names are provided, `None` will
+    be assigned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This index can back any axis of a pandas object, and the number of **levels**
+    of the index is up to you:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We’ve “sparsified” the higher levels of the indexes to make the console output
+    a bit easier on the eyes. Note that how the index is displayed can be controlled
+    using the `multi_sparse` option in `pandas.set_options()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It’s worth keeping in mind that there’s nothing preventing you from using tuples
+    as atomic labels on an axis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: The reason that the `MultiIndex` matters is that it can allow you to do grouping,
+    selection, and reshaping operations as we will describe below and in subsequent
+    areas of the documentation. As you will see in later sections, you can find yourself
+    working with hierarchically-indexed data without creating a `MultiIndex` explicitly
+    yourself. However, when loading data from a file, you may wish to generate your
+    own `MultiIndex` when preparing the data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Reconstructing the level labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The method [`get_level_values()`](../reference/api/pandas.MultiIndex.get_level_values.html#pandas.MultiIndex.get_level_values
+    "pandas.MultiIndex.get_level_values") will return a vector of the labels for each
+    location at a particular level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic indexing on axis with MultiIndex
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'One of the important features of hierarchical indexing is that you can select
+    data by a “partial” label identifying a subgroup in the data. **Partial** selection
+    “drops” levels of the hierarchical index in the result in a completely analogous
+    way to selecting a column in a regular DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [Cross-section with hierarchical index](#advanced-xs) for how to select
+    on a deeper level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Defined levels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") keeps all the defined levels of an index, even if they are
+    not actually used. When slicing an index, you may notice this. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is done to avoid a recomputation of the levels in order to make slicing
+    highly performant. If you want to see only the used levels, you can use the [`get_level_values()`](../reference/api/pandas.MultiIndex.get_level_values.html#pandas.MultiIndex.get_level_values
+    "pandas.MultiIndex.get_level_values") method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: To reconstruct the `MultiIndex` with only the used levels, the [`remove_unused_levels()`](../reference/api/pandas.MultiIndex.remove_unused_levels.html#pandas.MultiIndex.remove_unused_levels
+    "pandas.MultiIndex.remove_unused_levels") method may be used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data alignment and using `reindex`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Operations between differently-indexed objects having `MultiIndex` on the axes
+    will work as you expect; data alignment will work the same as an Index of tuples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`reindex()`](../reference/api/pandas.DataFrame.reindex.html#pandas.DataFrame.reindex
+    "pandas.DataFrame.reindex") method of `Series`/`DataFrames` can be called with
+    another `MultiIndex`, or even a list or array of tuples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]  ## Advanced indexing with hierarchical index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Syntactically integrating `MultiIndex` in advanced indexing with `.loc` is
+    a bit challenging, but we’ve made every effort to do so. In general, MultiIndex
+    keys take the form of tuples. For example, the following works as you would expect:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that `df.loc['bar', 'two']` would also work in this example, but this shorthand
+    notation can lead to ambiguity in general.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you also want to index a specific column with `.loc`, you must use a tuple
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You don’t have to specify all levels of the `MultiIndex` by passing only the
+    first elements of the tuple. For example, you can use “partial” indexing to get
+    all elements with `bar` in the first level as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is a shortcut for the slightly more verbose notation `df.loc[('bar',),]`
+    (equivalent to `df.loc['bar',]` in this example).
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Partial” slicing also works quite nicely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can slice with a ‘range’ of values, by providing a slice of tuples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Passing a list of labels or tuples works similar to reindexing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is important to note that tuples and lists are not treated identically in
+    pandas when it comes to indexing. Whereas a tuple is interpreted as one multi-level
+    key, a list is used to specify several keys. Or in other words, tuples go horizontally
+    (traversing levels), lists go vertically (scanning levels).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Importantly, a list of tuples indexes several complete `MultiIndex` keys, whereas
+    a tuple of lists refer to several values within a level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Using slicers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can slice a `MultiIndex` by providing multiple indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can provide any of the selectors as if you are indexing by label, see [Selection
+    by Label](indexing.html#indexing-label), including slices, lists of labels, labels,
+    and boolean indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use `slice(None)` to select all the contents of *that* level. You do
+    not need to specify all the *deeper* levels, they will be implied as `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As usual, **both sides** of the slicers are included as this is label indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should specify all axes in the `.loc` specifier, meaning the indexer for
+    the **index** and for the **columns**. There are some ambiguous cases where the
+    passed indexer could be misinterpreted as indexing *both* axes, rather than into
+    say the `MultiIndex` for the rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You should do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You should **not** do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic MultiIndex slicing using slices, lists, and labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use [`pandas.IndexSlice`](../reference/api/pandas.IndexSlice.html#pandas.IndexSlice
+    "pandas.IndexSlice") to facilitate a more natural syntax using `:`, rather than
+    using `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is possible to perform quite complicated selections using this method on
+    multiple axes at the same time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using a boolean indexer you can provide selection related to the *values*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also specify the `axis` argument to `.loc` to interpret the passed slicers
+    on a single axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Furthermore, you can *set* the values using the following methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use a right-hand-side of an alignable object as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]  ### Cross-section'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`xs()`](../reference/api/pandas.DataFrame.xs.html#pandas.DataFrame.xs "pandas.DataFrame.xs")
+    method of `DataFrame` additionally takes a level argument to make selecting data
+    at a particular level of a `MultiIndex` easier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also select on the columns with `xs`, by providing the axis argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`xs` also allows selection with multiple keys.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can pass `drop_level=False` to `xs` to retain the level that was selected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compare the above with the result using `drop_level=True` (the default value).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]  ### Advanced reindexing and alignment'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the parameter `level` in the [`reindex()`](../reference/api/pandas.DataFrame.reindex.html#pandas.DataFrame.reindex
+    "pandas.DataFrame.reindex") and [`align()`](../reference/api/pandas.DataFrame.align.html#pandas.DataFrame.align
+    "pandas.DataFrame.align") methods of pandas objects is useful to broadcast values
+    across a level. For instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Swapping levels with `swaplevel`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The [`swaplevel()`](../reference/api/pandas.MultiIndex.swaplevel.html#pandas.MultiIndex.swaplevel
+    "pandas.MultiIndex.swaplevel") method can switch the order of two levels:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Reordering levels with `reorder_levels`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [`reorder_levels()`](../reference/api/pandas.MultiIndex.reorder_levels.html#pandas.MultiIndex.reorder_levels
+    "pandas.MultiIndex.reorder_levels") method generalizes the `swaplevel` method,
+    allowing you to permute the hierarchical index levels in one step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]  ### Renaming names of an `Index` or `MultiIndex`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`rename()`](../reference/api/pandas.DataFrame.rename.html#pandas.DataFrame.rename
+    "pandas.DataFrame.rename") method is used to rename the labels of a `MultiIndex`,
+    and is typically used to rename the columns of a `DataFrame`. The `columns` argument
+    of `rename` allows a dictionary to be specified that includes only the columns
+    you wish to rename.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: This method can also be used to rename specific labels of the main index of
+    the `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`rename_axis()`](../reference/api/pandas.DataFrame.rename_axis.html#pandas.DataFrame.rename_axis
+    "pandas.DataFrame.rename_axis") method is used to rename the name of a `Index`
+    or `MultiIndex`. In particular, the names of the levels of a `MultiIndex` can
+    be specified, which is useful if `reset_index()` is later used to move the values
+    from the `MultiIndex` to a column.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the columns of a `DataFrame` are an index, so that using `rename_axis`
+    with the `columns` argument will change the name of that index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Both `rename` and `rename_axis` support specifying a dictionary, `Series` or
+    a mapping function to map labels/names to new values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When working with an `Index` object directly, rather than via a `DataFrame`,
+    [`Index.set_names()`](../reference/api/pandas.Index.set_names.html#pandas.Index.set_names
+    "pandas.Index.set_names") can be used to change the names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: You cannot set the names of the MultiIndex via a level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Use [`Index.set_names()`](../reference/api/pandas.Index.set_names.html#pandas.Index.set_names
+    "pandas.Index.set_names") instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sorting a `MultiIndex`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex")-ed objects to be indexed and sliced effectively, they need
+    to be sorted. As with any index, you can use [`sort_index()`](../reference/api/pandas.DataFrame.sort_index.html#pandas.DataFrame.sort_index
+    "pandas.DataFrame.sort_index").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: You may also pass a level name to `sort_index` if the `MultiIndex` levels are
+    named.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On higher dimensional objects, you can sort any of the other axes by level
+    if they have a `MultiIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Indexing will work even if the data are not sorted, but will be rather inefficient
+    (and show a `PerformanceWarning`). It will also return a copy of the data rather
+    than a view:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Furthermore, if you try to index something that is not fully lexsorted, this
+    can raise:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `is_monotonic_increasing()` method on a `MultiIndex` shows if the index
+    is sorted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: And now selection works as expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Take methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Similar to NumPy ndarrays, pandas `Index`, `Series`, and `DataFrame` also provides
+    the [`take()`](../reference/api/pandas.DataFrame.take.html#pandas.DataFrame.take
+    "pandas.DataFrame.take") method that retrieves elements along a given axis at
+    the given indices. The given indices must be either a list or an ndarray of integer
+    index positions. `take` will also accept negative integers as relative positions
+    to the end of the object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: For DataFrames, the given indices should be a 1d list or ndarray that specifies
+    row or column positions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is important to note that the `take` method on pandas objects are not intended
+    to work on boolean indices and may return unexpected results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, as a small note on performance, because the `take` method handles a
+    narrower range of inputs, it can offer performance that is a good deal faster
+    than fancy indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Index types'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have discussed `MultiIndex` in the previous sections pretty extensively.
+    Documentation about `DatetimeIndex` and `PeriodIndex` are shown [here](timeseries.html#timeseries-overview),
+    and documentation about `TimedeltaIndex` is found [here](timedeltas.html#timedeltas-index).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following sub-sections we will highlight some other index types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### CategoricalIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`CategoricalIndex`](../reference/api/pandas.CategoricalIndex.html#pandas.CategoricalIndex
+    "pandas.CategoricalIndex") is a type of index that is useful for supporting indexing
+    with duplicates. This is a container around a [`Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical") and allows efficient indexing and storage of an index with
+    a large number of duplicated elements.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setting the index will create a `CategoricalIndex`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indexing with `__getitem__/.iloc/.loc` works similarly to an `Index` with duplicates.
+    The indexers **must** be in the category or the operation will raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `CategoricalIndex` is **preserved** after indexing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sorting the index will sort by the order of the categories (recall that we created
+    the index with `CategoricalDtype(list('cab'))`, so the sorted order is `cab`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: Groupby operations on the index will preserve the index nature as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reindexing operations will return a resulting index based on the type of the
+    passed indexer. Passing a list will return a plain-old `Index`; indexing with
+    a `Categorical` will return a `CategoricalIndex`, indexed according to the categories
+    of the **passed** `Categorical` dtype. This allows one to arbitrarily index these
+    even with values **not** in the categories, similarly to how you can reindex **any**
+    pandas index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reshaping and Comparison operations on a `CategoricalIndex` must have the same
+    categories or a `TypeError` will be raised.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]  ### RangeIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`RangeIndex`](../reference/api/pandas.RangeIndex.html#pandas.RangeIndex "pandas.RangeIndex")
+    is a sub-class of [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index")
+    that provides the default index for all [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects. `RangeIndex` is an optimized version of `Index` that
+    can represent a monotonic ordered set. These are analogous to Python [range types](https://docs.python.org/3/library/stdtypes.html#typesseq-range).
+    A `RangeIndex` will always have an `int64` dtype.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`RangeIndex` is the default index for all [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A `RangeIndex` will behave similarly to a [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index") with an `int64` dtype and operations on a `RangeIndex`, whose
+    result cannot be represented by a `RangeIndex`, but should have an integer dtype,
+    will be converted to an `Index` with `int64`. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]  ### IntervalIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`IntervalIndex`](../reference/api/pandas.IntervalIndex.html#pandas.IntervalIndex
+    "pandas.IntervalIndex") together with its own dtype, `IntervalDtype` as well as
+    the [`Interval`](../reference/api/pandas.Interval.html#pandas.Interval "pandas.Interval")
+    scalar type, allow first-class support in pandas for interval notation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `IntervalIndex` allows some unique indexing and is also used as a return
+    type for the categories in [`cut()`](../reference/api/pandas.cut.html#pandas.cut
+    "pandas.cut") and [`qcut()`](../reference/api/pandas.qcut.html#pandas.qcut "pandas.qcut").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexing with an `IntervalIndex`
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: An `IntervalIndex` can be used in `Series` and in `DataFrame` as the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: Label based indexing via `.loc` along the edges of an interval works as you
+    would expect, selecting that particular interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you select a label *contained* within an interval, this will also select
+    the interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting using an `Interval` will only return exact matches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: Trying to select an `Interval` that is not exactly contained in the `IntervalIndex`
+    will raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting all `Intervals` that overlap a given `Interval` can be performed using
+    the [`overlaps()`](../reference/api/pandas.IntervalIndex.overlaps.html#pandas.IntervalIndex.overlaps
+    "pandas.IntervalIndex.overlaps") method to create a boolean indexer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Binning data with `cut` and `qcut`
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut") and [`qcut()`](../reference/api/pandas.qcut.html#pandas.qcut
+    "pandas.qcut") both return a `Categorical` object, and the bins they create are
+    stored as an `IntervalIndex` in its `.categories` attribute.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut") also accepts
+    an `IntervalIndex` for its `bins` argument, which enables a useful pandas idiom.
+    First, We call [`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut")
+    with some data and `bins` set to a fixed number, to generate the bins. Then, we
+    pass the values of `.categories` as the `bins` argument in subsequent calls to
+    [`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut"), supplying
+    new data which will be binned into the same bins.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any value which falls outside all bins will be assigned a `NaN` value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating ranges of intervals
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'If we need intervals on a regular frequency, we can use the [`interval_range()`](../reference/api/pandas.interval_range.html#pandas.interval_range
+    "pandas.interval_range") function to create an `IntervalIndex` using various combinations
+    of `start`, `end`, and `periods`. The default frequency for `interval_range` is
+    a 1 for numeric intervals, and calendar day for datetime-like intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `freq` parameter can used to specify non-default frequencies, and can utilize
+    a variety of [frequency aliases](timeseries.html#timeseries-offset-aliases) with
+    datetime-like intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, the `closed` parameter can be used to specify which side(s) the
+    intervals are closed on. Intervals are closed on the right side by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Specifying `start`, `end`, and `periods` will generate a range of evenly spaced
+    intervals from `start` to `end` inclusively, with `periods` number of elements
+    in the resulting `IntervalIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: Miscellaneous indexing FAQ
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Integer indexing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Label-based indexing with integer axis labels is a thorny topic. It has been
+    discussed heavily on mailing lists and among various members of the scientific
+    Python community. In pandas, our general viewpoint is that labels matter more
+    than integer locations. Therefore, with an integer axis index *only* label-based
+    indexing is possible with the standard tools like `.loc`. The following code will
+    generate exceptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: This deliberate decision was made to prevent ambiguities and subtle bugs (many
+    users reported finding bugs when the API change was made to stop “falling back”
+    on position-based indexing).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Non-monotonic indexes require exact matches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If the index of a `Series` or `DataFrame` is monotonically increasing or decreasing,
+    then the bounds of a label-based slice can be outside the range of the index,
+    much like slice indexing a normal Python `list`. Monotonicity of an index can
+    be tested with the [`is_monotonic_increasing()`](../reference/api/pandas.Index.is_monotonic_increasing.html#pandas.Index.is_monotonic_increasing
+    "pandas.Index.is_monotonic_increasing") and [`is_monotonic_decreasing()`](../reference/api/pandas.Index.is_monotonic_decreasing.html#pandas.Index.is_monotonic_decreasing
+    "pandas.Index.is_monotonic_decreasing") attributes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: On the other hand, if the index is not monotonic, then both slice bounds must
+    be *unique* members of the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Index.is_monotonic_increasing` and `Index.is_monotonic_decreasing` only check
+    that an index is weakly monotonic. To check for strict monotonicity, you can combine
+    one of those with the [`is_unique()`](../reference/api/pandas.Index.is_unique.html#pandas.Index.is_unique
+    "pandas.Index.is_unique") attribute.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Endpoints are inclusive'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Compared with standard Python sequence slicing in which the slice endpoint
+    is not inclusive, label-based slicing in pandas **is inclusive**. The primary
+    reason for this is that it is often not possible to easily determine the “successor”
+    or next element after a particular label in an index. For example, consider the
+    following `Series`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Suppose we wished to slice from `c` to `e`, using integers this would be accomplished
+    as such:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, if you only had `c` and `e`, determining the next element in the index
+    can be somewhat complicated. For example, the following does not work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A very common use case is to limit a time series to start and end at two specific
+    dates. To enable this, we made the design choice to make label-based slicing include
+    both endpoints:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is most definitely a “practicality beats purity” sort of thing, but it
+    is something to watch out for if you expect label-based slicing to behave exactly
+    in the way that standard Python integer slicing works.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexing potentially changes underlying Series dtype
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The different indexing operation can potentially change the dtype of a `Series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is because the (re)indexing operations above silently inserts `NaNs` and
+    the `dtype` changes accordingly. This can cause some issues when using `numpy`
+    `ufuncs` such as `numpy.logical_and`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [GH 2388](https://github.com/pandas-dev/pandas/issues/2388) for a more
+    detailed discussion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Hierarchical indexing (MultiIndex)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hierarchical / Multi-level indexing is very exciting as it opens the door to
+    some quite sophisticated data analysis and manipulation, especially for working
+    with higher dimensional data. In essence, it enables you to store and manipulate
+    data with an arbitrary number of dimensions in lower dimensional data structures
+    like `Series` (1d) and `DataFrame` (2d).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we will show what exactly we mean by “hierarchical” indexing
+    and how it integrates with all of the pandas indexing functionality described
+    above and in prior sections. Later, when discussing [group by](groupby.html#groupby)
+    and [pivoting and reshaping data](reshaping.html#reshaping), we’ll show non-trivial
+    applications to illustrate how it aids in structuring data for analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [cookbook](cookbook.html#cookbook-multi-index) for some advanced strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating a MultiIndex (hierarchical index) object
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") object is the hierarchical analogue of the standard [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index") object which typically stores the axis labels in pandas objects.
+    You can think of `MultiIndex` as an array of tuples where each tuple is unique.
+    A `MultiIndex` can be created from a list of arrays (using [`MultiIndex.from_arrays()`](../reference/api/pandas.MultiIndex.from_arrays.html#pandas.MultiIndex.from_arrays
+    "pandas.MultiIndex.from_arrays")), an array of tuples (using [`MultiIndex.from_tuples()`](../reference/api/pandas.MultiIndex.from_tuples.html#pandas.MultiIndex.from_tuples
+    "pandas.MultiIndex.from_tuples")), a crossed set of iterables (using [`MultiIndex.from_product()`](../reference/api/pandas.MultiIndex.from_product.html#pandas.MultiIndex.from_product
+    "pandas.MultiIndex.from_product")), or a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") (using [`MultiIndex.from_frame()`](../reference/api/pandas.MultiIndex.from_frame.html#pandas.MultiIndex.from_frame
+    "pandas.MultiIndex.from_frame")). The `Index` constructor will attempt to return
+    a `MultiIndex` when it is passed a list of tuples. The following examples demonstrate
+    different ways to initialize MultiIndexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When you want every pairing of the elements in two iterables, it can be easier
+    to use the [`MultiIndex.from_product()`](../reference/api/pandas.MultiIndex.from_product.html#pandas.MultiIndex.from_product
+    "pandas.MultiIndex.from_product") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also construct a `MultiIndex` from a `DataFrame` directly, using the
+    method [`MultiIndex.from_frame()`](../reference/api/pandas.MultiIndex.from_frame.html#pandas.MultiIndex.from_frame
+    "pandas.MultiIndex.from_frame"). This is a complementary method to [`MultiIndex.to_frame()`](../reference/api/pandas.MultiIndex.to_frame.html#pandas.MultiIndex.to_frame
+    "pandas.MultiIndex.to_frame").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As a convenience, you can pass a list of arrays directly into `Series` or `DataFrame`
+    to construct a `MultiIndex` automatically:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All of the `MultiIndex` constructors accept a `names` argument which stores
+    string names for the levels themselves. If no names are provided, `None` will
+    be assigned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This index can back any axis of a pandas object, and the number of **levels**
+    of the index is up to you:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We’ve “sparsified” the higher levels of the indexes to make the console output
+    a bit easier on the eyes. Note that how the index is displayed can be controlled
+    using the `multi_sparse` option in `pandas.set_options()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It’s worth keeping in mind that there’s nothing preventing you from using tuples
+    as atomic labels on an axis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: The reason that the `MultiIndex` matters is that it can allow you to do grouping,
+    selection, and reshaping operations as we will describe below and in subsequent
+    areas of the documentation. As you will see in later sections, you can find yourself
+    working with hierarchically-indexed data without creating a `MultiIndex` explicitly
+    yourself. However, when loading data from a file, you may wish to generate your
+    own `MultiIndex` when preparing the data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Reconstructing the level labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The method [`get_level_values()`](../reference/api/pandas.MultiIndex.get_level_values.html#pandas.MultiIndex.get_level_values
+    "pandas.MultiIndex.get_level_values") will return a vector of the labels for each
+    location at a particular level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic indexing on axis with MultiIndex
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'One of the important features of hierarchical indexing is that you can select
+    data by a “partial” label identifying a subgroup in the data. **Partial** selection
+    “drops” levels of the hierarchical index in the result in a completely analogous
+    way to selecting a column in a regular DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [Cross-section with hierarchical index](#advanced-xs) for how to select
+    on a deeper level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Defined levels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") keeps all the defined levels of an index, even if they are
+    not actually used. When slicing an index, you may notice this. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is done to avoid a recomputation of the levels in order to make slicing
+    highly performant. If you want to see only the used levels, you can use the [`get_level_values()`](../reference/api/pandas.MultiIndex.get_level_values.html#pandas.MultiIndex.get_level_values
+    "pandas.MultiIndex.get_level_values") method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: To reconstruct the `MultiIndex` with only the used levels, the [`remove_unused_levels()`](../reference/api/pandas.MultiIndex.remove_unused_levels.html#pandas.MultiIndex.remove_unused_levels
+    "pandas.MultiIndex.remove_unused_levels") method may be used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data alignment and using `reindex`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Operations between differently-indexed objects having `MultiIndex` on the axes
+    will work as you expect; data alignment will work the same as an Index of tuples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`reindex()`](../reference/api/pandas.DataFrame.reindex.html#pandas.DataFrame.reindex
+    "pandas.DataFrame.reindex") method of `Series`/`DataFrames` can be called with
+    another `MultiIndex`, or even a list or array of tuples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creating a MultiIndex (hierarchical index) object
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") object is the hierarchical analogue of the standard [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index") object which typically stores the axis labels in pandas objects.
+    You can think of `MultiIndex` as an array of tuples where each tuple is unique.
+    A `MultiIndex` can be created from a list of arrays (using [`MultiIndex.from_arrays()`](../reference/api/pandas.MultiIndex.from_arrays.html#pandas.MultiIndex.from_arrays
+    "pandas.MultiIndex.from_arrays")), an array of tuples (using [`MultiIndex.from_tuples()`](../reference/api/pandas.MultiIndex.from_tuples.html#pandas.MultiIndex.from_tuples
+    "pandas.MultiIndex.from_tuples")), a crossed set of iterables (using [`MultiIndex.from_product()`](../reference/api/pandas.MultiIndex.from_product.html#pandas.MultiIndex.from_product
+    "pandas.MultiIndex.from_product")), or a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") (using [`MultiIndex.from_frame()`](../reference/api/pandas.MultiIndex.from_frame.html#pandas.MultiIndex.from_frame
+    "pandas.MultiIndex.from_frame")). The `Index` constructor will attempt to return
+    a `MultiIndex` when it is passed a list of tuples. The following examples demonstrate
+    different ways to initialize MultiIndexes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When you want every pairing of the elements in two iterables, it can be easier
+    to use the [`MultiIndex.from_product()`](../reference/api/pandas.MultiIndex.from_product.html#pandas.MultiIndex.from_product
+    "pandas.MultiIndex.from_product") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also construct a `MultiIndex` from a `DataFrame` directly, using the
+    method [`MultiIndex.from_frame()`](../reference/api/pandas.MultiIndex.from_frame.html#pandas.MultiIndex.from_frame
+    "pandas.MultiIndex.from_frame"). This is a complementary method to [`MultiIndex.to_frame()`](../reference/api/pandas.MultiIndex.to_frame.html#pandas.MultiIndex.to_frame
+    "pandas.MultiIndex.to_frame").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As a convenience, you can pass a list of arrays directly into `Series` or `DataFrame`
+    to construct a `MultiIndex` automatically:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All of the `MultiIndex` constructors accept a `names` argument which stores
+    string names for the levels themselves. If no names are provided, `None` will
+    be assigned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This index can back any axis of a pandas object, and the number of **levels**
+    of the index is up to you:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We’ve “sparsified” the higher levels of the indexes to make the console output
+    a bit easier on the eyes. Note that how the index is displayed can be controlled
+    using the `multi_sparse` option in `pandas.set_options()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It’s worth keeping in mind that there’s nothing preventing you from using tuples
+    as atomic labels on an axis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: The reason that the `MultiIndex` matters is that it can allow you to do grouping,
+    selection, and reshaping operations as we will describe below and in subsequent
+    areas of the documentation. As you will see in later sections, you can find yourself
+    working with hierarchically-indexed data without creating a `MultiIndex` explicitly
+    yourself. However, when loading data from a file, you may wish to generate your
+    own `MultiIndex` when preparing the data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Reconstructing the level labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The method [`get_level_values()`](../reference/api/pandas.MultiIndex.get_level_values.html#pandas.MultiIndex.get_level_values
+    "pandas.MultiIndex.get_level_values") will return a vector of the labels for each
+    location at a particular level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic indexing on axis with MultiIndex
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'One of the important features of hierarchical indexing is that you can select
+    data by a “partial” label identifying a subgroup in the data. **Partial** selection
+    “drops” levels of the hierarchical index in the result in a completely analogous
+    way to selecting a column in a regular DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [Cross-section with hierarchical index](#advanced-xs) for how to select
+    on a deeper level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Defined levels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") keeps all the defined levels of an index, even if they are
+    not actually used. When slicing an index, you may notice this. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is done to avoid a recomputation of the levels in order to make slicing
+    highly performant. If you want to see only the used levels, you can use the [`get_level_values()`](../reference/api/pandas.MultiIndex.get_level_values.html#pandas.MultiIndex.get_level_values
+    "pandas.MultiIndex.get_level_values") method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: To reconstruct the `MultiIndex` with only the used levels, the [`remove_unused_levels()`](../reference/api/pandas.MultiIndex.remove_unused_levels.html#pandas.MultiIndex.remove_unused_levels
+    "pandas.MultiIndex.remove_unused_levels") method may be used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data alignment and using `reindex`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Operations between differently-indexed objects having `MultiIndex` on the axes
+    will work as you expect; data alignment will work the same as an Index of tuples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`reindex()`](../reference/api/pandas.DataFrame.reindex.html#pandas.DataFrame.reindex
+    "pandas.DataFrame.reindex") method of `Series`/`DataFrames` can be called with
+    another `MultiIndex`, or even a list or array of tuples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Advanced indexing with hierarchical index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Syntactically integrating `MultiIndex` in advanced indexing with `.loc` is
+    a bit challenging, but we’ve made every effort to do so. In general, MultiIndex
+    keys take the form of tuples. For example, the following works as you would expect:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that `df.loc['bar', 'two']` would also work in this example, but this shorthand
+    notation can lead to ambiguity in general.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you also want to index a specific column with `.loc`, you must use a tuple
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You don’t have to specify all levels of the `MultiIndex` by passing only the
+    first elements of the tuple. For example, you can use “partial” indexing to get
+    all elements with `bar` in the first level as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is a shortcut for the slightly more verbose notation `df.loc[('bar',),]`
+    (equivalent to `df.loc['bar',]` in this example).
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Partial” slicing also works quite nicely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can slice with a ‘range’ of values, by providing a slice of tuples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Passing a list of labels or tuples works similar to reindexing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is important to note that tuples and lists are not treated identically in
+    pandas when it comes to indexing. Whereas a tuple is interpreted as one multi-level
+    key, a list is used to specify several keys. Or in other words, tuples go horizontally
+    (traversing levels), lists go vertically (scanning levels).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Importantly, a list of tuples indexes several complete `MultiIndex` keys, whereas
+    a tuple of lists refer to several values within a level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Using slicers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can slice a `MultiIndex` by providing multiple indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can provide any of the selectors as if you are indexing by label, see [Selection
+    by Label](indexing.html#indexing-label), including slices, lists of labels, labels,
+    and boolean indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use `slice(None)` to select all the contents of *that* level. You do
+    not need to specify all the *deeper* levels, they will be implied as `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As usual, **both sides** of the slicers are included as this is label indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should specify all axes in the `.loc` specifier, meaning the indexer for
+    the **index** and for the **columns**. There are some ambiguous cases where the
+    passed indexer could be misinterpreted as indexing *both* axes, rather than into
+    say the `MultiIndex` for the rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You should do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You should **not** do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic MultiIndex slicing using slices, lists, and labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use [`pandas.IndexSlice`](../reference/api/pandas.IndexSlice.html#pandas.IndexSlice
+    "pandas.IndexSlice") to facilitate a more natural syntax using `:`, rather than
+    using `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is possible to perform quite complicated selections using this method on
+    multiple axes at the same time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using a boolean indexer you can provide selection related to the *values*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also specify the `axis` argument to `.loc` to interpret the passed slicers
+    on a single axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: Furthermore, you can *set* the values using the following methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use a right-hand-side of an alignable object as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]  ### Cross-section'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`xs()`](../reference/api/pandas.DataFrame.xs.html#pandas.DataFrame.xs "pandas.DataFrame.xs")
+    method of `DataFrame` additionally takes a level argument to make selecting data
+    at a particular level of a `MultiIndex` easier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also select on the columns with `xs`, by providing the axis argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`xs` also allows selection with multiple keys.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can pass `drop_level=False` to `xs` to retain the level that was selected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compare the above with the result using `drop_level=True` (the default value).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE152]  ### Advanced reindexing and alignment'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the parameter `level` in the [`reindex()`](../reference/api/pandas.DataFrame.reindex.html#pandas.DataFrame.reindex
+    "pandas.DataFrame.reindex") and [`align()`](../reference/api/pandas.DataFrame.align.html#pandas.DataFrame.align
+    "pandas.DataFrame.align") methods of pandas objects is useful to broadcast values
+    across a level. For instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: Swapping levels with `swaplevel`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The [`swaplevel()`](../reference/api/pandas.MultiIndex.swaplevel.html#pandas.MultiIndex.swaplevel
+    "pandas.MultiIndex.swaplevel") method can switch the order of two levels:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Reordering levels with `reorder_levels`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [`reorder_levels()`](../reference/api/pandas.MultiIndex.reorder_levels.html#pandas.MultiIndex.reorder_levels
+    "pandas.MultiIndex.reorder_levels") method generalizes the `swaplevel` method,
+    allowing you to permute the hierarchical index levels in one step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE155]  ### Renaming names of an `Index` or `MultiIndex`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`rename()`](../reference/api/pandas.DataFrame.rename.html#pandas.DataFrame.rename
+    "pandas.DataFrame.rename") method is used to rename the labels of a `MultiIndex`,
+    and is typically used to rename the columns of a `DataFrame`. The `columns` argument
+    of `rename` allows a dictionary to be specified that includes only the columns
+    you wish to rename.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: This method can also be used to rename specific labels of the main index of
+    the `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`rename_axis()`](../reference/api/pandas.DataFrame.rename_axis.html#pandas.DataFrame.rename_axis
+    "pandas.DataFrame.rename_axis") method is used to rename the name of a `Index`
+    or `MultiIndex`. In particular, the names of the levels of a `MultiIndex` can
+    be specified, which is useful if `reset_index()` is later used to move the values
+    from the `MultiIndex` to a column.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the columns of a `DataFrame` are an index, so that using `rename_axis`
+    with the `columns` argument will change the name of that index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: Both `rename` and `rename_axis` support specifying a dictionary, `Series` or
+    a mapping function to map labels/names to new values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When working with an `Index` object directly, rather than via a `DataFrame`,
+    [`Index.set_names()`](../reference/api/pandas.Index.set_names.html#pandas.Index.set_names
+    "pandas.Index.set_names") can be used to change the names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE160]'
+  prefs: []
+  type: TYPE_PRE
+- en: You cannot set the names of the MultiIndex via a level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE161]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Use [`Index.set_names()`](../reference/api/pandas.Index.set_names.html#pandas.Index.set_names
+    "pandas.Index.set_names") instead.  ### Using slicers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can slice a `MultiIndex` by providing multiple indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can provide any of the selectors as if you are indexing by label, see [Selection
+    by Label](indexing.html#indexing-label), including slices, lists of labels, labels,
+    and boolean indexers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use `slice(None)` to select all the contents of *that* level. You do
+    not need to specify all the *deeper* levels, they will be implied as `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As usual, **both sides** of the slicers are included as this is label indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should specify all axes in the `.loc` specifier, meaning the indexer for
+    the **index** and for the **columns**. There are some ambiguous cases where the
+    passed indexer could be misinterpreted as indexing *both* axes, rather than into
+    say the `MultiIndex` for the rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You should do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE162]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You should **not** do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE163]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE164]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic MultiIndex slicing using slices, lists, and labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE165]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use [`pandas.IndexSlice`](../reference/api/pandas.IndexSlice.html#pandas.IndexSlice
+    "pandas.IndexSlice") to facilitate a more natural syntax using `:`, rather than
+    using `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE166]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is possible to perform quite complicated selections using this method on
+    multiple axes at the same time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE167]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using a boolean indexer you can provide selection related to the *values*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE168]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also specify the `axis` argument to `.loc` to interpret the passed slicers
+    on a single axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE169]'
+  prefs: []
+  type: TYPE_PRE
+- en: Furthermore, you can *set* the values using the following methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE170]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can use a right-hand-side of an alignable object as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE171]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Cross-section'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`xs()`](../reference/api/pandas.DataFrame.xs.html#pandas.DataFrame.xs "pandas.DataFrame.xs")
+    method of `DataFrame` additionally takes a level argument to make selecting data
+    at a particular level of a `MultiIndex` easier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE172]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE173]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can also select on the columns with `xs`, by providing the axis argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE174]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE175]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`xs` also allows selection with multiple keys.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE176]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE177]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can pass `drop_level=False` to `xs` to retain the level that was selected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE178]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compare the above with the result using `drop_level=True` (the default value).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE179]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Advanced reindexing and alignment'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the parameter `level` in the [`reindex()`](../reference/api/pandas.DataFrame.reindex.html#pandas.DataFrame.reindex
+    "pandas.DataFrame.reindex") and [`align()`](../reference/api/pandas.DataFrame.align.html#pandas.DataFrame.align
+    "pandas.DataFrame.align") methods of pandas objects is useful to broadcast values
+    across a level. For instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE180]'
+  prefs: []
+  type: TYPE_PRE
+- en: Swapping levels with `swaplevel`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The [`swaplevel()`](../reference/api/pandas.MultiIndex.swaplevel.html#pandas.MultiIndex.swaplevel
+    "pandas.MultiIndex.swaplevel") method can switch the order of two levels:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE181]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Reordering levels with `reorder_levels`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [`reorder_levels()`](../reference/api/pandas.MultiIndex.reorder_levels.html#pandas.MultiIndex.reorder_levels
+    "pandas.MultiIndex.reorder_levels") method generalizes the `swaplevel` method,
+    allowing you to permute the hierarchical index levels in one step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE182]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Renaming names of an `Index` or `MultiIndex`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`rename()`](../reference/api/pandas.DataFrame.rename.html#pandas.DataFrame.rename
+    "pandas.DataFrame.rename") method is used to rename the labels of a `MultiIndex`,
+    and is typically used to rename the columns of a `DataFrame`. The `columns` argument
+    of `rename` allows a dictionary to be specified that includes only the columns
+    you wish to rename.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE183]'
+  prefs: []
+  type: TYPE_PRE
+- en: This method can also be used to rename specific labels of the main index of
+    the `DataFrame`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE184]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`rename_axis()`](../reference/api/pandas.DataFrame.rename_axis.html#pandas.DataFrame.rename_axis
+    "pandas.DataFrame.rename_axis") method is used to rename the name of a `Index`
+    or `MultiIndex`. In particular, the names of the levels of a `MultiIndex` can
+    be specified, which is useful if `reset_index()` is later used to move the values
+    from the `MultiIndex` to a column.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE185]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the columns of a `DataFrame` are an index, so that using `rename_axis`
+    with the `columns` argument will change the name of that index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE186]'
+  prefs: []
+  type: TYPE_PRE
+- en: Both `rename` and `rename_axis` support specifying a dictionary, `Series` or
+    a mapping function to map labels/names to new values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When working with an `Index` object directly, rather than via a `DataFrame`,
+    [`Index.set_names()`](../reference/api/pandas.Index.set_names.html#pandas.Index.set_names
+    "pandas.Index.set_names") can be used to change the names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE187]'
+  prefs: []
+  type: TYPE_PRE
+- en: You cannot set the names of the MultiIndex via a level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE188]'
+  prefs: []
+  type: TYPE_PRE
+- en: Use [`Index.set_names()`](../reference/api/pandas.Index.set_names.html#pandas.Index.set_names
+    "pandas.Index.set_names") instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sorting a `MultiIndex`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex")-ed objects to be indexed and sliced effectively, they need
+    to be sorted. As with any index, you can use [`sort_index()`](../reference/api/pandas.DataFrame.sort_index.html#pandas.DataFrame.sort_index
+    "pandas.DataFrame.sort_index").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE189]'
+  prefs: []
+  type: TYPE_PRE
+- en: You may also pass a level name to `sort_index` if the `MultiIndex` levels are
+    named.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE190]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On higher dimensional objects, you can sort any of the other axes by level
+    if they have a `MultiIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE191]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Indexing will work even if the data are not sorted, but will be rather inefficient
+    (and show a `PerformanceWarning`). It will also return a copy of the data rather
+    than a view:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE192]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Furthermore, if you try to index something that is not fully lexsorted, this
+    can raise:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE193]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `is_monotonic_increasing()` method on a `MultiIndex` shows if the index
+    is sorted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE194]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE195]'
+  prefs: []
+  type: TYPE_PRE
+- en: And now selection works as expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE196]'
+  prefs: []
+  type: TYPE_PRE
+- en: Take methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Similar to NumPy ndarrays, pandas `Index`, `Series`, and `DataFrame` also provides
+    the [`take()`](../reference/api/pandas.DataFrame.take.html#pandas.DataFrame.take
+    "pandas.DataFrame.take") method that retrieves elements along a given axis at
+    the given indices. The given indices must be either a list or an ndarray of integer
+    index positions. `take` will also accept negative integers as relative positions
+    to the end of the object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE197]'
+  prefs: []
+  type: TYPE_PRE
+- en: For DataFrames, the given indices should be a 1d list or ndarray that specifies
+    row or column positions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE198]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is important to note that the `take` method on pandas objects are not intended
+    to work on boolean indices and may return unexpected results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE199]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, as a small note on performance, because the `take` method handles a
+    narrower range of inputs, it can offer performance that is a good deal faster
+    than fancy indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE200]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE201]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Index types'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have discussed `MultiIndex` in the previous sections pretty extensively.
+    Documentation about `DatetimeIndex` and `PeriodIndex` are shown [here](timeseries.html#timeseries-overview),
+    and documentation about `TimedeltaIndex` is found [here](timedeltas.html#timedeltas-index).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following sub-sections we will highlight some other index types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### CategoricalIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`CategoricalIndex`](../reference/api/pandas.CategoricalIndex.html#pandas.CategoricalIndex
+    "pandas.CategoricalIndex") is a type of index that is useful for supporting indexing
+    with duplicates. This is a container around a [`Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical") and allows efficient indexing and storage of an index with
+    a large number of duplicated elements.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE202]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setting the index will create a `CategoricalIndex`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE203]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indexing with `__getitem__/.iloc/.loc` works similarly to an `Index` with duplicates.
+    The indexers **must** be in the category or the operation will raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE204]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `CategoricalIndex` is **preserved** after indexing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE205]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sorting the index will sort by the order of the categories (recall that we created
+    the index with `CategoricalDtype(list('cab'))`, so the sorted order is `cab`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE206]'
+  prefs: []
+  type: TYPE_PRE
+- en: Groupby operations on the index will preserve the index nature as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE207]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reindexing operations will return a resulting index based on the type of the
+    passed indexer. Passing a list will return a plain-old `Index`; indexing with
+    a `Categorical` will return a `CategoricalIndex`, indexed according to the categories
+    of the **passed** `Categorical` dtype. This allows one to arbitrarily index these
+    even with values **not** in the categories, similarly to how you can reindex **any**
+    pandas index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE208]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE209]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reshaping and Comparison operations on a `CategoricalIndex` must have the same
+    categories or a `TypeError` will be raised.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE210]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE211]  ### RangeIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`RangeIndex`](../reference/api/pandas.RangeIndex.html#pandas.RangeIndex "pandas.RangeIndex")
+    is a sub-class of [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index")
+    that provides the default index for all [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects. `RangeIndex` is an optimized version of `Index` that
+    can represent a monotonic ordered set. These are analogous to Python [range types](https://docs.python.org/3/library/stdtypes.html#typesseq-range).
+    A `RangeIndex` will always have an `int64` dtype.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE212]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`RangeIndex` is the default index for all [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE213]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A `RangeIndex` will behave similarly to a [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index") with an `int64` dtype and operations on a `RangeIndex`, whose
+    result cannot be represented by a `RangeIndex`, but should have an integer dtype,
+    will be converted to an `Index` with `int64`. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE214]  ### IntervalIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`IntervalIndex`](../reference/api/pandas.IntervalIndex.html#pandas.IntervalIndex
+    "pandas.IntervalIndex") together with its own dtype, `IntervalDtype` as well as
+    the [`Interval`](../reference/api/pandas.Interval.html#pandas.Interval "pandas.Interval")
+    scalar type, allow first-class support in pandas for interval notation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `IntervalIndex` allows some unique indexing and is also used as a return
+    type for the categories in [`cut()`](../reference/api/pandas.cut.html#pandas.cut
+    "pandas.cut") and [`qcut()`](../reference/api/pandas.qcut.html#pandas.qcut "pandas.qcut").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexing with an `IntervalIndex`
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: An `IntervalIndex` can be used in `Series` and in `DataFrame` as the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE215]'
+  prefs: []
+  type: TYPE_PRE
+- en: Label based indexing via `.loc` along the edges of an interval works as you
+    would expect, selecting that particular interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE216]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you select a label *contained* within an interval, this will also select
+    the interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE217]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting using an `Interval` will only return exact matches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE218]'
+  prefs: []
+  type: TYPE_PRE
+- en: Trying to select an `Interval` that is not exactly contained in the `IntervalIndex`
+    will raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE219]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting all `Intervals` that overlap a given `Interval` can be performed using
+    the [`overlaps()`](../reference/api/pandas.IntervalIndex.overlaps.html#pandas.IntervalIndex.overlaps
+    "pandas.IntervalIndex.overlaps") method to create a boolean indexer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE220]'
+  prefs: []
+  type: TYPE_PRE
+- en: Binning data with `cut` and `qcut`
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut") and [`qcut()`](../reference/api/pandas.qcut.html#pandas.qcut
+    "pandas.qcut") both return a `Categorical` object, and the bins they create are
+    stored as an `IntervalIndex` in its `.categories` attribute.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE221]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut") also accepts
+    an `IntervalIndex` for its `bins` argument, which enables a useful pandas idiom.
+    First, We call [`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut")
+    with some data and `bins` set to a fixed number, to generate the bins. Then, we
+    pass the values of `.categories` as the `bins` argument in subsequent calls to
+    [`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut"), supplying
+    new data which will be binned into the same bins.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE222]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any value which falls outside all bins will be assigned a `NaN` value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating ranges of intervals
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'If we need intervals on a regular frequency, we can use the [`interval_range()`](../reference/api/pandas.interval_range.html#pandas.interval_range
+    "pandas.interval_range") function to create an `IntervalIndex` using various combinations
+    of `start`, `end`, and `periods`. The default frequency for `interval_range` is
+    a 1 for numeric intervals, and calendar day for datetime-like intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE223]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `freq` parameter can used to specify non-default frequencies, and can utilize
+    a variety of [frequency aliases](timeseries.html#timeseries-offset-aliases) with
+    datetime-like intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE224]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, the `closed` parameter can be used to specify which side(s) the
+    intervals are closed on. Intervals are closed on the right side by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE225]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Specifying `start`, `end`, and `periods` will generate a range of evenly spaced
+    intervals from `start` to `end` inclusively, with `periods` number of elements
+    in the resulting `IntervalIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE226]  ### CategoricalIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`CategoricalIndex`](../reference/api/pandas.CategoricalIndex.html#pandas.CategoricalIndex
+    "pandas.CategoricalIndex") is a type of index that is useful for supporting indexing
+    with duplicates. This is a container around a [`Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical") and allows efficient indexing and storage of an index with
+    a large number of duplicated elements.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE227]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setting the index will create a `CategoricalIndex`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE228]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indexing with `__getitem__/.iloc/.loc` works similarly to an `Index` with duplicates.
+    The indexers **must** be in the category or the operation will raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE229]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `CategoricalIndex` is **preserved** after indexing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE230]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sorting the index will sort by the order of the categories (recall that we created
+    the index with `CategoricalDtype(list('cab'))`, so the sorted order is `cab`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE231]'
+  prefs: []
+  type: TYPE_PRE
+- en: Groupby operations on the index will preserve the index nature as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE232]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reindexing operations will return a resulting index based on the type of the
+    passed indexer. Passing a list will return a plain-old `Index`; indexing with
+    a `Categorical` will return a `CategoricalIndex`, indexed according to the categories
+    of the **passed** `Categorical` dtype. This allows one to arbitrarily index these
+    even with values **not** in the categories, similarly to how you can reindex **any**
+    pandas index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE233]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE234]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reshaping and Comparison operations on a `CategoricalIndex` must have the same
+    categories or a `TypeError` will be raised.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE235]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE236]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### RangeIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`RangeIndex`](../reference/api/pandas.RangeIndex.html#pandas.RangeIndex "pandas.RangeIndex")
+    is a sub-class of [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index")
+    that provides the default index for all [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects. `RangeIndex` is an optimized version of `Index` that
+    can represent a monotonic ordered set. These are analogous to Python [range types](https://docs.python.org/3/library/stdtypes.html#typesseq-range).
+    A `RangeIndex` will always have an `int64` dtype.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE237]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`RangeIndex` is the default index for all [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") and [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE238]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A `RangeIndex` will behave similarly to a [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index") with an `int64` dtype and operations on a `RangeIndex`, whose
+    result cannot be represented by a `RangeIndex`, but should have an integer dtype,
+    will be converted to an `Index` with `int64`. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE239]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### IntervalIndex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`IntervalIndex`](../reference/api/pandas.IntervalIndex.html#pandas.IntervalIndex
+    "pandas.IntervalIndex") together with its own dtype, `IntervalDtype` as well as
+    the [`Interval`](../reference/api/pandas.Interval.html#pandas.Interval "pandas.Interval")
+    scalar type, allow first-class support in pandas for interval notation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `IntervalIndex` allows some unique indexing and is also used as a return
+    type for the categories in [`cut()`](../reference/api/pandas.cut.html#pandas.cut
+    "pandas.cut") and [`qcut()`](../reference/api/pandas.qcut.html#pandas.qcut "pandas.qcut").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexing with an `IntervalIndex`
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: An `IntervalIndex` can be used in `Series` and in `DataFrame` as the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE240]'
+  prefs: []
+  type: TYPE_PRE
+- en: Label based indexing via `.loc` along the edges of an interval works as you
+    would expect, selecting that particular interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE241]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you select a label *contained* within an interval, this will also select
+    the interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE242]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting using an `Interval` will only return exact matches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE243]'
+  prefs: []
+  type: TYPE_PRE
+- en: Trying to select an `Interval` that is not exactly contained in the `IntervalIndex`
+    will raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE244]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting all `Intervals` that overlap a given `Interval` can be performed using
+    the [`overlaps()`](../reference/api/pandas.IntervalIndex.overlaps.html#pandas.IntervalIndex.overlaps
+    "pandas.IntervalIndex.overlaps") method to create a boolean indexer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE245]'
+  prefs: []
+  type: TYPE_PRE
+- en: Binning data with `cut` and `qcut`
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut") and [`qcut()`](../reference/api/pandas.qcut.html#pandas.qcut
+    "pandas.qcut") both return a `Categorical` object, and the bins they create are
+    stored as an `IntervalIndex` in its `.categories` attribute.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE246]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut") also accepts
+    an `IntervalIndex` for its `bins` argument, which enables a useful pandas idiom.
+    First, We call [`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut")
+    with some data and `bins` set to a fixed number, to generate the bins. Then, we
+    pass the values of `.categories` as the `bins` argument in subsequent calls to
+    [`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut"), supplying
+    new data which will be binned into the same bins.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE247]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any value which falls outside all bins will be assigned a `NaN` value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating ranges of intervals
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'If we need intervals on a regular frequency, we can use the [`interval_range()`](../reference/api/pandas.interval_range.html#pandas.interval_range
+    "pandas.interval_range") function to create an `IntervalIndex` using various combinations
+    of `start`, `end`, and `periods`. The default frequency for `interval_range` is
+    a 1 for numeric intervals, and calendar day for datetime-like intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE248]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `freq` parameter can used to specify non-default frequencies, and can utilize
+    a variety of [frequency aliases](timeseries.html#timeseries-offset-aliases) with
+    datetime-like intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE249]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, the `closed` parameter can be used to specify which side(s) the
+    intervals are closed on. Intervals are closed on the right side by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE250]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Specifying `start`, `end`, and `periods` will generate a range of evenly spaced
+    intervals from `start` to `end` inclusively, with `periods` number of elements
+    in the resulting `IntervalIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE251]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indexing with an `IntervalIndex`
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: An `IntervalIndex` can be used in `Series` and in `DataFrame` as the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE252]'
+  prefs: []
+  type: TYPE_PRE
+- en: Label based indexing via `.loc` along the edges of an interval works as you
+    would expect, selecting that particular interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE253]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you select a label *contained* within an interval, this will also select
+    the interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE254]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting using an `Interval` will only return exact matches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE255]'
+  prefs: []
+  type: TYPE_PRE
+- en: Trying to select an `Interval` that is not exactly contained in the `IntervalIndex`
+    will raise a `KeyError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE256]'
+  prefs: []
+  type: TYPE_PRE
+- en: Selecting all `Intervals` that overlap a given `Interval` can be performed using
+    the [`overlaps()`](../reference/api/pandas.IntervalIndex.overlaps.html#pandas.IntervalIndex.overlaps
+    "pandas.IntervalIndex.overlaps") method to create a boolean indexer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE257]'
+  prefs: []
+  type: TYPE_PRE
+- en: Binning data with `cut` and `qcut`
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut") and [`qcut()`](../reference/api/pandas.qcut.html#pandas.qcut
+    "pandas.qcut") both return a `Categorical` object, and the bins they create are
+    stored as an `IntervalIndex` in its `.categories` attribute.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE258]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut") also accepts
+    an `IntervalIndex` for its `bins` argument, which enables a useful pandas idiom.
+    First, We call [`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut")
+    with some data and `bins` set to a fixed number, to generate the bins. Then, we
+    pass the values of `.categories` as the `bins` argument in subsequent calls to
+    [`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut"), supplying
+    new data which will be binned into the same bins.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE259]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any value which falls outside all bins will be assigned a `NaN` value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating ranges of intervals
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'If we need intervals on a regular frequency, we can use the [`interval_range()`](../reference/api/pandas.interval_range.html#pandas.interval_range
+    "pandas.interval_range") function to create an `IntervalIndex` using various combinations
+    of `start`, `end`, and `periods`. The default frequency for `interval_range` is
+    a 1 for numeric intervals, and calendar day for datetime-like intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE260]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `freq` parameter can used to specify non-default frequencies, and can utilize
+    a variety of [frequency aliases](timeseries.html#timeseries-offset-aliases) with
+    datetime-like intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE261]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, the `closed` parameter can be used to specify which side(s) the
+    intervals are closed on. Intervals are closed on the right side by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE262]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Specifying `start`, `end`, and `periods` will generate a range of evenly spaced
+    intervals from `start` to `end` inclusively, with `periods` number of elements
+    in the resulting `IntervalIndex`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE263]'
+  prefs: []
+  type: TYPE_PRE
+- en: Miscellaneous indexing FAQ
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Integer indexing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Label-based indexing with integer axis labels is a thorny topic. It has been
+    discussed heavily on mailing lists and among various members of the scientific
+    Python community. In pandas, our general viewpoint is that labels matter more
+    than integer locations. Therefore, with an integer axis index *only* label-based
+    indexing is possible with the standard tools like `.loc`. The following code will
+    generate exceptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE264]'
+  prefs: []
+  type: TYPE_PRE
+- en: This deliberate decision was made to prevent ambiguities and subtle bugs (many
+    users reported finding bugs when the API change was made to stop “falling back”
+    on position-based indexing).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Non-monotonic indexes require exact matches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If the index of a `Series` or `DataFrame` is monotonically increasing or decreasing,
+    then the bounds of a label-based slice can be outside the range of the index,
+    much like slice indexing a normal Python `list`. Monotonicity of an index can
+    be tested with the [`is_monotonic_increasing()`](../reference/api/pandas.Index.is_monotonic_increasing.html#pandas.Index.is_monotonic_increasing
+    "pandas.Index.is_monotonic_increasing") and [`is_monotonic_decreasing()`](../reference/api/pandas.Index.is_monotonic_decreasing.html#pandas.Index.is_monotonic_decreasing
+    "pandas.Index.is_monotonic_decreasing") attributes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE265]'
+  prefs: []
+  type: TYPE_PRE
+- en: On the other hand, if the index is not monotonic, then both slice bounds must
+    be *unique* members of the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE266]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE267]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Index.is_monotonic_increasing` and `Index.is_monotonic_decreasing` only check
+    that an index is weakly monotonic. To check for strict monotonicity, you can combine
+    one of those with the [`is_unique()`](../reference/api/pandas.Index.is_unique.html#pandas.Index.is_unique
+    "pandas.Index.is_unique") attribute.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE268]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Endpoints are inclusive'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Compared with standard Python sequence slicing in which the slice endpoint
+    is not inclusive, label-based slicing in pandas **is inclusive**. The primary
+    reason for this is that it is often not possible to easily determine the “successor”
+    or next element after a particular label in an index. For example, consider the
+    following `Series`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE269]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Suppose we wished to slice from `c` to `e`, using integers this would be accomplished
+    as such:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE270]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, if you only had `c` and `e`, determining the next element in the index
+    can be somewhat complicated. For example, the following does not work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE271]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A very common use case is to limit a time series to start and end at two specific
+    dates. To enable this, we made the design choice to make label-based slicing include
+    both endpoints:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE272]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is most definitely a “practicality beats purity” sort of thing, but it
+    is something to watch out for if you expect label-based slicing to behave exactly
+    in the way that standard Python integer slicing works.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexing potentially changes underlying Series dtype
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The different indexing operation can potentially change the dtype of a `Series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE273]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE274]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is because the (re)indexing operations above silently inserts `NaNs` and
+    the `dtype` changes accordingly. This can cause some issues when using `numpy`
+    `ufuncs` such as `numpy.logical_and`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [GH 2388](https://github.com/pandas-dev/pandas/issues/2388) for a more
+    detailed discussion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Integer indexing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Label-based indexing with integer axis labels is a thorny topic. It has been
+    discussed heavily on mailing lists and among various members of the scientific
+    Python community. In pandas, our general viewpoint is that labels matter more
+    than integer locations. Therefore, with an integer axis index *only* label-based
+    indexing is possible with the standard tools like `.loc`. The following code will
+    generate exceptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE275]'
+  prefs: []
+  type: TYPE_PRE
+- en: This deliberate decision was made to prevent ambiguities and subtle bugs (many
+    users reported finding bugs when the API change was made to stop “falling back”
+    on position-based indexing).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Non-monotonic indexes require exact matches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If the index of a `Series` or `DataFrame` is monotonically increasing or decreasing,
+    then the bounds of a label-based slice can be outside the range of the index,
+    much like slice indexing a normal Python `list`. Monotonicity of an index can
+    be tested with the [`is_monotonic_increasing()`](../reference/api/pandas.Index.is_monotonic_increasing.html#pandas.Index.is_monotonic_increasing
+    "pandas.Index.is_monotonic_increasing") and [`is_monotonic_decreasing()`](../reference/api/pandas.Index.is_monotonic_decreasing.html#pandas.Index.is_monotonic_decreasing
+    "pandas.Index.is_monotonic_decreasing") attributes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE276]'
+  prefs: []
+  type: TYPE_PRE
+- en: On the other hand, if the index is not monotonic, then both slice bounds must
+    be *unique* members of the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE277]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE278]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Index.is_monotonic_increasing` and `Index.is_monotonic_decreasing` only check
+    that an index is weakly monotonic. To check for strict monotonicity, you can combine
+    one of those with the [`is_unique()`](../reference/api/pandas.Index.is_unique.html#pandas.Index.is_unique
+    "pandas.Index.is_unique") attribute.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE279]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Endpoints are inclusive'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Compared with standard Python sequence slicing in which the slice endpoint
+    is not inclusive, label-based slicing in pandas **is inclusive**. The primary
+    reason for this is that it is often not possible to easily determine the “successor”
+    or next element after a particular label in an index. For example, consider the
+    following `Series`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE280]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Suppose we wished to slice from `c` to `e`, using integers this would be accomplished
+    as such:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE281]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, if you only had `c` and `e`, determining the next element in the index
+    can be somewhat complicated. For example, the following does not work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE282]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A very common use case is to limit a time series to start and end at two specific
+    dates. To enable this, we made the design choice to make label-based slicing include
+    both endpoints:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE283]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is most definitely a “practicality beats purity” sort of thing, but it
+    is something to watch out for if you expect label-based slicing to behave exactly
+    in the way that standard Python integer slicing works.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indexing potentially changes underlying Series dtype
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The different indexing operation can potentially change the dtype of a `Series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE284]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE285]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is because the (re)indexing operations above silently inserts `NaNs` and
+    the `dtype` changes accordingly. This can cause some issues when using `numpy`
+    `ufuncs` such as `numpy.logical_and`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the [GH 2388](https://github.com/pandas-dev/pandas/issues/2388) for a more
+    detailed discussion.
+  prefs: []
+  type: TYPE_NORMAL

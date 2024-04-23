@@ -1,0 +1,398 @@
+- en: PyArrow Functionality
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/user_guide/pyarrow.html](https://pandas.pydata.org/docs/user_guide/pyarrow.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'pandas can utilize [PyArrow](https://arrow.apache.org/docs/python/index.html)
+    to extend functionality and improve the performance of various APIs. This includes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: More extensive [data types](https://arrow.apache.org/docs/python/api/datatypes.html)
+    compared to NumPy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Missing data support (NA) for all data types
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Performant IO reader integration
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Facilitate interoperability with other dataframe libraries based on the Apache
+    Arrow specification (e.g. polars, cuDF)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To use this functionality, please ensure you have [installed the minimum supported
+    PyArrow version.](../getting_started/install.html#install-optional-dependencies)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data Structure Integration
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series"),
+    [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index"), or
+    the columns of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") can be directly backed by a [`pyarrow.ChunkedArray`](https://arrow.apache.org/docs/python/generated/pyarrow.ChunkedArray.html#pyarrow.ChunkedArray
+    "(in Apache Arrow v15.0.2)") which is similar to a NumPy array. To construct these
+    from the main pandas data structures, you can pass in a string of the type followed
+    by `[pyarrow]`, e.g. `"int64[pyarrow]""` into the `dtype` parameter
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The string alias `"string[pyarrow]"` maps to `pd.StringDtype("pyarrow")` which
+    is not equivalent to specifying `dtype=pd.ArrowDtype(pa.string())`. Generally,
+    operations on the data will behave similarly except `pd.StringDtype("pyarrow")`
+    can return NumPy-backed nullable types while `pd.ArrowDtype(pa.string())` will
+    return [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: For PyArrow types that accept parameters, you can pass in a PyArrow type with
+    those parameters into [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype") to use in the `dtype` parameter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you already have an [`pyarrow.Array`](https://arrow.apache.org/docs/python/generated/pyarrow.Array.html#pyarrow.Array
+    "(in Apache Arrow v15.0.2)") or [`pyarrow.ChunkedArray`](https://arrow.apache.org/docs/python/generated/pyarrow.ChunkedArray.html#pyarrow.ChunkedArray
+    "(in Apache Arrow v15.0.2)"), you can pass it into [`arrays.ArrowExtensionArray`](../reference/api/pandas.arrays.ArrowExtensionArray.html#pandas.arrays.ArrowExtensionArray
+    "pandas.arrays.ArrowExtensionArray") to construct the associated [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"), [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index")
+    or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: To retrieve a pyarrow [`pyarrow.ChunkedArray`](https://arrow.apache.org/docs/python/generated/pyarrow.ChunkedArray.html#pyarrow.ChunkedArray
+    "(in Apache Arrow v15.0.2)") from a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index"), you can call the pyarrow array constructor on the [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: To convert a [`pyarrow.Table`](https://arrow.apache.org/docs/python/generated/pyarrow.Table.html#pyarrow.Table
+    "(in Apache Arrow v15.0.2)") to a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"), you can call the [`pyarrow.Table.to_pandas()`](https://arrow.apache.org/docs/python/generated/pyarrow.Table.html#pyarrow.Table.to_pandas
+    "(in Apache Arrow v15.0.2)") method with `types_mapper=pd.ArrowDtype`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Operations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'PyArrow data structure integration is implemented through pandas’ [`ExtensionArray`](../reference/api/pandas.api.extensions.ExtensionArray.html#pandas.api.extensions.ExtensionArray
+    "pandas.api.extensions.ExtensionArray") [interface](../development/extending.html#extending-extension-types);
+    therefore, supported functionality exists where this interface is integrated within
+    the pandas API. Additionally, this functionality is accelerated with PyArrow [compute
+    functions](https://arrow.apache.org/docs/python/api/compute.html) where available.
+    This includes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numeric aggregations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numeric arithmetic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numeric rounding
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Logical and comparison functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: String functionality
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Datetime functionality
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The following are just some examples of operations that are accelerated by native
+    PyArrow compute functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: I/O Reading
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: PyArrow also provides IO reading functionality that has been integrated into
+    several pandas IO readers. The following functions provide an `engine` keyword
+    that can dispatch to PyArrow to accelerate reading from an IO source.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv "pandas.read_csv")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_json()`](../reference/api/pandas.read_json.html#pandas.read_json "pandas.read_json")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_orc()`](../reference/api/pandas.read_orc.html#pandas.read_orc "pandas.read_orc")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_feather()`](../reference/api/pandas.read_feather.html#pandas.read_feather
+    "pandas.read_feather")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, these functions and all other IO reader functions return NumPy-backed
+    data. These readers can return PyArrow-backed data by specifying the parameter
+    `dtype_backend="pyarrow"`. A reader does not need to set `engine="pyarrow"` to
+    necessarily return PyArrow-backed data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Several non-IO reader functions can also use the `dtype_backend` argument to
+    return PyArrow-backed data including:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`to_numeric()`](../reference/api/pandas.to_numeric.html#pandas.to_numeric
+    "pandas.to_numeric")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame.convert_dtypes()`](../reference/api/pandas.DataFrame.convert_dtypes.html#pandas.DataFrame.convert_dtypes
+    "pandas.DataFrame.convert_dtypes")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Series.convert_dtypes()`](../reference/api/pandas.Series.convert_dtypes.html#pandas.Series.convert_dtypes
+    "pandas.Series.convert_dtypes")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data Structure Integration
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A [`Series`](../reference/api/pandas.Series.html#pandas.Series "pandas.Series"),
+    [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index"), or
+    the columns of a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") can be directly backed by a [`pyarrow.ChunkedArray`](https://arrow.apache.org/docs/python/generated/pyarrow.ChunkedArray.html#pyarrow.ChunkedArray
+    "(in Apache Arrow v15.0.2)") which is similar to a NumPy array. To construct these
+    from the main pandas data structures, you can pass in a string of the type followed
+    by `[pyarrow]`, e.g. `"int64[pyarrow]""` into the `dtype` parameter
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The string alias `"string[pyarrow]"` maps to `pd.StringDtype("pyarrow")` which
+    is not equivalent to specifying `dtype=pd.ArrowDtype(pa.string())`. Generally,
+    operations on the data will behave similarly except `pd.StringDtype("pyarrow")`
+    can return NumPy-backed nullable types while `pd.ArrowDtype(pa.string())` will
+    return [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: For PyArrow types that accept parameters, you can pass in a PyArrow type with
+    those parameters into [`ArrowDtype`](../reference/api/pandas.ArrowDtype.html#pandas.ArrowDtype
+    "pandas.ArrowDtype") to use in the `dtype` parameter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you already have an [`pyarrow.Array`](https://arrow.apache.org/docs/python/generated/pyarrow.Array.html#pyarrow.Array
+    "(in Apache Arrow v15.0.2)") or [`pyarrow.ChunkedArray`](https://arrow.apache.org/docs/python/generated/pyarrow.ChunkedArray.html#pyarrow.ChunkedArray
+    "(in Apache Arrow v15.0.2)"), you can pass it into [`arrays.ArrowExtensionArray`](../reference/api/pandas.arrays.ArrowExtensionArray.html#pandas.arrays.ArrowExtensionArray
+    "pandas.arrays.ArrowExtensionArray") to construct the associated [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series"), [`Index`](../reference/api/pandas.Index.html#pandas.Index "pandas.Index")
+    or [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: To retrieve a pyarrow [`pyarrow.ChunkedArray`](https://arrow.apache.org/docs/python/generated/pyarrow.ChunkedArray.html#pyarrow.ChunkedArray
+    "(in Apache Arrow v15.0.2)") from a [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index"), you can call the pyarrow array constructor on the [`Series`](../reference/api/pandas.Series.html#pandas.Series
+    "pandas.Series") or [`Index`](../reference/api/pandas.Index.html#pandas.Index
+    "pandas.Index").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: To convert a [`pyarrow.Table`](https://arrow.apache.org/docs/python/generated/pyarrow.Table.html#pyarrow.Table
+    "(in Apache Arrow v15.0.2)") to a [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame"), you can call the [`pyarrow.Table.to_pandas()`](https://arrow.apache.org/docs/python/generated/pyarrow.Table.html#pyarrow.Table.to_pandas
+    "(in Apache Arrow v15.0.2)") method with `types_mapper=pd.ArrowDtype`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Operations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'PyArrow data structure integration is implemented through pandas’ [`ExtensionArray`](../reference/api/pandas.api.extensions.ExtensionArray.html#pandas.api.extensions.ExtensionArray
+    "pandas.api.extensions.ExtensionArray") [interface](../development/extending.html#extending-extension-types);
+    therefore, supported functionality exists where this interface is integrated within
+    the pandas API. Additionally, this functionality is accelerated with PyArrow [compute
+    functions](https://arrow.apache.org/docs/python/api/compute.html) where available.
+    This includes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numeric aggregations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numeric arithmetic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numeric rounding
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Logical and comparison functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: String functionality
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Datetime functionality
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The following are just some examples of operations that are accelerated by native
+    PyArrow compute functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: I/O Reading
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: PyArrow also provides IO reading functionality that has been integrated into
+    several pandas IO readers. The following functions provide an `engine` keyword
+    that can dispatch to PyArrow to accelerate reading from an IO source.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv "pandas.read_csv")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_json()`](../reference/api/pandas.read_json.html#pandas.read_json "pandas.read_json")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_orc()`](../reference/api/pandas.read_orc.html#pandas.read_orc "pandas.read_orc")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`read_feather()`](../reference/api/pandas.read_feather.html#pandas.read_feather
+    "pandas.read_feather")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, these functions and all other IO reader functions return NumPy-backed
+    data. These readers can return PyArrow-backed data by specifying the parameter
+    `dtype_backend="pyarrow"`. A reader does not need to set `engine="pyarrow"` to
+    necessarily return PyArrow-backed data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Several non-IO reader functions can also use the `dtype_backend` argument to
+    return PyArrow-backed data including:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`to_numeric()`](../reference/api/pandas.to_numeric.html#pandas.to_numeric
+    "pandas.to_numeric")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`DataFrame.convert_dtypes()`](../reference/api/pandas.DataFrame.convert_dtypes.html#pandas.DataFrame.convert_dtypes
+    "pandas.DataFrame.convert_dtypes")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`Series.convert_dtypes()`](../reference/api/pandas.Series.convert_dtypes.html#pandas.Series.convert_dtypes
+    "pandas.Series.convert_dtypes")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

@@ -1,0 +1,414 @@
+- en: How to combine data from multiple tables
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://pandas.pydata.org/docs/getting_started/intro_tutorials/08_combine_dataframes.html](https://pandas.pydata.org/docs/getting_started/intro_tutorials/08_combine_dataframes.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Concatenating objects
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![../../_images/08_concat_row.svg](../Images/e027a498d2e16612781b466373b8015b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: I want to combine the measurements of \(NO_2\) and \(PM_{25}\), two tables with
+    a similar structure, in a single table.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The [`concat()`](../../reference/api/pandas.concat.html#pandas.concat "pandas.concat")
+    function performs concatenation operations of multiple tables along one of the
+    axes (row-wise or column-wise).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'By default concatenation is along axis 0, so the resulting table combines the
+    rows of the input tables. Let’s check the shape of the original and the concatenated
+    tables to verify the operation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Hence, the resulting table has 3178 = 1110 + 2068 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The **axis** argument will return in a number of pandas methods that can be
+    applied **along an axis**. A `DataFrame` has two corresponding axes: the first
+    running vertically downwards across rows (axis 0), and the second running horizontally
+    across columns (axis 1). Most operations like concatenation or summary statistics
+    are by default across rows (axis 0), but can be applied across columns as well.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sorting the table on the datetime information illustrates also the combination
+    of both tables, with the `parameter` column defining the origin of the table (either
+    `no2` from table `air_quality_no2` or `pm25` from table `air_quality_pm25`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this specific example, the `parameter` column provided by the data ensures
+    that each of the original tables can be identified. This is not always the case.
+    The `concat` function provides a convenient solution with the `keys` argument,
+    adding an additional (hierarchical) row index. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The existence of multiple row/column indices at the same time has not been mentioned
+    within these tutorials. *Hierarchical indexing* or *MultiIndex* is an advanced
+    and powerful pandas feature to analyze higher dimensional data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi-indexing is out of scope for this pandas introduction. For the moment,
+    remember that the function `reset_index` can be used to convert any level of an
+    index to a column, e.g. `air_quality.reset_index(level=0)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: To user guide
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feel free to dive into the world of multi-indexing at the user guide section
+    on [advanced indexing](../../user_guide/advanced.html#advanced).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To user guide
+  prefs: []
+  type: TYPE_NORMAL
+- en: More options on table concatenation (row and column wise) and how `concat` can
+    be used to define the logic (union or intersection) of the indexes on the other
+    axes is provided at the section on [object concatenation](../../user_guide/merging.html#merging-concat).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Join tables using a common identifier
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![../../_images/08_merge_left.svg](../Images/0ee5c3d3c09a299aac913296ea908f60.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Add the station coordinates, provided by the stations metadata table, to the
+    corresponding rows in the measurements table.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The air quality measurement station coordinates are stored in a data file `air_quality_stations.csv`,
+    downloaded using the [py-openaq](http://dhhagan.github.io/py-openaq/index.html)
+    package.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Note
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The stations used in this example (FR04014, BETR801 and London Westminster)
+    are just three entries enlisted in the metadata table. We only want to add the
+    coordinates of these three to the measurements table, each on the corresponding
+    rows of the `air_quality` table.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '[PRE6]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Using the [`merge()`](../../reference/api/pandas.merge.html#pandas.merge "pandas.merge")
+    function, for each of the rows in the `air_quality` table, the corresponding coordinates
+    are added from the `air_quality_stations_coord` table. Both tables have the column
+    `location` in common which is used as a key to combine the information. By choosing
+    the `left` join, only the locations available in the `air_quality` (left) table,
+    i.e. FR04014, BETR801 and London Westminster, end up in the resulting table. The
+    `merge` function supports multiple join options similar to database-style operations.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Add the parameters’ full description and name, provided by the parameters metadata
+    table, to the measurements table.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The air quality parameters metadata are stored in a data file `air_quality_parameters.csv`,
+    downloaded using the [py-openaq](http://dhhagan.github.io/py-openaq/index.html)
+    package.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '[PRE8]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Compared to the previous example, there is no common column name. However, the
+    `parameter` column in the `air_quality` table and the `id` column in the `air_quality_parameters_name`
+    both provide the measured variable in a common format. The `left_on` and `right_on`
+    arguments are used here (instead of just `on`) to make the link between the two
+    tables.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: To user guide
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas supports also inner, outer, and right joins. More information on join/merge
+    of tables is provided in the user guide section on [database style merging of
+    tables](../../user_guide/merging.html#merging-join). Or have a look at the [comparison
+    with SQL](../comparison/comparison_with_sql.html#compare-with-sql-join) page.
+  prefs: []
+  type: TYPE_NORMAL
+- en: REMEMBER
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Multiple tables can be concatenated both column-wise and row-wise using the
+    `concat` function.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For database-like merging/joining of tables, use the `merge` function.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To user guide
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the user guide for a full description of the various [facilities to combine
+    data tables](../../user_guide/merging.html#merging).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concatenating objects
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![../../_images/08_concat_row.svg](../Images/e027a498d2e16612781b466373b8015b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: I want to combine the measurements of \(NO_2\) and \(PM_{25}\), two tables with
+    a similar structure, in a single table.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The [`concat()`](../../reference/api/pandas.concat.html#pandas.concat "pandas.concat")
+    function performs concatenation operations of multiple tables along one of the
+    axes (row-wise or column-wise).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'By default concatenation is along axis 0, so the resulting table combines the
+    rows of the input tables. Let’s check the shape of the original and the concatenated
+    tables to verify the operation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Hence, the resulting table has 3178 = 1110 + 2068 rows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The **axis** argument will return in a number of pandas methods that can be
+    applied **along an axis**. A `DataFrame` has two corresponding axes: the first
+    running vertically downwards across rows (axis 0), and the second running horizontally
+    across columns (axis 1). Most operations like concatenation or summary statistics
+    are by default across rows (axis 0), but can be applied across columns as well.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sorting the table on the datetime information illustrates also the combination
+    of both tables, with the `parameter` column defining the origin of the table (either
+    `no2` from table `air_quality_no2` or `pm25` from table `air_quality_pm25`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this specific example, the `parameter` column provided by the data ensures
+    that each of the original tables can be identified. This is not always the case.
+    The `concat` function provides a convenient solution with the `keys` argument,
+    adding an additional (hierarchical) row index. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The existence of multiple row/column indices at the same time has not been mentioned
+    within these tutorials. *Hierarchical indexing* or *MultiIndex* is an advanced
+    and powerful pandas feature to analyze higher dimensional data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi-indexing is out of scope for this pandas introduction. For the moment,
+    remember that the function `reset_index` can be used to convert any level of an
+    index to a column, e.g. `air_quality.reset_index(level=0)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: To user guide
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feel free to dive into the world of multi-indexing at the user guide section
+    on [advanced indexing](../../user_guide/advanced.html#advanced).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To user guide
+  prefs: []
+  type: TYPE_NORMAL
+- en: More options on table concatenation (row and column wise) and how `concat` can
+    be used to define the logic (union or intersection) of the indexes on the other
+    axes is provided at the section on [object concatenation](../../user_guide/merging.html#merging-concat).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Join tables using a common identifier
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![../../_images/08_merge_left.svg](../Images/0ee5c3d3c09a299aac913296ea908f60.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Add the station coordinates, provided by the stations metadata table, to the
+    corresponding rows in the measurements table.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The air quality measurement station coordinates are stored in a data file `air_quality_stations.csv`,
+    downloaded using the [py-openaq](http://dhhagan.github.io/py-openaq/index.html)
+    package.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Note
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The stations used in this example (FR04014, BETR801 and London Westminster)
+    are just three entries enlisted in the metadata table. We only want to add the
+    coordinates of these three to the measurements table, each on the corresponding
+    rows of the `air_quality` table.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '[PRE15]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Using the [`merge()`](../../reference/api/pandas.merge.html#pandas.merge "pandas.merge")
+    function, for each of the rows in the `air_quality` table, the corresponding coordinates
+    are added from the `air_quality_stations_coord` table. Both tables have the column
+    `location` in common which is used as a key to combine the information. By choosing
+    the `left` join, only the locations available in the `air_quality` (left) table,
+    i.e. FR04014, BETR801 and London Westminster, end up in the resulting table. The
+    `merge` function supports multiple join options similar to database-style operations.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Add the parameters’ full description and name, provided by the parameters metadata
+    table, to the measurements table.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warning
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The air quality parameters metadata are stored in a data file `air_quality_parameters.csv`,
+    downloaded using the [py-openaq](http://dhhagan.github.io/py-openaq/index.html)
+    package.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '[PRE17]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Compared to the previous example, there is no common column name. However, the
+    `parameter` column in the `air_quality` table and the `id` column in the `air_quality_parameters_name`
+    both provide the measured variable in a common format. The `left_on` and `right_on`
+    arguments are used here (instead of just `on`) to make the link between the two
+    tables.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: To user guide
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas supports also inner, outer, and right joins. More information on join/merge
+    of tables is provided in the user guide section on [database style merging of
+    tables](../../user_guide/merging.html#merging-join). Or have a look at the [comparison
+    with SQL](../comparison/comparison_with_sql.html#compare-with-sql-join) page.
+  prefs: []
+  type: TYPE_NORMAL
+- en: REMEMBER
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Multiple tables can be concatenated both column-wise and row-wise using the
+    `concat` function.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For database-like merging/joining of tables, use the `merge` function.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To user guide
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the user guide for a full description of the various [facilities to combine
+    data tables](../../user_guide/merging.html#merging).
+  prefs: []
+  type: TYPE_NORMAL
