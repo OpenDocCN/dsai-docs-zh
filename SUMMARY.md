@@ -1,0 +1,7 @@
++   [OpenCV 中文文档 4.0.0](docs/cv400/README.md)
++   [FastText 中文文档](docs/fasttext/README.md)
++   [Gensim 中文文档](docs/gensim/README.md)
++   [LightGBM 中文文档](docs/lgbm/README.md)
++   [Matplotlib 用户指南](docs/mpl20/README.md)
++   [<center>scikit-learn (sklearn) 官方文档中文版</center>](docs/skl021/README.md)
++   [seaborn 0.9 中文文档](docs/sns09/README.md)
