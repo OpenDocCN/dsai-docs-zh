@@ -2524,6 +2524,7 @@
   id: totrans-421
   prefs: []
   type: TYPE_NORMAL
+  zh: 这两者产生相同的结果，那么应该使用哪一个呢？理解这些操作的顺序以及为什么方法 2（`.loc`）远比方法 1（链式`[]`）更可取是很有指导意义的。
 - en: '`dfmi[''one'']` selects the first level of the columns and returns a DataFrame
     that is singly-indexed. Then another Python operation `dfmi_with_one[''second'']`
     selects the series indexed by `''second''`. This is indicated by the variable
@@ -2533,6 +2534,8 @@
   id: totrans-422
   prefs: []
   type: TYPE_NORMAL
+  zh: '`dfmi[''one'']`选择列的第一级，并返回一个单索引的 DataFrame。然后另一个 Python 操作`dfmi_with_one[''second'']`选择由`''second''`索引的系列。这由变量`dfmi_with_one`表示，因为
+    pandas 将这些操作视为独立事件。例如。独立调用 `__getitem__`，因此必须将它们视为线性操作，它们一个接一个地发生。'
 - en: Contrast this to `df.loc[:,('one','second')]` which passes a nested tuple of
     `(slice(None),('one','second'))` to a single call to `__getitem__`. This allows
     pandas to deal with this as a single entity. Furthermore this order of operations
@@ -2540,15 +2543,19 @@
   id: totrans-423
   prefs: []
   type: TYPE_NORMAL
+  zh: 将其与`df.loc[:,('one','second')]`进行对比，后者传递了一个嵌套元组`(slice(None),('one','second'))`给单个`__getitem__`调用。这使得
+    pandas 能够将其视为单个实体处理。此外，这种操作顺序*可能*更快，并且如果需要，允许同时索引*两个*轴。
 - en: Why does assignment fail when using chained indexing?
   id: totrans-424
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用链式索引时为什么赋值失败？
 - en: Warning
   id: totrans-425
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
     in pandas 3.0\. This means than chained indexing will never work. As a consequence,
     the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
@@ -2557,26 +2564,31 @@
   id: totrans-426
   prefs: []
   type: TYPE_NORMAL
+  zh: '[写时复制](copy_on_write.html#copy-on-write) 将成为 pandas 3.0 的新默认值。这意味着链式索引永远不会起作用。因此，`SettingWithCopyWarning`将不再必要。有关更多上下文，请参见[此部分](copy_on_write.html#copy-on-write-chained-assignment)。我们建议打开写时复制以利用改进'
 - en: '`` pd.options.mode.copy_on_write = True ``'
   id: totrans-427
   prefs: []
   type: TYPE_NORMAL
+  zh: '`` pd.options.mode.copy_on_write = True ``'
 - en: even before pandas 3.0 is available.
   id: totrans-428
   prefs: []
   type: TYPE_NORMAL
+  zh: 即使在 pandas 3.0 可用之前。
 - en: The problem in the previous section is just a performance issue. What’s up with
     the `SettingWithCopy` warning? We don’t **usually** throw warnings around when
     you do something that might cost a few extra milliseconds!
   id: totrans-429
   prefs: []
   type: TYPE_NORMAL
+  zh: 前面部分的问题只是一个性能问题。关于`SettingWithCopy`警告是什么？当你做一些可能花费几毫秒额外时间的事情时，我们通常不会发出警告！
 - en: 'But it turns out that assigning to the product of chained indexing has inherently
     unpredictable results. To see this, think about how the Python interpreter executes
     this code:'
   id: totrans-430
   prefs: []
   type: TYPE_NORMAL
+  zh: 但事实证明，将链式索引的乘积分配给结果本质上是不可预测的。要理解这一点，请思考 Python 解释器如何执行这段代码：
 - en: '[PRE132]'
   id: totrans-431
   prefs: []
@@ -2586,6 +2598,7 @@
   id: totrans-432
   prefs: []
   type: TYPE_NORMAL
+  zh: 但这段代码处理方式不同：
 - en: '[PRE133]'
   id: totrans-433
   prefs: []
@@ -2599,10 +2612,12 @@
   id: totrans-434
   prefs: []
   type: TYPE_NORMAL
+  zh: 看到里面的`__getitem__`了吗？除了简单情况外，很难预测它是否会返回视图或副本（它取决于数组的内存布局，关于这一点，pandas 不做任何保证），因此`__setitem__`是否会修改`dfmi`或立即被丢弃的临时对象。**这**就是`SettingWithCopy`警告您的内容！
 - en: Note
   id: totrans-435
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: You may be wondering whether we should be concerned about the `loc` property
     in the first example. But `dfmi.loc` is guaranteed to be `dfmi` itself with modified
     indexing behavior, so `dfmi.loc.__getitem__` / `dfmi.loc.__setitem__` operate
@@ -2611,12 +2626,16 @@
   id: totrans-436
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可能想知道我们是否应该关注第一个示例中的`loc`属性。但是保证`dfmi.loc`是`dfmi`本身，并具有修改后的索引行为，因此`dfmi.loc.__getitem__`
+    / `dfmi.loc.__setitem__`直接在`dfmi`上操作。当然，`dfmi.loc.__getitem__(idx)`可能是`dfmi`的视图或副本。
 - en: 'Sometimes a `SettingWithCopy` warning will arise at times when there’s no obvious
     chained indexing going on. **These** are the bugs that `SettingWithCopy` is designed
     to catch! pandas is probably trying to warn you that you’ve done this:'
   id: totrans-437
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时会在没有明显的链式索引的情况下出现`SettingWithCopy`警告。**这些**就是`SettingWithCopy`旨在捕捉的错误！pandas
+    可能正试图警告您已经做了这件事：
 - en: '[PRE134]'
   id: totrans-438
   prefs: []
@@ -2626,14 +2645,17 @@
   id: totrans-439
   prefs: []
   type: TYPE_NORMAL
+  zh: 哎呀！
 - en: '### Evaluation order matters'
   id: totrans-440
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 评估顺序很重要'
 - en: Warning
   id: totrans-441
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
     in pandas 3.0\. This means than chained indexing will never work. As a consequence,
     the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
@@ -2642,48 +2664,59 @@
   id: totrans-442
   prefs: []
   type: TYPE_NORMAL
+  zh: '[写时复制](copy_on_write.html#copy-on-write) 将成为 pandas 3.0 的新默认值。这意味着链式索引将永远不会起作用。因此，`SettingWithCopyWarning`
+    将不再需要。有关更多上下文，请参阅[此部分](copy_on_write.html#copy-on-write-chained-assignment)。我们建议开启写时复制以利用改进。'
 - en: '`` pd.options.mode.copy_on_write = True ``'
   id: totrans-443
   prefs: []
   type: TYPE_NORMAL
+  zh: '`` pd.options.mode.copy_on_write = True ``'
 - en: even before pandas 3.0 is available.
   id: totrans-444
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 pandas 3.0 发布之前就已经可用。
 - en: When you use chained indexing, the order and type of the indexing operation
     partially determine whether the result is a slice into the original object, or
     a copy of the slice.
   id: totrans-445
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你使用链式索引时，索引操作的顺序和类型部分地确定结果是原始对象的切片，还是切片的副本。
 - en: pandas has the `SettingWithCopyWarning` because assigning to a copy of a slice
     is frequently not intentional, but a mistake caused by chained indexing returning
     a copy where a slice was expected.
   id: totrans-446
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas 有 `SettingWithCopyWarning`，因为在切片的副本上赋值通常不是有意的，而是由于链式索引返回了一个副本而预期的是一个切片引起的错误。
 - en: 'If you would like pandas to be more or less trusting about assignment to a
     chained indexing expression, you can set the [option](options.html#options) `mode.chained_assignment`
     to one of these values:'
   id: totrans-447
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你希望 pandas 对链式索引表达式的赋值更加信任或不信任，你可以将[选项](options.html#options) `mode.chained_assignment`
+    设置为以下值之一：
 - en: '`''warn''`, the default, means a `SettingWithCopyWarning` is printed.'
   id: totrans-448
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''warn''`，默认值，表示会打印出 `SettingWithCopyWarning`。'
 - en: '`''raise''` means pandas will raise a `SettingWithCopyError` you have to deal
     with.'
   id: totrans-449
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''raise''` 表示 pandas 将引发一个 `SettingWithCopyError` 让你处理。'
 - en: '`None` will suppress the warnings entirely.'
   id: totrans-450
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`None` 将完全抑制警告。'
 - en: '[PRE135]'
   id: totrans-451
   prefs: []
@@ -2693,6 +2726,7 @@
   id: totrans-452
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，这是在副本上操作的，不会起作用。
 - en: '[PRE136]'
   id: totrans-453
   prefs: []
@@ -2702,19 +2736,23 @@
   id: totrans-454
   prefs: []
   type: TYPE_NORMAL
+  zh: 链式赋值也可能出现在设置混合类型数据帧时。
 - en: Note
   id: totrans-455
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: These setting rules apply to all of `.loc/.iloc`.
   id: totrans-456
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些设置规则适用于所有 `.loc/.iloc`。
 - en: 'The following is the recommended access method using `.loc` for multiple items
     (using `mask`) and a single item using a fixed index:'
   id: totrans-457
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下是使用 `.loc` 获取多个项（使用 `mask`）和使用固定索引获取单个项的推荐访问方法：
 - en: '[PRE137]'
   id: totrans-458
   prefs: []
@@ -2725,6 +2763,7 @@
   id: totrans-459
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下内容 *有时* 可以工作，但不能保证，因此应该避免使用：
 - en: '[PRE138]'
   id: totrans-460
   prefs: []
@@ -2734,6 +2773,7 @@
   id: totrans-461
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，下面的示例将完全**不会**起作用，因此应该避免使用：
 - en: '[PRE139]'
   id: totrans-462
   prefs: []
@@ -2743,24 +2783,28 @@
   id: totrans-463
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: 'The chained assignment warnings / exceptions are aiming to inform the user
     of a possibly invalid assignment. There may be false positives; situations where
     a chained assignment is inadvertently reported.  ## Different choices for indexing'
   id: totrans-464
   prefs: []
   type: TYPE_NORMAL
+  zh: 链式赋值警告/异常旨在通知用户可能无效的赋值。可能会出现虚警；意外报告链式赋值的情况。## 索引的不同选择
 - en: Object selection has had a number of user-requested additions in order to support
     more explicit location based indexing. pandas now supports three types of multi-axis
     indexing.
   id: totrans-465
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了支持更明确的基于位置的索引，对象选择已经增加了一些用户请求的添加。pandas 现在支持三种类型的多轴索引。
 - en: '`.loc` is primarily label based, but may also be used with a boolean array.
     `.loc` will raise `KeyError` when the items are not found. Allowed inputs are:'
   id: totrans-466
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.loc` 主要基于标签，但也可以与布尔数组一起使用。当找不到项目时，`.loc` 将引发 `KeyError`。允许的输入是：'
 - en: A single label, e.g. `5` or `'a'` (Note that `5` is interpreted as a *label*
     of the index. This use is **not** an integer position along the index.).
   id: totrans-467
@@ -2769,6 +2813,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 单个标签，例如 `5` 或 `'a'`（请注意 `5` 被解释为索引的 *标签*。这种用法 **不是** 沿索引的整数位置。）。
 - en: ''
   id: totrans-468
   prefs:
@@ -2790,6 +2835,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 标签列表或数组 `['a', 'b', 'c']`。
 - en: ''
   id: totrans-471
   prefs:
@@ -2813,6 +2859,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用标签 `'a':'f'` 的切片对象（请注意，与通常的 Python 切片相反，**在索引中同时包括**起始和停止点！请参阅 [使用标签进行切片](#indexing-slicing-with-labels)
+    和 [端点是包含的](advanced.html#advanced-endpoints-are-inclusive)。）
 - en: ''
   id: totrans-474
   prefs:
@@ -2834,6 +2882,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 布尔数组（任何 `NA` 值都将被视为 `False`）。
 - en: ''
   id: totrans-477
   prefs:
@@ -2856,6 +2905,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 带有一个参数（调用系列或数据帧）并返回索引的有效输出（上述之一）的 `callable` 函数。
 - en: ''
   id: totrans-480
   prefs:
@@ -2877,11 +2927,13 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个包含整数的元组，其元素是上述输入之一。
 - en: See more at [Selection by Label](#indexing-label).
   id: totrans-483
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 更多信息请参见[通过标签进行选择](#indexing-label)。
 - en: '`.iloc` is primarily integer position based (from `0` to `length-1` of the
     axis), but may also be used with a boolean array. `.iloc` will raise `IndexError`
     if a requested indexer is out-of-bounds, except *slice* indexers which allow out-of-bounds
@@ -2891,6 +2943,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.iloc`主要基于整数位置（从轴的`0`到`length-1`），但也可以与布尔数组一起使用。如果请求的索引器超出范围，`.iloc`将引发`IndexError`，除了*切片*索引器允许超出范围的索引（这符合Python/NumPy的*切片*语义）。允许的输入为：'
 - en: An integer e.g. `5`.
   id: totrans-485
   prefs:
@@ -2898,6 +2951,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个整数，例如`5`。
 - en: ''
   id: totrans-486
   prefs:
@@ -2919,6 +2973,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个整数列表或数组`[4, 3, 0]`。
 - en: ''
   id: totrans-489
   prefs:
@@ -2940,6 +2995,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个包含整数`1:7`的切片对象。
 - en: ''
   id: totrans-492
   prefs:
@@ -2961,6 +3017,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个布尔数组（任何`NA`值都将被视为`False`）。
 - en: ''
   id: totrans-495
   prefs:
@@ -2983,6 +3040,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个具有一个参数（调用的Series或DataFrame）的`callable`函数，并返回用于索引的有效输出（上述之一）。
 - en: ''
   id: totrans-498
   prefs:
@@ -3004,23 +3062,27 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个元组，包含行（和列）索引，其元素是上述输入之一。
 - en: See more at [Selection by Position](#indexing-integer), [Advanced Indexing](advanced.html#advanced)
     and [Advanced Hierarchical](advanced.html#advanced-advanced-hierarchical).
   id: totrans-501
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 更多信息请参见[通过位置进行选择](#indexing-integer)、[高级索引](advanced.html#advanced)以及[高级分层](advanced.html#advanced-advanced-hierarchical)。
 - en: '`.loc`, `.iloc`, and also `[]` indexing can accept a `callable` as indexer.
     See more at [Selection By Callable](#indexing-callable).'
   id: totrans-502
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.loc`、`.iloc`，以及`[]`索引都可以接受`callable`作为索引器。更多信息请参见[通过可调用对象进行选择](#indexing-callable)。'
 - en: Note
   id: totrans-503
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 注意
 - en: Destructuring tuple keys into row (and column) indexes occurs *before* callables
     are applied, so you cannot return a tuple from a callable to index both rows and
     columns.
@@ -3028,6 +3090,7 @@
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在应用可调用对象之前，将元组键解构为行（和列）索引，因此无法从可调用对象中返回元组以索引行和列。
 - en: Getting values from an object with multi-axes selection uses the following notation
     (using `.loc` as an example, but the following applies to `.iloc` as well). Any
     of the axes accessors may be the null slice `:`. Axes left out of the specification
@@ -3035,26 +3098,33 @@
   id: totrans-505
   prefs: []
   type: TYPE_NORMAL
+  zh: 从具有多轴选择的对象中获取值使用以下表示法（以`.loc`为例，但`.iloc`也适用）。规范中的任何轴访问器都可以是空切片`:`。省略规范中的轴被假定为`:`，例如`p.loc['a']`等同于`p.loc['a',
+    :]`。
 - en: '| Object Type | Indexers |'
   id: totrans-506
   prefs: []
   type: TYPE_TB
+  zh: '| 对象类型 | 索引器 |'
 - en: '| --- | --- |'
   id: totrans-507
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- |'
 - en: '| Series | `s.loc[indexer]` |'
   id: totrans-508
   prefs: []
   type: TYPE_TB
+  zh: '| Series | `s.loc[indexer]` |'
 - en: '| DataFrame | `df.loc[row_indexer,column_indexer]` |'
   id: totrans-509
   prefs: []
   type: TYPE_TB
+  zh: '| DataFrame | `df.loc[row_indexer,column_indexer]` |'
 - en: '## Basics'
   id: totrans-510
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 基础知识'
 - en: 'As mentioned when introducing the data structures in the [last section](basics.html#basics),
     the primary function of indexing with `[]` (a.k.a. `__getitem__` for those familiar
     with implementing class behavior in Python) is selecting out lower-dimensional
@@ -3063,27 +3133,33 @@
   id: totrans-511
   prefs: []
   type: TYPE_NORMAL
+  zh: 如在[上一节](basics.html#basics)介绍数据结构时提到的，使用`[]`（即`__getitem__`，对于熟悉在Python中实现类行为的人）进行索引的主要功能是选择较低维度的切片。以下表格显示了使用`[]`索引pandas对象时的返回类型值：
 - en: '| Object Type | Selection | Return Value Type |'
   id: totrans-512
   prefs: []
   type: TYPE_TB
+  zh: '| 对象类型 | 选择 | 返回值类型 |'
 - en: '| --- | --- | --- |'
   id: totrans-513
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| Series | `series[label]` | scalar value |'
   id: totrans-514
   prefs: []
   type: TYPE_TB
+  zh: '| Series | `series[label]` | 标量值 |'
 - en: '| DataFrame | `frame[colname]` | `Series` corresponding to colname |'
   id: totrans-515
   prefs: []
   type: TYPE_TB
+  zh: '| DataFrame | `frame[colname]` | 对应于colname的Series |'
 - en: 'Here we construct a simple time series data set to use for illustrating the
     indexing functionality:'
   id: totrans-516
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们构建了一个简单的时间序列数据集，用于说明索引功能：
 - en: '[PRE140]'
   id: totrans-517
   prefs: []
@@ -3093,15 +3169,18 @@
   id: totrans-518
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: None of the indexing functionality is time series specific unless specifically
     stated.
   id: totrans-519
   prefs: []
   type: TYPE_NORMAL
+  zh: 除非特别说明，否则索引功能都不是特定于时间序列的。
 - en: 'Thus, as per above, we have the most basic indexing using `[]`:'
   id: totrans-520
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，根据上述，我们使用`[]`进行最基本的索引：
 - en: '[PRE141]'
   id: totrans-521
   prefs: []
@@ -3113,6 +3192,7 @@
   id: totrans-522
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以将列的列表传递给`[]`以按照该顺序选择列。如果DataFrame中不包含某列，将引发异常。也可以以这种方式设置多个列：
 - en: '[PRE142]'
   id: totrans-523
   prefs: []
@@ -3123,14 +3203,17 @@
   id: totrans-524
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可能会发现这对于对列的子集应用转换（就地）很有用。
 - en: Warning
   id: totrans-525
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: pandas aligns all AXES when setting `Series` and `DataFrame` from `.loc`.
   id: totrans-526
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas在从`.loc`设置`Series`和`DataFrame`时会对齐所有轴。
 - en: This will **not** modify `df` because the column alignment is before value assignment.
   id: totrans-527
   prefs: []
@@ -3567,10 +3650,12 @@
   id: totrans-602
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，如果两者中至少有一个缺失*且*索引未排序，则会引发错误（因为否则会在计算上昂贵，以及对于混合类型索引可能会产生歧义）。例如，在上面的示例中，`s.loc[1:6]`会引发`KeyError`。
 - en: For the rationale behind this behavior, see [Endpoints are inclusive](advanced.html#advanced-endpoints-are-inclusive).
   id: totrans-603
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关此行为背后的原理，请参见[端点是包含的](advanced.html#advanced-endpoints-are-inclusive)。
 - en: '[PRE169]'
   id: totrans-604
   prefs: []
@@ -3582,24 +3667,29 @@
   id: totrans-605
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，如果索引具有重复标签*且*开始或停止标签重复，则会引发错误。例如，在上面的示例中，`s.loc[2:5]`会引发`KeyError`。
 - en: For more information about duplicate labels, see [Duplicate Labels](duplicates.html#duplicates).
   id: totrans-606
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关重复标签的更多信息，请参见[重复标签](duplicates.html#duplicates)。
 - en: '## Selection by position'
   id: totrans-607
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 按位置选择'
 - en: Warning
   id: totrans-608
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: Whether a copy or a reference is returned for a setting operation, may depend
     on the context. This is sometimes called `chained assignment` and should be avoided.
     See [Returning a View versus Copy](#indexing-view-versus-copy).
   id: totrans-609
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于设置操作，返回副本还是引用可能取决于上下文。有时被称为`链式赋值`，应该避免。请参见[返回视图与副本](#indexing-view-versus-copy)。
 - en: pandas provides a suite of methods in order to get **purely integer based indexing**.
     The semantics follow closely Python and NumPy slicing. These are `0-based` indexing.
     When slicing, the start bound is *included*, while the upper bound is *excluded*.
@@ -3607,41 +3697,49 @@
   id: totrans-610
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas提供了一套方法，以便获得**纯整数索引**。语义紧随Python和NumPy的切片。这些是`基于0的`索引。在切片时，起始边界是*包含*的，而上限是*不包含*的。尝试使用非整数，即使是**有效**标签也会引发`IndexError`。
 - en: 'The `.iloc` attribute is the primary access method. The following are valid
     inputs:'
   id: totrans-611
   prefs: []
   type: TYPE_NORMAL
+  zh: '`.iloc`属性是主要访问方法。以下是有效的输入：'
 - en: An integer e.g. `5`.
   id: totrans-612
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个整数例如`5`。
 - en: A list or array of integers `[4, 3, 0]`.
   id: totrans-613
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个整数数组或列表`[4, 3, 0]`。
 - en: A slice object with ints `1:7`.
   id: totrans-614
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个带有整数`1:7`的切片对象。
 - en: A boolean array.
   id: totrans-615
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个布尔数组。
 - en: A `callable`, see [Selection By Callable](#indexing-callable).
   id: totrans-616
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个`callable`，请参见[通过可调用进行选择](#indexing-callable)。
 - en: A tuple of row (and column) indexes, whose elements are one of the above types.
   id: totrans-617
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个行（和列）索引的元组，其元素是上述类型之一。
 - en: '[PRE170]'
   id: totrans-618
   prefs: []
@@ -3651,6 +3749,7 @@
   id: totrans-619
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，设置也可以：
 - en: '[PRE171]'
   id: totrans-620
   prefs: []
@@ -3660,6 +3759,7 @@
   id: totrans-621
   prefs: []
   type: TYPE_NORMAL
+  zh: 与DataFrame一起：
 - en: '[PRE172]'
   id: totrans-622
   prefs: []
@@ -3669,6 +3769,7 @@
   id: totrans-623
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过整数切片选择：
 - en: '[PRE173]'
   id: totrans-624
   prefs: []
@@ -3678,6 +3779,7 @@
   id: totrans-625
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过整数列表选择：
 - en: '[PRE174]'
   id: totrans-626
   prefs: []
@@ -3702,6 +3804,7 @@
   id: totrans-630
   prefs: []
   type: TYPE_NORMAL
+  zh: 要使用整数位置获取交叉部分（等同于`df.xs(1)`）：
 - en: '[PRE178]'
   id: totrans-631
   prefs: []
@@ -3711,6 +3814,7 @@
   id: totrans-632
   prefs: []
   type: TYPE_NORMAL
+  zh: 超出范围的切片索引会像在Python/NumPy中一样得到很好的处理。
 - en: '[PRE179]'
   id: totrans-633
   prefs: []
@@ -3721,6 +3825,7 @@
   id: totrans-634
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，使用超出范围的切片可能导致一个空轴（例如返回一个空的DataFrame）。
 - en: '[PRE180]'
   id: totrans-635
   prefs: []
@@ -3731,6 +3836,7 @@
   id: totrans-636
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个超出范围的单个索引器将引发`IndexError`。任何元素超出范围的索引器列表将引发`IndexError`。
 - en: '[PRE181]'
   id: totrans-637
   prefs: []
@@ -3745,22 +3851,26 @@
   id: totrans-639
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 通过可调用进行选择'
 - en: '`.loc`, `.iloc`, and also `[]` indexing can accept a `callable` as indexer.
     The `callable` must be a function with one argument (the calling Series or DataFrame)
     that returns valid output for indexing.'
   id: totrans-640
   prefs: []
   type: TYPE_NORMAL
+  zh: '`.loc`、`.iloc`，以及`[]`索引可以接受一个`callable`作为索引器。这个`callable`必须是一个带有一个参数（调用的Series或DataFrame）的函数，返回用于索引的有效输出。'
 - en: Note
   id: totrans-641
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: For `.iloc` indexing, returning a tuple from the callable is not supported,
     since tuple destructuring for row and column indexes occurs *before* applying
     callables.
   id: totrans-642
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于`.iloc`索引，不支持从可调用返回元组，因为在应用可调用之前会发生行和列索引的元组解构。
 - en: '[PRE183]'
   id: totrans-643
   prefs: []
@@ -3770,6 +3880,7 @@
   id: totrans-644
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以在`Series`中使用可调用的索引。
 - en: '[PRE184]'
   id: totrans-645
   prefs: []
@@ -3780,6 +3891,7 @@
   id: totrans-646
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这些方法/索引器，您可以在不使用临时变量的情况下链接数据选择操作。
 - en: '[PRE185]'
   id: totrans-647
   prefs: []
@@ -3789,11 +3901,13 @@
   id: totrans-648
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 结合位置和基于标签的索引'
 - en: 'If you wish to get the 0th and the 2nd elements from the index in the ‘A’ column,
     you can do:'
   id: totrans-649
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您希望从‘A’列的索引中获取第0和第2个元素，可以这样做：
 - en: '[PRE186]'
   id: totrans-650
   prefs: []
@@ -3804,6 +3918,7 @@
   id: totrans-651
   prefs: []
   type: TYPE_NORMAL
+  zh: 这也可以使用`.iloc`来表示，通过明确在索引器上获取位置，并使用*位置*索引来选择内容。
 - en: '[PRE187]'
   id: totrans-652
   prefs: []
@@ -3813,6 +3928,7 @@
   id: totrans-653
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于获取 *多个* 索引器，可以使用 `.get_indexer`：
 - en: '[PRE188]'
   id: totrans-654
   prefs: []
@@ -3823,11 +3939,14 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重新索引
 - en: The idiomatic way to achieve selecting potentially not-found elements is via
     `.reindex()`. See also the section on [reindexing](basics.html#basics-reindexing).
   id: totrans-656
   prefs: []
   type: TYPE_NORMAL
+  zh: 实现选择可能不存在的元素的惯用方法是通过 `.reindex()`。另请参阅 [重新索引](basics.html#basics-reindexing)
+    部分。
 - en: '[PRE189]'
   id: totrans-657
   prefs: []
@@ -3838,6 +3957,7 @@
   id: totrans-658
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者，如果你只想选择 *有效* 的键，下面是惯用的且高效的方法；它保证保持选择的 dtype。
 - en: '[PRE190]'
   id: totrans-659
   prefs: []
@@ -3847,6 +3967,7 @@
   id: totrans-660
   prefs: []
   type: TYPE_NORMAL
+  zh: 当存在重复索引时，对 `.reindex()` 的调用将引发错误：
 - en: '[PRE191]'
   id: totrans-661
   prefs: []
@@ -3857,6 +3978,7 @@
   id: totrans-662
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常情况下，你可以将所需的标签与当前轴相交，然后重新索引。
 - en: '[PRE192]'
   id: totrans-663
   prefs: []
@@ -3866,6 +3988,7 @@
   id: totrans-664
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，如果你的结果索引重复，这仍然会引发错误。
 - en: '[PRE193]'
   id: totrans-665
   prefs: []
@@ -3876,11 +3999,14 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重新索引
 - en: The idiomatic way to achieve selecting potentially not-found elements is via
     `.reindex()`. See also the section on [reindexing](basics.html#basics-reindexing).
   id: totrans-667
   prefs: []
   type: TYPE_NORMAL
+  zh: 实现选择可能不存在的元素的惯用方法是通过 `.reindex()`。另请参阅 [重新索引](basics.html#basics-reindexing)
+    部分。
 - en: '[PRE194]'
   id: totrans-668
   prefs: []
@@ -3891,6 +4017,7 @@
   id: totrans-669
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者，如果你只想选择 *有效* 的键，下面是惯用的且高效的方法；它保证保持选择的 dtype。
 - en: '[PRE195]'
   id: totrans-670
   prefs: []
@@ -3900,6 +4027,7 @@
   id: totrans-671
   prefs: []
   type: TYPE_NORMAL
+  zh: 当存在重复索引时，对 `.reindex()` 的调用将引发错误：
 - en: '[PRE196]'
   id: totrans-672
   prefs: []
@@ -3910,6 +4038,7 @@
   id: totrans-673
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常情况下，你可以将所需的标签与当前轴相交，然后重新索引。
 - en: '[PRE197]'
   id: totrans-674
   prefs: []
@@ -3919,6 +4048,7 @@
   id: totrans-675
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，如果你的结果索引重复，这仍然会引发错误。
 - en: '[PRE198]'
   id: totrans-676
   prefs: []
@@ -3928,12 +4058,15 @@
   id: totrans-677
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 选择随机样本'
 - en: A random selection of rows or columns from a Series or DataFrame with the [`sample()`](../reference/api/pandas.DataFrame.sample.html#pandas.DataFrame.sample
     "pandas.DataFrame.sample") method. The method will sample rows by default, and
     accepts a specific number of rows/columns to return, or a fraction of rows.
   id: totrans-678
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 [`sample()`](../reference/api/pandas.DataFrame.sample.html#pandas.DataFrame.sample
+    "pandas.DataFrame.sample") 方法从 Series 或 DataFrame 中随机选择行或列。该方法默认会抽样行，并接受要返回的特定行/列数或行/列的比例。
 - en: '[PRE199]'
   id: totrans-679
   prefs: []
@@ -3944,6 +4077,7 @@
   id: totrans-680
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，`sample` 将至多一次返回每行，但也可以使用 `replace` 选项进行替换抽样：
 - en: '[PRE200]'
   id: totrans-681
   prefs: []
@@ -3959,6 +4093,8 @@
   id: totrans-682
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，每行被选中的概率相等，但如果你希望行具有不同的概率，可以将 `sample` 函数的抽样权重作为 `weights` 参数传递。这些权重可以是列表、NumPy
+    数组或 Series，但它们的长度必须与你正在抽样的对象相同。缺失值将被视为权重为零，不允许存在无穷大值。如果权重的总和不为 1，则通过将所有权重除以权重总和来重新归一化权重。例如：
 - en: '[PRE201]'
   id: totrans-683
   prefs: []
@@ -3970,6 +4106,7 @@
   id: totrans-684
   prefs: []
   type: TYPE_NORMAL
+  zh: 当应用于 DataFrame 时，你可以通过简单地将 DataFrame 的列名作为字符串传递来使用 DataFrame 的列作为抽样权重（前提是你正在抽样行而不是列）。
 - en: '[PRE202]'
   id: totrans-685
   prefs: []
@@ -3980,6 +4117,7 @@
   id: totrans-686
   prefs: []
   type: TYPE_NORMAL
+  zh: '`sample` 还允许用户使用 `axis` 参数对列而不是行进行抽样。'
 - en: '[PRE203]'
   id: totrans-687
   prefs: []
@@ -3991,6 +4129,8 @@
   id: totrans-688
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，可以使用 `random_state` 参数为 `sample` 的随机数生成器设置种子，该参数将接受整数（作为种子）或 NumPy RandomState
+    对象。
 - en: '[PRE204]'
   id: totrans-689
   prefs: []
@@ -4001,15 +4141,18 @@
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 设置时进行扩展
 - en: The `.loc/[]` operations can perform enlargement when setting a non-existent
     key for that axis.
   id: totrans-691
   prefs: []
   type: TYPE_NORMAL
+  zh: '`.loc/[]` 操作在为该轴设置不存在的键时可以进行扩展。'
 - en: In the `Series` case this is effectively an appending operation.
   id: totrans-692
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 `Series` 情况下，这实际上是一个追加操作。
 - en: '[PRE205]'
   id: totrans-693
   prefs: []
@@ -4019,6 +4162,7 @@
   id: totrans-694
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过 `.loc`，可以在任一轴上扩展 DataFrame。
 - en: '[PRE206]'
   id: totrans-695
   prefs: []
@@ -4028,6 +4172,7 @@
   id: totrans-696
   prefs: []
   type: TYPE_NORMAL
+  zh: 这就像是对 `DataFrame` 进行了一次 `append` 操作。
 - en: '[PRE207]'
   id: totrans-697
   prefs: []
@@ -4037,6 +4182,7 @@
   id: totrans-698
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 快速标量值的获取和设置'
 - en: Since indexing with `[]` must handle a lot of cases (single-label access, slicing,
     boolean indexing, etc.), it has a bit of overhead in order to figure out what
     you’re asking for. If you only want to access a scalar value, the fastest way
@@ -4045,11 +4191,14 @@
   id: totrans-699
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于使用 `[]` 进行索引必须处理很多情况（单标签访问、切片、布尔索引等），因此为了弄清楚您要请求的内容，它需要一点额外的开销。如果您只想访问一个标量值，最快的方法是使用所有数据结构上都实现的
+    `at` 和 `iat` 方法。
 - en: Similarly to `loc`, `at` provides **label** based scalar lookups, while, `iat`
     provides **integer** based lookups analogously to `iloc`
   id: totrans-700
   prefs: []
   type: TYPE_NORMAL
+  zh: 与 `loc` 类似，`at` 提供基于**标签**的标量查找，而 `iat` 则类似于 `iloc` 提供**整数**基础的查找。
 - en: '[PRE208]'
   id: totrans-701
   prefs: []
@@ -4059,6 +4208,7 @@
   id: totrans-702
   prefs: []
   type: TYPE_NORMAL
+  zh: 您也可以使用相同的索引器进行设置。
 - en: '[PRE209]'
   id: totrans-703
   prefs: []
@@ -4068,6 +4218,7 @@
   id: totrans-704
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果索引器缺失，`at` 可能会像上面那样就地放大对象。
 - en: '[PRE210]'
   id: totrans-705
   prefs: []
@@ -4078,6 +4229,7 @@
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 布尔索引
 - en: 'Another common operation is the use of boolean vectors to filter the data.
     The operators are: `|` for `or`, `&` for `and`, and `~` for `not`. These **must**
     be grouped by using parentheses, since by default Python will evaluate an expression
@@ -4086,10 +4238,14 @@
   id: totrans-707
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个常见的操作是使用布尔向量来过滤数据。操作符有：`|` 代表 `或`，`&` 代表 `与`，`~` 代表 `非`。这些**必须**使用括号进行分组，因为默认情况下
+    Python 将会评估如下表达式 `df['A'] > 2 & df['B'] < 3` 为 `df['A'] > (2 & df['B']) < 3`，而所需的评估顺序应为
+    `(df['A'] > 2) & (df['B'] < 3)`。
 - en: 'Using a boolean vector to index a Series works exactly as in a NumPy ndarray:'
   id: totrans-708
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用布尔向量来索引 Series 的工作方式与 NumPy ndarray 中完全相同：
 - en: '[PRE211]'
   id: totrans-709
   prefs: []
@@ -4101,6 +4257,7 @@
   id: totrans-710
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以使用与 DataFrame 索引相同长度的布尔向量从 DataFrame 中选择行（例如，从 DataFrame 的列之一派生的内容）：
 - en: '[PRE212]'
   id: totrans-711
   prefs: []
@@ -4111,6 +4268,7 @@
   id: totrans-712
   prefs: []
   type: TYPE_NORMAL
+  zh: 列表推导和 Series 的 `map` 方法也可以用于生成更复杂的条件：
 - en: '[PRE213]'
   id: totrans-713
   prefs: []
@@ -4123,6 +4281,7 @@
   id: totrans-714
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用选择方法 [按标签选择](#indexing-label)、[按位置选择](#indexing-integer) 和 [高级索引](advanced.html#advanced)，您可以使用布尔向量与其他索引表达式组合沿多个轴选择。
 - en: '[PRE214]'
   id: totrans-715
   prefs: []
@@ -4132,12 +4291,15 @@
   id: totrans-716
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: '`iloc` supports two kinds of boolean indexing. If the indexer is a boolean
     `Series`, an error will be raised. For instance, in the following example, `df.iloc[s.values,
     1]` is ok. The boolean indexer is an array. But `df.iloc[s, 1]` would raise `ValueError`.'
   id: totrans-717
   prefs: []
   type: TYPE_NORMAL
+  zh: '`iloc` 支持两种布尔索引。如果索引器是布尔 `Series`，则会引发错误。例如，在以下示例中，`df.iloc[s.values, 1]` 是可以的。布尔索引器是一个数组。但是
+    `df.iloc[s, 1]` 会引发 `ValueError`。'
 - en: '[PRE215]'
   id: totrans-718
   prefs: []
@@ -4147,6 +4309,7 @@
   id: totrans-719
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 使用 isin 进行索引'
 - en: 'Consider the [`isin()`](../reference/api/pandas.Series.isin.html#pandas.Series.isin
     "pandas.Series.isin") method of `Series`, which returns a boolean vector that
     is true wherever the `Series` elements exist in the passed list. This allows you
@@ -4154,6 +4317,8 @@
   id: totrans-720
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑 `Series` 的 [`isin()`](../reference/api/pandas.Series.isin.html#pandas.Series.isin
+    "pandas.Series.isin") 方法，它返回一个布尔向量，其中 `Series` 元素存在于传递的列表中的位置为真。这使您可以选择具有您想要的值的行：
 - en: '[PRE216]'
   id: totrans-721
   prefs: []
@@ -4164,6 +4329,7 @@
   id: totrans-722
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于 `Index` 对象也有相同的方法，并且在您不知道所寻找的标签中实际存在哪些情况下很有用：
 - en: '[PRE217]'
   id: totrans-723
   prefs: []
@@ -4174,6 +4340,7 @@
   id: totrans-724
   prefs: []
   type: TYPE_NORMAL
+  zh: 除此之外，`MultiIndex` 允许选择一个单独的级别用于成员检查：
 - en: '[PRE218]'
   id: totrans-725
   prefs: []
@@ -4187,6 +4354,9 @@
   id: totrans-726
   prefs: []
   type: TYPE_NORMAL
+  zh: DataFrame 还具有 [`isin()`](../reference/api/pandas.DataFrame.isin.html#pandas.DataFrame.isin
+    "pandas.DataFrame.isin") 方法。调用 `isin` 时，将一组值作为数组或字典传递。如果值是一个数组，则 `isin` 返回一个布尔值的
+    DataFrame，其形状与原始 DataFrame 相同，其中 True 表示元素在值序列中。
 - en: '[PRE219]'
   id: totrans-727
   prefs: []
@@ -4198,6 +4368,7 @@
   id: totrans-728
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常您会想要将某些值与某些列匹配。只需将值作为 `dict`，其中键是列，值是您要检查的项目列表。
 - en: '[PRE220]'
   id: totrans-729
   prefs: []
@@ -4208,6 +4379,7 @@
   id: totrans-730
   prefs: []
   type: TYPE_NORMAL
+  zh: 要返回布尔值 DataFrame，其中值*不*在原始 DataFrame 中，请使用 `~` 运算符：
 - en: '[PRE221]'
   id: totrans-731
   prefs: []
@@ -4219,6 +4391,7 @@
   id: totrans-732
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 DataFrame 的 `isin` 与 `any()` 和 `all()` 方法结合起来，快速选择满足给定条件的数据子集。要选择每列满足自身条件的行：
 - en: '[PRE222]'
   id: totrans-733
   prefs: []
@@ -4229,16 +4402,21 @@
   id: totrans-734
   prefs: []
   type: TYPE_NORMAL
+  zh: '## [`where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") 方法和掩码'
 - en: Selecting values from a Series with a boolean vector generally returns a subset
     of the data. To guarantee that selection output has the same shape as the original
     data, you can use the `where` method in `Series` and `DataFrame`.
   id: totrans-735
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 Series 中选择布尔向量通常会返回数据的子集。为了保证选择输出具有与原始数据相同的形状，您可以在 `Series` 和 `DataFrame`
+    中使用 `where` 方法。
 - en: 'To return only the selected rows:'
   id: totrans-736
   prefs: []
   type: TYPE_NORMAL
+  zh: 仅返回选定的行：
 - en: '[PRE223]'
   id: totrans-737
   prefs: []
@@ -4248,6 +4426,7 @@
   id: totrans-738
   prefs: []
   type: TYPE_NORMAL
+  zh: 要返回与原始数据相同形状的 Series：
 - en: '[PRE224]'
   id: totrans-739
   prefs: []
@@ -4259,6 +4438,7 @@
   id: totrans-740
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 DataFrame 中选择值时，现在也会保留输入数据形状。`where` 在内部用作实现。下面的代码等效于 `df.where(df < 0)`。
 - en: '[PRE225]'
   id: totrans-741
   prefs: []
@@ -4269,6 +4449,7 @@
   id: totrans-742
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，`where` 还可以接受一个可选的 `other` 参数，用于在返回的副本中替换条件为 False 的值。
 - en: '[PRE226]'
   id: totrans-743
   prefs: []
@@ -4279,6 +4460,7 @@
   id: totrans-744
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可能希望基于某些布尔条件设置值。可以像这样直观地完成：
 - en: '[PRE227]'
   id: totrans-745
   prefs: []
@@ -4288,10 +4470,12 @@
   id: totrans-746
   prefs: []
   type: TYPE_NORMAL
+  zh: '`where` 返回数据的修改副本。'
 - en: Note
   id: totrans-747
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The signature for [`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
     "pandas.DataFrame.where") differs from [`numpy.where()`](https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where
     "(in NumPy v1.26)"). Roughly `df1.where(m, df2)` is equivalent to `np.where(m,
@@ -4299,6 +4483,9 @@
   id: totrans-748
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame.where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") 的签名与 [`numpy.where()`](https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where
+    "(在 NumPy v1.26 中)") 不同。大致上 `df1.where(m, df2)` 等同于 `np.where(m, df1, df2)`。'
 - en: '[PRE228]'
   id: totrans-749
   prefs: []
@@ -4308,12 +4495,14 @@
   id: totrans-750
   prefs: []
   type: TYPE_NORMAL
+  zh: '**对齐**'
 - en: Furthermore, `where` aligns the input boolean condition (ndarray or DataFrame),
     such that partial selection with setting is possible. This is analogous to partial
     setting via `.loc` (but on the contents rather than the axis labels).
   id: totrans-751
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，`where` 对齐输入的布尔条件（ndarray 或 DataFrame），使得可以通过设置进行部分选择。这类似于通过 `.loc` 进行部分设置（但是针对的是内容而不是轴标签）。
 - en: '[PRE229]'
   id: totrans-752
   prefs: []
@@ -4324,6 +4513,7 @@
   id: totrans-753
   prefs: []
   type: TYPE_NORMAL
+  zh: '`where` 还可以接受 `axis` 和 `level` 参数，在执行 `where` 时对输入进行对齐。'
 - en: '[PRE230]'
   id: totrans-754
   prefs: []
@@ -4333,6 +4523,7 @@
   id: totrans-755
   prefs: []
   type: TYPE_NORMAL
+  zh: 这等效于（但比以下方法更快）。
 - en: '[PRE231]'
   id: totrans-756
   prefs: []
@@ -4344,6 +4535,8 @@
   id: totrans-757
   prefs: []
   type: TYPE_NORMAL
+  zh: '`where` 可以接受一个可调用对象作为条件和 `other` 参数。该函数必须带有一个参数（调用的 Series 或 DataFrame），并返回作为条件和
+    `other` 参数的有效输出。'
 - en: '[PRE232]'
   id: totrans-758
   prefs: []
@@ -4354,11 +4547,14 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 掩码
 - en: '[`mask()`](../reference/api/pandas.DataFrame.mask.html#pandas.DataFrame.mask
     "pandas.DataFrame.mask") is the inverse boolean operation of `where`.'
   id: totrans-760
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`mask()`](../reference/api/pandas.DataFrame.mask.html#pandas.DataFrame.mask
+    "pandas.DataFrame.mask") 是 `where` 的反布尔运算。'
 - en: '[PRE233]'
   id: totrans-761
   prefs: []
@@ -4369,11 +4565,14 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 掩码
 - en: '[`mask()`](../reference/api/pandas.DataFrame.mask.html#pandas.DataFrame.mask
     "pandas.DataFrame.mask") is the inverse boolean operation of `where`.'
   id: totrans-763
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`mask()`](../reference/api/pandas.DataFrame.mask.html#pandas.DataFrame.mask
+    "pandas.DataFrame.mask") 是 `where` 的反布尔运算。'
 - en: '[PRE234]'
   id: totrans-764
   prefs: []
@@ -4383,6 +4582,7 @@
   id: totrans-765
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 使用 `numpy()` 条件性地进行扩展设置'
 - en: An alternative to [`where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
     "pandas.DataFrame.where") is to use [`numpy.where()`](https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where
     "(in NumPy v1.26)"). Combined with setting a new column, you can use it to enlarge
@@ -4390,12 +4590,16 @@
   id: totrans-766
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个替代 [`where()`](../reference/api/pandas.DataFrame.where.html#pandas.DataFrame.where
+    "pandas.DataFrame.where") 的方法是使用 [`numpy.where()`](https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where
+    "(在 NumPy v1.26 中)")。结合设置新列，您可以使用它在条件确定的情况下扩展 DataFrame 的值。
 - en: 'Consider you have two choices to choose from in the following DataFrame. And
     you want to set a new column color to ‘green’ when the second column has ‘Z’.
     You can do the following:'
   id: totrans-767
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设你在以下DataFrame中有两个选择可供选择。当第二列为‘Z’时，你想将新列颜色设置为‘green’。你可以这样做：
 - en: '[PRE235]'
   id: totrans-768
   prefs: []
@@ -4408,6 +4612,8 @@
   id: totrans-769
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果有多个条件，你可以使用[`numpy.select()`](https://numpy.org/doc/stable/reference/generated/numpy.select.html#numpy.select
+    "(在 NumPy v1.26)")来实现。假设对应三个条件有三种颜色选择，第四种颜色作为备用，你可以这样做。
 - en: '[PRE236]'
   id: totrans-770
   prefs: []
@@ -4418,17 +4624,23 @@
   id: totrans-771
   prefs: []
   type: TYPE_NORMAL
+  zh: '## [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") 方法'
 - en: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
     objects have a [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") method that allows selection using an expression.'
   id: totrans-772
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame "pandas.DataFrame")
+    对象具有一个允许使用表达式进行选择的 [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") 方法。'
 - en: 'You can get the value of the frame where column `b` has values between the
     values of columns `a` and `c`. For example:'
   id: totrans-773
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以获取列`b`的值在列`a`和`c`的值之间的帧的值。例如：
 - en: '[PRE237]'
   id: totrans-774
   prefs: []
@@ -4439,6 +4651,7 @@
   id: totrans-775
   prefs: []
   type: TYPE_NORMAL
+  zh: 做同样的事情，但如果没有名为 `a` 的列，则回退到命名索引。
 - en: '[PRE238]'
   id: totrans-776
   prefs: []
@@ -4449,6 +4662,7 @@
   id: totrans-777
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你不想或不能命名你的索引，你可以在查询表达式中使用名称`index`：
 - en: '[PRE239]'
   id: totrans-778
   prefs: []
@@ -4458,11 +4672,13 @@
   id: totrans-779
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If the name of your index overlaps with a column name, the column name is given
     precedence. For example,
   id: totrans-780
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你的索引名称与列名重叠，列名将优先考虑。例如，
 - en: '[PRE240]'
   id: totrans-781
   prefs: []
@@ -4473,6 +4689,7 @@
   id: totrans-782
   prefs: []
   type: TYPE_NORMAL
+  zh: 你仍然可以通过使用特殊标识符‘index’在查询表达式中使用索引：
 - en: '[PRE241]'
   id: totrans-783
   prefs: []
@@ -4484,6 +4701,7 @@
   id: totrans-784
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果因某种原因你有一个名为`index`的列，那么你也可以将索引称为`ilevel_0`，但此时你应考虑将列重命名为更少歧义的名称。
 - en: '[`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex "pandas.MultiIndex")
     [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") Syntax'
@@ -4491,11 +4709,16 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex "pandas.MultiIndex")
+    [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") 语法'
 - en: 'You can also use the levels of a `DataFrame` with a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
     "pandas.MultiIndex") as if they were columns in the frame:'
   id: totrans-786
   prefs: []
   type: TYPE_NORMAL
+  zh: 你也可以像操作列一样使用带有 [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex") 的 `DataFrame` 的级别：
 - en: '[PRE242]'
   id: totrans-787
   prefs: []
@@ -4506,6 +4729,7 @@
   id: totrans-788
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 `MultiIndex` 的级别没有命名，你可以使用特殊名称来引用它们：
 - en: '[PRE243]'
   id: totrans-789
   prefs: []
@@ -4516,12 +4740,15 @@
   id: totrans-790
   prefs: []
   type: TYPE_NORMAL
+  zh: 约定是 `ilevel_0`，表示“索引级别0”对应索引的第0级。
 - en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") Use Cases'
   id: totrans-791
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") 用例'
 - en: A use case for [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") is when you have a collection of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") objects that have a subset of column names (or index levels/names)
@@ -4530,6 +4757,9 @@
   id: totrans-792
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") 的一个用例是当你有一组具有共同列名（或索引级别/名称）子集的 [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame") 对象时。你可以将相同的查询传递给两个框架，*而不必*指定你要查询的框架'
 - en: '[PRE244]'
   id: totrans-793
   prefs: []
@@ -4541,10 +4771,13 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Python与pandas语法比较'
 - en: 'Full numpy-like syntax:'
   id: totrans-795
   prefs: []
   type: TYPE_NORMAL
+  zh: 完整的类似numpy的语法：
 - en: '[PRE245]'
   id: totrans-796
   prefs: []
@@ -4555,6 +4788,7 @@
   id: totrans-797
   prefs: []
   type: TYPE_NORMAL
+  zh: 稍微优化一下，去掉括号（比较运算符比 `&` 和 `|` 的优先级更高）：
 - en: '[PRE246]'
   id: totrans-798
   prefs: []
@@ -4564,6 +4798,7 @@
   id: totrans-799
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用英语而不是符号：
 - en: '[PRE247]'
   id: totrans-800
   prefs: []
@@ -4573,6 +4808,7 @@
   id: totrans-801
   prefs: []
   type: TYPE_NORMAL
+  zh: 与您可能在纸上写的方式非常接近：
 - en: '[PRE248]'
   id: totrans-802
   prefs: []
@@ -4583,6 +4819,7 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`in`和`not in`运算符'
 - en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") also supports special use of Python’s `in` and `not
     in` comparison operators, providing a succinct syntax for calling the `isin` method
@@ -4590,6 +4827,8 @@
   id: totrans-804
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")还支持Python的`in`和`not in`比较运算符的特殊用法，提供了一种简洁的语法来调用`Series`或`DataFrame`的`isin`方法。'
 - en: '[PRE249]'
   id: totrans-805
   prefs: []
@@ -4599,6 +4838,7 @@
   id: totrans-806
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以将此与其他表达式结合使用，以获得非常简洁的查询：
 - en: '[PRE250]'
   id: totrans-807
   prefs: []
@@ -4608,12 +4848,15 @@
   id: totrans-808
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Note that `in` and `not in` are evaluated in Python, since `numexpr` has no
     equivalent of this operation. However, **only the** `in`/`not in` **expression
     itself** is evaluated in vanilla Python. For example, in the expression
   id: totrans-809
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，`in`和`not in`在Python中进行评估，因为`numexpr`没有这个操作的等效操作。但是，**只有**`in`/`not in`
+    **表达式本身**在普通Python中进行评估。例如，在表达式中
 - en: '[PRE251]'
   id: totrans-810
   prefs: []
@@ -4625,16 +4868,19 @@
   id: totrans-811
   prefs: []
   type: TYPE_NORMAL
+  zh: '`(b + c + d)`由`numexpr`计算，*然后*在普通Python中评估`in`操作。一般来说，任何可以使用`numexpr`计算的操作都会被计算。'
 - en: Special use of the `==` operator with `list` objects
   id: totrans-812
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`==`运算符与`list`对象的特殊用法'
 - en: Comparing a `list` of values to a column using `==`/`!=` works similarly to
     `in`/`not in`.
   id: totrans-813
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`==`/`!=`将值列表与列进行比较与使用`in`/`not in`类似。
 - en: '[PRE252]'
   id: totrans-814
   prefs: []
@@ -4645,10 +4891,12 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 布尔运算符
 - en: You can negate boolean expressions with the word `not` or the `~` operator.
   id: totrans-816
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以用`not`或`~`运算符来否定布尔表达式。
 - en: '[PRE253]'
   id: totrans-817
   prefs: []
@@ -4658,6 +4906,7 @@
   id: totrans-818
   prefs: []
   type: TYPE_NORMAL
+  zh: 当然，表达式也可以任意复杂：
 - en: '[PRE254]'
   id: totrans-819
   prefs: []
@@ -4669,25 +4918,31 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")的性能'
 - en: '`DataFrame.query()` using `numexpr` is slightly faster than Python for large
     frames.'
   id: totrans-821
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于大框架，使用`numexpr`的`DataFrame.query()`比Python略快。
 - en: '![../_images/query-perf.png](../Images/5c9dcf2ea447b26d588f19d23146ea2a.png)'
   id: totrans-822
   prefs: []
   type: TYPE_IMG
+  zh: '![../_images/query-perf.png](../Images/5c9dcf2ea447b26d588f19d23146ea2a.png)'
 - en: You will only see the performance benefits of using the `numexpr` engine with
     `DataFrame.query()` if your frame has more than approximately 100,000 rows.
   id: totrans-823
   prefs: []
   type: TYPE_NORMAL
+  zh: 只有当您的框架超过大约100,000行时，才能看到使用`numexpr`引擎与`DataFrame.query()`的性能优势。
 - en: This plot was created using a `DataFrame` with 3 columns each containing floating
     point values generated using `numpy.random.randn()`.
   id: totrans-824
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个图是使用包含3列的`DataFrame`创建的，每列都包含使用`numpy.random.randn()`生成的浮点值。
 - en: '[PRE255]'
   id: totrans-825
   prefs: []
@@ -4700,11 +4955,16 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex "pandas.MultiIndex")
+    [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") 语法'
 - en: 'You can also use the levels of a `DataFrame` with a [`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
     "pandas.MultiIndex") as if they were columns in the frame:'
   id: totrans-827
   prefs: []
   type: TYPE_NORMAL
+  zh: 您还可以像在框架中的列一样使用`DataFrame`的[`MultiIndex`](../reference/api/pandas.MultiIndex.html#pandas.MultiIndex
+    "pandas.MultiIndex")的级别：
 - en: '[PRE256]'
   id: totrans-828
   prefs: []
@@ -4715,6 +4975,7 @@
   id: totrans-829
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`MultiIndex`的级别没有名称，您可以使用特殊名称引用它们：
 - en: '[PRE257]'
   id: totrans-830
   prefs: []
@@ -4725,12 +4986,15 @@
   id: totrans-831
   prefs: []
   type: TYPE_NORMAL
+  zh: 约定是`ilevel_0`，表示“索引级别0”对应`index`的第0级。
 - en: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") Use Cases'
   id: totrans-832
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")用例'
 - en: A use case for [`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
     "pandas.DataFrame.query") is when you have a collection of [`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
     "pandas.DataFrame") objects that have a subset of column names (or index levels/names)
@@ -4739,6 +5003,9 @@
   id: totrans-833
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query")的一个用例是当你有一组具有共同列名（或索引级别/名称）子集的[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")对象时。你可以将相同的查询传递给两个框架，*而不需要*指定你要查询的框架。'
 - en: '[PRE258]'
   id: totrans-834
   prefs: []
@@ -4750,6 +5017,8 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[`query()`](../reference/api/pandas.DataFrame.query.html#pandas.DataFrame.query
+    "pandas.DataFrame.query") Python与pandas语法比较'
 - en: 'Full numpy-like syntax:'
   id: totrans-836
   prefs: []
@@ -5330,10 +5599,12 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 添加一个临时索引
 - en: 'You can assign a custom index to the `index` attribute:'
   id: totrans-953
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以为`index`属性分配一个自定义索引：
 - en: '[PRE297]'
   id: totrans-954
   prefs: []
@@ -5343,6 +5614,7 @@
   id: totrans-955
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 设置索引'
 - en: 'DataFrame has a [`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
     "pandas.DataFrame.set_index") method which takes a column name (for a regular
     `Index`) or a list of column names (for a `MultiIndex`). To create a new, re-indexed
@@ -5350,6 +5622,8 @@
   id: totrans-956
   prefs: []
   type: TYPE_NORMAL
+  zh: DataFrame有一个[`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
+    "pandas.DataFrame.set_index")方法，它接受一个列名（用于常规`Index`）或一个列名列表（用于`MultiIndex`）。要创建一个新的、重新索引的DataFrame：
 - en: '[PRE298]'
   id: totrans-957
   prefs: []
@@ -5360,6 +5634,7 @@
   id: totrans-958
   prefs: []
   type: TYPE_NORMAL
+  zh: '`append`关键字选项允许你保留现有索引并将给定列附加到多重索引中：'
 - en: '[PRE299]'
   id: totrans-959
   prefs: []
@@ -5369,6 +5644,7 @@
   id: totrans-960
   prefs: []
   type: TYPE_NORMAL
+  zh: '`set_index`中的其他选项允许你不丢弃索引列。'
 - en: '[PRE300]'
   id: totrans-961
   prefs: []
@@ -5379,6 +5655,7 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重置索引
 - en: As a convenience, there is a new function on DataFrame called [`reset_index()`](../reference/api/pandas.DataFrame.reset_index.html#pandas.DataFrame.reset_index
     "pandas.DataFrame.reset_index") which transfers the index values into the DataFrame’s
     columns and sets a simple integer index. This is the inverse operation of [`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
@@ -5386,6 +5663,9 @@
   id: totrans-963
   prefs: []
   type: TYPE_NORMAL
+  zh: 为方便起见，DataFrame上有一个名为[`reset_index()`](../reference/api/pandas.DataFrame.reset_index.html#pandas.DataFrame.reset_index
+    "pandas.DataFrame.reset_index")的新函数，它将索引值转移到DataFrame的列中，并设置一个简单的整数索引。这是[`set_index()`](../reference/api/pandas.DataFrame.set_index.html#pandas.DataFrame.set_index
+    "pandas.DataFrame.set_index")的逆操作。
 - en: '[PRE301]'
   id: totrans-964
   prefs: []
@@ -5396,10 +5676,12 @@
   id: totrans-965
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出更类似于 SQL 表或记录数组。从索引派生的列的名称存储在`names`属性中。
 - en: 'You can use the `level` keyword to remove only a portion of the index:'
   id: totrans-966
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以使用`level`关键字仅删除索引的一部分：
 - en: '[PRE302]'
   id: totrans-967
   prefs: []
@@ -5410,15 +5692,18 @@
   id: totrans-968
   prefs: []
   type: TYPE_NORMAL
+  zh: '`reset_index`接受一个可选参数`drop`，如果为true，则简单丢弃索引，而不是将索引值放入DataFrame的列中。'
 - en: Adding an ad hoc index
   id: totrans-969
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 添加一个临时索引
 - en: 'You can assign a custom index to the `index` attribute:'
   id: totrans-970
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以为`index`属性分配一个自定义索引：
 - en: '[PRE303]'
   id: totrans-971
   prefs: []
@@ -5428,10 +5713,12 @@
   id: totrans-972
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 返回视图还是副本'
 - en: Warning
   id: totrans-973
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: '[Copy-on-Write](copy_on_write.html#copy-on-write) will become the new default
     in pandas 3.0\. This means than chained indexing will never work. As a consequence,
     the `SettingWithCopyWarning` won’t be necessary anymore. See [this section](copy_on_write.html#copy-on-write-chained-assignment)
@@ -5440,19 +5727,23 @@
   id: totrans-974
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Copy-on-Write](copy_on_write.html#copy-on-write)将成为 pandas 3.0 的新默认设置。这意味着链式索引永远不会起作用。因此，`SettingWithCopyWarning`将不再必要。查看[此部分](copy_on_write.html#copy-on-write-chained-assignment)以获取更多背景信息。我们建议打开Copy-on-Write以利用改进'
 - en: '`` pd.options.mode.copy_on_write = True ``'
   id: totrans-975
   prefs: []
   type: TYPE_NORMAL
+  zh: '`` pd.options.mode.copy_on_write = True ``'
 - en: even before pandas 3.0 is available.
   id: totrans-976
   prefs: []
   type: TYPE_NORMAL
+  zh: 即使在 pandas 3.0 可用之前。
 - en: When setting values in a pandas object, care must be taken to avoid what is
     called `chained indexing`. Here is an example.
   id: totrans-977
   prefs: []
   type: TYPE_NORMAL
+  zh: 在设置 pandas 对象的值时，必须小心避免所谓的`chained indexing`。这里有一个例子。
 - en: '[PRE304]'
   id: totrans-978
   prefs: []
@@ -5462,6 +5753,7 @@
   id: totrans-979
   prefs: []
   type: TYPE_NORMAL
+  zh: 比较这两种访问方法：
 - en: '[PRE305]'
   id: totrans-980
   prefs: []
@@ -5478,6 +5770,7 @@
   id: totrans-982
   prefs: []
   type: TYPE_NORMAL
+  zh: 这两者产生相同的结果，那么应该使用哪一个？了解这些操作的顺序以及为什么方法2（`.loc`）比方法1（chained `[]`）更受欢迎是很有启发性的。
 - en: '`dfmi[''one'']` selects the first level of the columns and returns a DataFrame
     that is singly-indexed. Then another Python operation `dfmi_with_one[''second'']`
     selects the series indexed by `''second''`. This is indicated by the variable
@@ -5487,6 +5780,8 @@
   id: totrans-983
   prefs: []
   type: TYPE_NORMAL
+  zh: '`dfmi[''one'']`选择列的第一级，并返回一个单索引的DataFrame。然后另一个Python操作`dfmi_with_one[''second'']`选择由`''second''`索引的系列。这由变量`dfmi_with_one`表示，因为
+    pandas 将这些操作视为独立事件。例如，独立调用`__getitem__`，因此必须将它们视为线性操作，它们一个接一个地发生。'
 - en: Contrast this to `df.loc[:,('one','second')]` which passes a nested tuple of
     `(slice(None),('one','second'))` to a single call to `__getitem__`. This allows
     pandas to deal with this as a single entity. Furthermore this order of operations
