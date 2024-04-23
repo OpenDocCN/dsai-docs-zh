@@ -1,18 +1,10 @@
-# scikit-learn (sklearn) 官方文档中文版
+# scikit-learn 0.21 中文文档
 
-<center><img src="" alt="logo" /></center>
+![](img/logo/scikit-learn-logo.png)
 
-<br/>
-<table>
-    <tr align="center">
-        <td><a title="sklearn 0.21.3[master] 中文文档" href="https://sklearn.apachecn.org/" target="_blank"><font size="5">sklearn 0.21.3 中文文档</font></a></td>
-        <td><a title="sklearn 0.21.3[master] 中文示例" href="https://sklearn.apachecn.org/docs/examples" target="_blank"><font size="5">sklearn 0.21.3 中文示例</font></a></td>
-        <td><a title="sklearn 英文官网" href="https://scikit-learn.org" target="_blank"><font size="5">sklearn 英文官网</font></a></td>
-    </tr>
-</table>
-<br/>
-
----
++ [sklearn 0.21.3 中文文档](https://sklearn.apachecn.org/)
++ [sklearn 0.21.3 中文示例](https://sklearn.apachecn.org/docs/examples)
++ [sklearn 英文官网](https://scikit-learn.org)
 
 ## 介绍
 

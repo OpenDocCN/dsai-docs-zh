@@ -1,4 +1,4 @@
-# Matplotlib 用户指南
+# Matplotlib 2.0 用户指南
 
 > 来源：[User's Guide](http://matplotlib.org/users/index.html)
 

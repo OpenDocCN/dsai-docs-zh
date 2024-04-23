@@ -1,4 +1,4 @@
-# OpenCV 中文文档 4.0.0
+# OpenCV 4.0.0 中文文档
 
 ![](img/logo.png)
 
