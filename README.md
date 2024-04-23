@@ -1,4 +1,4 @@
-# 飞龙的数据科学 &amp; 人工智能中文文档汇总
+# 数据科学与人工智能中文文档汇总
 
 > 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 > 
@@ -10,16 +10,16 @@
 ### Docker
 
 ```
-docker pull apachecn0/flygon-dsai-docs-zh
-docker run -tid -p <port>:80 apachecn0/flygon-dsai-docs-zh
+docker pull apachecn0/dsai-docs-zh
+docker run -tid -p <port>:80 apachecn0/dsai-docs-zh
 # 访问 http://localhost:{port} 查看文档
 ```
 
 ### NPM
 
 ```
-npm install -g flygon-dsai-docs-zh
-flygon-dsai-docs-zh <port>
+npm install -g dsai-docs-zh
+dsai-docs-zh <port>
 # 访问 http://localhost:{port} 查看文档
 ```
 
