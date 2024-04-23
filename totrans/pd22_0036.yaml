@@ -1,2533 +1,3931 @@
 - en: Categorical data
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 分类数据
 - en: 原文：[https://pandas.pydata.org/docs/user_guide/categorical.html](https://pandas.pydata.org/docs/user_guide/categorical.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://pandas.pydata.org/docs/user_guide/categorical.html](https://pandas.pydata.org/docs/user_guide/categorical.html)
 - en: This is an introduction to pandas categorical data type, including a short comparison
     with R’s `factor`.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是关于pandas分类数据类型的介绍，包括与R的`factor`的简短比较。
 - en: '`Categoricals` are a pandas data type corresponding to categorical variables
     in statistics. A categorical variable takes on a limited, and usually fixed, number
     of possible values (`categories`; `levels` in R). Examples are gender, social
     class, blood type, country affiliation, observation time or rating via Likert
     scales.'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Categoricals`是一种与统计学中的分类变量对应的pandas数据类型。分类变量只能取有限且通常固定的可能值（`categories`；在R中称为`levels`）。例如性别、社会阶层、血型、国家隶属、观察时间或通过Likert量表进行评分等。'
 - en: In contrast to statistical categorical variables, categorical data might have
     an order (e.g. ‘strongly agree’ vs ‘agree’ or ‘first observation’ vs. ‘second
     observation’), but numerical operations (additions, divisions, …) are not possible.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 与统计学中的分类变量相反，分类数据可能具有顺序（例如‘强烈同意’与‘同意’或‘第一次观察’与‘第二次观察’），但不支持数值运算（加法、除法等）。
 - en: All values of categorical data are either in `categories` or `np.nan`. Order
     is defined by the order of `categories`, not lexical order of the values. Internally,
     the data structure consists of a `categories` array and an integer array of `codes`
     which point to the real value in the `categories` array.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类数据的所有值都在`categories`或`np.nan`中。顺序由`categories`的顺序而不是值的词法顺序定义。在内部，数据结构由一个`categories`数组和一个指向`categories`数组中实际值的整数数组`codes`组成。
 - en: 'The categorical data type is useful in the following cases:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类数据类型在以下情况下很有用：
 - en: A string variable consisting of only a few different values. Converting such
     a string variable to a categorical variable will save some memory, see [here](#categorical-memory).
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 由仅包含几个不同值的字符串变量组成。将这样的字符串变量转换为分类变量将节省一些内存，参见[这里](#categorical-memory)。
 - en: The lexical order of a variable is not the same as the logical order (“one”,
     “two”, “three”). By converting to a categorical and specifying an order on the
     categories, sorting and min/max will use the logical order instead of the lexical
     order, see [here](#categorical-sort).
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 变量的词法顺序与逻辑顺序（“one”、“two”、“three”）不同。通过转换为分类变量并在类别上指定顺序，排序和最小/最大值将使用逻辑顺序而不是词法顺序，参见[这里](#categorical-sort)。
 - en: As a signal to other Python libraries that this column should be treated as
     a categorical variable (e.g. to use suitable statistical methods or plot types).
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 作为向其他Python库发出信号的方式，表明该列应被视为分类变量（例如使用适当的统计方法或绘图类型）。
 - en: See also the [API docs on categoricals](../reference/arrays.html#api-arrays-categorical).
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅[categoricals的API文档](../reference/arrays.html#api-arrays-categorical)。
 - en: '## Object creation'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 对象创建'
 - en: Series creation
+  id: totrans-12
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 创建Series
 - en: 'Categorical `Series` or columns in a `DataFrame` can be created in several
     ways:'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过几种方式创建`Series`或`DataFrame`中的分类变量：
 - en: 'By specifying `dtype="category"` when constructing a `Series`:'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 在构建`Series`时指定`dtype="category"`：
 - en: '[PRE0]'
+  id: totrans-15
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'By converting an existing `Series` or column to a `category` dtype:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将现有的`Series`或列转换为`category`数据类型：
 - en: '[PRE1]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: By using special functions, such as [`cut()`](../reference/api/pandas.cut.html#pandas.cut
     "pandas.cut"), which groups data into discrete bins. See the [example on tiling](reshaping.html#reshaping-tile-cut)
     in the docs.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用特殊函数，例如[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut")，将数据分组为离散的箱。请参阅文档中有关切片的示例。
 - en: '[PRE2]'
+  id: totrans-19
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: By passing a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical") object to a `Series` or assigning it to a `DataFrame`.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")对象传递给`Series`或将其分配给`DataFrame`。
 - en: '[PRE3]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'Categorical data has a specific `category` [dtype](basics.html#basics-dtypes):'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类数据具有特定的`category` [dtype](basics.html#basics-dtypes)：
 - en: '[PRE4]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: DataFrame creation
+  id: totrans-24
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DataFrame创建
 - en: Similar to the previous section where a single column was converted to categorical,
     all columns in a `DataFrame` can be batch converted to categorical either during
     or after construction.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于前一节中将单个列转换为分类变量的情况，`DataFrame`中的所有列都可以在构建期间或构建后批量转换为分类变量。
 - en: 'This can be done during construction by specifying `dtype="category"` in the
     `DataFrame` constructor:'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以在构建期间通过在`DataFrame`构造函数中指定`dtype="category"`来完成此操作：
 - en: '[PRE5]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Note that the categories present in each column differ; the conversion is done
     column by column, so only labels present in a given column are categories:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，每列中存在的类别不同；转换是逐列进行的，因此只有给定列中存在的标签才是类别：
 - en: '[PRE6]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'Analogously, all columns in an existing `DataFrame` can be batch converted
     using [`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
     "pandas.DataFrame.astype"):'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似地，可以使用[`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype")来批量转换现有`DataFrame`中的所有列：
 - en: '[PRE7]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'This conversion is likewise done column by column:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种转换也是逐列进行的：
 - en: '[PRE8]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Controlling behavior
+  id: totrans-34
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 控制行为
 - en: 'In the examples above where we passed `dtype=''category''`, we used the default
     behavior:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上面的示例中，我们传递了`dtype='category'`，我们使用了默认行为：
 - en: Categories are inferred from the data.
+  id: totrans-36
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 类别是从数据中推断出来的。
 - en: Categories are unordered.
+  id: totrans-37
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 类别是无序的。
 - en: To control those behaviors, instead of passing `'category'`, use an instance
     of `CategoricalDtype`.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 要控制这些行为，而不是传递`'category'`，请使用`CategoricalDtype`的实例。
 - en: '[PRE9]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Similarly, a `CategoricalDtype` can be used with a `DataFrame` to ensure that
     categories are consistent among all columns.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样，`CategoricalDtype`可以与`DataFrame`一起使用，以确保所有列中的类别保持一致。
 - en: '[PRE10]'
+  id: totrans-41
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Note
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: To perform table-wise conversion, where all labels in the entire `DataFrame`
     are used as categories for each column, the `categories` parameter can be determined
     programmatically by `categories = pd.unique(df.to_numpy().ravel())`.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 要执行表格级别的转换，其中整个`DataFrame`中的所有标签都用作每列的类别，可以通过`categories = pd.unique(df.to_numpy().ravel())`来以编程方式确定`categories`参数。
 - en: 'If you already have `codes` and `categories`, you can use the [`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
     "pandas.Categorical.from_codes") constructor to save the factorize step during
     normal constructor mode:'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你已经有了`codes`和`categories`，你可以使用[`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
+    "pandas.Categorical.from_codes")构造函数，在正常构造模式下保存因子化步骤：
 - en: '[PRE11]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Regaining original data
+  id: totrans-46
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 恢复原始数据
 - en: 'To get back to the original `Series` or NumPy array, use `Series.astype(original_dtype)`
     or `np.asarray(categorical)`:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 要恢复到原始的`Series`或NumPy数组，使用`Series.astype(original_dtype)`或`np.asarray(categorical)`：
 - en: '[PRE12]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Note
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In contrast to R’s `factor` function, categorical data is not converting input
     values to strings; categories will end up the same data type as the original values.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`函数相反，分类数据不会将输入值转换为字符串；类别将以与原始值相同的数据类型结束。
 - en: Note
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'In contrast to R’s `factor` function, there is currently no way to assign/change
     labels at creation time. Use `categories` to change the categories after creation
     time.  ## CategoricalDtype'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`函数相反，目前没有办法在创建时分配/更改标签。在创建后使用`categories`来更改类别。## CategoricalDtype
 - en: A categorical’s type is fully described by
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别的类型完全由以下内容描述
 - en: '`categories`: a sequence of unique values and no missing values'
+  id: totrans-54
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`categories`: 一个唯一值序列，没有缺失值'
 - en: '`ordered`: a boolean'
+  id: totrans-55
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`ordered`: 一个布尔值'
 - en: This information can be stored in a `CategoricalDtype`. The `categories` argument
     is optional, which implies that the actual categories should be inferred from
     whatever is present in the data when the [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical") is created. The categories are assumed to be unordered by
     default.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些信息可以存储在`CategoricalDtype`中。`categories`参数是可选的，这意味着在创建[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")时，实际的类别应该从数据中存在的内容中推断出来。默认情况下，假定类别是无序的。
 - en: '[PRE13]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: A `CategoricalDtype` can be used in any place pandas expects a `dtype`. For
     example [`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
     "pandas.read_csv"), [`pandas.DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
     "pandas.DataFrame.astype"), or in the `Series` constructor.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '`CategoricalDtype`可以在任何需要`dtype`的地方使用。例如[`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")，[`pandas.DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype")，或者在`Series`构造函数中。'
 - en: Note
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: As a convenience, you can use the string `'category'` in place of a `CategoricalDtype`
     when you want the default behavior of the categories being unordered, and equal
     to the set values present in the array. In other words, `dtype='category'` is
     equivalent to `dtype=CategoricalDtype()`.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为一种便利，当你希望类别的默认行为是无序的，并且等于数组中存在的集合值时，可以在`CategoricalDtype`的位置使用字符串`'category'`。换句话说，`dtype='category'`等同于`dtype=CategoricalDtype()`。
 - en: Equality semantics
+  id: totrans-61
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 相等语义
 - en: Two instances of `CategoricalDtype` compare equal whenever they have the same
     categories and order. When comparing two unordered categoricals, the order of
     the `categories` is not considered.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 当两个`CategoricalDtype`实例具有相同的类别和顺序时，它们比较相等。当比较两个无序的分类时，不考虑`categories`的顺序。
 - en: '[PRE14]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: All instances of `CategoricalDtype` compare equal to the string `'category'`.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有的`CategoricalDtype`实例都与字符串`'category'`相等。
 - en: '[PRE15]'
+  id: totrans-65
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Description
+  id: totrans-66
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 描述
 - en: Using [`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
     "pandas.DataFrame.describe") on categorical data will produce similar output to
     a `Series` or `DataFrame` of type `string`.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 在分类数据上使用[`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
+    "pandas.DataFrame.describe")将产生类似于`string`类型的`Series`或`DataFrame`的输出。
 - en: '[PRE16]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: '## Working with categories'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 使用类别'
 - en: Categorical data has a `categories` and a `ordered` property, which list their
     possible values and whether the ordering matters or not. These properties are
     exposed as `s.cat.categories` and `s.cat.ordered`. If you don’t manually specify
     categories and ordering, they are inferred from the passed arguments.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类数据具有`categories`和`ordered`属性，列出了它们可能的值以及排序是否重要。这些属性被公开为`s.cat.categories`和`s.cat.ordered`。如果您不手动指定类别和排序，它们将从传递的参数中推断出来。
 - en: '[PRE17]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'It’s also possible to pass in the categories in a specific order:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 也可以按特定顺序传递类别：
 - en: '[PRE18]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Note
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: New categorical data are **not** automatically ordered. You must explicitly
     pass `ordered=True` to indicate an ordered `Categorical`.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 新的分类数据**不会**自动排序。您必须显式传递`ordered=True`来指示有序的`Categorical`。
 - en: Note
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The result of [`unique()`](../reference/api/pandas.Series.unique.html#pandas.Series.unique
     "pandas.Series.unique") is not always the same as `Series.cat.categories`, because
     `Series.unique()` has a couple of guarantees, namely that it returns categories
     in the order of appearance, and it only includes values that are actually present.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`unique()`](../reference/api/pandas.Series.unique.html#pandas.Series.unique
+    "pandas.Series.unique")的结果并不总是与`Series.cat.categories`相同，因为`Series.unique()`有一些保证，即它按照出现的顺序返回类别，并且仅包含实际存在的值。'
 - en: '[PRE19]'
+  id: totrans-78
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Renaming categories
+  id: totrans-79
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重命名类别
 - en: 'Renaming categories is done by using the `rename_categories()` method:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用`rename_categories()`方法来重命名类别：
 - en: '[PRE20]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: Note
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In contrast to R’s `factor`, categorical data can have categories of other types
     than string.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`相反，分类数据可以具有除字符串以外的其他类型的类别。
 - en: 'Categories must be unique or a `ValueError` is raised:'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别必须是唯一的，否则会引发`ValueError`：
 - en: '[PRE21]'
+  id: totrans-85
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Categories must also not be `NaN` or a `ValueError` is raised:'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别也不能是`NaN`，否则会引���`ValueError`：
 - en: '[PRE22]'
+  id: totrans-87
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Appending new categories
+  id: totrans-88
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 追加新类别
 - en: 'Appending categories can be done by using the `add_categories()` method:'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过使用`add_categories()`方法来追加类别：
 - en: '[PRE23]'
+  id: totrans-90
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Removing categories
+  id: totrans-91
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 删除类别
 - en: 'Removing categories can be done by using the `remove_categories()` method.
     Values which are removed are replaced by `np.nan`.:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用`remove_categories()`方法可以删除类别。被删除的值将被`np.nan`替换。
 - en: '[PRE24]'
+  id: totrans-93
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Removing unused categories
+  id: totrans-94
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 删除未使用的类别
 - en: 'Removing unused categories can also be done:'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 也可以删除未使用的类别：
 - en: '[PRE25]'
+  id: totrans-96
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Setting categories
+  id: totrans-97
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 设置类别
 - en: If you want to do remove and add new categories in one step (which has some
     speed advantage), or simply set the categories to a predefined scale, use `set_categories()`.
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您想要一次性执行删除和添加新类别的操作（这样做有一定的速度优势），或者简单地将类别设置为预定义的规模，请使用`set_categories()`。
 - en: '[PRE26]'
+  id: totrans-99
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Note
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Be aware that `Categorical.set_categories()` cannot know whether some category
     is omitted intentionally or because it is misspelled or (under Python3) due to
     a type difference (e.g., NumPy S1 dtype and Python strings). This can result in
     surprising behaviour!
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，`Categorical.set_categories()`无法知道某个类别是有意省略的还是因为拼写错误或（在Python3下）由于类型差异（例如，NumPy
+    S1 dtype和Python字符串）。这可能导致意外的行为！
 - en: Sorting and order
+  id: totrans-102
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 排序和顺序
 - en: If categorical data is ordered (`s.cat.ordered == True`), then the order of
     the categories has a meaning and certain operations are possible. If the categorical
     is unordered, `.min()/.max()` will raise a `TypeError`.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果分类数据是有序的（`s.cat.ordered == True`），那么类别的顺序具有意义，并且可以执行某些操作。如果分类是无序的，`.min()/.max()`将引发`TypeError`。
 - en: '[PRE27]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: You can set categorical data to be ordered by using `as_ordered()` or unordered
     by using `as_unordered()`. These will by default return a *new* object.
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以使用`as_ordered()`将分类数据设置为有序，或者使用`as_unordered()`将其设置为无序。这些方法默认会返回一个*新*对象。
 - en: '[PRE28]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'Sorting will use the order defined by categories, not any lexical order present
     on the data type. This is even true for strings and numeric data:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 排序将使用类别定义的顺序，而不是数据类型上存在的任何词法顺序。即使对于字符串和数字数据也是如此：
 - en: '[PRE29]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: Reordering
+  id: totrans-109
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重新排序
 - en: Reordering the categories is possible via the `Categorical.reorder_categories()`
     and the `Categorical.set_categories()` methods. For `Categorical.reorder_categories()`,
     all old categories must be included in the new categories and no new categories
     are allowed. This will necessarily make the sort order the same as the categories
     order.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过`Categorical.reorder_categories()`和`Categorical.set_categories()`方法可以重新排序类别。对于`Categorical.reorder_categories()`，所有旧类别必须包含在新类别中，不允许有新类别。这将必然使排序顺序与类别顺序相同。
 - en: '[PRE30]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: Note
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Note the difference between assigning new categories and reordering the categories:
     the first renames categories and therefore the individual values in the `Series`,
     but if the first position was sorted last, the renamed value will still be sorted
     last. Reordering means that the way values are sorted is different afterwards,
     but not that individual values in the `Series` are changed.'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意分配新类别和重新排序类别之间的区别：第一个重新命名类别，因此`Series`中的个别值也会更名，但是如果第一个位置最后被排序，重新命名的值仍将最后被排序。重新排序意味着排序值的方式在之后会有所不同，但不意味着`Series`中的个别值已更改。
 - en: Note
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If the `Categorical` is not ordered, [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
     "pandas.Series.min") and [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
     "pandas.Series.max") will raise `TypeError`. Numeric operations like `+`, `-`,
     `*`, `/` and operations based on them (e.g. [`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
     "pandas.Series.median"), which would need to compute the mean between two values
     if the length of an array is even) do not work and raise a `TypeError`.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`Categorical`未排序，[`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min")和[`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max")会引发`TypeError`。数值运算如`+`、`-`、`*`、`/`及基于它们的操作（例如[`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
+    "pandas.Series.median")，如果数组的长度为偶数，需要计算两个值之间的平均值）不起作用，并引发`TypeError`。
 - en: Multi column sorting
+  id: totrans-116
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多列排序
 - en: A categorical dtyped column will participate in a multi-column sort in a similar
     manner to other columns. The ordering of the categorical is determined by the
     `categories` of that column.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类`dtyped`列将以与其他列类似的方式参与多列排序。分类的排序由该列的`categories`确定。
 - en: '[PRE31]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Reordering the `categories` changes a future sort.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 重新排序`categories`会改变未来的排序。
 - en: '[PRE32]'
+  id: totrans-120
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: Comparisons
+  id: totrans-121
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 比较
 - en: 'Comparing categorical data with other objects is possible in three cases:'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 比较分类数据与其他对象可能有三种情况：
 - en: Comparing equality (`==` and `!=`) to a list-like object (list, Series, array,
     …) of the same length as the categorical data.
+  id: totrans-123
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 与类列表对象（列表、Series、数组等）进行相等比较（`==`和`!=`），长度与分类数据相同。
 - en: All comparisons (`==`, `!=`, `>`, `>=`, `<`, and `<=`) of categorical data to
     another categorical Series, when `ordered==True` and the `categories` are the
     same.
+  id: totrans-124
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 所有与另一个分类系列的比较（`==`、`!=`、`>`、`>=`、`<`和`<=`），当`ordered==True`且`categories`相同时。
 - en: All comparisons of a categorical data to a scalar.
+  id: totrans-125
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 所有分类数据与标量的比较。
 - en: All other comparisons, especially “non-equality” comparisons of two categoricals
     with different categories or a categorical with any list-like object, will raise
     a `TypeError`.
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有其他比较，特别是两个具有不同类别或一个具有任何类列表对象的分类的“非相等”比较，都会引发`TypeError`。
 - en: Note
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Any “non-equality” comparisons of categorical data with a `Series`, `np.array`,
     `list` or categorical data with different categories or ordering will raise a
     `TypeError` because custom categories ordering could be interpreted in two ways:
     one with taking into account the ordering and one without.'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 对分类数据与`Series`、`np.array`、`list`或具有不同类别或排序的分类数据的任何“非相等”比较都会引发`TypeError`，因为自定义类别排序可能会被解释为两种方式：一种考虑排序，一种不考虑排序。
 - en: '[PRE33]'
+  id: totrans-129
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'Comparing to a categorical with the same categories and ordering or to a scalar
     works:'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 与具有相同类别和顺序的分类或标量进行比较有效：
 - en: '[PRE34]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'Equality comparisons work with any list-like object of same length and scalars:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 相等比较适用于任何长度相同的类列表对象和标量：
 - en: '[PRE35]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'This doesn’t work because the categories are not the same:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 这不起作用，因为类别不相同：
 - en: '[PRE36]'
+  id: totrans-135
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'If you want to do a “non-equality” comparison of a categorical series with
     a list-like object which is not categorical data, you need to be explicit and
     convert the categorical data back to the original values:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果要对非分类数据进行“非相等”比较，需要明确地将分类数据转换回原始值：
 - en: '[PRE37]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'When you compare two unordered categoricals with the same categories, the order
     is not considered:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 当您比较具有相同类别的两个无序分类时，不考虑顺序：
 - en: '[PRE38]'
+  id: totrans-139
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: Operations
+  id: totrans-140
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 操作
 - en: 'Apart from [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
     "pandas.Series.min"), [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
     "pandas.Series.max") and [`Series.mode()`](../reference/api/pandas.Series.mode.html#pandas.Series.mode
     "pandas.Series.mode"), the following operations are possible with categorical
     data:'
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了[`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min"), [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max") 和 [`Series.mode()`](../reference/api/pandas.Series.mode.html#pandas.Series.mode
+    "pandas.Series.mode")，分类数据还可以进行以下操作：
 - en: '`Series` methods like [`Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
     "pandas.Series.value_counts") will use all categories, even if some categories
     are not present in the data:'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Series` 方法如[`Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
+    "pandas.Series.value_counts") 会使用所有类别，即使数据中有些类别不存在：'
 - en: '[PRE39]'
+  id: totrans-143
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: '`DataFrame` methods like [`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
     "pandas.DataFrame.sum") also show “unused” categories when `observed=False`.'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: '`DataFrame` 方法如[`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
+    "pandas.DataFrame.sum") 在 `observed=False` 时也会显示“未使用”的类别。'
 - en: '[PRE40]'
+  id: totrans-145
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'Groupby will also show “unused” categories when `observed=False`:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: Groupby 在 `observed=False` 时也会显示“未使用”的类别：
 - en: '[PRE41]'
+  id: totrans-147
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: 'Pivot tables:'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 透视表：
 - en: '[PRE42]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: Data munging
+  id: totrans-150
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 数据整理
 - en: The optimized pandas data access methods `.loc`, `.iloc`, `.at`, and `.iat`,
     work as normal. The only difference is the return type (for getting) and that
     only values already in `categories` can be assigned.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 优化的 pandas 数据访问方法 `.loc`, `.iloc`, `.at`, 和 `.iat` 的工作方式与正常情况下相同。唯一的区别在于返回类型（用于获取）以及只有已在
+    `categories` 中的值才能被赋值。
 - en: Getting
+  id: totrans-152
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 获取
 - en: If the slicing operation returns either a `DataFrame` or a column of type `Series`,
     the `category` dtype is preserved.
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果切片操作返回 `DataFrame` 或 `Series` 类型的列，则 `category` dtype 会被保留。
 - en: '[PRE43]'
+  id: totrans-154
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'An example where the category type is not preserved is if you take one single
     row: the resulting `Series` is of dtype `object`:'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别类型未保留的一个例子是如果您取一行：结果的 `Series` 的 dtype 是 `object`：
 - en: '[PRE44]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: Returning a single item from categorical data will also return the value, not
     a categorical of length “1”.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 从分类数据中返回单个项目也会返回该值，而不是长度为“1”的分类。
 - en: '[PRE45]'
+  id: totrans-158
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: Note
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The is in contrast to R’s `factor` function, where `factor(c(1,2,3))[1]` returns
     a single value `factor`.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 这与 R 的 `factor` 函数相反，其中 `factor(c(1,2,3))[1]` 返回一个单个值 `factor`。
 - en: 'To get a single value `Series` of type `category`, you pass in a list with
     a single value:'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 要获得类型为 `category` 的单个值 `Series`，您需要传入一个包含单个值的列表：
 - en: '[PRE46]'
+  id: totrans-162
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: String and datetime accessors
+  id: totrans-163
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 字符串和日期时间访问器
 - en: 'The accessors `.dt` and `.str` will work if the `s.cat.categories` are of an
     appropriate type:'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 `s.cat.categories` 是适当类型，则访问器 `.dt` 和 `.str` 将起作用：
 - en: '[PRE47]'
+  id: totrans-165
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: Note
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The returned `Series` (or `DataFrame`) is of the same type as if you used the
     `.str.<method>` / `.dt.<method>` on a `Series` of that type (and not of type `category`!).
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回的 `Series`（或 `DataFrame`）与在该类型的 `Series` 上使用 `.str.<method>` / `.dt.<method>`
+    时的类型相同（而不是 `category` 类型！）。
 - en: 'That means, that the returned values from methods and properties on the accessors
     of a `Series` and the returned values from methods and properties on the accessors
     of this `Series` transformed to one of type `category` will be equal:'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着，从 `Series` 的访问器的方法和属性返回的值与将该 `Series` 转换为 `category` 类型后的访问器的方法和属性返回的值将相等：
 - en: '[PRE48]'
+  id: totrans-169
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: Note
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The work is done on the `categories` and then a new `Series` is constructed.
     This has some performance implication if you have a `Series` of type string, where
     lots of elements are repeated (i.e. the number of unique elements in the `Series`
     is a lot smaller than the length of the `Series`). In this case it can be faster
     to convert the original `Series` to one of type `category` and use `.str.<method>`
     or `.dt.<property>` on that.
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 工作是在 `categories` 上进行的，然后构建一个新的 `Series`。如果您有一个字符串类型的 `Series`，其中有很多重复的元素（即
+    `Series` 中的唯一元素数量远小于 `Series` 的长度），这可能会对性能产生影响。在这种情况下，将原始 `Series` 转换为 `category`
+    类型，并在其上使用 `.str.<method>` 或 `.dt.<property>` 可能更快。
 - en: Setting
+  id: totrans-172
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 设置
 - en: 'Setting values in a categorical column (or `Series`) works as long as the value
     is included in the `categories`:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置分类列（或 `Series`）中的值只要该值包含在 `categories` 中即可：
 - en: '[PRE49]'
+  id: totrans-174
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'Setting values by assigning categorical data will also check that the `categories`
     match:'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过分配分类数据来设置值也会检查 `categories` 是否匹配：
 - en: '[PRE50]'
+  id: totrans-176
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: 'Assigning a `Categorical` to parts of a column of other types will use the
     values:'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 将`Categorical`分配给其他类型列的部分将使用这些值：
 - en: '[PRE51]'
+  id: totrans-178
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: '### Merging / concatenation'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 合并/连接'
 - en: By default, combining `Series` or `DataFrames` which contain the same categories
     results in `category` dtype, otherwise results will depend on the dtype of the
     underlying categories. Merges that result in non-categorical dtypes will likely
     have higher memory usage. Use `.astype` or `union_categoricals` to ensure `category`
     results.
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，合并包含相同类别的`Series`或`DataFrames`将导致`category` dtype，否则结果将取决于底层类别的dtype。导致非分类dtype的合并可能会导致更高的内存使用量。使用`.astype`或`union_categoricals`来确保`category`结果。
 - en: '[PRE52]'
+  id: totrans-181
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: 'The following table summarizes the results of merging `Categoricals`:'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下表格总结了合并`Categoricals`的结果：
 - en: '| arg1 | arg2 | identical | result |'
+  id: totrans-183
   prefs: []
   type: TYPE_TB
+  zh: '| arg1 | arg2 | 相同 | 结果 |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-184
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| category | category | True | category |'
+  id: totrans-185
   prefs: []
   type: TYPE_TB
+  zh: '| 类别 | 类别 | True | 类别 |'
 - en: '| category (object) | category (object) | False | object (dtype is inferred)
     |'
+  id: totrans-186
   prefs: []
   type: TYPE_TB
+  zh: '| 类别（object） | 类别（object） | False | object（推断出的dtype） |'
 - en: '| category (int) | category (float) | False | float (dtype is inferred) |  ###
     Unioning'
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: '| 类别（int） | 类别（float） | False | float（推断出的dtype） |  ### 合并'
 - en: If you want to combine categoricals that do not necessarily have the same categories,
     the [`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
     "pandas.api.types.union_categoricals") function will combine a list-like of categoricals.
     The new categories will be the union of the categories being combined.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果要合并不一定具有相同类别的分类，[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals")函数将合并类别列表。新类别将是被合并类别的并集。
 - en: '[PRE53]'
+  id: totrans-189
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: By default, the resulting categories will be ordered as they appear in the data.
     If you want the categories to be lexsorted, use `sort_categories=True` argument.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，生成的类别将按照它们在数据中出现的顺序排序。如果要使类别按字典顺序排序，请使用`sort_categories=True`参数。
 - en: '[PRE54]'
+  id: totrans-191
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: '`union_categoricals` also works with the “easy” case of combining two categoricals
     of the same categories and order information (e.g. what you could also `append`
     for).'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: '`union_categoricals`还适用于将具有相同类别和顺序信息的两个分类合并的“简单”情况（例如，您也可以使用`append`）。'
 - en: '[PRE55]'
+  id: totrans-193
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: The below raises `TypeError` because the categories are ordered and not identical.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下引发`TypeError`，因为类别是有序的而且不相同。
 - en: '[PRE56]'
+  id: totrans-195
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: Ordered categoricals with different categories or orderings can be combined
     by using the `ignore_ordered=True` argument.
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过使用`ignore_ordered=True`参数来合并具有不同类别或排序的有序分类。
 - en: '[PRE57]'
+  id: totrans-197
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
     "pandas.api.types.union_categoricals") also works with a `CategoricalIndex`, or
     `Series` containing categorical data, but note that the resulting array will always
     be a plain `Categorical`:'
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals")还适用于`CategoricalIndex`或包含分类数据的`Series`，但请注意，结果数组将始终是普通的`Categorical`：'
 - en: '[PRE58]'
+  id: totrans-199
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: Note
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: '`union_categoricals` may recode the integer codes for categories when combining
     categoricals. This is likely what you want, but if you are relying on the exact
     numbering of the categories, be aware.'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 当合并分类时，`union_categoricals`可能会重新编码类别的整数代码。这可能是您想要的，但如果您依赖于类别的确切编号，请注意。
 - en: '[PRE59]'
+  id: totrans-202
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: Getting data in/out
+  id: totrans-203
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 获取数据的输入/输出
 - en: You can write data that contains `category` dtypes to a `HDFStore`. See [here](io.html#io-hdf5-categorical)
     for an example and caveats.
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以将包含`category` dtypes的数据写入`HDFStore`。请参见[这里](io.html#io-hdf5-categorical)以获取示例和注意事项。
 - en: It is also possible to write data to and reading data from *Stata* format files.
     See [here](io.html#io-stata-categorical) for an example and caveats.
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 也可以将数据写入*Stata*格式文件并从中读取数据。请参见[这里](io.html#io-stata-categorical)以获取示例和注意事项。
 - en: Writing to a CSV file will convert the data, effectively removing any information
     about the categorical (categories and ordering). So if you read back the CSV file
     you have to convert the relevant columns back to `category` and assign the right
     categories and categories ordering.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 写入CSV文件将转换数据，有效地删除有关分类（类别和排序）的任何信息。因此，如果您读取回CSV文件，必须将相关列转换回`category`并分配正确的类别和类别排序。
 - en: '[PRE60]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: The same holds for writing to a SQL database with `to_sql`.
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 写入SQL数据库时也适用于相同规则。
 - en: Missing data
+  id: totrans-209
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 缺失数据
 - en: pandas primarily uses the value `np.nan` to represent missing data. It is by
     default not included in computations. See the [Missing Data section](missing_data.html#missing-data).
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas 主要使用值 `np.nan` 表示缺失数据。默认情况下不包括在计算中。请参阅[缺失数据部分](missing_data.html#missing-data)。
 - en: Missing values should **not** be included in the Categorical’s `categories`,
     only in the `values`. Instead, it is understood that NaN is different, and is
     always a possibility. When working with the Categorical’s `codes`, missing values
     will always have a code of `-1`.
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 缺失值 **不应** 包含在分类的 `categories` 中，只应包含在 `values` 中。相反，应理解 NaN 是不同的，并且始终可能存在。在处理分类的
+    `codes` 时，缺失值的代码始终为 `-1`。
 - en: '[PRE61]'
+  id: totrans-212
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: 'Methods for working with missing data, e.g. [`isna()`](../reference/api/pandas.Series.isna.html#pandas.Series.isna
     "pandas.Series.isna"), [`fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
     "pandas.Series.fillna"), [`dropna()`](../reference/api/pandas.Series.dropna.html#pandas.Series.dropna
     "pandas.Series.dropna"), all work normally:'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于处理缺失数据的方法，例如 [`isna()`](../reference/api/pandas.Series.isna.html#pandas.Series.isna
+    "pandas.Series.isna")、[`fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
+    "pandas.Series.fillna")、[`dropna()`](../reference/api/pandas.Series.dropna.html#pandas.Series.dropna
+    "pandas.Series.dropna")，都可以正常工作：
 - en: '[PRE62]'
+  id: totrans-214
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: Differences to R’s `factor`
+  id: totrans-215
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 与 R 的 `factor` 的差异
 - en: 'The following differences to R’s factor functions can be observed:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下与 R 的 factor 函数的差异可以观察到：
 - en: R’s `levels` are named `categories`.
+  id: totrans-217
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: R 的 `levels` 被命名为 `categories`。
 - en: R’s `levels` are always of type string, while `categories` in pandas can be
     of any dtype.
+  id: totrans-218
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: R 的 `levels` 始终是字符串类型，而 pandas 的 `categories` 可以是任何 dtype。
 - en: It’s not possible to specify labels at creation time. Use `s.cat.rename_categories(new_labels)`
     afterwards.
+  id: totrans-219
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不可能在创建时指定标签。之后使用 `s.cat.rename_categories(new_labels)`。在创建时指定标签。之后使用 `s.cat.rename_categories(new_labels)`。
 - en: In contrast to R’s `factor` function, using categorical data as the sole input
     to create a new categorical series will *not* remove unused categories but create
     a new categorical series which is equal to the passed in one!
+  id: totrans-220
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 与 R 的 `factor` 函数相反，将分类数据作为唯一输入来创建新的分类系列 *不会* 删除未使用的类别，而是创建一个与传入的相等的新分类系列！
 - en: R allows for missing values to be included in its `levels` (pandas’ `categories`).
     pandas does not allow `NaN` categories, but missing values can still be in the
     `values`.
+  id: totrans-221
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: R 允许在其 `levels`（pandas 的 `categories`）中包含缺失值。pandas 不允许 `NaN` 类别，但缺失值仍然可以在 `values`
+    中。
 - en: Gotchas
+  id: totrans-222
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 注意事项
 - en: '### Memory usage'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 内存使用'
 - en: The memory usage of a `Categorical` is proportional to the number of categories
     plus the length of the data. In contrast, an `object` dtype is a constant times
     the length of the data.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Categorical` 的内存使用量与类别数量加上数据长度成正比。相比之下，`object` dtype 是数据长度的常数倍。'
 - en: '[PRE63]'
+  id: totrans-225
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: Note
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If the number of categories approaches the length of the data, the `Categorical`
     will use nearly the same or more memory than an equivalent `object` dtype representation.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果类别数量接近数据长度，`Categorical` 将使用几乎相同或更多的内存，比等效的 `object` dtype 表示法更多。
 - en: '[PRE64]'
+  id: totrans-228
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: '`Categorical` is not a `numpy` array'
+  id: totrans-229
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`Categorical` 不是一个 `numpy` 数组'
 - en: Currently, categorical data and the underlying `Categorical` is implemented
     as a Python object and not as a low-level NumPy array dtype. This leads to some
     problems.
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 目前，分类数据和底层的 `Categorical` 实现为 Python 对象，而不是低级别的 NumPy 数组 dtype。这会导致一些问题。
 - en: 'NumPy itself doesn’t know about the new `dtype`:'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 本身不知道新的 `dtype`：
 - en: '[PRE65]'
+  id: totrans-232
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: 'Dtype comparisons work:'
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: Dtype 比较有效：
 - en: '[PRE66]'
+  id: totrans-234
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: 'To check if a Series contains Categorical data, use `hasattr(s, ''cat'')`:'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 要检查 Series 是否包含分类数据，请使用 `hasattr(s, 'cat')`：
 - en: '[PRE67]'
+  id: totrans-236
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: Using NumPy functions on a `Series` of type `category` should not work as `Categoricals`
     are not numeric data (even in the case that `.categories` is numeric).
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 在类型为 `category` 的 `Series` 上使��� NumPy 函数应该不起作用，因为 `Categoricals` 不是数值数据（即使
+    `.categories` 是数值的情况下也是如此）。
 - en: '[PRE68]'
+  id: totrans-238
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: Note
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If such a function works, please file a bug at [pandas-dev/pandas](https://github.com/pandas-dev/pandas)!
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这样的函数有效，请在 [pandas-dev/pandas](https://github.com/pandas-dev/pandas) 提交 bug！
 - en: dtype in apply
+  id: totrans-241
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在 apply 中的 dtype
 - en: 'pandas currently does not preserve the dtype in apply functions: If you apply
     along rows you get a `Series` of `object` `dtype` (same as getting a row -> getting
     one element will return a basic type) and applying along columns will also convert
     to object. `NaN` values are unaffected. You can use `fillna` to handle missing
     values before applying a function.'
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas 目前在 apply 函数中不会保留 dtype：如果你沿着行应用，你会得到一个 `Series`，其 `dtype` 为 `object`（与获取一行相同
+    -> 获取一个元素将返回基本类型），并且沿着列应用也会转换为 object。`NaN` 值不受影响。你可以在应用函数之前使用 `fillna` 处理缺失值。
 - en: '[PRE69]'
+  id: totrans-243
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: Categorical index
+  id: totrans-244
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 分类索引
 - en: '`CategoricalIndex` is a type of index that is useful for supporting indexing
     with duplicates. This is a container around a `Categorical` and allows efficient
     indexing and storage of an index with a large number of duplicated elements. See
     the [advanced indexing docs](advanced.html#advanced-categoricalindex) for a more
     detailed explanation.'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: '`CategoricalIndex`是一种支持具有重复索引的索引的类型。这是围绕`Categorical`的容器，允许有效地索引和存储具有大量重复元素的索引。有关更详细的解释，请参阅[高级索引文档](advanced.html#advanced-categoricalindex)。'
 - en: 'Setting the index will create a `CategoricalIndex`:'
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置索引将创建`CategoricalIndex`：
 - en: '[PRE70]'
+  id: totrans-247
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: Side effects
+  id: totrans-248
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 副作用
 - en: 'Constructing a `Series` from a `Categorical` will not copy the input `Categorical`.
     This means that changes to the `Series` will in most cases change the original
     `Categorical`:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 从`Categorical`构造`Series`不会复制输入的`Categorical`。这意味着对`Series`的更改在大多数情况下会更改原始的`Categorical`：
 - en: '[PRE71]'
+  id: totrans-250
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: 'Use `copy=True` to prevent such a behaviour or simply don’t reuse `Categoricals`:'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`copy=True`来防止这种行为，或者简单地不要重复使用`Categoricals`：
 - en: '[PRE72]'
+  id: totrans-252
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: Note
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'This also happens in some cases when you supply a NumPy array instead of a
     `Categorical`: using an int array (e.g. `np.array([1,2,3,4])`) will exhibit the
     same behavior, while using a string array (e.g. `np.array(["a","b","c","a"])`)
     will not.'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，当您提供NumPy数组而不是`Categorical`时，也会发生这种情况：使用整数数组（例如`np.array([1,2,3,4])`）将表现出相同的行为，而使用字符串数组（例如`np.array(["a","b","c","a"])`）则不会。
 - en: '## Object creation'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 对象创建'
 - en: Series creation
+  id: totrans-256
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Series创建
 - en: 'Categorical `Series` or columns in a `DataFrame` can be created in several
     ways:'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过多种方式创建分类`Series`或`DataFrame`中的列：
 - en: 'By specifying `dtype="category"` when constructing a `Series`:'
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 在构造`Series`时指定`dtype="category"`：
 - en: '[PRE73]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: 'By converting an existing `Series` or column to a `category` dtype:'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将现有的`Series`或列转换为`category` dtype：
 - en: '[PRE74]'
+  id: totrans-261
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: By using special functions, such as [`cut()`](../reference/api/pandas.cut.html#pandas.cut
     "pandas.cut"), which groups data into discrete bins. See the [example on tiling](reshaping.html#reshaping-tile-cut)
     in the docs.
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用特殊函数，例如[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut")，将数据分组为离散的箱。请参阅文档中有关[切片](reshaping.html#reshaping-tile-cut)的示例。
 - en: '[PRE75]'
+  id: totrans-263
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: By passing a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical") object to a `Series` or assigning it to a `DataFrame`.
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")对象传递给`Series`或将其分配给`DataFrame`。
 - en: '[PRE76]'
+  id: totrans-265
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: 'Categorical data has a specific `category` [dtype](basics.html#basics-dtypes):'
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类数据具有特定的`category` [dtype](basics.html#basics-dtypes)：
 - en: '[PRE77]'
+  id: totrans-267
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: DataFrame creation
+  id: totrans-268
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DataFrame创建
 - en: Similar to the previous section where a single column was converted to categorical,
     all columns in a `DataFrame` can be batch converted to categorical either during
     or after construction.
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于前一节中将单个列转换为分类的情况，可以在构建过程中或之后将`DataFrame`中的所有列批量转换为分类。
 - en: 'This can be done during construction by specifying `dtype="category"` in the
     `DataFrame` constructor:'
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 这可以在构造过程中通过在`DataFrame`构造函数中指定`dtype="category"`来完成：
 - en: '[PRE78]'
+  id: totrans-271
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE78]'
 - en: 'Note that the categories present in each column differ; the conversion is done
     column by column, so only labels present in a given column are categories:'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，每列中存在的类别不同；转换是逐列进行的，因此只有给定列中存在的标签才是类别：
 - en: '[PRE79]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE79]'
 - en: 'Analogously, all columns in an existing `DataFrame` can be batch converted
     using [`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
     "pandas.DataFrame.astype"):'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似地，可以使用[`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype")来批量转换现有`DataFrame`中的所有列：
 - en: '[PRE80]'
+  id: totrans-275
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE80]'
 - en: 'This conversion is likewise done column by column:'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种转换也是逐列进行的：
 - en: '[PRE81]'
+  id: totrans-277
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE81]'
 - en: Controlling behavior
+  id: totrans-278
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 控制行为
 - en: 'In the examples above where we passed `dtype=''category''`, we used the default
     behavior:'
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上面的示��中，我们传递`dtype='category'`时，使用了默认行为：
 - en: Categories are inferred from the data.
+  id: totrans-280
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 类别是从数据中推断出来的。
 - en: Categories are unordered.
+  id: totrans-281
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 类别是无序的。
 - en: To control those behaviors, instead of passing `'category'`, use an instance
     of `CategoricalDtype`.
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 要控制这些行为，而不是传递`'category'`，请使用`CategoricalDtype`的实例。
 - en: '[PRE82]'
+  id: totrans-283
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE82]'
 - en: Similarly, a `CategoricalDtype` can be used with a `DataFrame` to ensure that
     categories are consistent among all columns.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样，可以使用`CategoricalDtype`与`DataFrame`一起使用，以确保所有列中的类别保持一致。
 - en: '[PRE83]'
+  id: totrans-285
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE83]'
 - en: Note
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: To perform table-wise conversion, where all labels in the entire `DataFrame`
     are used as categories for each column, the `categories` parameter can be determined
     programmatically by `categories = pd.unique(df.to_numpy().ravel())`.
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 要执行表格转换，其中整个`DataFrame`中的所有标签都用作每列的类别，可以通过`categories = pd.unique(df.to_numpy().ravel())`来以编程方式确定`categories`参数。
 - en: 'If you already have `codes` and `categories`, you can use the [`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
     "pandas.Categorical.from_codes") constructor to save the factorize step during
     normal constructor mode:'
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您已经有`codes`和`categories`，可以使用[`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
+    "pandas.Categorical.from_codes")构造函数在正常构造模式下保存因子化步骤：
 - en: '[PRE84]'
+  id: totrans-289
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE84]'
 - en: Regaining original data
+  id: totrans-290
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 恢复原始数据
 - en: 'To get back to the original `Series` or NumPy array, use `Series.astype(original_dtype)`
     or `np.asarray(categorical)`:'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 要恢复到原始的`Series`或NumPy数组，请使用`Series.astype(original_dtype)`或`np.asarray(categorical)`：
 - en: '[PRE85]'
+  id: totrans-292
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE85]'
 - en: Note
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In contrast to R’s `factor` function, categorical data is not converting input
     values to strings; categories will end up the same data type as the original values.
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`函数相比，分类数据不会将输入值转换为字符串；类别最终将与原始值相同的数据类型。
 - en: Note
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In contrast to R’s `factor` function, there is currently no way to assign/change
     labels at creation time. Use `categories` to change the categories after creation
     time.
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`函数相比，目前没有办法在创建时分配/更改标签。在创建后使用`categories`来更改类别。
 - en: Series creation
+  id: totrans-297
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 系列创建
 - en: 'Categorical `Series` or columns in a `DataFrame` can be created in several
     ways:'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过几种方式创建`DataFrame`中的分类`Series`或列：
 - en: 'By specifying `dtype="category"` when constructing a `Series`:'
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 在构造`Series`时指定`dtype="category"`：
 - en: '[PRE86]'
+  id: totrans-300
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE86]'
 - en: 'By converting an existing `Series` or column to a `category` dtype:'
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将现有的`Series`或列转换为`category` dtype：
 - en: '[PRE87]'
+  id: totrans-302
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE87]'
 - en: By using special functions, such as [`cut()`](../reference/api/pandas.cut.html#pandas.cut
     "pandas.cut"), which groups data into discrete bins. See the [example on tiling](reshaping.html#reshaping-tile-cut)
     in the docs.
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用特殊函数，例如[`cut()`](../reference/api/pandas.cut.html#pandas.cut "pandas.cut")，将数据分组为离散的箱。请参阅文档中有关[切片](reshaping.html#reshaping-tile-cut)的示例。
 - en: '[PRE88]'
+  id: totrans-304
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE88]'
 - en: By passing a [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical") object to a `Series` or assigning it to a `DataFrame`.
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")对象传递给`Series`或将其分配给`DataFrame`。
 - en: '[PRE89]'
+  id: totrans-306
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE89]'
 - en: 'Categorical data has a specific `category` [dtype](basics.html#basics-dtypes):'
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类数据具有特定的`category` [dtype](basics.html#basics-dtypes)：
 - en: '[PRE90]'
+  id: totrans-308
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE90]'
 - en: DataFrame creation
+  id: totrans-309
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DataFrame创建
 - en: Similar to the previous section where a single column was converted to categorical,
     all columns in a `DataFrame` can be batch converted to categorical either during
     or after construction.
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于前一节中将单个列转换为分类的情况，`DataFrame`中的所有列可以在构建期间或构建后批量转换为分类。
 - en: 'This can be done during construction by specifying `dtype="category"` in the
     `DataFrame` constructor:'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以在构建期间通过在`DataFrame`构造函数中指定`dtype="category"`来执行此操作：
 - en: '[PRE91]'
+  id: totrans-312
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE91]'
 - en: 'Note that the categories present in each column differ; the conversion is done
     column by column, so only labels present in a given column are categories:'
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，每列中存在的类别不同；转换是逐列进行的，因此只有给定列中存在的标签才是类别：
 - en: '[PRE92]'
+  id: totrans-314
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE92]'
 - en: 'Analogously, all columns in an existing `DataFrame` can be batch converted
     using [`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
     "pandas.DataFrame.astype"):'
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似地，可以使用[`DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype")来批量转换现有`DataFrame`中的所有列：
 - en: '[PRE93]'
+  id: totrans-316
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE93]'
 - en: 'This conversion is likewise done column by column:'
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: 此转换也是逐列进行的：
 - en: '[PRE94]'
+  id: totrans-318
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE94]'
 - en: Controlling behavior
+  id: totrans-319
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 控制行为
 - en: 'In the examples above where we passed `dtype=''category''`, we used the default
     behavior:'
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上面的示例中，我们传递了`dtype='category'`，我们使用了默认行为：
 - en: Categories are inferred from the data.
+  id: totrans-321
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 类别是从数据中推断出来的。
 - en: Categories are unordered.
+  id: totrans-322
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 类别是无序的。
 - en: To control those behaviors, instead of passing `'category'`, use an instance
     of `CategoricalDtype`.
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: 要控制这些行为，而不是传递`'category'`，请使用`CategoricalDtype`的实例。
 - en: '[PRE95]'
+  id: totrans-324
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE95]'
 - en: Similarly, a `CategoricalDtype` can be used with a `DataFrame` to ensure that
     categories are consistent among all columns.
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样，可以在`DataFrame`中使用`CategoricalDtype`来确保所有列之间的类别保持一致。
 - en: '[PRE96]'
+  id: totrans-326
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE96]'
 - en: Note
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: To perform table-wise conversion, where all labels in the entire `DataFrame`
     are used as categories for each column, the `categories` parameter can be determined
     programmatically by `categories = pd.unique(df.to_numpy().ravel())`.
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
+  zh: 要执行表格转换，其中整个`DataFrame`中的所有标签都用作每列的类别，可以通过`categories = pd.unique(df.to_numpy().ravel())`来以编程方式确定`categories`参数。
 - en: 'If you already have `codes` and `categories`, you can use the [`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
     "pandas.Categorical.from_codes") constructor to save the factorize step during
     normal constructor mode:'
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你已经有`codes`和`categories`，可以使用[`from_codes()`](../reference/api/pandas.Categorical.from_codes.html#pandas.Categorical.from_codes
+    "pandas.Categorical.from_codes")构造函数在正常构造模式下保存因子化步骤：
 - en: '[PRE97]'
+  id: totrans-330
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE97]'
 - en: Regaining original data
+  id: totrans-331
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 恢复原始数据
 - en: 'To get back to the original `Series` or NumPy array, use `Series.astype(original_dtype)`
     or `np.asarray(categorical)`:'
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
+  zh: 要恢复到原始的`Series`或NumPy数组，使用`Series.astype(original_dtype)`或`np.asarray(categorical)`：
 - en: '[PRE98]'
+  id: totrans-333
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE98]'
 - en: Note
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In contrast to R’s `factor` function, categorical data is not converting input
     values to strings; categories will end up the same data type as the original values.
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`函数相反，分类数据不会将输入值转换为字符串；类别最终将与原始值相同的数据类型。
 - en: Note
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In contrast to R’s `factor` function, there is currently no way to assign/change
     labels at creation time. Use `categories` to change the categories after creation
     time.
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`函数相反，目前没有办法在创建时分配/更改标签。在创建后使用`categories`更改类别。
 - en: '## CategoricalDtype'
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
+  zh: '## CategoricalDtype'
 - en: A categorical’s type is fully described by
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别的类型完全由
 - en: '`categories`: a sequence of unique values and no missing values'
+  id: totrans-340
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`categories`：一系列唯一值且没有缺失值'
 - en: '`ordered`: a boolean'
+  id: totrans-341
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`ordered`：一个布尔值'
 - en: This information can be stored in a `CategoricalDtype`. The `categories` argument
     is optional, which implies that the actual categories should be inferred from
     whatever is present in the data when the [`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
     "pandas.Categorical") is created. The categories are assumed to be unordered by
     default.
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些信息可以存储在`CategoricalDtype`中。`categories`参数是可选的，这意味着实际的类别应该从创建[`pandas.Categorical`](../reference/api/pandas.Categorical.html#pandas.Categorical
+    "pandas.Categorical")时数据中推断出。默认情况下，假定类别是无序的。
 - en: '[PRE99]'
+  id: totrans-343
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE99]'
 - en: A `CategoricalDtype` can be used in any place pandas expects a `dtype`. For
     example [`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
     "pandas.read_csv"), [`pandas.DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
     "pandas.DataFrame.astype"), or in the `Series` constructor.
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: '`CategoricalDtype`可以在任何pandas期望`dtype`的地方使用。例如[`pandas.read_csv()`](../reference/api/pandas.read_csv.html#pandas.read_csv
+    "pandas.read_csv")，[`pandas.DataFrame.astype()`](../reference/api/pandas.DataFrame.astype.html#pandas.DataFrame.astype
+    "pandas.DataFrame.astype")，或在`Series`构造函数中。'
 - en: Note
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: As a convenience, you can use the string `'category'` in place of a `CategoricalDtype`
     when you want the default behavior of the categories being unordered, and equal
     to the set values present in the array. In other words, `dtype='category'` is
     equivalent to `dtype=CategoricalDtype()`.
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为一种便利，当你希望类别无序且等于数组中存在的值集时，可以使用字符串`'category'`代替`CategoricalDtype`，换句话说，`dtype='category'`等同于`dtype=CategoricalDtype()`。
 - en: Equality semantics
+  id: totrans-347
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 相等语义
 - en: Two instances of `CategoricalDtype` compare equal whenever they have the same
     categories and order. When comparing two unordered categoricals, the order of
     the `categories` is not considered.
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
+  zh: 两个`CategoricalDtype`实例具有相同的类别和顺序时，它们比较相等。当比较两个无序的分类时，`categories`的顺序不被考虑。
 - en: '[PRE100]'
+  id: totrans-349
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE100]'
 - en: All instances of `CategoricalDtype` compare equal to the string `'category'`.
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有`CategoricalDtype`实例都与字符串`'category'`相等。
 - en: '[PRE101]'
+  id: totrans-351
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE101]'
 - en: Equality semantics
+  id: totrans-352
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 相等语义
 - en: Two instances of `CategoricalDtype` compare equal whenever they have the same
     categories and order. When comparing two unordered categoricals, the order of
     the `categories` is not considered.
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: 两个`CategoricalDtype`实例具有相同的类别和顺序时，它们比较相等。当比较两个无序的分类时，`categories`的顺序不被考虑。
 - en: '[PRE102]'
+  id: totrans-354
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE102]'
 - en: All instances of `CategoricalDtype` compare equal to the string `'category'`.
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有`CategoricalDtype`实例都与字符串`'category'`相等。
 - en: '[PRE103]'
+  id: totrans-356
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE103]'
 - en: Description
+  id: totrans-357
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 描述
 - en: Using [`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
     "pandas.DataFrame.describe") on categorical data will produce similar output to
     a `Series` or `DataFrame` of type `string`.
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
+  zh: 在分类数据上使用[`describe()`](../reference/api/pandas.DataFrame.describe.html#pandas.DataFrame.describe
+    "pandas.DataFrame.describe")将产生类似于`string`类型的`Series`或`DataFrame`的输出。
 - en: '[PRE104]'
+  id: totrans-359
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE104]'
 - en: '## Working with categories'
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 使用类别'
 - en: Categorical data has a `categories` and a `ordered` property, which list their
     possible values and whether the ordering matters or not. These properties are
     exposed as `s.cat.categories` and `s.cat.ordered`. If you don’t manually specify
     categories and ordering, they are inferred from the passed arguments.
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类数据有一个`categories`和一个`ordered`属性，列出了它们可能的值以及排序是否重要。这些属性暴露为`s.cat.categories`和`s.cat.ordered`。如果您不手动指定类别和排序，它们将从传递的参数中推断出来。
 - en: '[PRE105]'
+  id: totrans-362
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE105]'
 - en: 'It’s also possible to pass in the categories in a specific order:'
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以按特定顺序传递类别：
 - en: '[PRE106]'
+  id: totrans-364
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE106]'
 - en: Note
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: New categorical data are **not** automatically ordered. You must explicitly
     pass `ordered=True` to indicate an ordered `Categorical`.
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
+  zh: 新的分类数据**不会**自动排序。您必须显式传递`ordered=True`来指示有序的`Categorical`。
 - en: Note
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The result of [`unique()`](../reference/api/pandas.Series.unique.html#pandas.Series.unique
     "pandas.Series.unique") is not always the same as `Series.cat.categories`, because
     `Series.unique()` has a couple of guarantees, namely that it returns categories
     in the order of appearance, and it only includes values that are actually present.
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`unique()`](../reference/api/pandas.Series.unique.html#pandas.Series.unique
+    "pandas.Series.unique")的结果并不总是与`Series.cat.categories`相同，因为`Series.unique()`有一些保证，即它按出现顺序返回类别，并且仅包括实际存在的值。'
 - en: '[PRE107]'
+  id: totrans-369
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE107]'
 - en: Renaming categories
+  id: totrans-370
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重命名类别
 - en: 'Renaming categories is done by using the `rename_categories()` method:'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用`rename_categories()`方法来重命名类别：
 - en: '[PRE108]'
+  id: totrans-372
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE108]'
 - en: Note
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In contrast to R’s `factor`, categorical data can have categories of other types
     than string.
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`相反，分类数据可以具有其他类型的类别而不仅仅是字符串。
 - en: 'Categories must be unique or a `ValueError` is raised:'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别必须是唯一的，否则会引发`ValueError`：
 - en: '[PRE109]'
+  id: totrans-376
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE109]'
 - en: 'Categories must also not be `NaN` or a `ValueError` is raised:'
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别也不能是`NaN`，否则会引发`ValueError`：
 - en: '[PRE110]'
+  id: totrans-378
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE110]'
 - en: Appending new categories
+  id: totrans-379
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 添加新类别
 - en: 'Appending categories can be done by using the `add_categories()` method:'
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用`add_categories()`方法添加类别：
 - en: '[PRE111]'
+  id: totrans-381
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE111]'
 - en: Removing categories
+  id: totrans-382
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 删除类别
 - en: 'Removing categories can be done by using the `remove_categories()` method.
     Values which are removed are replaced by `np.nan`.:'
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用`remove_categories()`方法删除类别。被删除的值将被`np.nan`替换。
 - en: '[PRE112]'
+  id: totrans-384
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE112]'
 - en: Removing unused categories
+  id: totrans-385
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 删除未使用的类别
 - en: 'Removing unused categories can also be done:'
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 也可以删除未使用的类别：
 - en: '[PRE113]'
+  id: totrans-387
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE113]'
 - en: Setting categories
+  id: totrans-388
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 设置类别
 - en: If you want to do remove and add new categories in one step (which has some
     speed advantage), or simply set the categories to a predefined scale, use `set_categories()`.
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您想要一次性删除并添加新类别（这样有一定的速度优势），或者简单地将类别设置为预定义的范围，请使用`set_categories()`。
 - en: '[PRE114]'
+  id: totrans-390
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE114]'
 - en: Note
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Be aware that `Categorical.set_categories()` cannot know whether some category
     is omitted intentionally or because it is misspelled or (under Python3) due to
     a type difference (e.g., NumPy S1 dtype and Python strings). This can result in
     surprising behaviour!
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，`Categorical.set_categories()`无法知道某些类别是有意省略的还是因为拼写错误或（在Python3下）由于类型差异（例如，NumPy
+    S1 dtype和Python字符串）。这可能导致意外行为！
 - en: Renaming categories
+  id: totrans-393
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重命名类别
 - en: 'Renaming categories is done by using the `rename_categories()` method:'
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用`rename_categories()`方法来重命名类别：
 - en: '[PRE115]'
+  id: totrans-395
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE115]'
 - en: Note
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: In contrast to R’s `factor`, categorical data can have categories of other types
     than string.
+  id: totrans-397
   prefs: []
   type: TYPE_NORMAL
+  zh: 与R的`factor`相反，分类数据可以具有其他类型的类别而不仅仅是字符串。
 - en: 'Categories must be unique or a `ValueError` is raised:'
+  id: totrans-398
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别必须是唯一的，否则会引发`ValueError`：
 - en: '[PRE116]'
+  id: totrans-399
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE116]'
 - en: 'Categories must also not be `NaN` or a `ValueError` is raised:'
+  id: totrans-400
   prefs: []
   type: TYPE_NORMAL
+  zh: 类别也不能是`NaN`，否则会引发`ValueError`：
 - en: '[PRE117]'
+  id: totrans-401
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE117]'
 - en: Appending new categories
+  id: totrans-402
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 添加新类别
 - en: 'Appending categories can be done by using the `add_categories()` method:'
+  id: totrans-403
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用`add_categories()`方法添加类别：
 - en: '[PRE118]'
+  id: totrans-404
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE118]'
 - en: Removing categories
+  id: totrans-405
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 删除类别
 - en: 'Removing categories can be done by using the `remove_categories()` method.
     Values which are removed are replaced by `np.nan`.:'
+  id: totrans-406
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用`remove_categories()`方法删除类别。被删除的值将被`np.nan`替换。
 - en: '[PRE119]'
+  id: totrans-407
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE119]'
 - en: Removing unused categories
+  id: totrans-408
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 删除未使用的类别
 - en: 'Removing unused categories can also be done:'
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
+  zh: 也可以删除未使用的类别：
 - en: '[PRE120]'
+  id: totrans-410
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE120]'
 - en: Setting categories
+  id: totrans-411
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 设置类别
 - en: If you want to do remove and add new categories in one step (which has some
     speed advantage), or simply set the categories to a predefined scale, use `set_categories()`.
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您想要一次性删除并添加新类别（这样有一定的速度优势），或者简单地将类别设置为预定义的范围，请使用`set_categories()`。
 - en: '[PRE121]'
+  id: totrans-413
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE121]'
 - en: Note
+  id: totrans-414
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Be aware that `Categorical.set_categories()` cannot know whether some category
     is omitted intentionally or because it is misspelled or (under Python3) due to
     a type difference (e.g., NumPy S1 dtype and Python strings). This can result in
     surprising behaviour!
+  id: totrans-415
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，`Categorical.set_categories()`无法知道某个类别是有意省略还是因为拼写错误或（在Python3下）由于类型差异（例如，NumPy
+    S1 dtype和Python字符串）。这可能导致意外行为！
 - en: Sorting and order
+  id: totrans-416
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 排序和顺序
 - en: If categorical data is ordered (`s.cat.ordered == True`), then the order of
     the categories has a meaning and certain operations are possible. If the categorical
     is unordered, `.min()/.max()` will raise a `TypeError`.
+  id: totrans-417
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果分类数据是有序的（`s.cat.ordered == True`），那么类别的顺序具有意义，并且可以进行某些操作。如果分类是无序的，`.min()/.max()`会引发`TypeError`。
 - en: '[PRE122]'
+  id: totrans-418
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE122]'
 - en: You can set categorical data to be ordered by using `as_ordered()` or unordered
     by using `as_unordered()`. These will by default return a *new* object.
+  id: totrans-419
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以使用`as_ordered()`将分类数据设置为有序，或使用`as_unordered()`将其设置为无序。这些默认情况下会返回一个*新*对象。
 - en: '[PRE123]'
+  id: totrans-420
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE123]'
 - en: 'Sorting will use the order defined by categories, not any lexical order present
     on the data type. This is even true for strings and numeric data:'
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
+  zh: 排序将使用由`categories`定义的顺序，而不是数据类型上存在的任何词法顺序。即使对于字符串和数字数据也是如此：
 - en: '[PRE124]'
+  id: totrans-422
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE124]'
 - en: Reordering
+  id: totrans-423
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重新排序
 - en: Reordering the categories is possible via the `Categorical.reorder_categories()`
     and the `Categorical.set_categories()` methods. For `Categorical.reorder_categories()`,
     all old categories must be included in the new categories and no new categories
     are allowed. This will necessarily make the sort order the same as the categories
     order.
+  id: totrans-424
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过`Categorical.reorder_categories()`和`Categorical.set_categories()`方法可以重新排序类别。对于`Categorical.reorder_categories()`，所有旧类别必须包含在新类别中，不允许有新类别。这将必然使排序顺序与类别顺序相同。
 - en: '[PRE125]'
+  id: totrans-425
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE125]'
 - en: Note
+  id: totrans-426
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Note the difference between assigning new categories and reordering the categories:
     the first renames categories and therefore the individual values in the `Series`,
     but if the first position was sorted last, the renamed value will still be sorted
     last. Reordering means that the way values are sorted is different afterwards,
     but not that individual values in the `Series` are changed.'
+  id: totrans-427
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意在分配新类别和重新排序类别之间的区别：第一个重命名类别，因此`Series`中的个别值也会被重命名，但如果第一个位置被排序到最后，重命名的值仍将被排序到最后。重新排序意味着值排序的方式之后不同，但不意味着`Series`中的个别值被更改。
 - en: Note
+  id: totrans-428
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If the `Categorical` is not ordered, [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
     "pandas.Series.min") and [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
     "pandas.Series.max") will raise `TypeError`. Numeric operations like `+`, `-`,
     `*`, `/` and operations based on them (e.g. [`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
     "pandas.Series.median"), which would need to compute the mean between two values
     if the length of an array is even) do not work and raise a `TypeError`.
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`Categorical`未排序，[`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min")和[`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max")会引发`TypeError`。像`+`、`-`、`*`、`/`和基于它们的操作（例如[`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
+    "pandas.Series.median")，如果数组的长度是偶数，则需要计算两个值之间的平均值）这样的数值操作不起作用，并引发`TypeError`。
 - en: Multi column sorting
+  id: totrans-430
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多列排序
 - en: A categorical dtyped column will participate in a multi-column sort in a similar
     manner to other columns. The ordering of the categorical is determined by the
     `categories` of that column.
+  id: totrans-431
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个分类数据类型的列将以与其他列类似的方式参与多列排序。分类的排序由该列的`categories`确定。
 - en: '[PRE126]'
+  id: totrans-432
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE126]'
 - en: Reordering the `categories` changes a future sort.
+  id: totrans-433
   prefs: []
   type: TYPE_NORMAL
+  zh: 重新排序`categories`会改变未来的排序。
 - en: '[PRE127]'
+  id: totrans-434
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE127]'
 - en: Reordering
+  id: totrans-435
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重新排序
 - en: Reordering the categories is possible via the `Categorical.reorder_categories()`
     and the `Categorical.set_categories()` methods. For `Categorical.reorder_categories()`,
     all old categories must be included in the new categories and no new categories
     are allowed. This will necessarily make the sort order the same as the categories
     order.
+  id: totrans-436
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过`Categorical.reorder_categories()`和`Categorical.set_categories()`方法可以重新排序类别。对于`Categorical.reorder_categories()`，所有旧类别必须包含在新类别中，不允许有新类别。这将必然使排序顺序与类别顺序相同。
 - en: '[PRE128]'
+  id: totrans-437
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE128]'
 - en: Note
+  id: totrans-438
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Note the difference between assigning new categories and reordering the categories:
     the first renames categories and therefore the individual values in the `Series`,
     but if the first position was sorted last, the renamed value will still be sorted
     last. Reordering means that the way values are sorted is different afterwards,
     but not that individual values in the `Series` are changed.'
+  id: totrans-439
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意分配新类别和重新排序类别之间的区别：第一个重命名类别，因此`Series`中的个别值也会被重命名，但如果第一个位置被排序为最后一个，则重命名的值仍将被排序为最后一个。重新排序意味着排序值的方式在之后不同，但不意味着`Series`中的个别值被更改。
 - en: Note
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If the `Categorical` is not ordered, [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
     "pandas.Series.min") and [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
     "pandas.Series.max") will raise `TypeError`. Numeric operations like `+`, `-`,
     `*`, `/` and operations based on them (e.g. [`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
     "pandas.Series.median"), which would need to compute the mean between two values
     if the length of an array is even) do not work and raise a `TypeError`.
+  id: totrans-441
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`Categorical`未排序，[`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min")和[`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max")将引发`TypeError`。像`+`、`-`、`*`、`/`和基于它们的操作（例如[`Series.median()`](../reference/api/pandas.Series.median.html#pandas.Series.median
+    "pandas.Series.median")，如果数组的长度是偶数，则需要计算两个值之间的平均值）的数值操作也不起作用，会引发`TypeError`。
 - en: Multi column sorting
+  id: totrans-442
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多列排序
 - en: A categorical dtyped column will participate in a multi-column sort in a similar
     manner to other columns. The ordering of the categorical is determined by the
     `categories` of that column.
+  id: totrans-443
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类数据类型的列将以与其他列类似的方式参与多列排序。分类的排序由该列的`categories`确定。
 - en: '[PRE129]'
+  id: totrans-444
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE129]'
 - en: Reordering the `categories` changes a future sort.
+  id: totrans-445
   prefs: []
   type: TYPE_NORMAL
+  zh: 重新排序`categories`会改变未来的排序。
 - en: '[PRE130]'
+  id: totrans-446
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE130]'
 - en: Comparisons
+  id: totrans-447
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 比较
 - en: 'Comparing categorical data with other objects is possible in three cases:'
+  id: totrans-448
   prefs: []
   type: TYPE_NORMAL
+  zh: 将分类数据与其他对象进行比较有三种情况：
 - en: Comparing equality (`==` and `!=`) to a list-like object (list, Series, array,
     …) of the same length as the categorical data.
+  id: totrans-449
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将等号(`==`和`!=`)与与分类数据长度相同的列表对象（列表、Series、数组等）进行比较。
 - en: All comparisons (`==`, `!=`, `>`, `>=`, `<`, and `<=`) of categorical data to
     another categorical Series, when `ordered==True` and the `categories` are the
     same.
+  id: totrans-450
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 所有对另一个分类系列进行比较（`==`、`!=`、`>`、`>=`、`<`和`<=`），当`ordered==True`且`categories`相同时。
 - en: All comparisons of a categorical data to a scalar.
+  id: totrans-451
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 所有对分类数据与标量的比较。
 - en: All other comparisons, especially “non-equality” comparisons of two categoricals
     with different categories or a categorical with any list-like object, will raise
     a `TypeError`.
+  id: totrans-452
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有其他比较，特别是两个具有不同类别的分类或分类与任何类似列表对象的“非相等”比较，都会引发`TypeError`。
 - en: Note
+  id: totrans-453
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Any “non-equality” comparisons of categorical data with a `Series`, `np.array`,
     `list` or categorical data with different categories or ordering will raise a
     `TypeError` because custom categories ordering could be interpreted in two ways:
     one with taking into account the ordering and one without.'
+  id: totrans-454
   prefs: []
   type: TYPE_NORMAL
+  zh: 任何对分类数据与`Series`、`np.array`、`list`或具有不同类别或排序的分类数据进行“非相等”比较都会引发`TypeError`，因为自定义类别排序可能会被解释为两种方式：一种考虑排序，一种不考虑。
 - en: '[PRE131]'
+  id: totrans-455
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE131]'
 - en: 'Comparing to a categorical with the same categories and ordering or to a scalar
     works:'
+  id: totrans-456
   prefs: []
   type: TYPE_NORMAL
+  zh: 与具有相同类别和排序或标量的分类进行比较有效：
 - en: '[PRE132]'
+  id: totrans-457
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE132]'
 - en: 'Equality comparisons work with any list-like object of same length and scalars:'
+  id: totrans-458
   prefs: []
   type: TYPE_NORMAL
+  zh: 相等比较适用于任何长度相同的类似列表对象和标量：
 - en: '[PRE133]'
+  id: totrans-459
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE133]'
 - en: 'This doesn’t work because the categories are not the same:'
+  id: totrans-460
   prefs: []
   type: TYPE_NORMAL
+  zh: 这不起作用，因为类别不同：
 - en: '[PRE134]'
+  id: totrans-461
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE134]'
 - en: 'If you want to do a “non-equality” comparison of a categorical series with
     a list-like object which is not categorical data, you need to be explicit and
     convert the categorical data back to the original values:'
+  id: totrans-462
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果要对分类系列与非分类数据的类似列表对象进行“非相等”比较，需要明确并将分类数据转换回原始值：
 - en: '[PRE135]'
+  id: totrans-463
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE135]'
 - en: 'When you compare two unordered categoricals with the same categories, the order
     is not considered:'
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
+  zh: 当您比较具有相同类别的无序分类时，不考虑顺序：
 - en: '[PRE136]'
+  id: totrans-465
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE136]'
 - en: Operations
+  id: totrans-466
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 操作
 - en: 'Apart from [`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
     "pandas.Series.min"), [`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
     "pandas.Series.max") and [`Series.mode()`](../reference/api/pandas.Series.mode.html#pandas.Series.mode
     "pandas.Series.mode"), the following operations are possible with categorical
     data:'
+  id: totrans-467
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了[`Series.min()`](../reference/api/pandas.Series.min.html#pandas.Series.min
+    "pandas.Series.min")、[`Series.max()`](../reference/api/pandas.Series.max.html#pandas.Series.max
+    "pandas.Series.max")和[`Series.mode()`](../reference/api/pandas.Series.mode.html#pandas.Series.mode
+    "pandas.Series.mode")之外，还可以对分类数据进行以下操作：
 - en: '`Series` methods like [`Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
     "pandas.Series.value_counts") will use all categories, even if some categories
     are not present in the data:'
+  id: totrans-468
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Series`方法如[`Series.value_counts()`](../reference/api/pandas.Series.value_counts.html#pandas.Series.value_counts
+    "pandas.Series.value_counts")将使用所有类别，即使某些类别在数据中不存在：'
 - en: '[PRE137]'
+  id: totrans-469
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE137]'
 - en: '`DataFrame` methods like [`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
     "pandas.DataFrame.sum") also show “unused” categories when `observed=False`.'
+  id: totrans-470
   prefs: []
   type: TYPE_NORMAL
+  zh: '`DataFrame`方法如[`DataFrame.sum()`](../reference/api/pandas.DataFrame.sum.html#pandas.DataFrame.sum
+    "pandas.DataFrame.sum")在`observed=False`时也会显示“未使用”的类别。'
 - en: '[PRE138]'
+  id: totrans-471
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE138]'
 - en: 'Groupby will also show “unused” categories when `observed=False`:'
+  id: totrans-472
   prefs: []
   type: TYPE_NORMAL
+  zh: 当`observed=False`时，Groupby也会显示“未使用”的类别：
 - en: '[PRE139]'
+  id: totrans-473
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE139]'
 - en: 'Pivot tables:'
+  id: totrans-474
   prefs: []
   type: TYPE_NORMAL
+  zh: 透视表：
 - en: '[PRE140]'
+  id: totrans-475
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE140]'
 - en: Data munging
+  id: totrans-476
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 数据整理
 - en: The optimized pandas data access methods `.loc`, `.iloc`, `.at`, and `.iat`,
     work as normal. The only difference is the return type (for getting) and that
     only values already in `categories` can be assigned.
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
+  zh: 优化过的pandas数据访问方法`.loc`、`.iloc`、`.at`和`.iat`的工作方式与正常情况下相同。唯一的区别是返回类型（用于获取）和只有已在`categories`中的值才能被赋值。
 - en: Getting
+  id: totrans-478
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 获取
 - en: If the slicing operation returns either a `DataFrame` or a column of type `Series`,
     the `category` dtype is preserved.
+  id: totrans-479
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果切片操作返回`DataFrame`或类型为`Series`的列，则`category` dtype将被保留。
 - en: '[PRE141]'
+  id: totrans-480
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE141]'
 - en: 'An example where the category type is not preserved is if you take one single
     row: the resulting `Series` is of dtype `object`:'
+  id: totrans-481
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您只取一行，则类别类型不会被保留的示例：结果的`Series`的dtype为`object`：
 - en: '[PRE142]'
+  id: totrans-482
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE142]'
 - en: Returning a single item from categorical data will also return the value, not
     a categorical of length “1”.
+  id: totrans-483
   prefs: []
   type: TYPE_NORMAL
+  zh: 从分类数据中返回单个项目也将返回该值，而不是长度为“1”的分类。
 - en: '[PRE143]'
+  id: totrans-484
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE143]'
 - en: Note
+  id: totrans-485
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The is in contrast to R’s `factor` function, where `factor(c(1,2,3))[1]` returns
     a single value `factor`.
+  id: totrans-486
   prefs: []
   type: TYPE_NORMAL
+  zh: 这与R的`factor`函数形成对比，其中`factor(c(1,2,3))[1]`返回一个单一值`factor`。
 - en: 'To get a single value `Series` of type `category`, you pass in a list with
     a single value:'
+  id: totrans-487
   prefs: []
   type: TYPE_NORMAL
+  zh: 要获取类型为`category`的单个值`Series`，您需要传入一个包含单个值的列表：
 - en: '[PRE144]'
+  id: totrans-488
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE144]'
 - en: String and datetime accessors
+  id: totrans-489
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 字符串和日期时间访问器
 - en: 'The accessors `.dt` and `.str` will work if the `s.cat.categories` are of an
     appropriate type:'
+  id: totrans-490
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`s.cat.categories`的访问器`.dt`和`.str`是适当类型，则会起作用：
 - en: '[PRE145]'
+  id: totrans-491
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE145]'
 - en: Note
+  id: totrans-492
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The returned `Series` (or `DataFrame`) is of the same type as if you used the
     `.str.<method>` / `.dt.<method>` on a `Series` of that type (and not of type `category`!).
+  id: totrans-493
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回的`Series`（或`DataFrame`）与如果您在该类型的`Series`上使用`.str.<method>` / `.dt.<method>`时的类型相同（而不是`category`类型！）。
 - en: 'That means, that the returned values from methods and properties on the accessors
     of a `Series` and the returned values from methods and properties on the accessors
     of this `Series` transformed to one of type `category` will be equal:'
+  id: totrans-494
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着，从`Series`的访问器上的方法和属性返回的值，以及将这个`Series`转换为`category`类型后的访问器上的方法和属性返回的值将是相等的：
 - en: '[PRE146]'
+  id: totrans-495
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE146]'
 - en: Note
+  id: totrans-496
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The work is done on the `categories` and then a new `Series` is constructed.
     This has some performance implication if you have a `Series` of type string, where
     lots of elements are repeated (i.e. the number of unique elements in the `Series`
     is a lot smaller than the length of the `Series`). In this case it can be faster
     to convert the original `Series` to one of type `category` and use `.str.<method>`
     or `.dt.<property>` on that.
+  id: totrans-497
   prefs: []
   type: TYPE_NORMAL
+  zh: 工作是在`categories`上进行的，然后构建一个新的`Series`。如果您有一个类型为字符串的`Series`，其中许多元素重复（即`Series`中的唯一元素数量远小于`Series`的长度），这会对性能产生一些影响。在这种情况下，将原始`Series`转换为`category`类型并在其上使���`.str.<method>`或`.dt.<property>`可能更快。
 - en: Setting
+  id: totrans-498
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 设置
 - en: 'Setting values in a categorical column (or `Series`) works as long as the value
     is included in the `categories`:'
+  id: totrans-499
   prefs: []
   type: TYPE_NORMAL
+  zh: 在分类列（或`Series`）中设置值只要该值包含在`categories`中即可：
 - en: '[PRE147]'
+  id: totrans-500
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE147]'
 - en: 'Setting values by assigning categorical data will also check that the `categories`
     match:'
+  id: totrans-501
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过分配分类数据来设置值还将检查`categories`是否匹配：
 - en: '[PRE148]'
+  id: totrans-502
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE148]'
 - en: 'Assigning a `Categorical` to parts of a column of other types will use the
     values:'
+  id: totrans-503
   prefs: []
   type: TYPE_NORMAL
+  zh: 将`Categorical`分配给其他类型列的部分将使用这些值：
 - en: '[PRE149]'
+  id: totrans-504
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE149]'
 - en: '### Merging / concatenation'
+  id: totrans-505
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 合并/连接'
 - en: By default, combining `Series` or `DataFrames` which contain the same categories
     results in `category` dtype, otherwise results will depend on the dtype of the
     underlying categories. Merges that result in non-categorical dtypes will likely
     have higher memory usage. Use `.astype` or `union_categoricals` to ensure `category`
     results.
+  id: totrans-506
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，合并包含相同类别的`Series`或`DataFrames`将导致`category`类型，否则结果将取决于底层类别的类型。导致非分类类型的合并可能会导致更高的内存使用量。使用`.astype`或`union_categoricals`来确保`category`类型的结果。
 - en: '[PRE150]'
+  id: totrans-507
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE150]'
 - en: 'The following table summarizes the results of merging `Categoricals`:'
+  id: totrans-508
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下表总结了合并`Categoricals`的结果：
 - en: '| arg1 | arg2 | identical | result |'
+  id: totrans-509
   prefs: []
   type: TYPE_TB
+  zh: '| arg1 | arg2 | 相同 | 结果 |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-510
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| category | category | True | category |'
+  id: totrans-511
   prefs: []
   type: TYPE_TB
+  zh: '| category | category | True | category |'
 - en: '| category (object) | category (object) | False | object (dtype is inferred)
     |'
+  id: totrans-512
   prefs: []
   type: TYPE_TB
+  zh: '| category (object) | category (object) | False | object (dtype is inferred)
+    |'
 - en: '| category (int) | category (float) | False | float (dtype is inferred) |  ###
     Unioning'
+  id: totrans-513
   prefs: []
   type: TYPE_NORMAL
+  zh: '| category (int) | category (float) | False | float (dtype is inferred) |  ###
+    Unioning'
 - en: If you want to combine categoricals that do not necessarily have the same categories,
     the [`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
     "pandas.api.types.union_categoricals") function will combine a list-like of categoricals.
     The new categories will be the union of the categories being combined.
+  id: totrans-514
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果要合并不一定具有相同类别的分类变量，[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals")函数将合并类别的列表。新的类别将是被合并类别的并集。
 - en: '[PRE151]'
+  id: totrans-515
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE151]'
 - en: By default, the resulting categories will be ordered as they appear in the data.
     If you want the categories to be lexsorted, use `sort_categories=True` argument.
+  id: totrans-516
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，结果类别将按照它们在数据中出现的顺序排序。如果希望类别按字典序排序，请使用`sort_categories=True`参数。
 - en: '[PRE152]'
+  id: totrans-517
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE152]'
 - en: '`union_categoricals` also works with the “easy” case of combining two categoricals
     of the same categories and order information (e.g. what you could also `append`
     for).'
+  id: totrans-518
   prefs: []
   type: TYPE_NORMAL
+  zh: '`union_categoricals`也适用于“简单”情况，即合并具有相同类别和顺序信息的两个分类变量（例如，您也可以使用`append`）。'
 - en: '[PRE153]'
+  id: totrans-519
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE153]'
 - en: The below raises `TypeError` because the categories are ordered and not identical.
+  id: totrans-520
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下代码会引发`TypeError`，因为类别是有序的而且不相同。
 - en: '[PRE154]'
+  id: totrans-521
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE154]'
 - en: Ordered categoricals with different categories or orderings can be combined
     by using the `ignore_ordered=True` argument.
+  id: totrans-522
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`ignore_ordered=True`参数可以合并具有不同类别或排序的有序分类变量。
 - en: '[PRE155]'
+  id: totrans-523
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE155]'
 - en: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
     "pandas.api.types.union_categoricals") also works with a `CategoricalIndex`, or
     `Series` containing categorical data, but note that the resulting array will always
     be a plain `Categorical`:'
+  id: totrans-524
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals")也适用于`CategoricalIndex`或包含分类数据的`Series`，但请注意，结果数组将始终是普通的`Categorical`：'
 - en: '[PRE156]'
+  id: totrans-525
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE156]'
 - en: Note
+  id: totrans-526
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: '`union_categoricals` may recode the integer codes for categories when combining
     categoricals. This is likely what you want, but if you are relying on the exact
     numbering of the categories, be aware.'
+  id: totrans-527
   prefs: []
   type: TYPE_NORMAL
+  zh: 当合并分类变量时，`union_categoricals`可能会重新编码类别的整数编码。这可能是您想要的，但如果您依赖于类别的确切编号，请注意。
 - en: '[PRE157]'
+  id: totrans-528
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE157]'
 - en: Getting
+  id: totrans-529
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 获取
 - en: If the slicing operation returns either a `DataFrame` or a column of type `Series`,
     the `category` dtype is preserved.
+  id: totrans-530
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果切片操作返回`DataFrame`或`Series`类型的列，`category`类型将被保留。
 - en: '[PRE158]'
+  id: totrans-531
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE158]'
 - en: 'An example where the category type is not preserved is if you take one single
     row: the resulting `Series` is of dtype `object`:'
+  id: totrans-532
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您只取一行作为示例，类别类型可能不会被保留：结果的`Series`类型为`object`：
 - en: '[PRE159]'
+  id: totrans-533
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE159]'
 - en: Returning a single item from categorical data will also return the value, not
     a categorical of length “1”.
+  id: totrans-534
   prefs: []
   type: TYPE_NORMAL
+  zh: 从分类数据中返回单个项目也将返回该值，而不是长度为“1”的分类。
 - en: '[PRE160]'
+  id: totrans-535
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE160]'
 - en: Note
+  id: totrans-536
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The is in contrast to R’s `factor` function, where `factor(c(1,2,3))[1]` returns
     a single value `factor`.
+  id: totrans-537
   prefs: []
   type: TYPE_NORMAL
+  zh: 这与R的`factor`函数形成对比，其中`factor(c(1,2,3))[1]`返回一个单一值`factor`。
 - en: 'To get a single value `Series` of type `category`, you pass in a list with
     a single value:'
+  id: totrans-538
   prefs: []
   type: TYPE_NORMAL
+  zh: 要获得类型为`category`的单一值`Series`，您可以传入一个只有一个值的列表：
 - en: '[PRE161]'
+  id: totrans-539
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE161]'
 - en: String and datetime accessors
+  id: totrans-540
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 字符串和日期时间访问器
 - en: 'The accessors `.dt` and `.str` will work if the `s.cat.categories` are of an
     appropriate type:'
+  id: totrans-541
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`s.cat.categories`的类型适当，访问器`.dt`和`.str`将起作用：
 - en: '[PRE162]'
+  id: totrans-542
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE162]'
 - en: Note
+  id: totrans-543
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The returned `Series` (or `DataFrame`) is of the same type as if you used the
     `.str.<method>` / `.dt.<method>` on a `Series` of that type (and not of type `category`!).
+  id: totrans-544
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回的`Series`（或`DataFrame`）与在该类型的`Series`上使用`.str.<method>` / `.dt.<method>`时的类型相同（而不是`category`类型！）。
 - en: 'That means, that the returned values from methods and properties on the accessors
     of a `Series` and the returned values from methods and properties on the accessors
     of this `Series` transformed to one of type `category` will be equal:'
+  id: totrans-545
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着，从`Series`的访问器的方法和属性返回的值，以及将这个`Series`转换为`category`类型后从其访问器的方法和属性返回的值将是相等的：
 - en: '[PRE163]'
+  id: totrans-546
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE163]'
 - en: Note
+  id: totrans-547
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The work is done on the `categories` and then a new `Series` is constructed.
     This has some performance implication if you have a `Series` of type string, where
     lots of elements are repeated (i.e. the number of unique elements in the `Series`
     is a lot smaller than the length of the `Series`). In this case it can be faster
     to convert the original `Series` to one of type `category` and use `.str.<method>`
     or `.dt.<property>` on that.
+  id: totrans-548
   prefs: []
   type: TYPE_NORMAL
+  zh: 工作是在`categories`上进行的，然后构建一个新的`Series`。如果您有一个字符串类型的`Series`，其中有很多重复的元素（即`Series`中唯一元素的数量远小于`Series`的长度），这会对性能产生一些影响。在这种情况下，将原始`Series`转换为`category`类型并在其上使用`.str.<method>`或`.dt.<property>`可能更快。
 - en: Setting
+  id: totrans-549
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 设置
 - en: 'Setting values in a categorical column (or `Series`) works as long as the value
     is included in the `categories`:'
+  id: totrans-550
   prefs: []
   type: TYPE_NORMAL
+  zh: 在分类列（或`Series`）中设置值只要该值包含在`categories`中即可：
 - en: '[PRE164]'
+  id: totrans-551
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE164]'
 - en: 'Setting values by assigning categorical data will also check that the `categories`
     match:'
+  id: totrans-552
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过分配分类数据来设置值也会检查`categories`是否匹配：
 - en: '[PRE165]'
+  id: totrans-553
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE165]'
 - en: 'Assigning a `Categorical` to parts of a column of other types will use the
     values:'
+  id: totrans-554
   prefs: []
   type: TYPE_NORMAL
+  zh: 将`Categorical`分配给其他类型列的部分将使用这些值：
 - en: '[PRE166]'
+  id: totrans-555
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE166]'
 - en: '### Merging / concatenation'
+  id: totrans-556
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 合并/连接'
 - en: By default, combining `Series` or `DataFrames` which contain the same categories
     results in `category` dtype, otherwise results will depend on the dtype of the
     underlying categories. Merges that result in non-categorical dtypes will likely
     have higher memory usage. Use `.astype` or `union_categoricals` to ensure `category`
     results.
+  id: totrans-557
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，合并包含相同类别的`Series`或`DataFrames`将导致`category`数据类型，否则结果将取决于底层类别的数据类型。导致非分类数据类型的合并可能会导致更高的内存使用量。使用`.astype`或`union_categoricals`来确保获得`category`结果。
 - en: '[PRE167]'
+  id: totrans-558
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE167]'
 - en: 'The following table summarizes the results of merging `Categoricals`:'
+  id: totrans-559
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下表总结了合并`Categoricals`的结果：
 - en: '| arg1 | arg2 | identical | result |'
+  id: totrans-560
   prefs: []
   type: TYPE_TB
+  zh: '| arg1 | arg2 | 相同 | 结果 |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-561
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| category | category | True | category |'
+  id: totrans-562
   prefs: []
   type: TYPE_TB
+  zh: '| 类别 | 类别 | True | 类别 |'
 - en: '| category (object) | category (object) | False | object (dtype is inferred)
     |'
+  id: totrans-563
   prefs: []
   type: TYPE_TB
+  zh: '| 类别（object） | 类别（object） | False | object（数据类型被推断） |'
 - en: '| category (int) | category (float) | False | float (dtype is inferred) |'
+  id: totrans-564
   prefs: []
   type: TYPE_TB
+  zh: '| 类别（int） | 类别（float） | False | float（数据类型被推断） |'
 - en: '### Unioning'
+  id: totrans-565
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 联合'
 - en: If you want to combine categoricals that do not necessarily have the same categories,
     the [`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
     "pandas.api.types.union_categoricals") function will combine a list-like of categoricals.
     The new categories will be the union of the categories being combined.
+  id: totrans-566
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果要组合不一定具有相同类别的分类变量，则[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals") 函数将组合一个类别列表。新的类别将是被组合的类别的并集。
 - en: '[PRE168]'
+  id: totrans-567
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE168]'
 - en: By default, the resulting categories will be ordered as they appear in the data.
     If you want the categories to be lexsorted, use `sort_categories=True` argument.
+  id: totrans-568
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，结果类别将按照它们在数据中出现的顺序排序。如果希望类别按字典顺序排序，请使用`sort_categories=True`参数。
 - en: '[PRE169]'
+  id: totrans-569
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE169]'
 - en: '`union_categoricals` also works with the “easy” case of combining two categoricals
     of the same categories and order information (e.g. what you could also `append`
     for).'
+  id: totrans-570
   prefs: []
   type: TYPE_NORMAL
+  zh: '`union_categoricals` 也适用于“简单”情况，即组合具有相同类别和排序信息的两个分类变量（例如，您也可以使用`append`）。'
 - en: '[PRE170]'
+  id: totrans-571
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE170]'
 - en: The below raises `TypeError` because the categories are ordered and not identical.
+  id: totrans-572
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下代码会引发`TypeError`，因为类别是有序的且不相同。
 - en: '[PRE171]'
+  id: totrans-573
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE171]'
 - en: Ordered categoricals with different categories or orderings can be combined
     by using the `ignore_ordered=True` argument.
+  id: totrans-574
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过使用`ignore_ordered=True`参数来组合具有不同类别或排序的有序分类。
 - en: '[PRE172]'
+  id: totrans-575
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE172]'
 - en: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
     "pandas.api.types.union_categoricals") also works with a `CategoricalIndex`, or
     `Series` containing categorical data, but note that the resulting array will always
     be a plain `Categorical`:'
+  id: totrans-576
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`union_categoricals()`](../reference/api/pandas.api.types.union_categoricals.html#pandas.api.types.union_categoricals
+    "pandas.api.types.union_categoricals") 也适用于`CategoricalIndex`或包含分类数据的`Series`，但请注意，结果数组将始终是普通的`Categorical`：'
 - en: '[PRE173]'
+  id: totrans-577
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE173]'
 - en: Note
+  id: totrans-578
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: '`union_categoricals` may recode the integer codes for categories when combining
     categoricals. This is likely what you want, but if you are relying on the exact
     numbering of the categories, be aware.'
+  id: totrans-579
   prefs: []
   type: TYPE_NORMAL
+  zh: 当组合分类数据时，`union_categoricals`可能会重新编码类别的整数代码。这可能是您想要的，但如果依赖于类别的确切编号，请注意。
 - en: '[PRE174]'
+  id: totrans-580
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE174]'
 - en: Getting data in/out
+  id: totrans-581
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 数据的读取/写入
 - en: You can write data that contains `category` dtypes to a `HDFStore`. See [here](io.html#io-hdf5-categorical)
     for an example and caveats.
+  id: totrans-582
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以将包含`category` dtypes的数据写入`HDFStore`。参见[这里](io.html#io-hdf5-categorical)以获取示例和注意事项。
 - en: It is also possible to write data to and reading data from *Stata* format files.
     See [here](io.html#io-stata-categorical) for an example and caveats.
+  id: totrans-583
   prefs: []
   type: TYPE_NORMAL
+  zh: 也可以将数据写入和从*Stata*格式文件中读取。参见[这里](io.html#io-stata-categorical)以获取示例和注意事项。
 - en: Writing to a CSV file will convert the data, effectively removing any information
     about the categorical (categories and ordering). So if you read back the CSV file
     you have to convert the relevant columns back to `category` and assign the right
     categories and categories ordering.
+  id: totrans-584
   prefs: []
   type: TYPE_NORMAL
+  zh: 写入CSV文件将转换数据，实际上删除有关分类（类别和排序）的任何信息。因此，如果您读取CSV文件，必须将相关列转换回`category`并分配正确的类别和类别排序。
 - en: '[PRE175]'
+  id: totrans-585
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE175]'
 - en: The same holds for writing to a SQL database with `to_sql`.
+  id: totrans-586
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`to_sql`将数据写入SQL数据��时也是如此。
 - en: Missing data
+  id: totrans-587
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 缺失数据
 - en: pandas primarily uses the value `np.nan` to represent missing data. It is by
     default not included in computations. See the [Missing Data section](missing_data.html#missing-data).
+  id: totrans-588
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas主要使用数值`np.nan`来表示缺失数据。默认情况下不包括在计算中。参见[缺失数据部分](missing_data.html#missing-data)。
 - en: Missing values should **not** be included in the Categorical’s `categories`,
     only in the `values`. Instead, it is understood that NaN is different, and is
     always a possibility. When working with the Categorical’s `codes`, missing values
     will always have a code of `-1`.
+  id: totrans-589
   prefs: []
   type: TYPE_NORMAL
+  zh: 缺失值**不应**包括在分类`categories`中，只应包括在`values`中。相反，应理解NaN是不同的，并且始终可能存在。在处理分类`codes`时，缺失值将始终具有代码`-1`。
 - en: '[PRE176]'
+  id: totrans-590
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE176]'
 - en: 'Methods for working with missing data, e.g. [`isna()`](../reference/api/pandas.Series.isna.html#pandas.Series.isna
     "pandas.Series.isna"), [`fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
     "pandas.Series.fillna"), [`dropna()`](../reference/api/pandas.Series.dropna.html#pandas.Series.dropna
     "pandas.Series.dropna"), all work normally:'
+  id: totrans-591
   prefs: []
   type: TYPE_NORMAL
+  zh: 处理缺失数据的方法，例如[`isna()`](../reference/api/pandas.Series.isna.html#pandas.Series.isna
+    "pandas.Series.isna")，[`fillna()`](../reference/api/pandas.Series.fillna.html#pandas.Series.fillna
+    "pandas.Series.fillna")，[`dropna()`](../reference/api/pandas.Series.dropna.html#pandas.Series.dropna
+    "pandas.Series.dropna")，都可以正常工作：
 - en: '[PRE177]'
+  id: totrans-592
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE177]'
 - en: Differences to R’s `factor`
+  id: totrans-593
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 与R的`factor`的差异
 - en: 'The following differences to R’s factor functions can be observed:'
+  id: totrans-594
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下与R的因子函数的差异可以观察到：
 - en: R’s `levels` are named `categories`.
+  id: totrans-595
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: R的`levels`被命名为`categories`。
 - en: R’s `levels` are always of type string, while `categories` in pandas can be
     of any dtype.
+  id: totrans-596
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: R的`levels`始终为字符串类型，而pandas中的`categories`可以是任何dtype。
 - en: It’s not possible to specify labels at creation time. Use `s.cat.rename_categories(new_labels)`
     afterwards.
+  id: totrans-597
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不可能在创建时指定标签。之后使用`s.cat.rename_categories(new_labels)`。
 - en: In contrast to R’s `factor` function, using categorical data as the sole input
     to create a new categorical series will *not* remove unused categories but create
     a new categorical series which is equal to the passed in one!
+  id: totrans-598
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 与R的`factor`函数相反，将分类数据作为创建新分类系列的唯一输入将*不会*删除未使用的类别，而是创建一个等于传入的新分类系列！
 - en: R allows for missing values to be included in its `levels` (pandas’ `categories`).
     pandas does not allow `NaN` categories, but missing values can still be in the
     `values`.
+  id: totrans-599
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: R允许在其`levels`（pandas的`categories`）中包含缺失值。pandas不允许`NaN`类别，但缺失值仍然可以在`values`中。
 - en: Gotchas
+  id: totrans-600
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 注意事项
 - en: '### Memory usage'
+  id: totrans-601
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 内存使用'
 - en: The memory usage of a `Categorical` is proportional to the number of categories
     plus the length of the data. In contrast, an `object` dtype is a constant times
     the length of the data.
+  id: totrans-602
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Categorical`的内存使用量与类别数和数据长度成正比。相比之下，`object` dtype是数据长度的常数倍。'
 - en: '[PRE178]'
+  id: totrans-603
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE178]'
 - en: Note
+  id: totrans-604
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If the number of categories approaches the length of the data, the `Categorical`
     will use nearly the same or more memory than an equivalent `object` dtype representation.
+  id: totrans-605
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果类别数接近数据长度，`Categorical`将使用几乎相同或更多的内存，而不是等效的`object` dtype表示。
 - en: '[PRE179]'
+  id: totrans-606
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE179]'
 - en: '`Categorical` is not a `numpy` array'
+  id: totrans-607
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`Categorical`不是`numpy`数组'
 - en: Currently, categorical data and the underlying `Categorical` is implemented
     as a Python object and not as a low-level NumPy array dtype. This leads to some
     problems.
+  id: totrans-608
   prefs: []
   type: TYPE_NORMAL
+  zh: 目前，分类数据和底层的`Categorical`是作为Python对象实现的，而不是作为低级别的NumPy数组dtype。这会导致一些问题。
 - en: 'NumPy itself doesn’t know about the new `dtype`:'
+  id: totrans-609
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 本身不知道新的 `dtype`：
 - en: '[PRE180]'
+  id: totrans-610
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE180]'
 - en: 'Dtype comparisons work:'
+  id: totrans-611
   prefs: []
   type: TYPE_NORMAL
+  zh: Dtype 比较有效：
 - en: '[PRE181]'
+  id: totrans-612
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE181]'
 - en: 'To check if a Series contains Categorical data, use `hasattr(s, ''cat'')`:'
+  id: totrans-613
   prefs: []
   type: TYPE_NORMAL
+  zh: 要检查 Series 是否包含分类数据，请使用 `hasattr(s, 'cat')`：
 - en: '[PRE182]'
+  id: totrans-614
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE182]'
 - en: Using NumPy functions on a `Series` of type `category` should not work as `Categoricals`
     are not numeric data (even in the case that `.categories` is numeric).
+  id: totrans-615
   prefs: []
   type: TYPE_NORMAL
+  zh: 在类型为 `category` 的 `Series` 上使用 NumPy 函数应该不起作用，因为 `Categoricals` 不是数值数据（即使 `.categories`
+    是数值的情况下也是如此）。
 - en: '[PRE183]'
+  id: totrans-616
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE183]'
 - en: Note
+  id: totrans-617
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If such a function works, please file a bug at [pandas-dev/pandas](https://github.com/pandas-dev/pandas)!
+  id: totrans-618
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这样的函数有效，请在 [pandas-dev/pandas](https://github.com/pandas-dev/pandas) 提交 bug！
 - en: dtype in apply
+  id: totrans-619
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: apply 中的 dtype
 - en: 'pandas currently does not preserve the dtype in apply functions: If you apply
     along rows you get a `Series` of `object` `dtype` (same as getting a row -> getting
     one element will return a basic type) and applying along columns will also convert
     to object. `NaN` values are unaffected. You can use `fillna` to handle missing
     values before applying a function.'
+  id: totrans-620
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas 目前不会在 apply 函数中保留 dtype：如果你沿着行应用，你会得到一个 `object` `dtype` 的 `Series`（与获取一行相同
+    -> 获取一个元素将返回一个基本类型），并且沿着列应用也会转换为 object。`NaN` 值不受影响。你可以在应用函数之前使用 `fillna` 处理缺失值。
 - en: '[PRE184]'
+  id: totrans-621
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE184]'
 - en: Categorical index
+  id: totrans-622
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 分类索引
 - en: '`CategoricalIndex` is a type of index that is useful for supporting indexing
     with duplicates. This is a container around a `Categorical` and allows efficient
     indexing and storage of an index with a large number of duplicated elements. See
     the [advanced indexing docs](advanced.html#advanced-categoricalindex) for a more
     detailed explanation.'
+  id: totrans-623
   prefs: []
   type: TYPE_NORMAL
+  zh: '`CategoricalIndex` 是一种支持具有重复索引的索引的类型。这是围绕一个 `Categorical` 的容器，允许有效地索引和存储具有大量重复元素的索引。有关更详细的解释，请参阅[高级索引文档](advanced.html#advanced-categoricalindex)。'
 - en: 'Setting the index will create a `CategoricalIndex`:'
+  id: totrans-624
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置索引将创建一个 `CategoricalIndex`：
 - en: '[PRE185]'
+  id: totrans-625
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE185]'
 - en: Side effects
+  id: totrans-626
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 副作用
 - en: 'Constructing a `Series` from a `Categorical` will not copy the input `Categorical`.
     This means that changes to the `Series` will in most cases change the original
     `Categorical`:'
+  id: totrans-627
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 `Categorical` 构建 `Series` 不会复制输入的 `Categorical`。这意味着对 `Series` 的更改在大多数情况下会改变原始的
+    `Categorical`：
 - en: '[PRE186]'
+  id: totrans-628
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE186]'
 - en: 'Use `copy=True` to prevent such a behaviour or simply don’t reuse `Categoricals`:'
+  id: totrans-629
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 `copy=True` 来防止这种行为，或者简单地不要重复使用 `Categoricals`：
 - en: '[PRE187]'
+  id: totrans-630
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE187]'
 - en: Note
+  id: totrans-631
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'This also happens in some cases when you supply a NumPy array instead of a
     `Categorical`: using an int array (e.g. `np.array([1,2,3,4])`) will exhibit the
     same behavior, while using a string array (e.g. `np.array(["a","b","c","a"])`)
     will not.'
+  id: totrans-632
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，当您提供一个 NumPy 数组而不是 `Categorical` 时也会发生这种情况：使用整数数组（例如 `np.array([1,2,3,4])`）会表现出相同的行为，而使用字符串数组（例如
+    `np.array(["a","b","c","a"])`）则不会。
 - en: '### Memory usage'
+  id: totrans-633
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 内存使用'
 - en: The memory usage of a `Categorical` is proportional to the number of categories
     plus the length of the data. In contrast, an `object` dtype is a constant times
     the length of the data.
+  id: totrans-634
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Categorical` 的内存使用量与类别数量加上数据长度成正比。相比之下，`object` dtype 是数据长度的常数倍。'
 - en: '[PRE188]'
+  id: totrans-635
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE188]'
 - en: Note
+  id: totrans-636
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If the number of categories approaches the length of the data, the `Categorical`
     will use nearly the same or more memory than an equivalent `object` dtype representation.
+  id: totrans-637
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果类别数量接近数据长度，`Categorical` 将使用几乎相同或更多的内存，与等效的 `object` dtype 表示相比。
 - en: '[PRE189]'
+  id: totrans-638
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE189]'
 - en: '`Categorical` is not a `numpy` array'
+  id: totrans-639
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`Categorical` 不是一个 `numpy` 数组'
 - en: Currently, categorical data and the underlying `Categorical` is implemented
     as a Python object and not as a low-level NumPy array dtype. This leads to some
     problems.
+  id: totrans-640
   prefs: []
   type: TYPE_NORMAL
+  zh: 当前，分类数据和底层的 `Categorical` 是作为 Python 对象实现的，而不是作为低级 NumPy 数组 dtype。这会导致一些问题。
 - en: 'NumPy itself doesn’t know about the new `dtype`:'
+  id: totrans-641
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 本身不知道新的 `dtype`：
 - en: '[PRE190]'
+  id: totrans-642
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE190]'
 - en: 'Dtype comparisons work:'
+  id: totrans-643
   prefs: []
   type: TYPE_NORMAL
+  zh: Dtype 比较有效：
 - en: '[PRE191]'
+  id: totrans-644
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE191]'
 - en: 'To check if a Series contains Categorical data, use `hasattr(s, ''cat'')`:'
+  id: totrans-645
   prefs: []
   type: TYPE_NORMAL
+  zh: 要检查 Series 是否包含分类数据，请使用 `hasattr(s, 'cat')`：
 - en: '[PRE192]'
+  id: totrans-646
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE192]'
 - en: Using NumPy functions on a `Series` of type `category` should not work as `Categoricals`
     are not numeric data (even in the case that `.categories` is numeric).
+  id: totrans-647
   prefs: []
   type: TYPE_NORMAL
+  zh: 在类型为 `category` 的 `Series` 上使用 NumPy 函数应该不起作用，因为 `Categoricals` 不是数值数据（即使 `.categories`
+    是数值的情况下也是如此）。
 - en: '[PRE193]'
+  id: totrans-648
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE193]'
 - en: Note
+  id: totrans-649
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If such a function works, please file a bug at [pandas-dev/pandas](https://github.com/pandas-dev/pandas)!
+  id: totrans-650
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这样的函数有效，请在 [pandas-dev/pandas](https://github.com/pandas-dev/pandas) 提交 bug！
 - en: dtype in apply
+  id: totrans-651
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: apply 中的 dtype
 - en: 'pandas currently does not preserve the dtype in apply functions: If you apply
     along rows you get a `Series` of `object` `dtype` (same as getting a row -> getting
     one element will return a basic type) and applying along columns will also convert
     to object. `NaN` values are unaffected. You can use `fillna` to handle missing
     values before applying a function.'
+  id: totrans-652
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas目前不会在应用函数中保留dtype：如果沿着行应用，你会得到一个`dtype`为`object`的`Series`（与获取一行相同 -> 获取一个元素将返回基本类型），并且沿着列应用也会转换为object。`NaN`值不受影响。你可以在应用函数之前使用`fillna`来处理缺失值。
 - en: '[PRE194]'
+  id: totrans-653
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE194]'
 - en: Categorical index
+  id: totrans-654
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 分类索引
 - en: '`CategoricalIndex` is a type of index that is useful for supporting indexing
     with duplicates. This is a container around a `Categorical` and allows efficient
     indexing and storage of an index with a large number of duplicated elements. See
     the [advanced indexing docs](advanced.html#advanced-categoricalindex) for a more
     detailed explanation.'
+  id: totrans-655
   prefs: []
   type: TYPE_NORMAL
+  zh: '`CategoricalIndex`是一种支持具有重复索引的索引的类型。这是围绕一个`Categorical`的容器，允许高效地索引和存储具有大量重复元素的索引。查看[高级索引文档](advanced.html#advanced-categoricalindex)以获取更详细的解释。'
 - en: 'Setting the index will create a `CategoricalIndex`:'
+  id: totrans-656
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置索引将创建一个`CategoricalIndex`：
 - en: '[PRE195]'
+  id: totrans-657
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE195]'
 - en: Side effects
+  id: totrans-658
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 副作用
 - en: 'Constructing a `Series` from a `Categorical` will not copy the input `Categorical`.
     This means that changes to the `Series` will in most cases change the original
     `Categorical`:'
+  id: totrans-659
   prefs: []
   type: TYPE_NORMAL
+  zh: 从`Categorical`构建`Series`不会复制输入的`Categorical`。这意味着对`Series`的更改在大多数情况下会改变原始的`Categorical`：
 - en: '[PRE196]'
+  id: totrans-660
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE196]'
 - en: 'Use `copy=True` to prevent such a behaviour or simply don’t reuse `Categoricals`:'
+  id: totrans-661
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`copy=True`来防止这种行为，或者简单地不要重复使用`Categoricals`：
 - en: '[PRE197]'
+  id: totrans-662
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE197]'
 - en: Note
+  id: totrans-663
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'This also happens in some cases when you supply a NumPy array instead of a
     `Categorical`: using an int array (e.g. `np.array([1,2,3,4])`) will exhibit the
     same behavior, while using a string array (e.g. `np.array(["a","b","c","a"])`)
     will not.'
+  id: totrans-664
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，当您提供一个NumPy数组而不是`Categorical`时也会发生这种情况：使用整数数组（例如`np.array([1,2,3,4])`）将表现出相同的行为，而使用字符串数组（例如`np.array(["a","b","c","a"])`）则不会。
