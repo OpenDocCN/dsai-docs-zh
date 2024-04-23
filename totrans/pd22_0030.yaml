@@ -306,6 +306,7 @@
   id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 以前，在操作视图时，会修改视图和父对象：
 - en: '[PRE11]'
   id: totrans-50
   prefs: []
@@ -315,6 +316,7 @@
   id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 当`df`更改时触发拷贝，以避免突变`view`：
 - en: '[PRE12]'
   id: totrans-52
   prefs: []
@@ -324,11 +326,13 @@
   id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 链式赋值'
 - en: Chained assignment references a technique where an object is updated through
     two subsequent indexing operations, e.g.
   id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 链式赋值引用一种技术，通过两个连续的索引操作来更新对象，例如。
 - en: '[PRE13]'
   id: totrans-55
   prefs: []
@@ -341,6 +345,7 @@
   id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 当列`bar`大于5时，更新列`foo`。尽管如此，这违反了写时拷贝的原则，因为它必须在一步中修改视图`df["foo"]`和`df`。因此，链式赋值将始终无法工作，并在启用写时拷贝时引发`ChainedAssignmentError`警告：
 - en: '[PRE14]'
   id: totrans-57
   prefs: []
@@ -350,19 +355,23 @@
   id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用`loc`可以实现写时拷贝。
 - en: '[PRE15]  ## Read-only NumPy arrays'
   id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE15]  ## 只读 NumPy 数组'
 - en: 'Accessing the underlying NumPy array of a DataFrame will return a read-only
     array if the array shares data with the initial DataFrame:'
   id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果数组与初始DataFrame共享数据，则访问DataFrame的底层NumPy数组将返回只读数组：
 - en: 'The array is a copy if the initial DataFrame consists of more than one array:'
   id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果初始DataFrame由多个数组组成，则该数组是一个拷贝：
 - en: '[PRE16]'
   id: totrans-62
   prefs: []
@@ -373,6 +382,7 @@
   id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果DataFrame仅由一个NumPy数组组成，则该数组与DataFrame共享数据：
 - en: '[PRE17]'
   id: totrans-64
   prefs: []
@@ -382,6 +392,7 @@
   id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 此数组是只读的，这意味着它不能就地修改：
 - en: '[PRE18]'
   id: totrans-66
   prefs: []
@@ -392,22 +403,26 @@
   id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于Series也是如此，因为Series始终由单个数组组成。
 - en: 'There are two potential solution to this:'
   id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 这有两种潜在的解决方案：
 - en: Trigger a copy manually if you want to avoid updating DataFrames that share
     memory with your array.
   id: totrans-69
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果想避免更新与数组共享内存的DataFrame，则手动触发拷贝。
 - en: Make the array writeable. This is a more performant solution but circumvents
     Copy-on-Write rules, so it should be used with caution.
   id: totrans-70
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使数组可写。这是一种性能更好的解决方案，但是绕过了写时拷贝规则，因此应谨慎使用。
 - en: '[PRE19]'
   id: totrans-71
   prefs: []
@@ -418,11 +433,13 @@
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 避免模式
 - en: No defensive copy will be performed if two objects share the same data while
     you are modifying one object inplace.
   id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果两个对象共享相同的数据，而您正在就地修改一个对象，则不会执行防御性拷贝。
 - en: '[PRE20]'
   id: totrans-74
   prefs: []
@@ -435,6 +452,7 @@
   id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将创建两个共享数据的对象，因此setitem操作将触发一个拷贝。如果不再需要初始对象`df`，则不需要这样做。简单地重新分配给相同的变量将使对象持有的引用无效。
 - en: '[PRE21]'
   id: totrans-76
   prefs: []
@@ -445,10 +463,12 @@
   id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中不需要拷贝。创建多个引用会保持不必要的引用存在，因此会影响性能，因为写时拷贝。
 - en: '## Copy-on-Write optimizations'
   id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 写时拷贝优化'
 - en: A new lazy copy mechanism that defers the copy until the object in question
     is modified and only if this object shares data with another object. This mechanism
     was added to methods that don’t require a copy of the underlying data. Popular
@@ -458,17 +478,22 @@
   id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 新的惰性拷贝机制，直到修改问题对象并且仅当该对象与另一个对象共享数据时才进行拷贝。此机制已添加到不需要底层数据拷贝的方法中。流行的例子有[`DataFrame.drop()`](../reference/api/pandas.DataFrame.drop.html#pandas.DataFrame.drop
+    "pandas.DataFrame.drop")用于`axis=1`和[`DataFrame.rename()`](../reference/api/pandas.DataFrame.rename.html#pandas.DataFrame.rename
+    "pandas.DataFrame.rename")。
 - en: 'These methods return views when Copy-on-Write is enabled, which provides a
     significant performance improvement compared to the regular execution.  ## How
     to enable CoW'
   id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: '当启用写时拷贝时，这些方法返回视图，与常规执行相比提供了显著的性能改进。  ## 如何启用写时拷贝'
 - en: 'Copy-on-Write can be enabled through the configuration option `copy_on_write`.
     The option can be turned on __globally__ through either of the following:'
   id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 写时拷贝可以通过配置选项`copy_on_write`启用。该选项可以通过以下任一方式__全局__启用：
 - en: '[PRE22]'
   id: totrans-82
   prefs: []
@@ -479,6 +504,7 @@
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 先前的行为
 - en: 'pandas indexing behavior is tricky to understand. Some operations return views
     while other return copies. Depending on the result of the operation, mutating
     one object might accidentally mutate another:'
@@ -621,6 +647,8 @@
   id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用就地方法从[`DataFrame`](../reference/api/pandas.DataFrame.html#pandas.DataFrame
+    "pandas.DataFrame")中选择的列更新列也将不再起作用。
 - en: '[PRE28]'
   id: totrans-107
   prefs: []
@@ -631,6 +659,7 @@
   id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是另一种链式赋值的形式。这通常可以以2种不同的形式重写：
 - en: '[PRE29]'
   id: totrans-109
   prefs: []
@@ -640,6 +669,7 @@
   id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种选择是不使用`inplace`：
 - en: '[PRE30]'
   id: totrans-111
   prefs: []
@@ -649,6 +679,7 @@
   id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: '**构造函数现在默认复制NumPy数组**'
 - en: The Series and DataFrame constructors will now copy NumPy array by default when
     not otherwise specified. This was changed to avoid mutating a pandas object when
     the NumPy array is changed inplace outside of pandas. You can set `copy=False`
@@ -656,11 +687,13 @@
   id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 当没有另行指定时，Series和DataFrame构造函数现在默认复制NumPy数组。这一变更是为了避免在pandas之外原位更改NumPy数组时突变pandas对象。您可以设置`copy=False`来避免此复制。
 - en: Description
   id: totrans-114
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 描述
 - en: CoW means that any DataFrame or Series derived from another in any way always
     behaves as a copy. As a consequence, we can only change the values of an object
     through modifying the object itself. CoW disallows updating a DataFrame or a Series
@@ -668,15 +701,18 @@
   id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: CoW意味着以任何方式从另一个DataFrame或Series派生的任何DataFrame或Series都始终表现为副本。因此，我们只能通过修改对象本身来更改对象的值。CoW不允许直接更新共享数据与另一个DataFrame或Series对象的DataFrame或Series。
 - en: This avoids side-effects when modifying values and hence, most methods can avoid
     actually copying the data and only trigger a copy when necessary.
   id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 在修改值时避免副作用，因此，大多数方法可以避免实际复制数据，并且只在必要时触发复制。
 - en: 'The following example will operate inplace with CoW:'
   id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下示例将在CoW下进行就地操作：
 - en: '[PRE31]'
   id: totrans-118
   prefs: []
@@ -688,6 +724,7 @@
   id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 对象`df`不与任何其他对象共享数据，因此在更新值时不触发复制。相比之下，下面的操作在CoW下触发数据的复制：
 - en: '[PRE32]'
   id: totrans-120
   prefs: []
@@ -700,12 +737,14 @@
   id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: '`reset_index`返回一个带有CoW的延迟副本，而在没有CoW的情况下复制数据。由于`df`和`df2`这两个对象共享相同的数据，所以当修改`df2`时会触发复制。对象`df`仍然具有最初的相同值，而`df2`已经被修改。'
 - en: 'If the object `df` isn’t needed anymore after performing the `reset_index`
     operation, you can emulate an inplace-like operation through assigning the output
     of `reset_index` to the same variable:'
   id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果在执行`reset_index`操作后不再需要对象`df`，则可以通过将`reset_index`的输出分配给同一变量来模拟类似于inplace的操作：
 - en: '[PRE33]'
   id: totrans-123
   prefs: []
@@ -718,10 +757,12 @@
   id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 当`reset_index`的结果重新分配时，初始对象就会超出范围，因此`df`与任何其他对象都不共享数据。在修改对象时，不需要复制。这通常对于列表中列出的所有方法都成立[写时复制优化](#写时复制优化)。
 - en: 'Previously, when operating on views, the view and the parent object was modified:'
   id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 以前，在操作视图时，视图和父对象都会被修改：
 - en: '[PRE34]'
   id: totrans-126
   prefs: []
@@ -731,6 +772,7 @@
   id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 当修改`df`时，CoW会触发复制以避免同时更改`view`：
 - en: '[PRE35]'
   id: totrans-128
   prefs: []
@@ -740,11 +782,13 @@
   id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 链式赋值'
 - en: Chained assignment references a technique where an object is updated through
     two subsequent indexing operations, e.g.
   id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 链式赋值引用一种通过两个后续索引操作更新对象的技术，例如
 - en: '[PRE36]'
   id: totrans-131
   prefs: []
@@ -757,6 +801,7 @@
   id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 当列`bar`大于5时，更新列`foo`。尽管如此，这违反了CoW原则，因为它需要一次性修改视图`df["foo"]`和`df`。因此，链式赋值始终不起作用，并在启用CoW时引发`ChainedAssignmentError`警告：
 - en: '[PRE37]'
   id: totrans-133
   prefs: []
@@ -766,6 +811,7 @@
   id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`loc`可以使用写时复制来完成这个过程。
 - en: '[PRE38]'
   id: totrans-135
   prefs: []
@@ -775,11 +821,13 @@
   id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 只读NumPy数组'
 - en: 'Accessing the underlying NumPy array of a DataFrame will return a read-only
     array if the array shares data with the initial DataFrame:'
   id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 访问DataFrame的底层NumPy数组将返回一个只读数组，如果数组与初始DataFrame共享数据：
 - en: 'The array is a copy if the initial DataFrame consists of more than one array:'
   id: totrans-138
   prefs: []
