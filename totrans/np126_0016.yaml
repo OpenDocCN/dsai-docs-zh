@@ -1,11 +1,15 @@
 - en: Interoperability with NumPy
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 与 NumPy 的互操作性
 - en: 原文：[https://numpy.org/doc/1.26/user/basics.interoperability.html](https://numpy.org/doc/1.26/user/basics.interoperability.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://numpy.org/doc/1.26/user/basics.interoperability.html](https://numpy.org/doc/1.26/user/basics.interoperability.html)
 - en: NumPy’s ndarray objects provide both a high-level API for operations on array-structured
     data and a concrete implementation of the API based on [strided in-RAM storage](../reference/arrays.html#arrays).
     While this API is powerful and fairly general, its concrete implementation has
@@ -24,64 +28,101 @@
     physical units ([astropy.units](https://docs.astropy.org/en/stable/units/), [pint](https://pint.readthedocs.io/),
     [unyt](https://unyt.readthedocs.io/)), among others that add additional functionality
     on top of the NumPy API.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 的 ndarray 对象提供了对数组结构化数据进行操作的高级 API，以及基于 [分块内存中存储](../reference/arrays.html#arrays)
+    的 API 的具体实现。虽然这个 API 功能强大且相当通用，但它的具体实现有限制。随着数据集的增长和 NumPy 在各种新环境和架构中的使用，有些情况下分块内存中存储策略不适用，这导致不同的库为其自己的用途重新实现了这个
+    API。这包括 GPU 数组 ([CuPy](https://cupy.dev/))、稀疏数组 ([`scipy.sparse`](https://docs.scipy.org/doc/scipy/reference/sparse.html#module-scipy.sparse
+    "(在 SciPy v1.11.2 中)")、[PyData/Sparse](https://sparse.pydata.org/)) 和并行数组 ([Dask](https://docs.dask.org/)
+    数组)，以及深度学习框架中类似 NumPy 的实现，如 [TensorFlow](https://www.tensorflow.org/) 和 [PyTorch](https://pytorch.org/)。同样，还有许多项目建立在
+    NumPy API 之上，用于标记和索引数组 ([XArray](http://xarray.pydata.org/))、自动微分 ([JAX](https://jax.readthedocs.io/))、遮罩数组
+    ([`numpy.ma`](../reference/maskedarray.generic.html#module-numpy.ma "numpy.ma"))、物理单位
+    ([astropy.units](https://docs.astropy.org/en/stable/units/)、[pint](https://pint.readthedocs.io/)、[unyt](https://unyt.readthedocs.io/))
+    等等，这些项目在 NumPy API 的基础上添加了额外的功能。
 - en: Yet, users still want to work with these arrays using the familiar NumPy API
     and re-use existing code with minimal (ideally zero) porting overhead. With this
     goal in mind, various protocols are defined for implementations of multi-dimensional
     arrays with high-level APIs matching NumPy.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，用户仍然希望使用熟悉的 NumPy API 和最小（理想情况下为零）的移植开销重新使用现有代码来处理这些数组。考虑到这一目标，为具有与 NumPy
+    匹配的高级 API 的多维数组实现定义了各种协议。
 - en: 'Broadly speaking, there are three groups of features used for interoperability
     with NumPy:'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 广义上来说，用于与 NumPy 互操作的特性分为三组：
 - en: Methods of turning a foreign object into an ndarray;
+  id: totrans-5
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将外部对象转换为 ndarray 的方法；
 - en: Methods of deferring execution from a NumPy function to another array library;
+  id: totrans-6
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将执行延迟从 NumPy 函数转移到另一个数组库的方法；
 - en: Methods that use NumPy functions and return an instance of a foreign object.
+  id: totrans-7
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用 NumPy 函数并返回外部对象实例的方法。
 - en: We describe these features below.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在下面描述这些特性。
 - en: 1\. Using arbitrary objects in NumPy
+  id: totrans-9
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 1\. 在 NumPy 中使用任意对象
 - en: 'The first set of interoperability features from the NumPy API allows foreign
     objects to be treated as NumPy arrays whenever possible. When NumPy functions
     encounter a foreign object, they will try (in order):'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy API 的第一组互操作特性允许在可能的情况下将外部对象视为 NumPy 数组。当 NumPy 函数遇到外部对象时，它们会依次尝试：
 - en: The buffer protocol, described [in the Python C-API documentation](https://docs.python.org/3/c-api/buffer.html
     "(in Python v3.11)").
+  id: totrans-11
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 缓冲区协议，在 [Python C-API 文档](https://docs.python.org/3/c-api/buffer.html "(在 Python
+    v3.11 中)") 中描述。
 - en: The `__array_interface__` protocol, described [in this page](../reference/arrays.interface.html#arrays-interface).
     A precursor to Python’s buffer protocol, it defines a way to access the contents
     of a NumPy array from other C extensions.
+  id: totrans-12
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`__array_interface__` 协议，描述在 [此页面](../reference/arrays.interface.html#arrays-interface)
+    中。作为 Python 缓冲区协议的前身，它定义了一种从其他 C 扩展中访问 NumPy 数组内容的方法。'
 - en: The `__array__()` method, which asks an arbitrary object to convert itself into
     an array.
+  id: totrans-13
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`__array__()` 方法，用于要求任意对象将自身转换为数组。'
 - en: For both the buffer and the `__array_interface__` protocols, the object describes
     its memory layout and NumPy does everything else (zero-copy if possible). If that’s
     not possible, the object itself is responsible for returning a `ndarray` from
     `__array__()`.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于缓冲区和`__array_interface__`协议，对象描述其内存布局，NumPy会完成其他一切（如果可能的话，就是零拷贝）。如果这不可能，那么对象本身负责从`__array__()`返回一个`ndarray`。
 - en: '[DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)") is
     yet another protocol to convert foreign objects to NumPy arrays in a language
     and device agnostic manner. NumPy doesn’t implicitly convert objects to ndarrays
@@ -90,50 +131,76 @@
     and outputs a NumPy ndarray (which is generally a view of the input object’s data
     buffer). The [Python Specification for DLPack](https://dmlc.github.io/dlpack/latest/python_spec.html#python-spec
     "(in DLPack)") page explains the `__dlpack__` protocol in detail.'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: '[DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)")是用于以一种语言和设备不可知的方式将外部对象转换为NumPy数组的另一种协议。NumPy不会使用DLPack隐式地将对象转换为ndarrays。它提供了函数[`numpy.from_dlpack`](../reference/generated/numpy.from_dlpack.html#numpy.from_dlpack
+    "numpy.from_dlpack")，该函数接受任何实现`__dlpack__`方法的对象，并输出一个NumPy ndarray（通常是输入对象的数据缓冲区的视图）。[DLPack的Python规范](https://dmlc.github.io/dlpack/latest/python_spec.html#python-spec
+    "(in DLPack)")页面详细解释了`__dlpack__`协议。'
 - en: The array interface protocol
+  id: totrans-16
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 数组接口协议
 - en: 'The [array interface protocol](../reference/arrays.interface.html#arrays-interface)
     defines a way for array-like objects to re-use each other’s data buffers. Its
     implementation relies on the existence of the following attributes or methods:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: '[数组接口协议](../reference/arrays.interface.html#arrays-interface)定义了一种让类似数组对象重新使用彼此的数据缓冲区的方式。其实现依赖于以下属性或方法的存在：'
 - en: '`__array_interface__`: a Python dictionary containing the shape, the element
     type, and optionally, the data buffer address and the strides of an array-like
     object;'
+  id: totrans-18
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_interface__`：包含数组样对象的形状、元素类型，可选的数据缓冲区地址和步长的Python字典；'
 - en: '`__array__()`: a method returning the NumPy ndarray view of an array-like object;'
+  id: totrans-19
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array__()`: 返回数组样对象的NumPy ndarray视图的方法；'
 - en: 'The `__array_interface__` attribute can be inspected directly:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以直接检查`__array_interface__`属性：
 - en: '[PRE0]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'The `__array_interface__` attribute can also be used to manipulate the object
     data in place:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_interface__`属性还可以用于就地操纵对象数据：'
 - en: '[PRE1]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'We can check that `arr` and `new_arr` share the same data buffer:'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以检查`arr`和`new_arr`是否共享相同的数据缓冲区：
 - en: '[PRE2]'
+  id: totrans-25
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: The `__array__()` method
+  id: totrans-26
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array__()`方法'
 - en: The `__array__()` method ensures that any NumPy-like object (an array, any object
     exposing the array interface, an object whose `__array__()` method returns an
     array or any nested sequence) that implements it can be used as a NumPy array.
@@ -142,92 +209,137 @@
     This is not optimal, as coercing arrays into ndarrays may cause performance problems
     or create the need for copies and loss of metadata, as the original object and
     any attributes/behavior it may have had, is lost.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array__()`方法确保任何类似于NumPy的对象（数组，任何公开数组接口的对象，其`__array__()`方法返回数组或任何嵌套序列的对象）实现它都可以用作NumPy数组。如果可能，这意味着使用`__array__()`来创建数组样对象的NumPy
+    ndarray视图。否则，这将复制数据到一个新的ndarray对象中。这并不是最佳选择，因为强制将数组强制转换为ndarrays可能会导致性能问题，或者需要复制和丢失元数据，原始对象以及原始对象可能具有的任何属性/行为都会丢失。'
 - en: To see an example of a custom array implementation including the use of `__array__()`,
     see [Writing custom array containers](basics.dispatch.html#basics-dispatch).
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 要查看包括使用`__array__()`的自定义数组实现的示例，请参见[编写自定义数组容器](basics.dispatch.html#basics-dispatch)。
 - en: The DLPack Protocol
+  id: totrans-29
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DLPack协议
 - en: 'The [DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)")
     protocol defines a memory-layout of strided n-dimensional array objects. It offers
     the following syntax for data exchange:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: '[DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)")协议定义了跨strided
+    n维数组对象的内存布局。它提供以下语法以进行数据交换：'
 - en: A [`numpy.from_dlpack`](../reference/generated/numpy.from_dlpack.html#numpy.from_dlpack
     "numpy.from_dlpack") function, which accepts (array) objects with a `__dlpack__`
     method and uses that method to construct a new array containing the data from
     `x`.
+  id: totrans-31
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 一个[`numpy.from_dlpack`](../reference/generated/numpy.from_dlpack.html#numpy.from_dlpack
+    "numpy.from_dlpack")函数，它接受带有`__dlpack__`方法的（数组）对象，并使用该方法来构建包含来自`x`的数据的新数组。
 - en: '`__dlpack__(self, stream=None)` and `__dlpack_device__` methods on the array
     object, which will be called from within `from_dlpack`, to query what device the
     array is on (may be needed to pass in the correct stream, e.g. in the case of
     multiple GPUs) and to access the data.'
+  id: totrans-32
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 数组对象上的`__dlpack__(self, stream=None)`和`__dlpack_device__`方法，它们将在`from_dlpack`中调用，以查询数组所在的设备（在多个GPU的情况下可能需要传入正确的流），以及访问数据。
 - en: Unlike the buffer protocol, DLPack allows exchanging arrays containing data
     on devices other than the CPU (e.g. Vulkan or GPU). Since NumPy only supports
     CPU, it can only convert objects whose data exists on the CPU. But other libraries,
     like [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/), may exchange
     data on GPU using this protocol.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 与缓冲区协议不同，DLPack允许交换包含非CPU设备（例如Vulkan或GPU）上数据的数组。由于NumPy仅支持CPU，它只能转换数据存在于CPU上的对象。但其他库，如[PyTorch](https://pytorch.org/)和
+    [CuPy](https://cupy.dev/)，可能使用该协议在GPU上交换数据。
 - en: 2\. Operating on foreign objects without converting
+  id: totrans-34
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 2\. 在不转换的情况下操作外部对象
 - en: A second set of methods defined by the NumPy API allows us to defer the execution
     from a NumPy function to another array library.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy API定义的第二组方法允许我们将执行从NumPy函数延迟到另一个数组库。
 - en: Consider the following function.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑以下函数。
 - en: '[PRE3]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Note that [`np.exp`](../reference/generated/numpy.exp.html#numpy.exp "numpy.exp")
     is a [ufunc](basics.ufuncs.html#ufuncs-basics), which means that it operates on
     ndarrays in an element-by-element fashion. On the other hand, [`np.mean`](../reference/generated/numpy.mean.html#numpy.mean
     "numpy.mean") operates along one of the array’s axes.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，[`np.exp`](../reference/generated/numpy.exp.html#numpy.exp "numpy.exp")是一个[ufunc](basics.ufuncs.html#ufuncs-basics)，这意味着它以逐元素的方式作用于ndarrays。另一方面，[`np.mean`](../reference/generated/numpy.mean.html#numpy.mean
+    "numpy.mean")沿着数组的一个轴进行操作。
 - en: 'We can apply `f` to a NumPy ndarray object directly:'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以将`f`直接应用于一个NumPy ndarray对象：
 - en: '[PRE4]'
+  id: totrans-40
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: We would like this function to work equally well with any NumPy-like array object.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们希望这个函数能够在任何类似于NumPy的数组对象上同样有效。
 - en: 'NumPy allows a class to indicate that it would like to handle computations
     in a custom-defined way through the following interfaces:'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy允许类通过以下接口指示它希望以自定义方式进行计算：
 - en: '`__array_ufunc__`: allows third-party objects to support and override [ufuncs](basics.ufuncs.html#ufuncs-basics).'
+  id: totrans-43
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_ufunc__`: 允许第三方对象支持和覆盖[ufuncs](basics.ufuncs.html#ufuncs-basics)。'
 - en: '`__array_function__`: a catch-all for NumPy functionality that is not covered
     by the `__array_ufunc__` protocol for universal functions.'
+  id: totrans-44
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_function__`: 用于覆盖通用函数中不涵盖的NumPy功能的默认操作。'
 - en: As long as foreign objects implement the `__array_ufunc__` or `__array_function__`
     protocols, it is possible to operate on them without the need for explicit conversion.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 只要外部对象实现了`__array_ufunc__`或`__array_function__`协议，就可以在它们上操作而无需进行显式转换。
 - en: The `__array_ufunc__` protocol
+  id: totrans-46
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array_ufunc__` 协议'
 - en: A [universal function (or ufunc for short)](basics.ufuncs.html#ufuncs-basics)
     is a “vectorized” wrapper for a function that takes a fixed number of specific
     inputs and produces a fixed number of specific outputs. The output of the ufunc
@@ -237,49 +349,69 @@
     method defined on that (non-ndarray) object has access to the NumPy ufunc. Because
     ufuncs have a well-defined structure, the foreign `__array_ufunc__` method may
     rely on ufunc attributes like `.at()`, `.reduce()`, and others.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: '[通用函数（或简写为ufunc）](basics.ufuncs.html#ufuncs-basics)是一个对函数进行“矢量化”封装的函数，它接受固定数量的特定输入并产生固定数量的特定输出。如果非ndarray对象的输入定义了`__array_ufunc__`方法，则控制完全传递给该函数，即ufunc将被覆盖。在该（非ndarray）对象上定义的`__array_ufunc__`方法可以访问NumPy
+    ufunc。由于ufunc具有明确定义的结构，外部`__array_ufunc__`方法可能依赖ufunc属性，如`.at()`、`.reduce()`等。'
 - en: A subclass can override what happens when executing NumPy ufuncs on it by overriding
     the default `ndarray.__array_ufunc__` method. This method is executed instead
     of the ufunc and should return either the result of the operation, or `NotImplemented`
     if the operation requested is not implemented.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 子类可以通过覆盖默认的`ndarray.__array_ufunc__`方法来覆盖在其上执行NumPy ufuncs时发生的情况。这个方法将代替ufunc的执行，并且应该返回操作的结果，或者如果请求的操作未实现，则返回`NotImplemented`。
 - en: The `__array_function__` protocol
+  id: totrans-49
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array_function__` 协议'
 - en: To achieve enough coverage of the NumPy API to support downstream projects,
     there is a need to go beyond `__array_ufunc__` and implement a protocol that allows
     arguments of a NumPy function to take control and divert execution to another
     function (for example, a GPU or parallel implementation) in a way that is safe
     and consistent across projects.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了足够覆盖NumPy API以支持下游项目，需要超越 `__array_ufunc__` 并实现一个协议，允许NumPy函数的参数控制并将执行转移到另一个函数（例如GPU或并行实现），以安全和一致的方式跨项目进行。
 - en: The semantics of `__array_function__` are very similar to `__array_ufunc__`,
     except the operation is specified by an arbitrary callable object rather than
     a ufunc instance and method. For more details, see [NEP 18 — A dispatch mechanism
     for NumPy’s high level array functions](https://numpy.org/neps/nep-0018-array-function-protocol.html#nep18
     "(in NumPy Enhancement Proposals)").
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_function__`的语义与`__array_ufunc__`非常相似，只是操作由任意可调用对象指定，而不是由ufunc实例和方法指定。更多细节，请参见[NEP
+    18 — NumPy高级数组函数的调度机制](https://numpy.org/neps/nep-0018-array-function-protocol.html#nep18)，其中包含NumPy
+    Enhancement Proposals。"'
 - en: 3\. Returning foreign objects
+  id: totrans-52
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 3\. 返回外部对象
 - en: A third type of feature set is meant to use the NumPy function implementation
     and then convert the return value back into an instance of the foreign object.
     The `__array_finalize__` and `__array_wrap__` methods act behind the scenes to
     ensure that the return type of a NumPy function can be specified as needed.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 第三种特性集旨在使用NumPy函数实现，然后将返回值转换为外部对象的实例。`__array_finalize__` 和 `__array_wrap__`
+    方法在幕后起作用，以确保可以根据需要指定NumPy函数的返回类型。
 - en: The `__array_finalize__` method is the mechanism that NumPy provides to allow
     subclasses to handle the various ways that new instances get created. This method
     is called whenever the system internally allocates a new array from an object
     which is a subclass (subtype) of the ndarray. It can be used to change attributes
     after construction, or to update meta-information from the “parent.”
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_finalize__` 方法是NumPy提供的机制，允许子类处理新实例被创建的各种方式。每当系统从ndarray的子类（子类型）内部分配新数组时，都会调用此方法。它可以用于在构建后更改属性，或从“父类”更新元信息。'
 - en: The `__array_wrap__` method “wraps up the action” in the sense of allowing any
     object (such as user-defined functions) to set the type of its return value and
     update attributes and metadata. This can be seen as the opposite of the `__array__`
@@ -290,297 +422,463 @@
     for the Python type of the returned object. For example, subclasses may opt to
     use this method to transform the output array into an instance of the subclass
     and update metadata before returning the array to the user.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_wrap__` 方法“包装了行动”，意思是允许任何对象（如用户定义的函数）设置其返回值的类型并更新属性和元数据。这可以被视为`__array__`方法的相反。在每个实现`__array_wrap__`的对象的最高*数组优先级*或指定的输出对象之后，将对输入对象调用此方法。
+    `__array_priority__`属性用于确定在返回对象的Python类型存在多种可能性的情况下要返回什么类型的对象。例如，子类可以选择使用此方法将输出数组转换为子类的实例，并在将数组返回给用户之前更新元数据。'
 - en: For more information on these methods, see [Subclassing ndarray](basics.subclassing.html#basics-subclassing)
     and [Specific features of ndarray sub-typing](c-info.beyond-basics.html#specific-array-subtyping).
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关这些方法的更多信息，请参阅[ndarray子类化](basics.subclassing.html#basics-subclassing) 和[ndarray子类型的特定特性](c-info.beyond-basics.html#specific-array-subtyping)。
 - en: Interoperability examples
+  id: totrans-57
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 互操作性示例
 - en: 'Example: Pandas `Series` objects'
+  id: totrans-58
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 示例：Pandas `Series` 对象
 - en: 'Consider the following:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑以下内容：
 - en: '[PRE5]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Now, `ser` is **not** a ndarray, but because it [implements the __array_ufunc__
     protocol](https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe-interoperability-with-numpy-functions),
     we can apply ufuncs to it as if it were a ndarray:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，`ser` **不是**一个ndarray，但因为它[实现了__array_ufunc__协议](https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe-interoperability-with-numpy-functions)，我们可以将ufunc应用于它，好像它是一个ndarray一样：
 - en: '[PRE6]'
+  id: totrans-62
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'We can even do operations with other ndarrays:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们甚至可以与其他ndarray执行操作：
 - en: '[PRE7]'
+  id: totrans-64
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Example: PyTorch tensors'
+  id: totrans-65
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 示例：PyTorch张量
 - en: '[PyTorch](https://pytorch.org/) is an optimized tensor library for deep learning
     using GPUs and CPUs. PyTorch arrays are commonly called *tensors*. Tensors are
     similar to NumPy’s ndarrays, except that tensors can run on GPUs or other hardware
     accelerators. In fact, tensors and NumPy arrays can often share the same underlying
     memory, eliminating the need to copy data.'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PyTorch](https://pytorch.org/) 是一个针对使用 GPU 和 CPU 进行深度学习的优化张量库。PyTorch 数组通常被称为
+    *张量*。张量类似于 NumPy 的 ndarrays，只是张量可以在 GPU 或其他硬件加速器上运行。事实上，张量和 NumPy 数组通常可以共享相同的底层内存，消除了复制数据的需要。'
 - en: '[PRE8]'
+  id: totrans-67
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Note that `x_np` and `x_tensor` are different kinds of objects:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意 `x_np` 和 `x_tensor` 是不同种类的对象：
 - en: '[PRE9]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'However, we can treat PyTorch tensors as NumPy arrays without the need for
     explicit conversion:'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，我们可以将 PyTorch 张量视为 NumPy 数组，而无需显式转换：
 - en: '[PRE10]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Also, note that the return type of this function is compatible with the initial
     data type.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，请注意该函数的返回类型与初始数据类型兼容。
 - en: Warning
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: While this mixing of ndarrays and tensors may be convenient, it is not recommended.
     It will not work for non-CPU tensors, and will have unexpected behavior in corner
     cases. Users should prefer explicitly converting the ndarray to a tensor.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管将 ndarrays 和张量混合使用可能很方便，但不建议这样做。它对于非 CPU 张量不起作用，在一些边缘情况下会有意外的行为。用户应该优先显式地将
+    ndarray 转换为张量。
 - en: Note
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: PyTorch does not implement `__array_function__` or `__array_ufunc__`. Under
     the hood, the `Tensor.__array__()` method returns a NumPy ndarray as a view of
     the tensor data buffer. See [this issue](https://github.com/pytorch/pytorch/issues/24015)
     and the [__torch_function__ implementation](https://github.com/pytorch/pytorch/blob/master/torch/overrides.py)
     for details.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: PyTorch 没有实现 `__array_function__` 或 `__array_ufunc__`。在底层，`Tensor.__array__()`
+    方法返回张量数据缓冲区的 NumPy ndarray 视图。详情请参阅 [此问题](https://github.com/pytorch/pytorch/issues/24015)
+    和 [__torch_function__ 实现](https://github.com/pytorch/pytorch/blob/master/torch/overrides.py)。
 - en: 'Note also that we can see `__array_wrap__` in action here, even though `torch.Tensor`
     is not a subclass of ndarray:'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 还需注意，即使 `torch.Tensor` 不是 ndarray 的子类，我们也可以看到 `__array_wrap__` 在这里发挥作用：
 - en: '[PRE11]'
+  id: totrans-78
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: PyTorch implements `__array_wrap__` to be able to get tensors back from NumPy
     functions, and we can modify it directly to control which type of objects are
     returned from these functions.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: PyTorch 实现了 `__array_wrap__` 来能够从 NumPy 函数中获取张量，并且我们可以直接修改它以控制从这些函数中返回哪种类型的对象。
 - en: 'Example: CuPy arrays'
+  id: totrans-80
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 例如：CuPy 数组
 - en: CuPy is a NumPy/SciPy-compatible array library for GPU-accelerated computing
     with Python. CuPy implements a subset of the NumPy interface by implementing `cupy.ndarray`,
     [a counterpart to NumPy ndarrays](https://docs.cupy.dev/en/stable/reference/ndarray.html).
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: CuPy 是一个用于 GPU 加速计算的 NumPy/SciPy 兼容数组库。CuPy 通过实现 `cupy.ndarray` 实现了 NumPy 接口的子集，[与
+    NumPy ndarrays 对应](https://docs.cupy.dev/en/stable/reference/ndarray.html)。
 - en: '[PRE12]'
+  id: totrans-82
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'The `cupy.ndarray` object implements the `__array_ufunc__` interface. This
     enables NumPy ufuncs to be applied to CuPy arrays (this will defer operation to
     the matching CuPy CUDA/ROCm implementation of the ufunc):'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: '`cupy.ndarray` 对象实现了 `__array_ufunc__` 接口。这使得可以将 NumPy ufuncs 应用于 CuPy 数组（这将推迟操作到与
+    ufunc 匹配的 CuPy CUDA/ROCm 实现）：'
 - en: '[PRE13]'
+  id: totrans-84
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Note that the return type of these operations is still consistent with the
     initial type:'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意这些操作的返回类型仍与初始类型一致：
 - en: '[PRE14]'
+  id: totrans-86
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: See [this page in the CuPy documentation for details](https://docs.cupy.dev/en/stable/reference/ufunc.html).
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 请参阅 [CuPy 文档中的此页面以获取详细信息](https://docs.cupy.dev/en/stable/reference/ufunc.html)。
 - en: '`cupy.ndarray` also implements the `__array_function__` interface, meaning
     it is possible to do operations such as'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: '`cupy.ndarray` 也实现了 `__array_function__` 接口，这意味着可以执行诸如'
 - en: '[PRE15]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: CuPy implements many NumPy functions on `cupy.ndarray` objects, but not all.
     See [the CuPy documentation](https://docs.cupy.dev/en/stable/user_guide/difference.html)
     for details.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: CuPy 在 `cupy.ndarray` 对象上实现了许多 NumPy 函数，但并非全部。详情请参阅 [CuPy 文档](https://docs.cupy.dev/en/stable/user_guide/difference.html)。
 - en: 'Example: Dask arrays'
+  id: totrans-91
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 例如：Dask 数组
 - en: Dask is a flexible library for parallel computing in Python. Dask Array implements
     a subset of the NumPy ndarray interface using blocked algorithms, cutting up the
     large array into many small arrays. This allows computations on larger-than-memory
     arrays using multiple cores.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask 是 Python 中用于并行计算的灵活库。Dask Array 使用分块算法实现了 NumPy ndarray 接口的子集，将大数组切分成许多小数组。这允许使用多个核心对大于内存的数组进行计算。
 - en: Dask supports `__array__()` and `__array_ufunc__`.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask 支持 `__array__()` 和 `__array_ufunc__`。
 - en: '[PRE16]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Note
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Dask is lazily evaluated, and the result from a computation isn’t computed until
     you ask for it by invoking `compute()`.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask 是惰性评估的，只有在通过调用 `compute()` 请求时，才会计算计算结果。
 - en: See [the Dask array documentation](https://docs.dask.org/en/stable/array.html)
     and the [scope of Dask arrays interoperability with NumPy arrays](https://docs.dask.org/en/stable/array.html#scope)
     for details.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 详细了解 [Dask 数组文档](https://docs.dask.org/en/stable/array.html) 和 [Dask 数组与 NumPy
+    数组互操作性的范围](https://docs.dask.org/en/stable/array.html#scope)。
 - en: 'Example: DLPack'
+  id: totrans-98
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 示例：DLPack
 - en: Several Python data science libraries implement the `__dlpack__` protocol. Among
     them are [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/). A full
     list of libraries that implement this protocol can be found on [this page of DLPack
     documentation](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)").
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 几个 Python 数据科学库实现了 `__dlpack__` 协议。其中包括 [PyTorch](https://pytorch.org/) 和 [CuPy](https://cupy.dev/)。可以在
+    [DLPack 文档的这一页](https://dmlc.github.io/dlpack/latest/index.html "(在 DLPack 中)")
+    找到实现此协议的库的完整列表。
 - en: 'Convert a PyTorch CPU tensor to NumPy array:'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 PyTorch CPU 张量转换为 NumPy 数组：
 - en: '[PRE17]'
+  id: totrans-101
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'The imported arrays are read-only so writing or operating in-place will fail:'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入的数组是只读的，因此无法进行写入或原地操作：
 - en: '[PRE18]'
+  id: totrans-103
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'A copy must be created in order to operate on the imported arrays in-place,
     but will mean duplicating the memory. Do not do this for very large arrays:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了原地操作导入的数组，必须创建副本，但这将意味着复制内存。对于非常大的数组，请不要这样做：
 - en: '[PRE19]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Note
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Note that GPU tensors can’t be converted to NumPy arrays since NumPy doesn’t
     support GPU devices:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，由于 NumPy 不支持 GPU 设备，无法将 GPU 张量转换为 NumPy 数组：
 - en: '[PRE20]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'But, if both libraries support the device the data buffer is on, it is possible
     to use the `__dlpack__` protocol (e.g. [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/)):'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，如果两个库都支持数据缓冲区所在的设备，则可以使用 `__dlpack__` 协议（例如 [PyTorch](https://pytorch.org/)
+    和 [CuPy](https://cupy.dev/)）：
 - en: '[PRE21]'
+  id: totrans-110
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Similarly, a NumPy array can be converted to a PyTorch tensor:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似地，可以将 NumPy 数组转换为 PyTorch 张量：
 - en: '[PRE22]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'Read-only arrays cannot be exported:'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 只读数组无法导出：
 - en: '[PRE23]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Further reading
+  id: totrans-115
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 进一步阅读
 - en: '[The array interface protocol](../reference/arrays.interface.html#arrays-interface)'
+  id: totrans-116
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[数组接口协议](../reference/arrays.interface.html#arrays-interface)'
 - en: '[Writing custom array containers](basics.dispatch.html#basics-dispatch)'
+  id: totrans-117
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[编写自定义数组容器](basics.dispatch.html#basics-dispatch)'
 - en: '[Special attributes and methods](../reference/arrays.classes.html#special-attributes-and-methods)
     (details on the `__array_ufunc__` and `__array_function__` protocols)'
+  id: totrans-118
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[特殊属性和方法](../reference/arrays.classes.html#special-attributes-and-methods)（关于
+    `__array_ufunc__` 和 `__array_function__` 协议的详细信息）'
 - en: '[Subclassing ndarray](basics.subclassing.html#basics-subclassing) (details
     on the `__array_wrap__` and `__array_finalize__` methods)'
+  id: totrans-119
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[子类化 ndarray](basics.subclassing.html#basics-subclassing)（关于 `__array_wrap__`
+    和 `__array_finalize__` 方法的详细信息）'
 - en: '[Specific features of ndarray sub-typing](c-info.beyond-basics.html#specific-array-subtyping)
     (more details on the implementation of `__array_finalize__`, `__array_wrap__`
     and `__array_priority__`)'
+  id: totrans-120
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[ndarray 子类型化的特定功能](c-info.beyond-basics.html#specific-array-subtyping)（有关
+    `__array_finalize__`、`__array_wrap__` 和 `__array_priority__` 实现的更多详细信息）'
 - en: '[NumPy roadmap: interoperability](https://numpy.org/neps/roadmap.html "(in
     NumPy Enhancement Proposals)")'
+  id: totrans-121
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[NumPy 路线图：互操作性](https://numpy.org/neps/roadmap.html "(在 NumPy Enhancement
+    Proposals)")'
 - en: '[PyTorch documentation on the Bridge with NumPy](https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html#bridge-to-np-label)'
+  id: totrans-122
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[PyTorch 与 NumPy 桥接的文档](https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html#bridge-to-np-label)'
 - en: 1\. Using arbitrary objects in NumPy
+  id: totrans-123
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 1\. 在 NumPy 中使用任意对象
 - en: 'The first set of interoperability features from the NumPy API allows foreign
     objects to be treated as NumPy arrays whenever possible. When NumPy functions
     encounter a foreign object, they will try (in order):'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy API 的第一组互操作性功能允许在可能的情况下将外部对象视为 NumPy 数组。当 NumPy 函数遇到外部对象时，它们将按顺序尝试：
 - en: The buffer protocol, described [in the Python C-API documentation](https://docs.python.org/3/c-api/buffer.html
     "(in Python v3.11)").
+  id: totrans-125
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 缓冲区协议，在 [Python C-API 文档中](https://docs.python.org/3/c-api/buffer.html "(在 Python
+    v3.11)") 有描述。
 - en: The `__array_interface__` protocol, described [in this page](../reference/arrays.interface.html#arrays-interface).
     A precursor to Python’s buffer protocol, it defines a way to access the contents
     of a NumPy array from other C extensions.
+  id: totrans-126
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`__array_interface__` 协议，在 [这个页面](../reference/arrays.interface.html#arrays-interface)
+    有描述。作为 Python 缓冲区协议的前身，它定义了从其他 C 扩展中访问 NumPy 数组内容的方法。'
 - en: The `__array__()` method, which asks an arbitrary object to convert itself into
     an array.
+  id: totrans-127
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`__array__()` 方法，请求任意对象将自身转换为数组。'
 - en: For both the buffer and the `__array_interface__` protocols, the object describes
     its memory layout and NumPy does everything else (zero-copy if possible). If that’s
     not possible, the object itself is responsible for returning a `ndarray` from
     `__array__()`.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于缓冲区和 `__array_interface__` 协议，对象描述其内存布局，NumPy执行其他所有操作（如果可能，零拷贝）。 如果不可能，则对象本身负责从
+    `__array__()` 返回 `ndarray`。
 - en: '[DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)") is
     yet another protocol to convert foreign objects to NumPy arrays in a language
     and device agnostic manner. NumPy doesn’t implicitly convert objects to ndarrays
@@ -589,50 +887,79 @@
     and outputs a NumPy ndarray (which is generally a view of the input object’s data
     buffer). The [Python Specification for DLPack](https://dmlc.github.io/dlpack/latest/python_spec.html#python-spec
     "(in DLPack)") page explains the `__dlpack__` protocol in detail.'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: '[DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)") 是将外部对象以一种与语言和设备无关的方式转换为NumPy数组的另一种协议。
+    NumPy不会使用DLPack将对象隐式转换为ndarrays。 它提供了函数 [`numpy.from_dlpack`](../reference/generated/numpy.from_dlpack.html#numpy.from_dlpack
+    "numpy.from_dlpack") ，该函数接受实现 `__dlpack__` 方法的任何对象，并输出NumPy ndarray（通常是输入对象数据缓冲区的视图）。
+    [DLPack的Python规范](https://dmlc.github.io/dlpack/latest/python_spec.html#python-spec
+    "(in DLPack)") 页面详细说明了 `__dlpack__` 协议。'
 - en: The array interface protocol
+  id: totrans-130
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 数组接口协议
 - en: 'The [array interface protocol](../reference/arrays.interface.html#arrays-interface)
     defines a way for array-like objects to re-use each other’s data buffers. Its
     implementation relies on the existence of the following attributes or methods:'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: '[数组接口协议](../reference/arrays.interface.html#arrays-interface) 定义了数组样对象重用彼此数据缓冲区的方式。
+    其实现依赖于以下属性或方法的存在：'
 - en: '`__array_interface__`: a Python dictionary containing the shape, the element
     type, and optionally, the data buffer address and the strides of an array-like
     object;'
+  id: totrans-132
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_interface__`：一个Python字典，包含类似数组对象的形状、元素类型，以及可选的数据缓冲地址和步幅；'
 - en: '`__array__()`: a method returning the NumPy ndarray view of an array-like object;'
+  id: totrans-133
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array__()`：返回类似数组对象的NumPy ndarray视图的方法；'
 - en: 'The `__array_interface__` attribute can be inspected directly:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以直接检查 `__array_interface__` 属性：
 - en: '[PRE24]'
+  id: totrans-135
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'The `__array_interface__` attribute can also be used to manipulate the object
     data in place:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_interface__` 属性还可用于就地操作对象数据：'
 - en: '[PRE25]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'We can check that `arr` and `new_arr` share the same data buffer:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以检查 `arr` 和 `new_arr` 是否共享相同的数据缓冲区：
 - en: '[PRE26]'
+  id: totrans-139
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: The `__array__()` method
+  id: totrans-140
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array__()` 方法'
 - en: The `__array__()` method ensures that any NumPy-like object (an array, any object
     exposing the array interface, an object whose `__array__()` method returns an
     array or any nested sequence) that implements it can be used as a NumPy array.
@@ -641,84 +968,124 @@
     This is not optimal, as coercing arrays into ndarrays may cause performance problems
     or create the need for copies and loss of metadata, as the original object and
     any attributes/behavior it may have had, is lost.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array__()` 方法确保任何类似NumPy的对象（数组、公开数组接口的任何对象、其 `__array__()` 方法返回数组的对象或任何嵌套序列），只要实现它，就可以用作NumPy数组。
+    如果可能，这将意味着使用 `__array__()` 来创建数组对象的NumPy ndarray视图。 否则，这将复制数据到一个新的ndarray对象中。
+    这不是最佳的，因为将数组强制转换为ndarrays可能会导致性能问题或创建副本和元数据丢失，因为原始对象及其可能具有的任何属性/行为都会丢失。'
 - en: To see an example of a custom array implementation including the use of `__array__()`,
     see [Writing custom array containers](basics.dispatch.html#basics-dispatch).
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 要查看自定义数组实现的示例，包括使用 `__array__()` 的用法，请参见 [编写自定义数组容器](basics.dispatch.html#basics-dispatch)。
 - en: The DLPack Protocol
+  id: totrans-143
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DLPack协议
 - en: 'The [DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)")
     protocol defines a memory-layout of strided n-dimensional array objects. It offers
     the following syntax for data exchange:'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: '[DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)") 协议定义了分块的n维数组对象的内存布局。
+    它为数据交换提供了以下语法：'
 - en: A [`numpy.from_dlpack`](../reference/generated/numpy.from_dlpack.html#numpy.from_dlpack
     "numpy.from_dlpack") function, which accepts (array) objects with a `__dlpack__`
     method and uses that method to construct a new array containing the data from
     `x`.
+  id: totrans-145
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '[`numpy.from_dlpack`](../reference/generated/numpy.from_dlpack.html#numpy.from_dlpack
+    "numpy.from_dlpack") 函数接受具有 `__dlpack__` 方法的（数组）对象，并使用该方法构造一个包含来自 `x` 的数据的新数组。'
 - en: '`__dlpack__(self, stream=None)` and `__dlpack_device__` methods on the array
     object, which will be called from within `from_dlpack`, to query what device the
     array is on (may be needed to pass in the correct stream, e.g. in the case of
     multiple GPUs) and to access the data.'
+  id: totrans-146
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 数组对象上的`__dlpack__(self, stream=None)`和`__dlpack_device__`方法将从`from_dlpack`中调用，以查询数组所在的设备（可能需要传递正确的流，例如在多个GPU的情况下），并访问数据。
 - en: Unlike the buffer protocol, DLPack allows exchanging arrays containing data
     on devices other than the CPU (e.g. Vulkan or GPU). Since NumPy only supports
     CPU, it can only convert objects whose data exists on the CPU. But other libraries,
     like [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/), may exchange
     data on GPU using this protocol.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 与缓冲区协议不同，DLPack允许交换包含在CPU之外设备上的数据的数组（例如Vulkan或GPU）。由于NumPy仅支持CPU，因此它只能转换其数据存在于CPU的对象。但其他库，如[PyTorch](https://pytorch.org/)和[CuPy](https://cupy.dev/)，可以使用这个协议在GPU上交换数据。
 - en: The array interface protocol
+  id: totrans-148
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 数组接口协议
 - en: 'The [array interface protocol](../reference/arrays.interface.html#arrays-interface)
     defines a way for array-like objects to re-use each other’s data buffers. Its
     implementation relies on the existence of the following attributes or methods:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: '[数组接口协议](../reference/arrays.interface.html#arrays-interface)定义了类似数组的对象重复使用对方的数据缓冲区的方式。其实现依赖于以下属性或方法的存在：'
 - en: '`__array_interface__`: a Python dictionary containing the shape, the element
     type, and optionally, the data buffer address and the strides of an array-like
     object;'
+  id: totrans-150
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_interface__`：一个包含数组-like对象的形状，元素类型，和可选的数据缓冲区地址和步幅的Python字典；'
 - en: '`__array__()`: a method returning the NumPy ndarray view of an array-like object;'
+  id: totrans-151
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array__()`：返回类似数组的对象的NumPy ndarray视图的方法；'
 - en: 'The `__array_interface__` attribute can be inspected directly:'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以直接检查`__array_interface__`属性：
 - en: '[PRE27]'
+  id: totrans-153
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'The `__array_interface__` attribute can also be used to manipulate the object
     data in place:'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_interface__`属性还可以用于原地操作对象数据：'
 - en: '[PRE28]'
+  id: totrans-155
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'We can check that `arr` and `new_arr` share the same data buffer:'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以检查`arr`和`new_arr`是否共享相同的数据缓冲区：
 - en: '[PRE29]'
+  id: totrans-157
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: The `__array__()` method
+  id: totrans-158
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array__()`方法'
 - en: The `__array__()` method ensures that any NumPy-like object (an array, any object
     exposing the array interface, an object whose `__array__()` method returns an
     array or any nested sequence) that implements it can be used as a NumPy array.
@@ -727,92 +1094,138 @@
     This is not optimal, as coercing arrays into ndarrays may cause performance problems
     or create the need for copies and loss of metadata, as the original object and
     any attributes/behavior it may have had, is lost.
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array__()`方法确保任何类似NumPy的对象（数组，任何暴露数组接口的对象，其`__array__()`方法返回数组或任何嵌套序列的对象）都可以用作NumPy数组。如果可能的话，这意味着使用`__array__()`来创建类似数组对象的NumPy
+    ndarray视图。否则，这将复制数据到一个新的ndarray对象中。这并不是最佳情况，因为将数组强制转换为ndarrays可能会导致性能问题或创建需要复制和丢失元数据的情况，因为原始对象及其可能具有的任何属性/行为都会丢失。'
 - en: To see an example of a custom array implementation including the use of `__array__()`,
     see [Writing custom array containers](basics.dispatch.html#basics-dispatch).
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 要查看包括使用`__array__()`的自定义数组实现的示例，请参见[编写自定义数组容器](basics.dispatch.html#basics-dispatch)。
 - en: The DLPack Protocol
+  id: totrans-161
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DLPack协议
 - en: 'The [DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)")
     protocol defines a memory-layout of strided n-dimensional array objects. It offers
     the following syntax for data exchange:'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: '[DLPack](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)")协议定义了步进式n维数组对象的内存布局。它为数据交换提供了以下语法：'
 - en: A [`numpy.from_dlpack`](../reference/generated/numpy.from_dlpack.html#numpy.from_dlpack
     "numpy.from_dlpack") function, which accepts (array) objects with a `__dlpack__`
     method and uses that method to construct a new array containing the data from
     `x`.
+  id: totrans-163
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '[`numpy.from_dlpack`](../reference/generated/numpy.from_dlpack.html#numpy.from_dlpack
+    "numpy.from_dlpack")函数，接受具有`__dlpack__`方法的（数组）对象，并使用该方法来构建包含`x`数据的新数组。'
 - en: '`__dlpack__(self, stream=None)` and `__dlpack_device__` methods on the array
     object, which will be called from within `from_dlpack`, to query what device the
     array is on (may be needed to pass in the correct stream, e.g. in the case of
     multiple GPUs) and to access the data.'
+  id: totrans-164
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 数组对象上的`__dlpack__(self, stream=None)`和`__dlpack_device__`方法将从`from_dlpack`中调用，以查询数组所在的设备（可能需要传递正确的流，例如在多个GPU的情况下），并访问数据。
 - en: Unlike the buffer protocol, DLPack allows exchanging arrays containing data
     on devices other than the CPU (e.g. Vulkan or GPU). Since NumPy only supports
     CPU, it can only convert objects whose data exists on the CPU. But other libraries,
     like [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/), may exchange
     data on GPU using this protocol.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 与缓冲协议不同，DLPack 允许交换包含设备上的数据（如 Vulkan 或 GPU）的数组。由于 NumPy 仅支持 CPU，因此只能转换数据存在于
+    CPU 上的对象。但其他库，如 [PyTorch](https://pytorch.org/) 和 [CuPy](https://cupy.dev/)，可以使用该协议在
+    GPU 上交换数据。
 - en: 2\. Operating on foreign objects without converting
+  id: totrans-166
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 2\. 在不转换的情况下操作外部对象
 - en: A second set of methods defined by the NumPy API allows us to defer the execution
     from a NumPy function to another array library.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy API 定义的第二组方法允许我们将一个 NumPy 函数的执行延迟到另一个数组库。
 - en: Consider the following function.
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑以下函数。
 - en: '[PRE30]'
+  id: totrans-169
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: Note that [`np.exp`](../reference/generated/numpy.exp.html#numpy.exp "numpy.exp")
     is a [ufunc](basics.ufuncs.html#ufuncs-basics), which means that it operates on
     ndarrays in an element-by-element fashion. On the other hand, [`np.mean`](../reference/generated/numpy.mean.html#numpy.mean
     "numpy.mean") operates along one of the array’s axes.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，[`np.exp`](../reference/generated/numpy.exp.html#numpy.exp "numpy.exp")
+    是一个 [ufunc](basics.ufuncs.html#ufuncs-basics)，这意味着它按元素方式在 ndarrays 上操作。另一方面，[`np.mean`](../reference/generated/numpy.mean.html#numpy.mean
+    "numpy.mean") 沿数组的一个轴操作。
 - en: 'We can apply `f` to a NumPy ndarray object directly:'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以直接将 `f` 应用于 NumPy ndarray 对象：
 - en: '[PRE31]'
+  id: totrans-172
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: We would like this function to work equally well with any NumPy-like array object.
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们希望这个函数在任何类似 NumPy 的数组对象上都能很好地工作。
 - en: 'NumPy allows a class to indicate that it would like to handle computations
     in a custom-defined way through the following interfaces:'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 允许一个类通过以下接口指示它想通过自定义方式处理计算：
 - en: '`__array_ufunc__`: allows third-party objects to support and override [ufuncs](basics.ufuncs.html#ufuncs-basics).'
+  id: totrans-175
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_ufunc__`：允许第三方对象支持和覆盖 [ufuncs](basics.ufuncs.html#ufuncs-basics)。'
 - en: '`__array_function__`: a catch-all for NumPy functionality that is not covered
     by the `__array_ufunc__` protocol for universal functions.'
+  id: totrans-176
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_function__`：用于处理通用函数的 NumPy 功能的总称，该功能不受通用函数协议 `__array_ufunc__` 的覆盖。'
 - en: As long as foreign objects implement the `__array_ufunc__` or `__array_function__`
     protocols, it is possible to operate on them without the need for explicit conversion.
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 只要外部对象实现了 `__array_ufunc__` 或 `__array_function__` 协议，就可以在它们上操作而无需进行显式转换。
 - en: The `__array_ufunc__` protocol
+  id: totrans-178
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array_ufunc__` 协议'
 - en: A [universal function (or ufunc for short)](basics.ufuncs.html#ufuncs-basics)
     is a “vectorized” wrapper for a function that takes a fixed number of specific
     inputs and produces a fixed number of specific outputs. The output of the ufunc
@@ -822,36 +1235,55 @@
     method defined on that (non-ndarray) object has access to the NumPy ufunc. Because
     ufuncs have a well-defined structure, the foreign `__array_ufunc__` method may
     rely on ufunc attributes like `.at()`, `.reduce()`, and others.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: '[通用函数（ufunc 简写）](basics.ufuncs.html#ufuncs-basics)是一个“向量化”包装器，用于接收固定数量的特定输入并产生固定数量的特定输出的函数。如果不是所有的输入参数都是
+    ndarray，ufunc 的输出（及其方法）不一定是 ndarray。实际上，如果任何输入定义了 `__array_ufunc__` 方法，控制权将完全传递给该函数，即通用函数被覆盖。在该（非
+    ndarray）对象上定义的 `__array_ufunc__` 方法可以访问 NumPy ufunc。由于通用函数有明确定义的结构，外部的 `__array_ufunc__`
+    方法可以依赖于类似 `.at()`、`.reduce()` 等的 ufunc 属性。'
 - en: A subclass can override what happens when executing NumPy ufuncs on it by overriding
     the default `ndarray.__array_ufunc__` method. This method is executed instead
     of the ufunc and should return either the result of the operation, or `NotImplemented`
     if the operation requested is not implemented.
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过重写默认的 `ndarray.__array_ufunc__` 方法，子类可以覆盖在其上执行 NumPy ufuncs 时的操作方式。这个方法会代替
+    ufunc 被执行，并应该返回操作的结果，或者在请求的操作未被实现时返回 `NotImplemented`。
 - en: The `__array_function__` protocol
+  id: totrans-181
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array_function__` 协议'
 - en: To achieve enough coverage of the NumPy API to support downstream projects,
     there is a need to go beyond `__array_ufunc__` and implement a protocol that allows
     arguments of a NumPy function to take control and divert execution to another
     function (for example, a GPU or parallel implementation) in a way that is safe
     and consistent across projects.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了实现足够的 NumPy API 覆盖范围以支持下游项目，需要超出`__array_ufunc__`并实现一种协议，允许 NumPy 函数的参数控制并将执行转移到另一个函数（例如
+    GPU 或并行实现），以一种安全和一致的方式跨项目进行。
 - en: The semantics of `__array_function__` are very similar to `__array_ufunc__`,
     except the operation is specified by an arbitrary callable object rather than
     a ufunc instance and method. For more details, see [NEP 18 — A dispatch mechanism
     for NumPy’s high level array functions](https://numpy.org/neps/nep-0018-array-function-protocol.html#nep18
     "(in NumPy Enhancement Proposals)").
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_function__` 的语义与 `__array_ufunc__` 非常相似，只是操作由任意可调用对象指定，而不是 ufunc 实例和方法。具体详情请参见[NEP
+    18 — NumPy高级数组函数的调度机制](https://numpy.org/neps/nep-0018-array-function-protocol.html#nep18
+    "（在NumPy增强提案中）")。'
 - en: The `__array_ufunc__` protocol
+  id: totrans-184
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array_ufunc__` 协议'
 - en: A [universal function (or ufunc for short)](basics.ufuncs.html#ufuncs-basics)
     is a “vectorized” wrapper for a function that takes a fixed number of specific
     inputs and produces a fixed number of specific outputs. The output of the ufunc
@@ -861,49 +1293,73 @@
     method defined on that (non-ndarray) object has access to the NumPy ufunc. Because
     ufuncs have a well-defined structure, the foreign `__array_ufunc__` method may
     rely on ufunc attributes like `.at()`, `.reduce()`, and others.
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: '[通用函数（或简称 ufunc）](basics.ufuncs.html#ufuncs-basics)是一个对函数进行“矢量化”封装的函数，它接受固定数量的特定输入，并产生固定数量的特定输出。
+    如果所有输入参数都不是 ndarray，则 ufunc 的输出（及其方法）未必是 ndarray。 实际上，如果任何输入定义了`__array_ufunc__`方法，则完全将控制权传递给该函数，即
+    ufunc 被覆盖。定义在那个（非ndarray）对象上的`__array_ufunc__`方法可以访问 NumPy ufunc。 由于 ufuncs 有明确定义的结构，外部`__array_ufunc__`方法可以依赖于
+    ufunc 属性，例如`.at()`、`.reduce()`和其他属性。'
 - en: A subclass can override what happens when executing NumPy ufuncs on it by overriding
     the default `ndarray.__array_ufunc__` method. This method is executed instead
     of the ufunc and should return either the result of the operation, or `NotImplemented`
     if the operation requested is not implemented.
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 子类可以通过覆盖默认的`ndarray.__array_ufunc__`方法来在执行 NumPy ufuncs 时改写其行为。这个方法将代替 ufunc
+    的执行，并应该返回操作的结果，或者如果请求的操作未实现，则返回`NotImplemented`。
 - en: The `__array_function__` protocol
+  id: totrans-187
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`__array_function__` 协议'
 - en: To achieve enough coverage of the NumPy API to support downstream projects,
     there is a need to go beyond `__array_ufunc__` and implement a protocol that allows
     arguments of a NumPy function to take control and divert execution to another
     function (for example, a GPU or parallel implementation) in a way that is safe
     and consistent across projects.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了实现足够的 NumPy API 覆盖范围以支持下游项目，需要超出`__array_ufunc__`并实现一种协议，允许 NumPy 函数的参数控制并将执行转移到另一个函数（例如
+    GPU 或并行实现），以一种安全和一致的方式跨项目进行。
 - en: The semantics of `__array_function__` are very similar to `__array_ufunc__`,
     except the operation is specified by an arbitrary callable object rather than
     a ufunc instance and method. For more details, see [NEP 18 — A dispatch mechanism
     for NumPy’s high level array functions](https://numpy.org/neps/nep-0018-array-function-protocol.html#nep18
     "(in NumPy Enhancement Proposals)").
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_function__` 的语义与 `__array_ufunc__` 非常相似，只是操作由任意可调用对象指定，而不是 ufunc 实例和方法。具体详情请参见[NEP
+    18 — NumPy高级数组函数的调度机制](https://numpy.org/neps/nep-0018-array-function-protocol.html#nep18
+    "（在NumPy增强提案中）")。'
 - en: 3\. Returning foreign objects
+  id: totrans-190
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 3\. 返回外部对象
 - en: A third type of feature set is meant to use the NumPy function implementation
     and then convert the return value back into an instance of the foreign object.
     The `__array_finalize__` and `__array_wrap__` methods act behind the scenes to
     ensure that the return type of a NumPy function can be specified as needed.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 第三种特性集意在使用 NumPy 函数实现，然后将返回值转换回外部对象的实例。`__array_finalize__`和`__array_wrap__`方法在幕后起作用，以确保可以根据需要指定
+    NumPy 函数的返回类型。
 - en: The `__array_finalize__` method is the mechanism that NumPy provides to allow
     subclasses to handle the various ways that new instances get created. This method
     is called whenever the system internally allocates a new array from an object
     which is a subclass (subtype) of the ndarray. It can be used to change attributes
     after construction, or to update meta-information from the “parent.”
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_finalize__`方法是NumPy提供的机制，允许子类处理创建新实例的各种方式。每当系统从数组的子类（子类型）的对象内部分配新数组时，就会调用此方法。它可用于在构造后更改属性，或者从“父级”更新元信息。'
 - en: The `__array_wrap__` method “wraps up the action” in the sense of allowing any
     object (such as user-defined functions) to set the type of its return value and
     update attributes and metadata. This can be seen as the opposite of the `__array__`
@@ -914,476 +1370,734 @@
     for the Python type of the returned object. For example, subclasses may opt to
     use this method to transform the output array into an instance of the subclass
     and update metadata before returning the array to the user.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_wrap__`方法“包装了操作”，在允许任何对象（如用户定义的函数）设置其返回值类型和更新属性和元数据方面发挥作用。这可以看作是`__array__`方法的相反。在实现`__array_wrap__`的每个对象的末尾，将对具有最高*数组优先级*的输入对象调用此方法，或者如果指定了输出对象，则在输出对象上调用此方法。`__array_priority__`属性用于确定在返回对象的Python类型存在多种可能性的情况下应返回什么类型的对象。例如，子类可能选择使用此方法将输出数组变换为子类实例并在返回数组给用户之前更新元数据。'
 - en: For more information on these methods, see [Subclassing ndarray](basics.subclassing.html#basics-subclassing)
     and [Specific features of ndarray sub-typing](c-info.beyond-basics.html#specific-array-subtyping).
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关这些方法的更多信息，请参阅[子类化ndarray](basics.subclassing.html#basics-subclassing)和[ndarray子类型的特定特征](c-info.beyond-basics.html#specific-array-subtyping)。
 - en: Interoperability examples
+  id: totrans-195
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 互操作性示例
 - en: 'Example: Pandas `Series` objects'
+  id: totrans-196
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 例子：Pandas `Series`对象
 - en: 'Consider the following:'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑以下内容：
 - en: '[PRE32]'
+  id: totrans-198
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Now, `ser` is **not** a ndarray, but because it [implements the __array_ufunc__
     protocol](https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe-interoperability-with-numpy-functions),
     we can apply ufuncs to it as if it were a ndarray:'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，`ser` **不是**一个ndarray，但由于它[实现了__array_ufunc__协议](https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe-interoperability-with-numpy-functions)，我们可以将ufuncs应用于它，就好像它是一个ndarray一样：
 - en: '[PRE33]'
+  id: totrans-200
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'We can even do operations with other ndarrays:'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们甚至可以对其他ndarray执行操作：
 - en: '[PRE34]'
+  id: totrans-202
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'Example: PyTorch tensors'
+  id: totrans-203
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 例子：PyTorch张量
 - en: '[PyTorch](https://pytorch.org/) is an optimized tensor library for deep learning
     using GPUs and CPUs. PyTorch arrays are commonly called *tensors*. Tensors are
     similar to NumPy’s ndarrays, except that tensors can run on GPUs or other hardware
     accelerators. In fact, tensors and NumPy arrays can often share the same underlying
     memory, eliminating the need to copy data.'
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PyTorch](https://pytorch.org/)是一个针对使用GPU和CPU进行深度学习的优化张量库。PyTorch数组通常被称为*张量*。张量类似于NumPy的ndarray，只不过张量可以在GPU或其他硬件加速器上运行。实际上，张量和NumPy数组通常可以共享相同的底层内存，消除了复制数据的需求。'
 - en: '[PRE35]'
+  id: totrans-205
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'Note that `x_np` and `x_tensor` are different kinds of objects:'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意`x_np`和`x_tensor`是不同类型的对象：
 - en: '[PRE36]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'However, we can treat PyTorch tensors as NumPy arrays without the need for
     explicit conversion:'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，我们可以将PyTorch张量视为NumPy数组，而无需显式转换：
 - en: '[PRE37]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: Also, note that the return type of this function is compatible with the initial
     data type.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，还要注意此函数的返回类型与初始数据类型兼容。
 - en: Warning
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: While this mixing of ndarrays and tensors may be convenient, it is not recommended.
     It will not work for non-CPU tensors, and will have unexpected behavior in corner
     cases. Users should prefer explicitly converting the ndarray to a tensor.
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然混合使用ndarray和张量可能很方便，但不建议这样做。它对非CPU张量不起作用，并且在一些特殊情况下会产生意外行为。用户应优先显式将ndarray转换为张量。
 - en: Note
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: PyTorch does not implement `__array_function__` or `__array_ufunc__`. Under
     the hood, the `Tensor.__array__()` method returns a NumPy ndarray as a view of
     the tensor data buffer. See [this issue](https://github.com/pytorch/pytorch/issues/24015)
     and the [__torch_function__ implementation](https://github.com/pytorch/pytorch/blob/master/torch/overrides.py)
     for details.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: PyTorch不实现`__array_function__`或`__array_ufunc__`。在底层，`Tensor.__array__()`方法返回一个NumPy
+    ndarray，作为张量数据缓冲区的视图。有关详细信息，请参阅[此问题](https://github.com/pytorch/pytorch/issues/24015)和[__torch_function__实现](https://github.com/pytorch/pytorch/blob/master/torch/overrides.py)。
 - en: 'Note also that we can see `__array_wrap__` in action here, even though `torch.Tensor`
     is not a subclass of ndarray:'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 还要注意，即使`torch.Tensor`不是ndarray的子类，我们也可以在这里看到`__array_wrap__`的实际运行：
 - en: '[PRE38]'
+  id: totrans-216
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: PyTorch implements `__array_wrap__` to be able to get tensors back from NumPy
     functions, and we can modify it directly to control which type of objects are
     returned from these functions.
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: PyTorch实现了`__array_wrap__`以便从NumPy函数获取张量，并且我们可以直接修改它以控制从这些函数返回哪种类型的对象。
 - en: 'Example: CuPy arrays'
+  id: totrans-218
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 例：CuPy数组
 - en: CuPy is a NumPy/SciPy-compatible array library for GPU-accelerated computing
     with Python. CuPy implements a subset of the NumPy interface by implementing `cupy.ndarray`,
     [a counterpart to NumPy ndarrays](https://docs.cupy.dev/en/stable/reference/ndarray.html).
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: CuPy是用于GPU加速计算的NumPy/SciPy兼容数组库。CuPy通过实现`cupy.ndarray`实现了NumPy接口的子集，[与NumPy
+    ndarrays对应](https://docs.cupy.dev/en/stable/reference/ndarray.html)。
 - en: '[PRE39]'
+  id: totrans-220
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'The `cupy.ndarray` object implements the `__array_ufunc__` interface. This
     enables NumPy ufuncs to be applied to CuPy arrays (this will defer operation to
     the matching CuPy CUDA/ROCm implementation of the ufunc):'
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: '`cupy.ndarray`对象实现了`__array_ufunc__`接口。这使得可以对CuPy数组应用NumPy ufunc（这将将操作推迟到对应的CuPy
+    CUDA/ROCm实现的ufunc）：'
 - en: '[PRE40]'
+  id: totrans-222
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'Note that the return type of these operations is still consistent with the
     initial type:'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，这些操作的返回类型仍与初始类型保持一致：
 - en: '[PRE41]'
+  id: totrans-224
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: See [this page in the CuPy documentation for details](https://docs.cupy.dev/en/stable/reference/ufunc.html).
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看[此页CuPy文档有关详细信息](https://docs.cupy.dev/en/stable/reference/ufunc.html)。
 - en: '`cupy.ndarray` also implements the `__array_function__` interface, meaning
     it is possible to do operations such as'
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: '`cupy.ndarray`还实现了`__array_function__`接口，这意味着可以进行诸如'
 - en: '[PRE42]'
+  id: totrans-227
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: CuPy implements many NumPy functions on `cupy.ndarray` objects, but not all.
     See [the CuPy documentation](https://docs.cupy.dev/en/stable/user_guide/difference.html)
     for details.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: CuPy在`cupy.ndarray`对象上实现了许多NumPy函数，但不是全部。有关详细信息，请参阅[CuPy文档](https://docs.cupy.dev/en/stable/user_guide/difference.html)。
 - en: 'Example: Dask arrays'
+  id: totrans-229
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 例：Dask数组
 - en: Dask is a flexible library for parallel computing in Python. Dask Array implements
     a subset of the NumPy ndarray interface using blocked algorithms, cutting up the
     large array into many small arrays. This allows computations on larger-than-memory
     arrays using multiple cores.
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask是Python中用于并行计算的灵活库。Dask数组使用分块算法实现了NumPy ndarray接口的子集，将大数组切割成许多小数组。这允许使用多个核心对大于内存的数组进行计算。
 - en: Dask supports `__array__()` and `__array_ufunc__`.
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask支持`__array__()`和`__array_ufunc__`。
 - en: '[PRE43]'
+  id: totrans-232
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: Note
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意
 - en: Dask is lazily evaluated, and the result from a computation isn’t computed until
     you ask for it by invoking `compute()`.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask是延迟评估的，直到通过调用`compute()`要求计算结果才会计算。
 - en: See [the Dask array documentation](https://docs.dask.org/en/stable/array.html)
     and the [scope of Dask arrays interoperability with NumPy arrays](https://docs.dask.org/en/stable/array.html#scope)
     for details.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关详细信息，请参阅[Dask数组文档](https://docs.dask.org/en/stable/array.html)以及[Dask数组与NumPy数组的互操作性范围](https://docs.dask.org/en/stable/array.html#scope)。
 - en: 'Example: DLPack'
+  id: totrans-236
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 例：DLPack
 - en: Several Python data science libraries implement the `__dlpack__` protocol. Among
     them are [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/). A full
     list of libraries that implement this protocol can be found on [this page of DLPack
     documentation](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)").
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 几个Python数据科学库实现了`__dlpack__`协议。其中包括[PyTorch](https://pytorch.org/)和[CuPy](https://cupy.dev/)。可以在[DLPack文档的此页面](https://dmlc.github.io/dlpack/latest/index.html)找到实现此协议的库的完整列表。
 - en: 'Convert a PyTorch CPU tensor to NumPy array:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 将PyTorch CPU张量转换为NumPy数组：
 - en: '[PRE44]'
+  id: totrans-239
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'The imported arrays are read-only so writing or operating in-place will fail:'
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入的数组是只读的，因此写入或原地操作将失败：
 - en: '[PRE45]'
+  id: totrans-241
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'A copy must be created in order to operate on the imported arrays in-place,
     but will mean duplicating the memory. Do not do this for very large arrays:'
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 必须创建副本才能对导入的数组进行原地操作，但这将意味着复制内存。对于非常大的数组不要这样做：
 - en: '[PRE46]'
+  id: totrans-243
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: Note
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意
 - en: 'Note that GPU tensors can’t be converted to NumPy arrays since NumPy doesn’t
     support GPU devices:'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，GPU张量不能转换为NumPy数组，因为NumPy不支持GPU设备：
 - en: '[PRE47]'
+  id: totrans-246
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: 'But, if both libraries support the device the data buffer is on, it is possible
     to use the `__dlpack__` protocol (e.g. [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/)):'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，如果这两个库都支持数据缓冲区所在的设备，则可以使用`__dlpack__`协议（例如[PyTorch](https://pytorch.org/)和[CuPy](https://cupy.dev/)）：
 - en: '[PRE48]'
+  id: totrans-248
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: 'Similarly, a NumPy array can be converted to a PyTorch tensor:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样，NumPy数组可以转换为PyTorch张量：
 - en: '[PRE49]'
+  id: totrans-250
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'Read-only arrays cannot be exported:'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 只读数组无法导出：
 - en: '[PRE50]'
+  id: totrans-252
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: 'Example: Pandas `Series` objects'
+  id: totrans-253
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 示例：Pandas `Series`对象
 - en: 'Consider the following:'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑以下内容：
 - en: '[PRE51]'
+  id: totrans-255
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'Now, `ser` is **not** a ndarray, but because it [implements the __array_ufunc__
     protocol](https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe-interoperability-with-numpy-functions),
     we can apply ufuncs to it as if it were a ndarray:'
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，`ser`**不**是一个ndarray，但因为它[实现了`__array_ufunc__`协议](https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe-interoperability-with-numpy-functions)，我们就可以像处理ndarray一样对其应用ufunc：
 - en: '[PRE52]'
+  id: totrans-257
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: 'We can even do operations with other ndarrays:'
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们甚至可以对其他ndarrays执行操作：
 - en: '[PRE53]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: 'Example: PyTorch tensors'
+  id: totrans-260
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 示例：PyTorch张量
 - en: '[PyTorch](https://pytorch.org/) is an optimized tensor library for deep learning
     using GPUs and CPUs. PyTorch arrays are commonly called *tensors*. Tensors are
     similar to NumPy’s ndarrays, except that tensors can run on GPUs or other hardware
     accelerators. In fact, tensors and NumPy arrays can often share the same underlying
     memory, eliminating the need to copy data.'
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PyTorch](https://pytorch.org/)是一个用于在GPU和CPU上进行深度学习的优化张量库。PyTorch数组通常被称为*张量*。张量类似于NumPy的ndarrays，唯一的区别在于张量可以在GPU或其他硬件加速器上运行。实际上，张量和NumPy数组通常可以共享相同的底层存储器，消除了复制数据的需求。'
 - en: '[PRE54]'
+  id: totrans-262
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: 'Note that `x_np` and `x_tensor` are different kinds of objects:'
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意`x_np`和`x_tensor`是不同类型的对象：
 - en: '[PRE55]'
+  id: totrans-264
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: 'However, we can treat PyTorch tensors as NumPy arrays without the need for
     explicit conversion:'
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，我们可以将PyTorch张量视为NumPy数组，无需进行显式转换：
 - en: '[PRE56]'
+  id: totrans-266
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: Also, note that the return type of this function is compatible with the initial
     data type.
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样，请注意此函数的返回类型与初始数据类型兼容。
 - en: Warning
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 警告
 - en: While this mixing of ndarrays and tensors may be convenient, it is not recommended.
     It will not work for non-CPU tensors, and will have unexpected behavior in corner
     cases. Users should prefer explicitly converting the ndarray to a tensor.
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然混合使用ndarrays和张量可能很方便，但不建议这样做。它不适用于非CPU张量，并且在极端情况下会出现意外行为。用户应该更倾向于显式将ndarray转换为张量。
 - en: Note
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: PyTorch does not implement `__array_function__` or `__array_ufunc__`. Under
     the hood, the `Tensor.__array__()` method returns a NumPy ndarray as a view of
     the tensor data buffer. See [this issue](https://github.com/pytorch/pytorch/issues/24015)
     and the [__torch_function__ implementation](https://github.com/pytorch/pytorch/blob/master/torch/overrides.py)
     for details.
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: PyTorch不实现`__array_function__`或`__array_ufunc__`。在内部，`Tensor.__array__()`方法返回一个NumPy
+    ndarray作为张量数据缓冲区的视图。有关详细信息，请参见[此问题](https://github.com/pytorch/pytorch/issues/24015)和[__torch_function__实现](https://github.com/pytorch/pytorch/blob/master/torch/overrides.py)。
 - en: 'Note also that we can see `__array_wrap__` in action here, even though `torch.Tensor`
     is not a subclass of ndarray:'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 还要注意，即使`torch.Tensor`不是ndarray的子类，我们也可以在这里看到`__array_wrap__`的功能：
 - en: '[PRE57]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: PyTorch implements `__array_wrap__` to be able to get tensors back from NumPy
     functions, and we can modify it directly to control which type of objects are
     returned from these functions.
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: PyTorch实现了`__array_wrap__`以便能够从NumPy函数中取回张量，并且我们可以直接修改它以控制从这些函数返回哪种类型的对象。
 - en: 'Example: CuPy arrays'
+  id: totrans-275
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 示例：CuPy数组
 - en: CuPy is a NumPy/SciPy-compatible array library for GPU-accelerated computing
     with Python. CuPy implements a subset of the NumPy interface by implementing `cupy.ndarray`,
     [a counterpart to NumPy ndarrays](https://docs.cupy.dev/en/stable/reference/ndarray.html).
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: CuPy是一个用于GPU加速计算的与NumPy/SciPy兼容的数组库。CuPy通过实现`cupy.ndarray`，[与NumPy ndarrays对应的对象](https://docs.cupy.dev/en/stable/reference/ndarray.html)实现了NumPy接口的子集。
 - en: '[PRE58]'
+  id: totrans-277
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'The `cupy.ndarray` object implements the `__array_ufunc__` interface. This
     enables NumPy ufuncs to be applied to CuPy arrays (this will defer operation to
     the matching CuPy CUDA/ROCm implementation of the ufunc):'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: '`cupy.ndarray`对象实现了`__array_ufunc__`接口。这使得可以将NumPy ufuncs应用于CuPy数组（这将将操作延迟到ufunc的匹配CuPy
+    CUDA/ROCm实现）：'
 - en: '[PRE59]'
+  id: totrans-279
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: 'Note that the return type of these operations is still consistent with the
     initial type:'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意这些操作的返回类型仍与初始类型一致：
 - en: '[PRE60]'
+  id: totrans-281
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: See [this page in the CuPy documentation for details](https://docs.cupy.dev/en/stable/reference/ufunc.html).
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关详细信息，请参见[CuPy文档中的此页面](https://docs.cupy.dev/en/stable/reference/ufunc.html)。
 - en: '`cupy.ndarray` also implements the `__array_function__` interface, meaning
     it is possible to do operations such as'
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: '`cupy.ndarray`还实现了`__array_function__`接口，这意味着可以进行诸如'
 - en: '[PRE61]'
+  id: totrans-284
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: CuPy implements many NumPy functions on `cupy.ndarray` objects, but not all.
     See [the CuPy documentation](https://docs.cupy.dev/en/stable/user_guide/difference.html)
     for details.
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: CuPy 在`cupy.ndarray`对象上实现了许多 NumPy 函数，但并非都实现。有关详细信息，请参阅[CuPy文档](https://docs.cupy.dev/en/stable/user_guide/difference.html)。
 - en: 'Example: Dask arrays'
+  id: totrans-286
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 示例：Dask 数组
 - en: Dask is a flexible library for parallel computing in Python. Dask Array implements
     a subset of the NumPy ndarray interface using blocked algorithms, cutting up the
     large array into many small arrays. This allows computations on larger-than-memory
     arrays using multiple cores.
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask 是 Python 中用于并行计算的灵活库。Dask Array 使用分块算法实现了 NumPy ndarray 接口的子集，将大数组切分为许多小数组。这使得可以使用多个核心对大于内存大小的数组进行计算。
 - en: Dask supports `__array__()` and `__array_ufunc__`.
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask 支持`__array__()`和`__array_ufunc__`。
 - en: '[PRE62]'
+  id: totrans-289
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: Note
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Dask is lazily evaluated, and the result from a computation isn’t computed until
     you ask for it by invoking `compute()`.
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: Dask 是惰性计算的，计算的结果直到通过调用`compute()`来要求计算时才计算。
 - en: See [the Dask array documentation](https://docs.dask.org/en/stable/array.html)
     and the [scope of Dask arrays interoperability with NumPy arrays](https://docs.dask.org/en/stable/array.html#scope)
     for details.
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关详细信息，请参阅 [Dask 数组文档](https://docs.dask.org/en/stable/array.html) 和 [Dask 数组与
+    NumPy 数组互操作性的范围](https://docs.dask.org/en/stable/array.html#scope)。
 - en: 'Example: DLPack'
+  id: totrans-293
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 示例：DLPack
 - en: Several Python data science libraries implement the `__dlpack__` protocol. Among
     them are [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/). A full
     list of libraries that implement this protocol can be found on [this page of DLPack
     documentation](https://dmlc.github.io/dlpack/latest/index.html "(in DLPack)").
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 几个 Python 数据科学库都实现了`__dlpack__`协议，其中包括[PyTorch](https://pytorch.org/)和[CuPy](https://cupy.dev/)。可以在[DLPack文档的此页面](https://dmlc.github.io/dlpack/latest/index.html
+    "(在DLPack中)")找到实现此协议的库的完整列表。
 - en: 'Convert a PyTorch CPU tensor to NumPy array:'
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 PyTorch CPU 张量转换为 NumPy 数组：
 - en: '[PRE63]'
+  id: totrans-296
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: 'The imported arrays are read-only so writing or operating in-place will fail:'
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入的数组是只读的，因此写入或就地操作将失败：
 - en: '[PRE64]'
+  id: totrans-298
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: 'A copy must be created in order to operate on the imported arrays in-place,
     but will mean duplicating the memory. Do not do this for very large arrays:'
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了就地操作导入的数组，必须创建副本，但这将意味着内存复制。对于非常大的数组不要这样做：
 - en: '[PRE65]'
+  id: totrans-300
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: Note
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Note that GPU tensors can’t be converted to NumPy arrays since NumPy doesn’t
     support GPU devices:'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意 GPU 张量无法转换为 NumPy 数组，因为 NumPy 不支持 GPU 设备：
 - en: '[PRE66]'
+  id: totrans-303
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: 'But, if both libraries support the device the data buffer is on, it is possible
     to use the `__dlpack__` protocol (e.g. [PyTorch](https://pytorch.org/) and [CuPy](https://cupy.dev/)):'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，如果两个库都支持数据缓冲区所在的设备，则可以使用`__dlpack__`协议（例如 [PyTorch](https://pytorch.org/)
+    和 [CuPy](https://cupy.dev/)）：
 - en: '[PRE67]'
+  id: totrans-305
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: 'Similarly, a NumPy array can be converted to a PyTorch tensor:'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样，可以将 NumPy 数组转换为 PyTorch 张量：
 - en: '[PRE68]'
+  id: totrans-307
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: 'Read-only arrays cannot be exported:'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: 只读数组无法导出：
 - en: '[PRE69]'
+  id: totrans-309
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: Further reading
+  id: totrans-310
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 进一步阅读
 - en: '[The array interface protocol](../reference/arrays.interface.html#arrays-interface)'
+  id: totrans-311
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[数组接口协议](../reference/arrays.interface.html#arrays-interface)'
 - en: '[Writing custom array containers](basics.dispatch.html#basics-dispatch)'
+  id: totrans-312
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[编写自定义数组容器](basics.dispatch.html#basics-dispatch)'
 - en: '[Special attributes and methods](../reference/arrays.classes.html#special-attributes-and-methods)
     (details on the `__array_ufunc__` and `__array_function__` protocols)'
+  id: totrans-313
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[特殊属性和方法](../reference/arrays.classes.html#special-attributes-and-methods)（关于`__array_ufunc__`和`__array_function__`协议的详细信息）'
 - en: '[Subclassing ndarray](basics.subclassing.html#basics-subclassing) (details
     on the `__array_wrap__` and `__array_finalize__` methods)'
+  id: totrans-314
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[子类化 ndarray](basics.subclassing.html#basics-subclassing)（关于`__array_wrap__`和`__array_finalize__`方法的详细信息）'
 - en: '[Specific features of ndarray sub-typing](c-info.beyond-basics.html#specific-array-subtyping)
     (more details on the implementation of `__array_finalize__`, `__array_wrap__`
     and `__array_priority__`)'
+  id: totrans-315
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[ndarray 子类型化的特定特性](c-info.beyond-basics.html#specific-array-subtyping)（关于`__array_finalize__`、`__array_wrap__`和`__array_priority__`实现的更多详细信息）'
 - en: '[NumPy roadmap: interoperability](https://numpy.org/neps/roadmap.html "(in
     NumPy Enhancement Proposals)")'
+  id: totrans-316
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[NumPy 路线图：互操作性](https://numpy.org/neps/roadmap.html "(在 NumPy 增强提案中)")'
 - en: '[PyTorch documentation on the Bridge with NumPy](https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html#bridge-to-np-label)'
+  id: totrans-317
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[PyTorch 与 NumPy 之间的桥接文档](https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html#bridge-to-np-label)'
