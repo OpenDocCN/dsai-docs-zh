@@ -1,561 +1,804 @@
 - en: Developer
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 开发者
 - en: 原文：[https://pandas.pydata.org/docs/development/developer.html](https://pandas.pydata.org/docs/development/developer.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://pandas.pydata.org/docs/development/developer.html](https://pandas.pydata.org/docs/development/developer.html)
 - en: This section will focus on downstream applications of pandas.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节将重点关注 pandas 的下游应用。
 - en: '## Storing pandas DataFrame objects in Apache Parquet format'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 在 Apache Parquet 格式中存储 pandas DataFrame 对象'
 - en: 'The [Apache Parquet](https://github.com/apache/parquet-format) format provides
     key-value metadata at the file and column level, stored in the footer of the Parquet
     file:'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Apache Parquet](https://github.com/apache/parquet-format) 格式在 Parquet 文件的页脚中提供文件和列级别的键值元数据：'
 - en: '[PRE0]'
+  id: totrans-5
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: where `KeyValue` is
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 `KeyValue` 是
 - en: '[PRE1]'
+  id: totrans-7
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'So that a `pandas.DataFrame` can be faithfully reconstructed, we store a `pandas`
     metadata key in the `FileMetaData` with the value stored as :'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了能够忠实地重建 `pandas.DataFrame`，我们在 `FileMetaData` 中存储一个 `pandas` 元数据键，其值存储为：
 - en: '[PRE2]'
+  id: totrans-9
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: The “descriptor” values `<descr0>` in the `'index_columns'` field are strings
     (referring to a column) or dictionaries with values as described below.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: '`''index_columns''` 字段中的“描述符”值 `<descr0>` 是字符串（指向列）或具有如下描述的字典。'
 - en: 'The `<c0>`/`<ci0>` and so forth are dictionaries containing the metadata for
     each column, *including the index columns*. This has JSON form:'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: '`<c0>`/`<ci0>` 等是包含每列元数据的字典，*包括索引列*。这具有 JSON 形式：'
 - en: '[PRE3]'
+  id: totrans-12
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: See below for the detailed specification for these.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 详细规范请参见下文。
 - en: Index metadata descriptors
+  id: totrans-14
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 索引元数据描述符
 - en: '`RangeIndex` can be stored as metadata only, not requiring serialization. The
     descriptor format for these as is follows:'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: '`RangeIndex` 只能作为元数据存储，不需要序列化。这些的描述格式如下：'
 - en: '[PRE4]'
+  id: totrans-16
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Other index types must be serialized as data columns along with the other DataFrame
     columns. The metadata for these is a string indicating the name of the field in
     the data columns, for example `'__index_level_0__'`.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 其他索引类型必须与其他 DataFrame 列一起序列化为数据列。这些的元数据是一个字符串，指示数据列中字段的名称，例如 `'__index_level_0__'`。
 - en: If an index has a non-None `name` attribute, and there is no other column with
     a name matching that value, then the `index.name` value can be used as the descriptor.
     Otherwise (for unnamed indexes and ones with names colliding with other column
     names) a disambiguating name with pattern matching `__index_level_\d+__` should
     be used. In cases of named indexes as data columns, `name` attribute is always
     stored in the column descriptors as above.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果索引具有非 `None` 的 `name` 属性，并且没有其他名称匹配该值的列，则 `index.name` 值可以用作描述符。否则（对于未命名索引和名称与其他列名称冲突的索引），应使用具有模式匹配
+    `__index_level_\d+__` 的消歧名。对于作为数据列的命名索引，`name` 属性始终存储在上述列描述符中。
 - en: Column metadata
+  id: totrans-19
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 列元数据
 - en: '`pandas_type` is the logical type of the column, and is one of:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: '`pandas_type` 是列的逻辑类型之一：'
 - en: 'Boolean: `''bool''`'
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 布尔值：`'bool'`
 - en: 'Integers: `''int8'', ''int16'', ''int32'', ''int64'', ''uint8'', ''uint16'',
     ''uint32'', ''uint64''`'
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 整数：`'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'`
 - en: 'Floats: `''float16'', ''float32'', ''float64''`'
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 浮点数：`'float16', 'float32', 'float64'`
 - en: 'Date and Time Types: `''datetime'', ''datetimetz''`, `''timedelta''`'
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 日期和时间类型：`'datetime', 'datetimetz'`，`'timedelta'`
 - en: 'String: `''unicode'', ''bytes''`'
+  id: totrans-25
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符串：`'unicode', 'bytes'`
 - en: 'Categorical: `''categorical''`'
+  id: totrans-26
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 分类：`'categorical'`
 - en: 'Other Python objects: `''object''`'
+  id: totrans-27
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 其��� Python 对象：`'object'`
 - en: The `numpy_type` is the physical storage type of the column, which is the result
     of `str(dtype)` for the underlying NumPy array that holds the data. So for `datetimetz`
     this is `datetime64[ns]` and for categorical, it may be any of the supported integer
     categorical types.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy_type` 是列的物理存储类型，是保存数据的底层 NumPy 数组的 `str(dtype)` 的结果。因此，对于 `datetimetz`，这是
+    `datetime64[ns]`，对于分类，它可以是任何支持的整数分类类型之一。'
 - en: 'The `metadata` field is `None` except for:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: '`metadata` 字段为 `None`，除非：'
 - en: '`datetimetz`: `{''timezone'': zone, ''unit'': ''ns''}`, e.g. `{''timezone'',
     ''America/New_York'', ''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
     it is assumed to be nanoseconds.'
+  id: totrans-30
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`datetimetz`：`{''timezone'': zone, ''unit'': ''ns''}`，例如 `{''timezone'', ''America/New_York'',
+    ''unit'': ''ns''}`。`''unit''` 是可选的，如果省略，则假定为纳秒。'
 - en: '`categorical`: `{''num_categories'': K, ''ordered'': is_ordered, ''type'':
     $TYPE}`'
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`categorical`：`{''num_categories'': K, ''ordered'': is_ordered, ''type'': $TYPE}`'
 - en: Here `'type'` is optional, and can be a nested pandas type specification here
     (but not categorical)
+  id: totrans-32
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 这里 `'type'` 是可选的，并且可以在此处是一个嵌套的 pandas 类型规范（但不是分类）
 - en: '`unicode`: `{''encoding'': encoding}`'
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unicode`：`{''encoding'': encoding}`'
 - en: The encoding is optional, and if not present is UTF-8
+  id: totrans-34
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 编码是可选的，如果不存在，则为 UTF-8
 - en: '`object`: `{''encoding'': encoding}`. Objects can be serialized and stored
     in `BYTE_ARRAY` Parquet columns. The encoding can be one of:'
+  id: totrans-35
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`object`: `{''encoding'': encoding}`。对象可以被序列化并存储在 `BYTE_ARRAY` Parquet 列中。编码可以是以下之一：'
 - en: '`''pickle''`'
+  id: totrans-36
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''pickle''`'
 - en: ''
+  id: totrans-37
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-38
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`''bson''`'
+  id: totrans-39
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''bson''`'
 - en: ''
+  id: totrans-40
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-41
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`''json''`'
+  id: totrans-42
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''json''`'
 - en: '`timedelta`: `{''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
     it is assumed to be nanoseconds. This metadata is optional altogether'
+  id: totrans-43
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`timedelta`: `{''unit'': ''ns''}`。`''unit''` 是可选的，如果省略，则默认为纳秒。这些元数据完全是可选的'
 - en: For types other than these, the `'metadata'` key can be omitted. Implementations
     can assume `None` if the key is not present.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于除此之外的类型，可以省略 `'metadata'` 键。如果键不存在，实现可以假定为 `None`。
 - en: 'As an example of fully-formed metadata:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为完整元数据的示例：
 - en: '[PRE5]  ## Storing pandas DataFrame objects in Apache Parquet format'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE5]  ## 将 pandas DataFrame 对象存储为 Apache Parquet 格式'
 - en: 'The [Apache Parquet](https://github.com/apache/parquet-format) format provides
     key-value metadata at the file and column level, stored in the footer of the Parquet
     file:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Apache Parquet](https://github.com/apache/parquet-format) 格式在 Parquet 文件的页脚中提供了文件和列级别的键值元数据：'
 - en: '[PRE6]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: where `KeyValue` is
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 `KeyValue` 是
 - en: '[PRE7]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'So that a `pandas.DataFrame` can be faithfully reconstructed, we store a `pandas`
     metadata key in the `FileMetaData` with the value stored as :'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了能够忠实地重建 `pandas.DataFrame`，我们在 `FileMetaData` 中存储了一个 `pandas` 元数据键，其值存储为：
 - en: '[PRE8]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: The “descriptor” values `<descr0>` in the `'index_columns'` field are strings
     (referring to a column) or dictionaries with values as described below.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '`''index_columns''` 字段中的“描述符”值 `<descr0>` 是字符串（指向列）或具有如下描述的字典。'
 - en: 'The `<c0>`/`<ci0>` and so forth are dictionaries containing the metadata for
     each column, *including the index columns*. This has JSON form:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: '`<c0>`/`<ci0>` 等是包含每列元数据的字典，*包括索引列*。其 JSON 格式如下：'
 - en: '[PRE9]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: See below for the detailed specification for these.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 详细规范请参见下文。
 - en: Index metadata descriptors
+  id: totrans-57
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 索引元数据描述符
 - en: '`RangeIndex` can be stored as metadata only, not requiring serialization. The
     descriptor format for these as is follows:'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '`RangeIndex` 可以仅存储为元数据，无需序列化。这些的描述格式如下：'
 - en: '[PRE10]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Other index types must be serialized as data columns along with the other DataFrame
     columns. The metadata for these is a string indicating the name of the field in
     the data columns, for example `'__index_level_0__'`.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 其他索引类型必须与其他 DataFrame 列一起序列化为数据列。这些的元数据是指示数据列中字段名称的字符串，例如 `'__index_level_0__'`。
 - en: If an index has a non-None `name` attribute, and there is no other column with
     a name matching that value, then the `index.name` value can be used as the descriptor.
     Otherwise (for unnamed indexes and ones with names colliding with other column
     names) a disambiguating name with pattern matching `__index_level_\d+__` should
     be used. In cases of named indexes as data columns, `name` attribute is always
     stored in the column descriptors as above.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果索引具有非 `None` 的 `name` 属性，并且没有其他名称匹配该值的列，则 `index.name` 值可以用作描述符。否则（对于无名称的索引和名称与其他列名称冲突的情况），应使用具有模式匹配
+    `__index_level_\d+__` 的消歧名。对于作为数据列的命名索引，`name` 属性始终存储在列描述符中。
 - en: Column metadata
+  id: totrans-62
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 列元数据
 - en: '`pandas_type` is the logical type of the column, and is one of:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: '`pandas_type` 是列的逻辑类型之一，包括：'
 - en: 'Boolean: `''bool''`'
+  id: totrans-64
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 布尔值：`'bool'`
 - en: 'Integers: `''int8'', ''int16'', ''int32'', ''int64'', ''uint8'', ''uint16'',
     ''uint32'', ''uint64''`'
+  id: totrans-65
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 整数：`'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'`
 - en: 'Floats: `''float16'', ''float32'', ''float64''`'
+  id: totrans-66
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 浮点数：`'float16', 'float32', 'float64'`
 - en: 'Date and Time Types: `''datetime'', ''datetimetz''`, `''timedelta''`'
+  id: totrans-67
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 日期和时间类型：`'datetime', 'datetimetz'`, `'timedelta'`
 - en: 'String: `''unicode'', ''bytes''`'
+  id: totrans-68
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符串：`'unicode', 'bytes'`
 - en: 'Categorical: `''categorical''`'
+  id: totrans-69
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 分类变量：`'categorical'`
 - en: 'Other Python objects: `''object''`'
+  id: totrans-70
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 其他 Python 对象：`'object'`
 - en: The `numpy_type` is the physical storage type of the column, which is the result
     of `str(dtype)` for the underlying NumPy array that holds the data. So for `datetimetz`
     this is `datetime64[ns]` and for categorical, it may be any of the supported integer
     categorical types.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy_type` 是列的物理存储类型，是持有数据的基础 NumPy 数组的 `str(dtype)` 的结果。因此对于 `datetimetz`，这是
+    `datetime64[ns]`，对于分类变量，可能是任何支持的整数分类类型之一。'
 - en: 'The `metadata` field is `None` except for:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: '`metadata` 字段除了以下情况外都为 `None`：'
 - en: '`datetimetz`: `{''timezone'': zone, ''unit'': ''ns''}`, e.g. `{''timezone'',
     ''America/New_York'', ''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
     it is assumed to be nanoseconds.'
+  id: totrans-73
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`datetimetz`: `{''timezone'': zone, ''unit'': ''ns''}`, 例如 `{''timezone'',
+    ''America/New_York'', ''unit'': ''ns''}`。`''unit''` 是可选的，如果省略，则默认为纳秒。'
 - en: '`categorical`: `{''num_categories'': K, ''ordered'': is_ordered, ''type'':
     $TYPE}`'
+  id: totrans-74
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`categorical`: `{''num_categories'': K, ''ordered'': is_ordered, ''type'':
+    $TYPE}`'
 - en: Here `'type'` is optional, and can be a nested pandas type specification here
     (but not categorical)
+  id: totrans-75
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 这里`'type'`是可选的，可以在此处是一个嵌套的pandas类型规范（但不是分类）
 - en: '`unicode`: `{''encoding'': encoding}`'
+  id: totrans-76
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unicode`: `{''encoding'': encoding}`'
 - en: The encoding is optional, and if not present is UTF-8
+  id: totrans-77
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 编码是可选的，如果不存在，则为UTF-8
 - en: '`object`: `{''encoding'': encoding}`. Objects can be serialized and stored
     in `BYTE_ARRAY` Parquet columns. The encoding can be one of:'
+  id: totrans-78
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`object`: `{''encoding'': encoding}`。对象可以被序列化并存储在`BYTE_ARRAY` Parquet列中。编码可以是以下之一：'
 - en: '`''pickle''`'
+  id: totrans-79
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''pickle''`'
 - en: ''
+  id: totrans-80
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-81
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`''bson''`'
+  id: totrans-82
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''bson''`'
 - en: ''
+  id: totrans-83
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-84
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`''json''`'
+  id: totrans-85
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''json''`'
 - en: '`timedelta`: `{''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
     it is assumed to be nanoseconds. This metadata is optional altogether'
+  id: totrans-86
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`timedelta`: `{''unit'': ''ns''}`。`''unit''`是可选的，如果省略，则默认为纳秒。这些元数据完全是可选的'
 - en: For types other than these, the `'metadata'` key can be omitted. Implementations
     can assume `None` if the key is not present.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于除此之外的类型，可以省略`'metadata'`键。如果键不存在，实现可以假定为`None`。
 - en: 'As an example of fully-formed metadata:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为完全形成的元数据示例：
 - en: '[PRE11]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Index metadata descriptors
+  id: totrans-90
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 索引元数据描述符
 - en: '`RangeIndex` can be stored as metadata only, not requiring serialization. The
     descriptor format for these as is follows:'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '`RangeIndex`可以仅存储为元数据，不需要序列化。这些的描述符格式如下：'
 - en: '[PRE12]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Other index types must be serialized as data columns along with the other DataFrame
     columns. The metadata for these is a string indicating the name of the field in
     the data columns, for example `'__index_level_0__'`.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 其他索引类型必须与其他DataFrame列一起序列化为数据列。这些的元数据是一个指示数据列中字段名称的字符串，例如`'__index_level_0__'`。
 - en: If an index has a non-None `name` attribute, and there is no other column with
     a name matching that value, then the `index.name` value can be used as the descriptor.
     Otherwise (for unnamed indexes and ones with names colliding with other column
     names) a disambiguating name with pattern matching `__index_level_\d+__` should
     be used. In cases of named indexes as data columns, `name` attribute is always
     stored in the column descriptors as above.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果索引具有非`None`的`name`属性，并且没有其他名称与该值匹配的列，则`index.name`值可以用作描述符。否则（对于无名称的索引和名称与其他列名称冲突的索引），应使用具有模式匹配`__index_level_\d+__`的消歧名。在数据列中具有命名索引的情况下，`name`属性始终存储在上述列描述符中。
 - en: Column metadata
+  id: totrans-95
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 列元数据
 - en: '`pandas_type` is the logical type of the column, and is one of:'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '`pandas_type`是列的逻辑类型，可以是以下之一：'
 - en: 'Boolean: `''bool''`'
+  id: totrans-97
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 布尔型：`'bool'`
 - en: 'Integers: `''int8'', ''int16'', ''int32'', ''int64'', ''uint8'', ''uint16'',
     ''uint32'', ''uint64''`'
+  id: totrans-98
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 整数：`'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'`
 - en: 'Floats: `''float16'', ''float32'', ''float64''`'
+  id: totrans-99
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 浮点数：`'float16', 'float32', 'float64'`
 - en: 'Date and Time Types: `''datetime'', ''datetimetz''`, `''timedelta''`'
+  id: totrans-100
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 日期和时间类型：`'datetime', 'datetimetz'`，`'timedelta'`
 - en: 'String: `''unicode'', ''bytes''`'
+  id: totrans-101
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符串：`'unicode', 'bytes'`
 - en: 'Categorical: `''categorical''`'
+  id: totrans-102
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 分类：`'categorical'`
 - en: 'Other Python objects: `''object''`'
+  id: totrans-103
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 其他Python对象：`'object'`
 - en: The `numpy_type` is the physical storage type of the column, which is the result
     of `str(dtype)` for the underlying NumPy array that holds the data. So for `datetimetz`
     this is `datetime64[ns]` and for categorical, it may be any of the supported integer
     categorical types.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy_type`是列的物理存储类型，是持有数据的底层NumPy数组的`str(dtype)`的结果。因此，对于`datetimetz`，这是`datetime64[ns]`，对于分类，可能是任何支持的整数分类类型之一。'
 - en: 'The `metadata` field is `None` except for:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: '`metadata`字段为`None`，除了：'
 - en: '`datetimetz`: `{''timezone'': zone, ''unit'': ''ns''}`, e.g. `{''timezone'',
     ''America/New_York'', ''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
     it is assumed to be nanoseconds.'
+  id: totrans-106
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`datetimetz`: `{''timezone'': zone, ''unit'': ''ns''}`，例如`{''timezone'', ''America/New_York'',
+    ''unit'': ''ns''}`。`''unit''`是可选的，如果省略，则默认为纳秒。'
 - en: '`categorical`: `{''num_categories'': K, ''ordered'': is_ordered, ''type'':
     $TYPE}`'
+  id: totrans-107
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`categorical`: `{''num_categories'': K, ''ordered'': is_ordered, ''type'':
+    $TYPE}`'
 - en: Here `'type'` is optional, and can be a nested pandas type specification here
     (but not categorical)
+  id: totrans-108
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 这里`'type'`是可选的，可以在此处是一个嵌套的pandas类型规范（但不是分类）
 - en: '`unicode`: `{''encoding'': encoding}`'
+  id: totrans-109
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unicode`: `{''encoding'': encoding}`'
 - en: The encoding is optional, and if not present is UTF-8
+  id: totrans-110
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 编码是可选的，如果不存在，则为UTF-8
 - en: '`object`: `{''encoding'': encoding}`. Objects can be serialized and stored
     in `BYTE_ARRAY` Parquet columns. The encoding can be one of:'
+  id: totrans-111
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`object`: `{''encoding'': encoding}`。对象可以被序列化并存储在`BYTE_ARRAY` Parquet列中。编码可以是以下之一：'
 - en: '`''pickle''`'
+  id: totrans-112
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''pickle''`'
 - en: ''
+  id: totrans-113
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-114
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`''bson''`'
+  id: totrans-115
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''bson''`'
 - en: ''
+  id: totrans-116
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-117
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`''json''`'
+  id: totrans-118
   prefs:
   - PREF_IND
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`''json''`'
 - en: '`timedelta`: `{''unit'': ''ns''}`. The `''unit''` is optional, and if omitted
     it is assumed to be nanoseconds. This metadata is optional altogether'
+  id: totrans-119
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`timedelta`: `{''unit'': ''ns''}`。`''unit''`是可选的，如果省略，则默认为纳秒。这些元数据完全是可选的'
 - en: For types other than these, the `'metadata'` key can be omitted. Implementations
     can assume `None` if the key is not present.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于除此之外的类型，可以省略`'metadata'`键。如果该键不存在，实现可以假设为`None`。
 - en: 'As an example of fully-formed metadata:'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为完整元数据的一个示例：
 - en: '[PRE13]'
+  id: totrans-122
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
