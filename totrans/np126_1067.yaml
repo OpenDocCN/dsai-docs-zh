@@ -1,0 +1,400 @@
+- en: Status of numpy.distutils and migration advice
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/distutils_status_migration.html](https://numpy.org/doc/1.26/reference/distutils_status_migration.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[`numpy.distutils`](distutils.html#module-numpy.distutils "numpy.distutils")
+    has been deprecated in NumPy `1.23.0`. It will be removed for Python 3.12; for
+    Python <= 3.11 it will not be removed until 2 years after the Python 3.12 release
+    (Oct 2025).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`numpy.distutils` is only tested with `setuptools < 60.0`, newer versions may
+    break. See [Interaction of numpy.distutils with setuptools](#numpy-setuptools-interaction)
+    for details.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Migration advice
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are several build systems which are good options to migrate to. Assuming
+    you have compiled code in your package (if not, you have several good options,
+    e.g. the build backends offered by Poetry, Hatch or PDM) and you want to be using
+    a well-designed, modern and reliable build system, we recommend:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Meson](https://mesonbuild.com/), and the [meson-python](https://meson-python.readthedocs.io)
+    build backend'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[CMake](https://cmake.org/), and the [scikit-build-core](https://scikit-build-core.readthedocs.io/en/latest/)
+    build backend'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If you have modest needs (only simple Cython/C extensions; no need for Fortran,
+    BLAS/LAPACK, nested `setup.py` files, or other features of `numpy.distutils`)
+    and have been happy with `numpy.distutils` so far, you can also consider switching
+    to `setuptools`. Note that most functionality of `numpy.distutils` is unlikely
+    to be ported to `setuptools`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to Meson
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'SciPy has moved to Meson and meson-python for its 1.9.0 release. During this
+    process, remaining issues with Meson’s Python support and feature parity with
+    `numpy.distutils` were resolved. *Note: parity means a large superset (because
+    Meson is a good general-purpose build system); only a few BLAS/LAPACK library
+    selection niceties are missing*. SciPy uses almost all functionality that `numpy.distutils`
+    offers, so if SciPy has successfully made a release with Meson as the build system,
+    there should be no blockers left to migrate, and SciPy will be a good reference
+    for other packages who are migrating. For more details about the SciPy migration,
+    see:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[RFC: switch to Meson as a build system](https://github.com/scipy/scipy/issues/13615)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Tracking issue for Meson support](https://github.com/rgommers/scipy/issues/22)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: NumPy will migrate to Meson for the 1.26 release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to CMake / scikit-build
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The next generation of scikit-build is called [scikit-build-core](https://scikit-build-core.readthedocs.io/en/latest/).
+    Where the older `scikit-build` used `setuptools` underneath, the rewrite does
+    not. Like Meson, CMake is a good general-purpose build system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to `setuptools`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For projects that only use `numpy.distutils` for historical reasons, and do
+    not actually use features beyond those that `setuptools` also supports, moving
+    to `setuptools` is likely the solution which costs the least effort. To assess
+    that, there are the `numpy.distutils` features that are *not* present in `setuptools`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nested `setup.py` files
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fortran build support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: BLAS/LAPACK library support (OpenBLAS, MKL, ATLAS, Netlib LAPACK/BLAS, BLIS,
+    64-bit ILP interface, etc.)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for a few other scientific libraries, like FFTW and UMFPACK
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Better MinGW support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Per-compiler build flag customization (e.g. *-O3* and *SSE2* flags are default)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: a simple user build config system, see [site.cfg.example](https://github.com/numpy/numpy/blob/master/site.cfg.example)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SIMD intrinsics support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The most widely used feature is nested `setup.py` files. This feature may perhaps
+    still be ported to `setuptools` in the future (it needs a volunteer though, see
+    [gh-18588](https://github.com/numpy/numpy/issues/18588) for status). Projects
+    only using that feature could move to `setuptools` after that is done. In case
+    a project uses only a couple of `setup.py` files, it also could make sense to
+    simply aggregate all the content of those files into a single `setup.py` file
+    and then move to `setuptools`. This involves dropping all `Configuration` instances,
+    and using `Extension` instead. E.g.,:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: For more details, see the [setuptools documentation](https://setuptools.pypa.io/en/latest/setuptools.html)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Interaction of `numpy.distutils` with `setuptools`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is recommended to use `setuptools < 60.0`. Newer versions may work, but are
+    not guaranteed to. The reason for this is that `setuptools` 60.0 enabled a vendored
+    copy of `distutils`, including backwards incompatible changes that affect some
+    functionality in `numpy.distutils`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are using only simple Cython or C extensions with minimal use of `numpy.distutils`
+    functionality beyond nested `setup.py` files (its most popular feature, see [`Configuration`](distutils.html#numpy.distutils.misc_util.Configuration
+    "numpy.distutils.misc_util.Configuration")), then latest `setuptools` is likely
+    to continue working. In case of problems, you can also try `SETUPTOOLS_USE_DISTUTILS=stdlib`
+    to avoid the backwards incompatible changes in `setuptools`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whatever you do, it is recommended to put an upper bound on your `setuptools`
+    build requirement in `pyproject.toml` to avoid future breakage - see [For downstream
+    package authors](../dev/depending_on_numpy.html#for-downstream-package-authors).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Migration advice
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are several build systems which are good options to migrate to. Assuming
+    you have compiled code in your package (if not, you have several good options,
+    e.g. the build backends offered by Poetry, Hatch or PDM) and you want to be using
+    a well-designed, modern and reliable build system, we recommend:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Meson](https://mesonbuild.com/), and the [meson-python](https://meson-python.readthedocs.io)
+    build backend'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[CMake](https://cmake.org/), and the [scikit-build-core](https://scikit-build-core.readthedocs.io/en/latest/)
+    build backend'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If you have modest needs (only simple Cython/C extensions; no need for Fortran,
+    BLAS/LAPACK, nested `setup.py` files, or other features of `numpy.distutils`)
+    and have been happy with `numpy.distutils` so far, you can also consider switching
+    to `setuptools`. Note that most functionality of `numpy.distutils` is unlikely
+    to be ported to `setuptools`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to Meson
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'SciPy has moved to Meson and meson-python for its 1.9.0 release. During this
+    process, remaining issues with Meson’s Python support and feature parity with
+    `numpy.distutils` were resolved. *Note: parity means a large superset (because
+    Meson is a good general-purpose build system); only a few BLAS/LAPACK library
+    selection niceties are missing*. SciPy uses almost all functionality that `numpy.distutils`
+    offers, so if SciPy has successfully made a release with Meson as the build system,
+    there should be no blockers left to migrate, and SciPy will be a good reference
+    for other packages who are migrating. For more details about the SciPy migration,
+    see:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[RFC: switch to Meson as a build system](https://github.com/scipy/scipy/issues/13615)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Tracking issue for Meson support](https://github.com/rgommers/scipy/issues/22)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: NumPy will migrate to Meson for the 1.26 release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to CMake / scikit-build
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The next generation of scikit-build is called [scikit-build-core](https://scikit-build-core.readthedocs.io/en/latest/).
+    Where the older `scikit-build` used `setuptools` underneath, the rewrite does
+    not. Like Meson, CMake is a good general-purpose build system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to `setuptools`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For projects that only use `numpy.distutils` for historical reasons, and do
+    not actually use features beyond those that `setuptools` also supports, moving
+    to `setuptools` is likely the solution which costs the least effort. To assess
+    that, there are the `numpy.distutils` features that are *not* present in `setuptools`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nested `setup.py` files
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fortran build support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: BLAS/LAPACK library support (OpenBLAS, MKL, ATLAS, Netlib LAPACK/BLAS, BLIS,
+    64-bit ILP interface, etc.)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for a few other scientific libraries, like FFTW and UMFPACK
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Better MinGW support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Per-compiler build flag customization (e.g. *-O3* and *SSE2* flags are default)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: a simple user build config system, see [site.cfg.example](https://github.com/numpy/numpy/blob/master/site.cfg.example)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SIMD intrinsics support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The most widely used feature is nested `setup.py` files. This feature may perhaps
+    still be ported to `setuptools` in the future (it needs a volunteer though, see
+    [gh-18588](https://github.com/numpy/numpy/issues/18588) for status). Projects
+    only using that feature could move to `setuptools` after that is done. In case
+    a project uses only a couple of `setup.py` files, it also could make sense to
+    simply aggregate all the content of those files into a single `setup.py` file
+    and then move to `setuptools`. This involves dropping all `Configuration` instances,
+    and using `Extension` instead. E.g.,:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: For more details, see the [setuptools documentation](https://setuptools.pypa.io/en/latest/setuptools.html)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to Meson
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'SciPy has moved to Meson and meson-python for its 1.9.0 release. During this
+    process, remaining issues with Meson’s Python support and feature parity with
+    `numpy.distutils` were resolved. *Note: parity means a large superset (because
+    Meson is a good general-purpose build system); only a few BLAS/LAPACK library
+    selection niceties are missing*. SciPy uses almost all functionality that `numpy.distutils`
+    offers, so if SciPy has successfully made a release with Meson as the build system,
+    there should be no blockers left to migrate, and SciPy will be a good reference
+    for other packages who are migrating. For more details about the SciPy migration,
+    see:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[RFC: switch to Meson as a build system](https://github.com/scipy/scipy/issues/13615)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Tracking issue for Meson support](https://github.com/rgommers/scipy/issues/22)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: NumPy will migrate to Meson for the 1.26 release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to CMake / scikit-build
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The next generation of scikit-build is called [scikit-build-core](https://scikit-build-core.readthedocs.io/en/latest/).
+    Where the older `scikit-build` used `setuptools` underneath, the rewrite does
+    not. Like Meson, CMake is a good general-purpose build system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving to `setuptools`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For projects that only use `numpy.distutils` for historical reasons, and do
+    not actually use features beyond those that `setuptools` also supports, moving
+    to `setuptools` is likely the solution which costs the least effort. To assess
+    that, there are the `numpy.distutils` features that are *not* present in `setuptools`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nested `setup.py` files
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fortran build support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: BLAS/LAPACK library support (OpenBLAS, MKL, ATLAS, Netlib LAPACK/BLAS, BLIS,
+    64-bit ILP interface, etc.)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for a few other scientific libraries, like FFTW and UMFPACK
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Better MinGW support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Per-compiler build flag customization (e.g. *-O3* and *SSE2* flags are default)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: a simple user build config system, see [site.cfg.example](https://github.com/numpy/numpy/blob/master/site.cfg.example)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SIMD intrinsics support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The most widely used feature is nested `setup.py` files. This feature may perhaps
+    still be ported to `setuptools` in the future (it needs a volunteer though, see
+    [gh-18588](https://github.com/numpy/numpy/issues/18588) for status). Projects
+    only using that feature could move to `setuptools` after that is done. In case
+    a project uses only a couple of `setup.py` files, it also could make sense to
+    simply aggregate all the content of those files into a single `setup.py` file
+    and then move to `setuptools`. This involves dropping all `Configuration` instances,
+    and using `Extension` instead. E.g.,:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: For more details, see the [setuptools documentation](https://setuptools.pypa.io/en/latest/setuptools.html)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Interaction of `numpy.distutils` with `setuptools`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is recommended to use `setuptools < 60.0`. Newer versions may work, but are
+    not guaranteed to. The reason for this is that `setuptools` 60.0 enabled a vendored
+    copy of `distutils`, including backwards incompatible changes that affect some
+    functionality in `numpy.distutils`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are using only simple Cython or C extensions with minimal use of `numpy.distutils`
+    functionality beyond nested `setup.py` files (its most popular feature, see [`Configuration`](distutils.html#numpy.distutils.misc_util.Configuration
+    "numpy.distutils.misc_util.Configuration")), then latest `setuptools` is likely
+    to continue working. In case of problems, you can also try `SETUPTOOLS_USE_DISTUTILS=stdlib`
+    to avoid the backwards incompatible changes in `setuptools`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whatever you do, it is recommended to put an upper bound on your `setuptools`
+    build requirement in `pyproject.toml` to avoid future breakage - see [For downstream
+    package authors](../dev/depending_on_numpy.html#for-downstream-package-authors).
+  prefs: []
+  type: TYPE_NORMAL

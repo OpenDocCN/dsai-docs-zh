@@ -1,0 +1,327 @@
+- en: Memory management in NumPy
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/c-api/data_memory.html](https://numpy.org/doc/1.26/reference/c-api/data_memory.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The [`numpy.ndarray`](../generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray")
+    is a python class. It requires additional memory allocations to hold [`numpy.ndarray.strides`](../generated/numpy.ndarray.strides.html#numpy.ndarray.strides
+    "numpy.ndarray.strides"), [`numpy.ndarray.shape`](../generated/numpy.ndarray.shape.html#numpy.ndarray.shape
+    "numpy.ndarray.shape") and [`numpy.ndarray.data`](../generated/numpy.ndarray.data.html#numpy.ndarray.data
+    "numpy.ndarray.data") attributes. These attributes are specially allocated after
+    creating the python object in *__new__*. The `strides` and `shape` are stored
+    in a piece of memory allocated internally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `data` allocation used to store the actual array values (which could be
+    pointers in the case of `object` arrays) can be very large, so NumPy has provided
+    interfaces to manage its allocation and release. This document details how those
+    interfaces work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Historical overview
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Since version 1.7.0, NumPy has exposed a set of `PyDataMem_*` functions ([`PyDataMem_NEW`](array.html#c.PyDataMem_NEW
+    "PyDataMem_NEW"), [`PyDataMem_FREE`](array.html#c.PyDataMem_FREE "PyDataMem_FREE"),
+    [`PyDataMem_RENEW`](array.html#c.PyDataMem_RENEW "PyDataMem_RENEW")) which are
+    backed by *alloc*, *free*, *realloc* respectively. In that version NumPy also
+    exposed the *PyDataMem_EventHook* function (now deprecated) described below, which
+    wrap the OS-level calls.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since those early days, Python also improved its memory management capabilities,
+    and began providing various [management policies](https://docs.python.org/3/c-api/memory.html#memoryoverview
+    "(in Python v3.11)") beginning in version 3.4\. These routines are divided into
+    a set of domains, each domain has a [`PyMemAllocatorEx`](https://docs.python.org/3/c-api/memory.html#c.PyMemAllocatorEx
+    "(in Python v3.11)") structure of routines for memory management. Python also
+    added a [`tracemalloc`](https://docs.python.org/3/library/tracemalloc.html#module-tracemalloc
+    "(in Python v3.11)") module to trace calls to the various routines. These tracking
+    hooks were added to the NumPy `PyDataMem_*` routines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy added a small cache of allocated memory in its internal `npy_alloc_cache`,
+    `npy_alloc_cache_zero`, and `npy_free_cache` functions. These wrap `alloc`, `alloc-and-memset(0)`
+    and `free` respectively, but when `npy_free_cache` is called, it adds the pointer
+    to a short list of available blocks marked by size. These blocks can be re-used
+    by subsequent calls to `npy_alloc*`, avoiding memory thrashing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Configurable memory routines in NumPy (NEP 49)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Users may wish to override the internal data memory routines with ones of their
+    own. Since NumPy does not use the Python domain strategy to manage data memory,
+    it provides an alternative set of C-APIs to change memory routines. There are
+    no Python domain-wide strategies for large chunks of object data, so those are
+    less suited to NumPy’s needs. User who wish to change the NumPy data memory management
+    routines can use [`PyDataMem_SetHandler`](#c.PyDataMem_SetHandler "PyDataMem_SetHandler"),
+    which uses a [`PyDataMem_Handler`](#c.PyDataMem_Handler "PyDataMem_Handler") structure
+    to hold pointers to functions used to manage the data memory. The calls are still
+    wrapped by internal routines to call [`PyTraceMalloc_Track`](https://docs.python.org/3/c-api/memory.html#c.PyTraceMalloc_Track
+    "(in Python v3.11)"), [`PyTraceMalloc_Untrack`](https://docs.python.org/3/c-api/memory.html#c.PyTraceMalloc_Untrack
+    "(in Python v3.11)"), and will use the deprecated [`PyDataMem_EventHookFunc`](#c.PyDataMem_EventHookFunc
+    "PyDataMem_EventHookFunc") mechanism. Since the functions may change during the
+    lifetime of the process, each `ndarray` carries with it the functions used at
+    the time of its instantiation, and these will be used to reallocate or free the
+    data memory of the instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: A struct to hold function pointers used to manipulate memory
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: where the allocator structure is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Set a new allocation policy. If the input value is `NULL`, will reset the policy
+    to the default. Return the previous policy, or return `NULL` if an error has occurred.
+    We wrap the user-provided functions so they will still call the python and numpy
+    memory management callback hooks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the current policy that will be used to allocate data for the next `PyArrayObject`.
+    On failure, return `NULL`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For an example of setting up and using the PyDataMem_Handler, see the test in
+    `numpy/core/tests/test_mem_policy.py`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function will be called during data memory manipulation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sets the allocation event hook for numpy array data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns a pointer to the previous hook or `NULL`. If old_data is non-`NULL`,
+    the previous user_data pointer will be copied to it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If not `NULL`, hook will be called at the end of each `PyDataMem_NEW/FREE/RENEW`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: When the hook is called, the GIL will be held by the calling thread. The hook
+    should be written to be reentrant, if it performs operations that might cause
+    new allocation events (such as the creation/destruction numpy objects, or creating/destroying
+    Python objects which might cause a gc).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecated in v1.23
+  prefs: []
+  type: TYPE_NORMAL
+- en: What happens when deallocating if there is no policy set
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A rare but useful technique is to allocate a buffer outside NumPy, use [`PyArray_NewFromDescr`](array.html#c.PyArray_NewFromDescr
+    "PyArray_NewFromDescr") to wrap the buffer in a `ndarray`, then switch the `OWNDATA`
+    flag to true. When the `ndarray` is released, the appropriate function from the
+    `ndarray`’s `PyDataMem_Handler` should be called to free the buffer. But the `PyDataMem_Handler`
+    field was never set, it will be `NULL`. For backward compatibility, NumPy will
+    call `free()` to release the buffer. If `NUMPY_WARN_IF_NO_MEM_POLICY` is set to
+    `1`, a warning will be emitted. The current default is not to emit a warning,
+    this may change in a future version of NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A better technique would be to use a `PyCapsule` as a base object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Example of memory tracing with `np.lib.tracemalloc_domain`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Note that since Python 3.6 (or newer), the builtin `tracemalloc` module can
+    be used to track allocations inside NumPy. NumPy places its CPU memory allocations
+    into the `np.lib.tracemalloc_domain` domain. For additional information, check:
+    *https://docs.python.org/3/library/tracemalloc.html*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is an example on how to use `np.lib.tracemalloc_domain`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Historical overview
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Since version 1.7.0, NumPy has exposed a set of `PyDataMem_*` functions ([`PyDataMem_NEW`](array.html#c.PyDataMem_NEW
+    "PyDataMem_NEW"), [`PyDataMem_FREE`](array.html#c.PyDataMem_FREE "PyDataMem_FREE"),
+    [`PyDataMem_RENEW`](array.html#c.PyDataMem_RENEW "PyDataMem_RENEW")) which are
+    backed by *alloc*, *free*, *realloc* respectively. In that version NumPy also
+    exposed the *PyDataMem_EventHook* function (now deprecated) described below, which
+    wrap the OS-level calls.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since those early days, Python also improved its memory management capabilities,
+    and began providing various [management policies](https://docs.python.org/3/c-api/memory.html#memoryoverview
+    "(in Python v3.11)") beginning in version 3.4\. These routines are divided into
+    a set of domains, each domain has a [`PyMemAllocatorEx`](https://docs.python.org/3/c-api/memory.html#c.PyMemAllocatorEx
+    "(in Python v3.11)") structure of routines for memory management. Python also
+    added a [`tracemalloc`](https://docs.python.org/3/library/tracemalloc.html#module-tracemalloc
+    "(in Python v3.11)") module to trace calls to the various routines. These tracking
+    hooks were added to the NumPy `PyDataMem_*` routines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy added a small cache of allocated memory in its internal `npy_alloc_cache`,
+    `npy_alloc_cache_zero`, and `npy_free_cache` functions. These wrap `alloc`, `alloc-and-memset(0)`
+    and `free` respectively, but when `npy_free_cache` is called, it adds the pointer
+    to a short list of available blocks marked by size. These blocks can be re-used
+    by subsequent calls to `npy_alloc*`, avoiding memory thrashing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Configurable memory routines in NumPy (NEP 49)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Users may wish to override the internal data memory routines with ones of their
+    own. Since NumPy does not use the Python domain strategy to manage data memory,
+    it provides an alternative set of C-APIs to change memory routines. There are
+    no Python domain-wide strategies for large chunks of object data, so those are
+    less suited to NumPy’s needs. User who wish to change the NumPy data memory management
+    routines can use [`PyDataMem_SetHandler`](#c.PyDataMem_SetHandler "PyDataMem_SetHandler"),
+    which uses a [`PyDataMem_Handler`](#c.PyDataMem_Handler "PyDataMem_Handler") structure
+    to hold pointers to functions used to manage the data memory. The calls are still
+    wrapped by internal routines to call [`PyTraceMalloc_Track`](https://docs.python.org/3/c-api/memory.html#c.PyTraceMalloc_Track
+    "(in Python v3.11)"), [`PyTraceMalloc_Untrack`](https://docs.python.org/3/c-api/memory.html#c.PyTraceMalloc_Untrack
+    "(in Python v3.11)"), and will use the deprecated [`PyDataMem_EventHookFunc`](#c.PyDataMem_EventHookFunc
+    "PyDataMem_EventHookFunc") mechanism. Since the functions may change during the
+    lifetime of the process, each `ndarray` carries with it the functions used at
+    the time of its instantiation, and these will be used to reallocate or free the
+    data memory of the instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: A struct to hold function pointers used to manipulate memory
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: where the allocator structure is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Set a new allocation policy. If the input value is `NULL`, will reset the policy
+    to the default. Return the previous policy, or return `NULL` if an error has occurred.
+    We wrap the user-provided functions so they will still call the python and numpy
+    memory management callback hooks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the current policy that will be used to allocate data for the next `PyArrayObject`.
+    On failure, return `NULL`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For an example of setting up and using the PyDataMem_Handler, see the test in
+    `numpy/core/tests/test_mem_policy.py`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function will be called during data memory manipulation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sets the allocation event hook for numpy array data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns a pointer to the previous hook or `NULL`. If old_data is non-`NULL`,
+    the previous user_data pointer will be copied to it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If not `NULL`, hook will be called at the end of each `PyDataMem_NEW/FREE/RENEW`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: When the hook is called, the GIL will be held by the calling thread. The hook
+    should be written to be reentrant, if it performs operations that might cause
+    new allocation events (such as the creation/destruction numpy objects, or creating/destroying
+    Python objects which might cause a gc).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecated in v1.23
+  prefs: []
+  type: TYPE_NORMAL
+- en: What happens when deallocating if there is no policy set
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A rare but useful technique is to allocate a buffer outside NumPy, use [`PyArray_NewFromDescr`](array.html#c.PyArray_NewFromDescr
+    "PyArray_NewFromDescr") to wrap the buffer in a `ndarray`, then switch the `OWNDATA`
+    flag to true. When the `ndarray` is released, the appropriate function from the
+    `ndarray`’s `PyDataMem_Handler` should be called to free the buffer. But the `PyDataMem_Handler`
+    field was never set, it will be `NULL`. For backward compatibility, NumPy will
+    call `free()` to release the buffer. If `NUMPY_WARN_IF_NO_MEM_POLICY` is set to
+    `1`, a warning will be emitted. The current default is not to emit a warning,
+    this may change in a future version of NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A better technique would be to use a `PyCapsule` as a base object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Example of memory tracing with `np.lib.tracemalloc_domain`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Note that since Python 3.6 (or newer), the builtin `tracemalloc` module can
+    be used to track allocations inside NumPy. NumPy places its CPU memory allocations
+    into the `np.lib.tracemalloc_domain` domain. For additional information, check:
+    *https://docs.python.org/3/library/tracemalloc.html*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is an example on how to use `np.lib.tracemalloc_domain`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE

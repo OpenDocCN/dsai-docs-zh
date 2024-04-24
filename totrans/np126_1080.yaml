@@ -1,0 +1,1970 @@
+- en: CPU build options
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/simd/build-options.html](https://numpy.org/doc/1.26/reference/simd/build-options.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Description
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The following options are mainly used to change the default behavior of optimizations
+    that target certain CPU features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`--cpu-baseline`: minimal set of required CPU features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Default value is `min` which provides the minimum CPU features that can safely
+    run on a wide range of platforms within the processor family.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: During the runtime, NumPy modules will fail to load if any of specified features
+    are not supported by the target CPU (raises Python runtime error).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`--cpu-dispatch`: dispatched set of additional CPU features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Default value is `max -xop -fma4` which enables all CPU features, except for
+    AMD legacy features (in case of X86).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: During the runtime, NumPy modules will skip any specified features that are
+    not available in the target CPU.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These options are accessible through [`distutils`](https://docs.python.org/3/library/distutils.html#module-distutils
+    "(in Python v3.11)") commands [`distutils.command.build`](https://docs.python.org/3/distutils/apiref.html#module-distutils.command.build
+    "(in Python v3.11)"), [`distutils.command.build_clib`](https://docs.python.org/3/distutils/apiref.html#module-distutils.command.build_clib
+    "(in Python v3.11)") and [`distutils.command.build_ext`](https://docs.python.org/3/distutils/apiref.html#module-distutils.command.build_ext
+    "(in Python v3.11)"). They accept a set of [CPU features](#opt-supported-features)
+    or groups of features that gather several features or [special options](#opt-special-options)
+    that perform a series of procedures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `build_clib` or `build_ext` are not specified by the user, the arguments
+    of `build` will be used instead, which also holds the default values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To customize both `build_ext` and `build_clib`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To customize only `build_ext`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To customize only `build_clib`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also customize CPU/build options through PIP command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Quick Start
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In general, the default settings tend to not impose certain CPU features that
+    may not be available on some older processors. Raising the ceiling of the baseline
+    features will often improve performance and may also reduce binary size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following are the most common scenarios that may require changing the default
+    settings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I am building NumPy for my local use
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: And I do not intend to export the build to other users or target a different
+    CPU than what the host has.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Set *native* for baseline, or manually specify the CPU features in case of
+    option *native* isn’t supported by your platform:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Building NumPy with extra CPU features isn’t necessary for this case, since
+    all supported features are already defined within the baseline features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: A fatal error will be raised if *native* isn’t supported by the host platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I do not want to support the old processors of the *x86* architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Since most of the CPUs nowadays support at least *AVX*, *F16C* features, you
+    can use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`--cpu-baseline` force combine all implied features, so there’s no need to
+    add SSE features.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’m facing the same case above but with *ppc64* architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Then raise the ceiling of the baseline features to Power8:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Having issues with *AVX512* features?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You may have some reservations about including of *AVX512* or any other CPU
+    feature and you want to exclude from the dispatched features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Supported Features'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The names of the features can express one feature or a group of features, as
+    shown in the following tables supported depend on the lowest interest:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following features may not be supported by all compilers, also some compilers
+    may produce different set of implied features when it comes to features like `AVX512`,
+    `AVX2`, and `FMA3`. See [Platform differences](#opt-platform-differences) for
+    more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On x86
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE` | `SSE2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE2` | `SSE` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE3` | `SSE` `SSE2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSSE3` | `SSE` `SSE2` `SSE3` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE41` | `SSE` `SSE2` `SSE3` `SSSE3` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `POPCNT` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE42` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `XOP` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `FMA4` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `F16C` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `FMA3` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX2` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512F` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    `FMA3` `AVX2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512CD` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    `FMA3` `AVX2` `AVX512F` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_KNL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` | `AVX512ER` `AVX512PF` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_KNM` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_KNL` | `AVX5124FMAPS` `AVX5124VNNIW`
+    `AVX512VPOPCNTDQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_SKX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` | `AVX512VL` `AVX512BW` `AVX512DQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_CLX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` | `AVX512VNNI` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_CNL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` | `AVX512IFMA` `AVX512VBMI`
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_ICL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` `AVX512_CLX` `AVX512_CNL`
+    | `AVX512VBMI2` `AVX512BITALG` `AVX512VPOPCNTDQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_SPR` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` `AVX512_CLX` `AVX512_CNL`
+    `AVX512_ICL` | `AVX512FP16` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/POWER big-endian
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX2` | `VSX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX3` | `VSX` `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX4` | `VSX` `VSX2` `VSX3` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/POWER little-endian
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX` | `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX2` | `VSX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX3` | `VSX` `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX4` | `VSX` `VSX2` `VSX3` |'
+  prefs: []
+  type: TYPE_TB
+- en: On ARMv7/A32
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_FP16` | `NEON` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_VFPV4` | `NEON` `NEON_FP16` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMD` | `NEON` `NEON_FP16` `NEON_VFPV4` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDHP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDDP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDFHM` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` `ASIMDHP` |'
+  prefs: []
+  type: TYPE_TB
+- en: On ARMv8/A64
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON` | `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_FP16` | `NEON` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_VFPV4` | `NEON` `NEON_FP16` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMD` | `NEON` `NEON_FP16` `NEON_VFPV4` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDHP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDDP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDFHM` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` `ASIMDHP` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/ZSYSTEM(S390X)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VXE` | `VX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VXE2` | `VX` `VXE` |  ## Special Options'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`NONE`: enable no features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`NATIVE`: Enables all CPU features that supported by the host CPU, this operation
+    is based on the compiler flags (`-march=native`, `-xHost`, `/QxHost`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`MIN`: Enables the minimum CPU features that can safely run on a wide range
+    of platforms:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '| For Arch | Implies |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| x86 (32-bit mode) | `SSE` `SSE2` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| x86_64 | `SSE` `SSE2` `SSE3` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| IBM/POWER (big-endian mode) | `NONE` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| IBM/POWER (little-endian mode) | `VSX` `VSX2` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| ARMHF | `NONE` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| ARM64 A.K. AARCH64 | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| IBM/ZSYSTEM(S390X) | `NONE` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '`MAX`: Enables all supported CPU features by the compiler and platform.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Operators-/+`: remove or add features, useful with options `MAX`, `MIN` and
+    `NATIVE`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Behaviors
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'CPU features and other options are case-insensitive, for example:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The order of the requested optimizations doesn’t matter:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Either commas or spaces or ‘+’ can be used as a separator, for example:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: all works but arguments should be enclosed in quotes or escaped by backslash
+    if any spaces are used.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`--cpu-baseline` combines all implied CPU features, for example:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`--cpu-baseline` will be treated as “native” if compiler native flag `-march=native`
+    or `-xHost` or `/QxHost` is enabled through environment variable *CFLAGS*:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`--cpu-baseline` escapes any specified features that aren’t supported by the
+    target platform or compiler rather than raising fatal errors.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Since `--cpu-baseline` combines all implied features, the maximum supported
+    of implied features will be enabled rather than escape all of them. For example:'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_PRE
+- en: '`--cpu-dispatch` does not combain any of implied CPU features, so you must
+    add them unless you want to disable one or all of them:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`--cpu-dispatch` escapes any specified baseline features and also escapes any
+    features not supported by the target platform or compiler without raising fatal
+    errors.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eventually, you should always check the final report through the build log to
+    verify the enabled features. See [Build report](#opt-build-report) for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Platform differences'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some exceptional conditions force us to link some features together when it
+    come to certain compilers or architectures, resulting in the impossibility of
+    building them separately.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These conditions can be divided into two parts, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Architectural compatibility**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The need to align certain CPU features that are assured to be supported by
+    successive generations of the same architecture, some cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On ppc64le `VSX(ISA 2.06)` and `VSX2(ISA 2.07)` both imply one another since
+    the first generation that supports little-endian mode is Power-8`(ISA 2.07)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On AArch64 `NEON NEON_FP16 NEON_VFPV4 ASIMD` implies each other since they are
+    part of the hardware baseline.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please take a deep look at [Supported Features](#opt-supported-features), in
+    order to determine the features that imply one another.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Compilation compatibility**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some compilers don’t provide independent support for all CPU features. For instance
+    **Intel**’s compiler doesn’t provide separated flags for `AVX2` and `FMA3`, it
+    makes sense since all Intel CPUs that comes with `AVX2` also support `FMA3`, but
+    this approach is incompatible with other **x86** CPUs from **AMD** or **VIA**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following tables only show the differences imposed by some compilers from
+    the general context that been shown in the [Supported Features](#opt-supported-features)
+    tables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Features names with strikeout represent the unsupported CPU features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On x86::Intel Compiler
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA3 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C AVX2 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX2 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512F | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512CD
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| XOP | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA4 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_SPR | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL | AVX512FP16 |'
+  prefs: []
+  type: TYPE_TB
+- en: On x86::Microsoft Visual C/C++
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA3 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C AVX2 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX2 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512F | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512CD
+    AVX512_SKX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512CD | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512_SKX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_KNL | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD | AVX512ER AVX512PF |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_KNM | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_KNL | AVX5124FMAPS AVX5124VNNIW AVX512VPOPCNTDQ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_SPR | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL | AVX512FP16 |  ## Build
+    report'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In most cases, the CPU build options do not produce any fatal errors that lead
+    to hanging the build. Most of the errors that may appear in the build log serve
+    as heavy warnings due to the lack of some expected CPU features by the compiler.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So we strongly recommend checking the final report log, to be aware of what
+    kind of CPU features are enabled and what are not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can find the final report of CPU optimizations at the end of the build
+    log, and here is how it looks on x86_64/gcc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There is a separate report for each of `build_ext` and `build_clib` that includes
+    several sections, and each section has several values, representing the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Platform**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Architecture: The architecture name of target CPU. It should be one of `x86`,
+    `x64`, `ppc64`, `ppc64le`, `armhf`, `aarch64`, `s390x` or `unknown`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Compiler: The compiler name. It should be one of gcc, clang, msvc, icc, iccw
+    or unix-like.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**CPU baseline**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Requested: The specific features and options to `--cpu-baseline` as-is.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Enabled: The final set of enabled CPU features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Flags: The compiler flags that were used to all NumPy *C/C++* sources during
+    the compilation except for temporary sources that have been used for generating
+    the binary objects of dispatched features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Extra checks: list of internal checks that activate certain functionality or
+    intrinsics related to the enabled features, useful for debugging when it comes
+    to developing SIMD kernels.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**CPU dispatch**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Requested: The specific features and options to `--cpu-dispatch` as-is.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Enabled: The final set of enabled CPU features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Generated: At the beginning of the next row of this property, the features
+    for which optimizations have been generated are shown in the form of several sections
+    with similar properties explained as follows:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'One or multiple dispatched feature: The implied CPU features.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Flags: The compiler flags that been used for these features.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Extra checks: Similar to the baseline but for these dispatched features.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Detect: Set of CPU features that need be detected in runtime in order to execute
+    the generated optimizations.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The lines that come after the above property and end with a ‘:’ on a separate
+    line, represent the paths of c/c++ sources that define the generated optimizations.  ##
+    Runtime dispatch'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Importing NumPy triggers a scan of the available CPU features from the set
+    of dispatchable features. This can be further restricted by setting the environment
+    variable `NPY_DISABLE_CPU_FEATURES` to a comma-, tab-, or space-separated list
+    of features to disable. This will raise an error if parsing fails or if the feature
+    was not enabled. For instance, on `x86_64` this will disable `AVX2` and `FMA3`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the feature is not available, a warning will be emitted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Description
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The following options are mainly used to change the default behavior of optimizations
+    that target certain CPU features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`--cpu-baseline`: minimal set of required CPU features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Default value is `min` which provides the minimum CPU features that can safely
+    run on a wide range of platforms within the processor family.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: During the runtime, NumPy modules will fail to load if any of specified features
+    are not supported by the target CPU (raises Python runtime error).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`--cpu-dispatch`: dispatched set of additional CPU features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Default value is `max -xop -fma4` which enables all CPU features, except for
+    AMD legacy features (in case of X86).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: During the runtime, NumPy modules will skip any specified features that are
+    not available in the target CPU.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These options are accessible through [`distutils`](https://docs.python.org/3/library/distutils.html#module-distutils
+    "(in Python v3.11)") commands [`distutils.command.build`](https://docs.python.org/3/distutils/apiref.html#module-distutils.command.build
+    "(in Python v3.11)"), [`distutils.command.build_clib`](https://docs.python.org/3/distutils/apiref.html#module-distutils.command.build_clib
+    "(in Python v3.11)") and [`distutils.command.build_ext`](https://docs.python.org/3/distutils/apiref.html#module-distutils.command.build_ext
+    "(in Python v3.11)"). They accept a set of [CPU features](#opt-supported-features)
+    or groups of features that gather several features or [special options](#opt-special-options)
+    that perform a series of procedures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `build_clib` or `build_ext` are not specified by the user, the arguments
+    of `build` will be used instead, which also holds the default values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To customize both `build_ext` and `build_clib`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To customize only `build_ext`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To customize only `build_clib`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also customize CPU/build options through PIP command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Quick Start
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In general, the default settings tend to not impose certain CPU features that
+    may not be available on some older processors. Raising the ceiling of the baseline
+    features will often improve performance and may also reduce binary size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following are the most common scenarios that may require changing the default
+    settings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I am building NumPy for my local use
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: And I do not intend to export the build to other users or target a different
+    CPU than what the host has.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Set *native* for baseline, or manually specify the CPU features in case of
+    option *native* isn’t supported by your platform:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Building NumPy with extra CPU features isn’t necessary for this case, since
+    all supported features are already defined within the baseline features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: A fatal error will be raised if *native* isn’t supported by the host platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I do not want to support the old processors of the *x86* architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Since most of the CPUs nowadays support at least *AVX*, *F16C* features, you
+    can use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`--cpu-baseline` force combine all implied features, so there’s no need to
+    add SSE features.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’m facing the same case above but with *ppc64* architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Then raise the ceiling of the baseline features to Power8:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Having issues with *AVX512* features?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You may have some reservations about including of *AVX512* or any other CPU
+    feature and you want to exclude from the dispatched features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: I am building NumPy for my local use
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: And I do not intend to export the build to other users or target a different
+    CPU than what the host has.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Set *native* for baseline, or manually specify the CPU features in case of
+    option *native* isn’t supported by your platform:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Building NumPy with extra CPU features isn’t necessary for this case, since
+    all supported features are already defined within the baseline features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: A fatal error will be raised if *native* isn’t supported by the host platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I do not want to support the old processors of the *x86* architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Since most of the CPUs nowadays support at least *AVX*, *F16C* features, you
+    can use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`--cpu-baseline` force combine all implied features, so there’s no need to
+    add SSE features.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’m facing the same case above but with *ppc64* architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Then raise the ceiling of the baseline features to Power8:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Having issues with *AVX512* features?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You may have some reservations about including of *AVX512* or any other CPU
+    feature and you want to exclude from the dispatched features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Supported Features'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The names of the features can express one feature or a group of features, as
+    shown in the following tables supported depend on the lowest interest:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following features may not be supported by all compilers, also some compilers
+    may produce different set of implied features when it comes to features like `AVX512`,
+    `AVX2`, and `FMA3`. See [Platform differences](#opt-platform-differences) for
+    more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On x86
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE` | `SSE2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE2` | `SSE` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE3` | `SSE` `SSE2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSSE3` | `SSE` `SSE2` `SSE3` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE41` | `SSE` `SSE2` `SSE3` `SSSE3` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `POPCNT` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE42` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `XOP` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `FMA4` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `F16C` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `FMA3` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX2` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512F` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    `FMA3` `AVX2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512CD` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    `FMA3` `AVX2` `AVX512F` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_KNL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` | `AVX512ER` `AVX512PF` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_KNM` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_KNL` | `AVX5124FMAPS` `AVX5124VNNIW`
+    `AVX512VPOPCNTDQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_SKX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` | `AVX512VL` `AVX512BW` `AVX512DQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_CLX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` | `AVX512VNNI` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_CNL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` | `AVX512IFMA` `AVX512VBMI`
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_ICL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` `AVX512_CLX` `AVX512_CNL`
+    | `AVX512VBMI2` `AVX512BITALG` `AVX512VPOPCNTDQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_SPR` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` `AVX512_CLX` `AVX512_CNL`
+    `AVX512_ICL` | `AVX512FP16` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/POWER big-endian
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX2` | `VSX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX3` | `VSX` `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX4` | `VSX` `VSX2` `VSX3` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/POWER little-endian
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX` | `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX2` | `VSX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX3` | `VSX` `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX4` | `VSX` `VSX2` `VSX3` |'
+  prefs: []
+  type: TYPE_TB
+- en: On ARMv7/A32
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_FP16` | `NEON` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_VFPV4` | `NEON` `NEON_FP16` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMD` | `NEON` `NEON_FP16` `NEON_VFPV4` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDHP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDDP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDFHM` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` `ASIMDHP` |'
+  prefs: []
+  type: TYPE_TB
+- en: On ARMv8/A64
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON` | `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_FP16` | `NEON` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_VFPV4` | `NEON` `NEON_FP16` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMD` | `NEON` `NEON_FP16` `NEON_VFPV4` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDHP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDDP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDFHM` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` `ASIMDHP` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/ZSYSTEM(S390X)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VXE` | `VX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VXE2` | `VX` `VXE` |'
+  prefs: []
+  type: TYPE_TB
+- en: On x86
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE` | `SSE2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE2` | `SSE` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE3` | `SSE` `SSE2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSSE3` | `SSE` `SSE2` `SSE3` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE41` | `SSE` `SSE2` `SSE3` `SSSE3` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `POPCNT` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SSE42` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `XOP` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `FMA4` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `F16C` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `FMA3` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX2` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512F` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    `FMA3` `AVX2` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512CD` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C`
+    `FMA3` `AVX2` `AVX512F` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_KNL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` | `AVX512ER` `AVX512PF` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_KNM` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_KNL` | `AVX5124FMAPS` `AVX5124VNNIW`
+    `AVX512VPOPCNTDQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_SKX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` | `AVX512VL` `AVX512BW` `AVX512DQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_CLX` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` | `AVX512VNNI` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_CNL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` | `AVX512IFMA` `AVX512VBMI`
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_ICL` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` `AVX512_CLX` `AVX512_CNL`
+    | `AVX512VBMI2` `AVX512BITALG` `AVX512VPOPCNTDQ` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `AVX512_SPR` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`
+    `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` `AVX512_SKX` `AVX512_CLX` `AVX512_CNL`
+    `AVX512_ICL` | `AVX512FP16` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/POWER big-endian
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX2` | `VSX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX3` | `VSX` `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX4` | `VSX` `VSX2` `VSX3` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/POWER little-endian
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX` | `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX2` | `VSX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX3` | `VSX` `VSX2` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VSX4` | `VSX` `VSX2` `VSX3` |'
+  prefs: []
+  type: TYPE_TB
+- en: On ARMv7/A32
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_FP16` | `NEON` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_VFPV4` | `NEON` `NEON_FP16` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMD` | `NEON` `NEON_FP16` `NEON_VFPV4` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDHP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDDP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDFHM` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` `ASIMDHP` |'
+  prefs: []
+  type: TYPE_TB
+- en: On ARMv8/A64
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON` | `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_FP16` | `NEON` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NEON_VFPV4` | `NEON` `NEON_FP16` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMD` | `NEON` `NEON_FP16` `NEON_VFPV4` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDHP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDDP` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ASIMDFHM` | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` `ASIMDHP` |'
+  prefs: []
+  type: TYPE_TB
+- en: On IBM/ZSYSTEM(S390X)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VX` |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VXE` | `VX` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `VXE2` | `VX` `VXE` |'
+  prefs: []
+  type: TYPE_TB
+- en: '## Special Options'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`NONE`: enable no features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`NATIVE`: Enables all CPU features that supported by the host CPU, this operation
+    is based on the compiler flags (`-march=native`, `-xHost`, `/QxHost`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`MIN`: Enables the minimum CPU features that can safely run on a wide range
+    of platforms:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '| For Arch | Implies |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| x86 (32-bit mode) | `SSE` `SSE2` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| x86_64 | `SSE` `SSE2` `SSE3` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| IBM/POWER (big-endian mode) | `NONE` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| IBM/POWER (little-endian mode) | `VSX` `VSX2` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| ARMHF | `NONE` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| ARM64 A.K. AARCH64 | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| IBM/ZSYSTEM(S390X) | `NONE` |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '`MAX`: Enables all supported CPU features by the compiler and platform.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Operators-/+`: remove or add features, useful with options `MAX`, `MIN` and
+    `NATIVE`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Behaviors
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'CPU features and other options are case-insensitive, for example:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The order of the requested optimizations doesn’t matter:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Either commas or spaces or ‘+’ can be used as a separator, for example:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: all works but arguments should be enclosed in quotes or escaped by backslash
+    if any spaces are used.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`--cpu-baseline` combines all implied CPU features, for example:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`--cpu-baseline` will be treated as “native” if compiler native flag `-march=native`
+    or `-xHost` or `/QxHost` is enabled through environment variable *CFLAGS*:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`--cpu-baseline` escapes any specified features that aren’t supported by the
+    target platform or compiler rather than raising fatal errors.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Since `--cpu-baseline` combines all implied features, the maximum supported
+    of implied features will be enabled rather than escape all of them. For example:'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_PRE
+- en: '`--cpu-dispatch` does not combain any of implied CPU features, so you must
+    add them unless you want to disable one or all of them:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`--cpu-dispatch` escapes any specified baseline features and also escapes any
+    features not supported by the target platform or compiler without raising fatal
+    errors.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eventually, you should always check the final report through the build log to
+    verify the enabled features. See [Build report](#opt-build-report) for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Platform differences'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some exceptional conditions force us to link some features together when it
+    come to certain compilers or architectures, resulting in the impossibility of
+    building them separately.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These conditions can be divided into two parts, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Architectural compatibility**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The need to align certain CPU features that are assured to be supported by
+    successive generations of the same architecture, some cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On ppc64le `VSX(ISA 2.06)` and `VSX2(ISA 2.07)` both imply one another since
+    the first generation that supports little-endian mode is Power-8`(ISA 2.07)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On AArch64 `NEON NEON_FP16 NEON_VFPV4 ASIMD` implies each other since they are
+    part of the hardware baseline.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please take a deep look at [Supported Features](#opt-supported-features), in
+    order to determine the features that imply one another.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Compilation compatibility**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some compilers don’t provide independent support for all CPU features. For instance
+    **Intel**’s compiler doesn’t provide separated flags for `AVX2` and `FMA3`, it
+    makes sense since all Intel CPUs that comes with `AVX2` also support `FMA3`, but
+    this approach is incompatible with other **x86** CPUs from **AMD** or **VIA**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following tables only show the differences imposed by some compilers from
+    the general context that been shown in the [Supported Features](#opt-supported-features)
+    tables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Features names with strikeout represent the unsupported CPU features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On x86::Intel Compiler
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA3 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C AVX2 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX2 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512F | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512CD
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| XOP | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA4 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_SPR | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL | AVX512FP16 |'
+  prefs: []
+  type: TYPE_TB
+- en: On x86::Microsoft Visual C/C++
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA3 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C AVX2 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX2 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512F | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512CD
+    AVX512_SKX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512CD | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512_SKX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_KNL | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD | AVX512ER AVX512PF |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_KNM | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_KNL | AVX5124FMAPS AVX5124VNNIW AVX512VPOPCNTDQ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_SPR | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL | AVX512FP16 |'
+  prefs: []
+  type: TYPE_TB
+- en: On x86::Intel Compiler
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA3 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C AVX2 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX2 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512F | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512CD
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| XOP | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA4 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_SPR | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL | AVX512FP16 |'
+  prefs: []
+  type: TYPE_TB
+- en: On x86::Microsoft Visual C/C++
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Name | Implies | Gathers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FMA3 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C AVX2 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX2 | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512F | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512CD
+    AVX512_SKX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512CD | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512_SKX |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_KNL | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD | AVX512ER AVX512PF |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_KNM | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_KNL | AVX5124FMAPS AVX5124VNNIW AVX512VPOPCNTDQ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AVX512_SPR | SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F
+    AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL | AVX512FP16 |'
+  prefs: []
+  type: TYPE_TB
+- en: '## Build report'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In most cases, the CPU build options do not produce any fatal errors that lead
+    to hanging the build. Most of the errors that may appear in the build log serve
+    as heavy warnings due to the lack of some expected CPU features by the compiler.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So we strongly recommend checking the final report log, to be aware of what
+    kind of CPU features are enabled and what are not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can find the final report of CPU optimizations at the end of the build
+    log, and here is how it looks on x86_64/gcc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There is a separate report for each of `build_ext` and `build_clib` that includes
+    several sections, and each section has several values, representing the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Platform**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Architecture: The architecture name of target CPU. It should be one of `x86`,
+    `x64`, `ppc64`, `ppc64le`, `armhf`, `aarch64`, `s390x` or `unknown`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Compiler: The compiler name. It should be one of gcc, clang, msvc, icc, iccw
+    or unix-like.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**CPU baseline**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Requested: The specific features and options to `--cpu-baseline` as-is.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Enabled: The final set of enabled CPU features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Flags: The compiler flags that were used to all NumPy *C/C++* sources during
+    the compilation except for temporary sources that have been used for generating
+    the binary objects of dispatched features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Extra checks: list of internal checks that activate certain functionality or
+    intrinsics related to the enabled features, useful for debugging when it comes
+    to developing SIMD kernels.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**CPU dispatch**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Requested: The specific features and options to `--cpu-dispatch` as-is.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Enabled: The final set of enabled CPU features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Generated: At the beginning of the next row of this property, the features
+    for which optimizations have been generated are shown in the form of several sections
+    with similar properties explained as follows:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'One or multiple dispatched feature: The implied CPU features.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Flags: The compiler flags that been used for these features.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Extra checks: Similar to the baseline but for these dispatched features.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Detect: Set of CPU features that need be detected in runtime in order to execute
+    the generated optimizations.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The lines that come after the above property and end with a ‘:’ on a separate
+    line, represent the paths of c/c++ sources that define the generated optimizations.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '## Runtime dispatch'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Importing NumPy triggers a scan of the available CPU features from the set
+    of dispatchable features. This can be further restricted by setting the environment
+    variable `NPY_DISABLE_CPU_FEATURES` to a comma-, tab-, or space-separated list
+    of features to disable. This will raise an error if parsing fails or if the feature
+    was not enabled. For instance, on `x86_64` this will disable `AVX2` and `FMA3`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the feature is not available, a warning will be emitted.
+  prefs: []
+  type: TYPE_NORMAL

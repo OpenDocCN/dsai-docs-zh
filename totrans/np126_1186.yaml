@@ -1,0 +1,2485 @@
+- en: NumPy 1.8.0 Release Notes
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/release/1.8.0-notes.html](https://numpy.org/doc/1.26/release/1.8.0-notes.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This release supports Python 2.6 -2.7 and 3.2 - 3.3.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Highlights
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: New, no 2to3, Python 2 and Python 3 are supported by a common code base.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, gufuncs for linear algebra, enabling operations on stacked arrays.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, inplace fancy indexing for ufuncs with the `.at` method.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, `partition` function, partial sorting via selection for fast median.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, `nanmean`, `nanvar`, and `nanstd` functions skipping NaNs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, `full` and `full_like` functions to create value initialized arrays.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, `PyUFunc_RegisterLoopForDescr`, better ufunc support for user dtypes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numerous performance improvements in many areas.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dropped Support
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Support for Python versions 2.4 and 2.5 has been dropped,
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support for SCons has been removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Future Changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Datetime64 type remains experimental in this release. In 1.9 there will
+    probably be some changes to make it more usable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The diagonal method currently returns a new array and raises a FutureWarning.
+    In 1.9 it will return a readonly view.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiple field selection from an array of structured type currently returns
+    a new array and raises a FutureWarning. In 1.9 it will return a readonly view.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The numpy/oldnumeric and numpy/numarray compatibility modules will be removed
+    in 1.9.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compatibility notes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The doc/sphinxext content has been moved into its own github repository, and
+    is included in numpy as a submodule. See the instructions in doc/HOWTO_BUILD_DOCS.rst
+    for how to access the content.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The hash function of numpy.void scalars has been changed. Previously the pointer
+    to the data was hashed as an integer. Now, the hash function uses the tuple-hash
+    algorithm to combine the hash functions of the elements of the scalar, but only
+    if the scalar is read-only.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numpy has switched its build system to using ‘separate compilation’ by default.
+    In previous releases this was supported, but not default. This should produce
+    the same results as the old system, but if you’re trying to do something complicated
+    like link numpy statically or using an unusual compiler, then it’s possible you
+    will encounter problems. If so, please file a bug and as a temporary workaround
+    you can re-enable the old build system by exporting the shell variable NPY_SEPARATE_COMPILATION=0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the AdvancedNew iterator the `oa_ndim` flag should now be -1 to indicate
+    that no `op_axes` and `itershape` are passed in. The `oa_ndim == 0` case, now
+    indicates a 0-D iteration and `op_axes` being NULL and the old usage is deprecated.
+    This does not effect the `NpyIter_New` or `NpyIter_MultiNew` functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The functions nanargmin and nanargmax now return np.iinfo[‘intp’].min for the
+    index in all-NaN slices. Previously the functions would raise a ValueError for
+    array returns and NaN for scalar returns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NPY_RELAXED_STRIDES_CHECKING
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There is a new compile time environment variable `NPY_RELAXED_STRIDES_CHECKING`.
+    If this variable is set to 1, then numpy will consider more arrays to be C- or
+    F-contiguous – for example, it becomes possible to have a column vector which
+    is considered both C- and F-contiguous simultaneously. The new definition is more
+    accurate, allows for faster code that makes fewer unnecessary copies, and simplifies
+    numpy’s code internally. However, it may also break third-party libraries that
+    make too-strong assumptions about the stride values of C- and F-contiguous arrays.
+    (It is also currently known that this breaks Cython code using memoryviews, which
+    will be fixed in Cython.) THIS WILL BECOME THE DEFAULT IN A FUTURE RELEASE, SO
+    PLEASE TEST YOUR CODE NOW AGAINST NUMPY BUILT WITH:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can check whether NPY_RELAXED_STRIDES_CHECKING is in effect by running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will be `True` if relaxed strides checking is enabled, and `False` otherwise.
+    The typical problem we’ve seen so far is C code that works with C-contiguous arrays,
+    and assumes that the itemsize can be accessed by looking at the last element in
+    the `PyArray_STRIDES(arr)` array. When relaxed strides are in effect, this is
+    not true (and in fact, it never was true in some corner cases). Instead, use `PyArray_ITEMSIZE(arr)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more information check the “Internal memory layout of an ndarray” section
+    in the documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Binary operations with non-arrays as second argument
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Binary operations of the form `<array-or-subclass> * <non-array-subclass>` where
+    `<non-array-subclass>` declares an `__array_priority__` higher than that of `<array-or-subclass>`
+    will now unconditionally return *NotImplemented*, giving `<non-array-subclass>`
+    a chance to handle the operation. Previously, *NotImplemented* would only be returned
+    if `<non-array-subclass>` actually implemented the reversed operation, and after
+    a (potentially expensive) array conversion of `<non-array-subclass>` had been
+    attempted. ([bug](https://github.com/numpy/numpy/issues/3375), [pull request](https://github.com/numpy/numpy/pull/3501))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Function *median* used with *overwrite_input* only partially sorts array
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If *median* is used with *overwrite_input* option the input array will now only
+    be partially sorted instead of fully sorted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fix to financial.npv
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The npv function had a bug. Contrary to what the documentation stated, it summed
+    from indexes `1` to `M` instead of from `0` to `M - 1`. The fix changes the returned
+    value. The mirr function called the npv function, but worked around the problem,
+    so that was also fixed and the return value of the mirr function remains unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Runtime warnings when comparing NaN numbers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Comparing `NaN` floating point numbers now raises the `invalid` runtime warning.
+    If a `NaN` is expected the warning can be ignored using np.errstate. E.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: New Features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Support for linear algebra on stacked arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The gufunc machinery is now used for np.linalg, allowing operations on stacked
+    arrays and vectors. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: In place fancy indexing for ufuncs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The function `at` has been added to ufunc objects to allow in place ufuncs
+    with no buffering when fancy indexing is used. For example, the following will
+    increment the first and second items in the array, and will increment the third
+    item twice: `numpy.add.at(arr, [0, 1, 2, 2], 1)`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is what many have mistakenly thought `arr[[0, 1, 2, 2]] += 1` would do,
+    but that does not work as the incremented value of `arr[2]` is simply copied into
+    the third slot in `arr` twice, not incremented twice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *partition* and *argpartition*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New functions to partially sort arrays via a selection algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A `partition` by index `k` moves the `k` smallest element to the front of an
+    array. All elements before `k` are then smaller or equal than the value in position
+    `k` and all elements following `k` are then greater or equal than the value in
+    position `k`. The ordering of the values within these bounds is undefined. A sequence
+    of indices can be provided to sort all of them into their sorted position at once
+    iterative partitioning. This can be used to efficiently obtain order statistics
+    like median or percentiles of samples. `partition` has a linear time complexity
+    of `O(n)` while a full sort has `O(n log(n))`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *nanmean*, *nanvar* and *nanstd*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New nan aware statistical functions are added. In these functions the results
+    are what would be obtained if nan values were omitted from all computations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *full* and *full_like*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New convenience functions to create arrays filled with a specific value; complementary
+    to the existing *zeros* and *zeros_like* functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IO compatibility with large files
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Large NPZ files >2GB can be loaded on 64-bit systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building against OpenBLAS
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is now possible to build numpy against OpenBLAS by editing site.cfg.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New constant
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Euler’s constant is now exposed in numpy as euler_gamma.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New modes for qr
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New modes ‘complete’, ‘reduced’, and ‘raw’ have been added to the qr factorization
+    and the old ‘full’ and ‘economic’ modes are deprecated. The ‘reduced’ mode replaces
+    the old ‘full’ mode and is the default as was the ‘full’ mode, so backward compatibility
+    can be maintained by not specifying the mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ‘complete’ mode returns a full dimensional factorization, which can be useful
+    for obtaining a basis for the orthogonal complement of the range space. The ‘raw’
+    mode returns arrays that contain the Householder reflectors and scaling factors
+    that can be used in the future to apply q without needing to convert to a matrix.
+    The ‘economic’ mode is simply deprecated, there isn’t much use for it and it isn’t
+    any more efficient than the ‘raw’ mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New *invert* argument to *in1d*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function *in1d* now accepts a *invert* argument which, when *True*, causes
+    the returned array to be inverted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Advanced indexing using *np.newaxis*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is now possible to use *np.newaxis*/*None* together with index arrays instead
+    of only in simple indices. This means that `array[np.newaxis, [0, 1]]` will now
+    work as expected and select the first two rows while prepending a new axis to
+    the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New ufuncs can now be registered with builtin input types and a custom output
+    type. Before this change, NumPy wouldn’t be able to find the right ufunc loop
+    function when the ufunc was called from Python, because the ufunc loop signature
+    matching logic wasn’t looking at the output operand type. Now the correct ufunc
+    loop is found, as long as the user provides an output argument with the correct
+    output type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: runtests.py
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A simple test runner script `runtests.py` was added. It also builds Numpy via
+    `setup.py build` and can be used to run tests easily during development.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Improvements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: IO performance improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Performance in reading large files was improved by chunking (see also IO compatibility).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *pad*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The *pad* function has a new implementation, greatly improving performance for
+    all inputs except *mode=* (retained for backwards compatibility). Scaling with
+    dimensionality is dramatically improved for rank >= 4.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *isnan*, *isinf*, *isfinite* and *byteswap*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*isnan*, *isinf*, *isfinite* and *byteswap* have been improved to take advantage
+    of compiler builtins to avoid expensive calls to libc. This improves performance
+    of these operations by about a factor of two on gnu libc systems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements via SSE2 vectorization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Several functions have been optimized to make use of SSE2 CPU SIMD instructions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Float32 and float64:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: base math (*add*, *subtract*, *divide*, *multiply*)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*sqrt*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*minimum/maximum*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*absolute*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bool:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_or*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_and*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_not*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This improves performance of these operations up to 4x/2x for float32/float64
+    and up to 10x for bool depending on the location of the data in the CPU caches.
+    The performance gain is greatest for in-place operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to use the improved functions the SSE2 instruction set must be enabled
+    at compile time. It is enabled by default on x86_64 systems. On x86_32 with a
+    capable CPU it must be enabled by passing the appropriate flag to the CFLAGS build
+    variable (-msse2 with gcc).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *median*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*median* is now implemented in terms of *partition* instead of *sort* which
+    reduces its time complexity from O(n log(n)) to O(n). If used with the *overwrite_input*
+    option the array will now only be partially sorted instead of fully sorted.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overridable operand flags in ufunc C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When creating a ufunc, the default ufunc operand flags can be overridden via
+    the new op_flags attribute of the ufunc object. For example, to set the operand
+    flag for the first input to read/write:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyObject *ufunc = PyUFunc_FromFuncAndData(…); ufunc->op_flags[0] = NPY_ITER_READWRITE;
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This allows a ufunc to perform an operation in place. Also, global nditer flags
+    can be overridden via the new iter_flags attribute of the ufunc object. For example,
+    to set the reduce flag for a ufunc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ufunc->iter_flags = NPY_ITER_REDUCE_OK;
+  prefs: []
+  type: TYPE_NORMAL
+- en: Changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function np.take now allows 0-d arrays as indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The separate compilation mode is now enabled by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Several changes to np.insert and np.delete:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Previously, negative indices and indices that pointed past the end of the array
+    were simply ignored. Now, this will raise a Future or Deprecation Warning. In
+    the future they will be treated like normal indexing treats them – negative indices
+    will wrap around, and out-of-bound indices will generate an error.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Previously, boolean indices were treated as if they were integers (always referring
+    to either the 0th or 1st item in the array). In the future, they will be treated
+    as masks. In this release, they raise a FutureWarning warning of this coming change.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In Numpy 1.7\. np.insert already allowed the syntax *np.insert(arr, 3, [1,2,3])*
+    to insert multiple items at a single position. In Numpy 1.8\. this is also possible
+    for *np.insert(arr, [3], [1, 2, 3])*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Padded regions from np.pad are now correctly rounded, not truncated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API Array Additions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Four new functions have been added to the array C-API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Partition
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyArray_ArgPartition
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyArray_SelectkindConverter
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyDataMem_NEW_ZEROED
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C-API Ufunc Additions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One new function has been added to the ufunc C-API that allows to register an
+    inner loop for user types using the descr.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyUFunc_RegisterLoopForDescr
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C-API Developer Improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `PyArray_Type` instance creation function `tp_new` now uses `tp_basicsize`
+    to determine how much memory to allocate. In previous releases only `sizeof(PyArrayObject)`
+    bytes of memory were allocated, often requiring C-API subtypes to reimplement
+    `tp_new`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The ‘full’ and ‘economic’ modes of qr factorization are deprecated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The use of non-integer for indices and most integer arguments has been deprecated.
+    Previously float indices and function arguments such as axes or shapes were truncated
+    to integers without warning. For example *arr.reshape(3., -1)* or *arr[0.]* will
+    trigger a deprecation warning in NumPy 1.8., and in some future version of NumPy
+    they will raise an error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Authors
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This release contains work by the following people who contributed at least
+    one patch to this release. The names are in alphabetical order by first name:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '87'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adam Ginsburg +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adam Griffiths +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alexander Belopolsky +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alex Barth +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alex Ford +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andreas Hilboll +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andreas Kloeckner +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andreas Schwab +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andrew Horton +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: argriffing +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Arink Verma +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bago Amirbekian +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bartosz Telenczuk +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: bebert218 +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Benjamin Root +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bill Spotz +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bradley M. Froehle
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Carwyn Pelley +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Charles Harris
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chris
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christian Brueffer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christoph Dann +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christoph Gohlke
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dan Hipschman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Daniel +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dan Miller +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: daveydave400 +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Cournapeau
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Warde-Farley
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Denis Laxalde
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: dmuellner +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Edward Catmur +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Egor Zindy +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: endolith
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Firing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Fode
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Moore +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Price +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fazlul Shahriar +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Félix Hartmann +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fernando Perez
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Frank B +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Frank Breitling +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Frederic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gabriel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: GaelVaroquaux
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guillaume Gay +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Han Genuit
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: HaroldMills +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: hklemm +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jamestwebber +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jason Madden +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jay Bourque
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jeromekelleher +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jesús Gómez +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jmozmoz +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jnothman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Johannes Schönberger +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John Benediktsson +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John Salvatier +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John Stechschulte +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jonathan Waltman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joon Ro +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jos de Kloe +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joseph Martinot-Lagarde +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Josh Warner (Mac) +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jostein Bø Fløystad +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Juan Luis Cano Rodríguez +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Julian Taylor +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Julien Phalip +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: K.-Michael Aye +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kumar Appaiah +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lars Buitinck
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Leon Weber +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Luis Pedro Coelho
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marcin Juszkiewicz
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mark Wiebe
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marten van Kerkwijk +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin Baeuml +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin Spacek
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin Teichmann +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matt Davis +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matthew Brett
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Maximilian Albert +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: m-d-w +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Michael Droettboom
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: mwtoews +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nathaniel J. Smith
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nicolas Scheffer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nils Werner +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ochoadavid +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ondřej Čertík
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ovillellas +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Paul Ivanov
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pauli Virtanen
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: peterjc
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ralf Gommers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raul Cota +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Richard Hattersley +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robert Costa +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robert Kern
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rob Ruana +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ronan Lamy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sandro Tosi
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sascha Peilicke +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sebastian Berg
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Skipper Seabold
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stefan van der Walt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Steve +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Takafumi Arakaki +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Thomas Robitaille +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tomas Tomecek +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Travis E. Oliphant
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Valentin Haenel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vladimir Rutsky +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warren Weckesser
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yaroslav Halchenko
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yury V. Zaytsev +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A total of 119 people contributed to this release. People with a “+” by their
+    names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Highlights
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: New, no 2to3, Python 2 and Python 3 are supported by a common code base.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, gufuncs for linear algebra, enabling operations on stacked arrays.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, inplace fancy indexing for ufuncs with the `.at` method.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, `partition` function, partial sorting via selection for fast median.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, `nanmean`, `nanvar`, and `nanstd` functions skipping NaNs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, `full` and `full_like` functions to create value initialized arrays.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New, `PyUFunc_RegisterLoopForDescr`, better ufunc support for user dtypes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numerous performance improvements in many areas.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dropped Support
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Support for Python versions 2.4 and 2.5 has been dropped,
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support for SCons has been removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Future Changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Datetime64 type remains experimental in this release. In 1.9 there will
+    probably be some changes to make it more usable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The diagonal method currently returns a new array and raises a FutureWarning.
+    In 1.9 it will return a readonly view.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiple field selection from an array of structured type currently returns
+    a new array and raises a FutureWarning. In 1.9 it will return a readonly view.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The numpy/oldnumeric and numpy/numarray compatibility modules will be removed
+    in 1.9.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compatibility notes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The doc/sphinxext content has been moved into its own github repository, and
+    is included in numpy as a submodule. See the instructions in doc/HOWTO_BUILD_DOCS.rst
+    for how to access the content.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The hash function of numpy.void scalars has been changed. Previously the pointer
+    to the data was hashed as an integer. Now, the hash function uses the tuple-hash
+    algorithm to combine the hash functions of the elements of the scalar, but only
+    if the scalar is read-only.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numpy has switched its build system to using ‘separate compilation’ by default.
+    In previous releases this was supported, but not default. This should produce
+    the same results as the old system, but if you’re trying to do something complicated
+    like link numpy statically or using an unusual compiler, then it’s possible you
+    will encounter problems. If so, please file a bug and as a temporary workaround
+    you can re-enable the old build system by exporting the shell variable NPY_SEPARATE_COMPILATION=0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the AdvancedNew iterator the `oa_ndim` flag should now be -1 to indicate
+    that no `op_axes` and `itershape` are passed in. The `oa_ndim == 0` case, now
+    indicates a 0-D iteration and `op_axes` being NULL and the old usage is deprecated.
+    This does not effect the `NpyIter_New` or `NpyIter_MultiNew` functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The functions nanargmin and nanargmax now return np.iinfo[‘intp’].min for the
+    index in all-NaN slices. Previously the functions would raise a ValueError for
+    array returns and NaN for scalar returns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NPY_RELAXED_STRIDES_CHECKING
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There is a new compile time environment variable `NPY_RELAXED_STRIDES_CHECKING`.
+    If this variable is set to 1, then numpy will consider more arrays to be C- or
+    F-contiguous – for example, it becomes possible to have a column vector which
+    is considered both C- and F-contiguous simultaneously. The new definition is more
+    accurate, allows for faster code that makes fewer unnecessary copies, and simplifies
+    numpy’s code internally. However, it may also break third-party libraries that
+    make too-strong assumptions about the stride values of C- and F-contiguous arrays.
+    (It is also currently known that this breaks Cython code using memoryviews, which
+    will be fixed in Cython.) THIS WILL BECOME THE DEFAULT IN A FUTURE RELEASE, SO
+    PLEASE TEST YOUR CODE NOW AGAINST NUMPY BUILT WITH:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can check whether NPY_RELAXED_STRIDES_CHECKING is in effect by running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will be `True` if relaxed strides checking is enabled, and `False` otherwise.
+    The typical problem we’ve seen so far is C code that works with C-contiguous arrays,
+    and assumes that the itemsize can be accessed by looking at the last element in
+    the `PyArray_STRIDES(arr)` array. When relaxed strides are in effect, this is
+    not true (and in fact, it never was true in some corner cases). Instead, use `PyArray_ITEMSIZE(arr)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more information check the “Internal memory layout of an ndarray” section
+    in the documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Binary operations with non-arrays as second argument
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Binary operations of the form `<array-or-subclass> * <non-array-subclass>` where
+    `<non-array-subclass>` declares an `__array_priority__` higher than that of `<array-or-subclass>`
+    will now unconditionally return *NotImplemented*, giving `<non-array-subclass>`
+    a chance to handle the operation. Previously, *NotImplemented* would only be returned
+    if `<non-array-subclass>` actually implemented the reversed operation, and after
+    a (potentially expensive) array conversion of `<non-array-subclass>` had been
+    attempted. ([bug](https://github.com/numpy/numpy/issues/3375), [pull request](https://github.com/numpy/numpy/pull/3501))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Function *median* used with *overwrite_input* only partially sorts array
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If *median* is used with *overwrite_input* option the input array will now only
+    be partially sorted instead of fully sorted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fix to financial.npv
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The npv function had a bug. Contrary to what the documentation stated, it summed
+    from indexes `1` to `M` instead of from `0` to `M - 1`. The fix changes the returned
+    value. The mirr function called the npv function, but worked around the problem,
+    so that was also fixed and the return value of the mirr function remains unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Runtime warnings when comparing NaN numbers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Comparing `NaN` floating point numbers now raises the `invalid` runtime warning.
+    If a `NaN` is expected the warning can be ignored using np.errstate. E.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: NPY_RELAXED_STRIDES_CHECKING
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There is a new compile time environment variable `NPY_RELAXED_STRIDES_CHECKING`.
+    If this variable is set to 1, then numpy will consider more arrays to be C- or
+    F-contiguous – for example, it becomes possible to have a column vector which
+    is considered both C- and F-contiguous simultaneously. The new definition is more
+    accurate, allows for faster code that makes fewer unnecessary copies, and simplifies
+    numpy’s code internally. However, it may also break third-party libraries that
+    make too-strong assumptions about the stride values of C- and F-contiguous arrays.
+    (It is also currently known that this breaks Cython code using memoryviews, which
+    will be fixed in Cython.) THIS WILL BECOME THE DEFAULT IN A FUTURE RELEASE, SO
+    PLEASE TEST YOUR CODE NOW AGAINST NUMPY BUILT WITH:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can check whether NPY_RELAXED_STRIDES_CHECKING is in effect by running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will be `True` if relaxed strides checking is enabled, and `False` otherwise.
+    The typical problem we’ve seen so far is C code that works with C-contiguous arrays,
+    and assumes that the itemsize can be accessed by looking at the last element in
+    the `PyArray_STRIDES(arr)` array. When relaxed strides are in effect, this is
+    not true (and in fact, it never was true in some corner cases). Instead, use `PyArray_ITEMSIZE(arr)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more information check the “Internal memory layout of an ndarray” section
+    in the documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Binary operations with non-arrays as second argument
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Binary operations of the form `<array-or-subclass> * <non-array-subclass>` where
+    `<non-array-subclass>` declares an `__array_priority__` higher than that of `<array-or-subclass>`
+    will now unconditionally return *NotImplemented*, giving `<non-array-subclass>`
+    a chance to handle the operation. Previously, *NotImplemented* would only be returned
+    if `<non-array-subclass>` actually implemented the reversed operation, and after
+    a (potentially expensive) array conversion of `<non-array-subclass>` had been
+    attempted. ([bug](https://github.com/numpy/numpy/issues/3375), [pull request](https://github.com/numpy/numpy/pull/3501))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Function *median* used with *overwrite_input* only partially sorts array
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If *median* is used with *overwrite_input* option the input array will now only
+    be partially sorted instead of fully sorted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fix to financial.npv
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The npv function had a bug. Contrary to what the documentation stated, it summed
+    from indexes `1` to `M` instead of from `0` to `M - 1`. The fix changes the returned
+    value. The mirr function called the npv function, but worked around the problem,
+    so that was also fixed and the return value of the mirr function remains unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Runtime warnings when comparing NaN numbers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Comparing `NaN` floating point numbers now raises the `invalid` runtime warning.
+    If a `NaN` is expected the warning can be ignored using np.errstate. E.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: New Features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Support for linear algebra on stacked arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The gufunc machinery is now used for np.linalg, allowing operations on stacked
+    arrays and vectors. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: In place fancy indexing for ufuncs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The function `at` has been added to ufunc objects to allow in place ufuncs
+    with no buffering when fancy indexing is used. For example, the following will
+    increment the first and second items in the array, and will increment the third
+    item twice: `numpy.add.at(arr, [0, 1, 2, 2], 1)`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is what many have mistakenly thought `arr[[0, 1, 2, 2]] += 1` would do,
+    but that does not work as the incremented value of `arr[2]` is simply copied into
+    the third slot in `arr` twice, not incremented twice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *partition* and *argpartition*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New functions to partially sort arrays via a selection algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A `partition` by index `k` moves the `k` smallest element to the front of an
+    array. All elements before `k` are then smaller or equal than the value in position
+    `k` and all elements following `k` are then greater or equal than the value in
+    position `k`. The ordering of the values within these bounds is undefined. A sequence
+    of indices can be provided to sort all of them into their sorted position at once
+    iterative partitioning. This can be used to efficiently obtain order statistics
+    like median or percentiles of samples. `partition` has a linear time complexity
+    of `O(n)` while a full sort has `O(n log(n))`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *nanmean*, *nanvar* and *nanstd*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New nan aware statistical functions are added. In these functions the results
+    are what would be obtained if nan values were omitted from all computations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *full* and *full_like*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New convenience functions to create arrays filled with a specific value; complementary
+    to the existing *zeros* and *zeros_like* functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IO compatibility with large files
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Large NPZ files >2GB can be loaded on 64-bit systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building against OpenBLAS
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is now possible to build numpy against OpenBLAS by editing site.cfg.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New constant
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Euler’s constant is now exposed in numpy as euler_gamma.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New modes for qr
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New modes ‘complete’, ‘reduced’, and ‘raw’ have been added to the qr factorization
+    and the old ‘full’ and ‘economic’ modes are deprecated. The ‘reduced’ mode replaces
+    the old ‘full’ mode and is the default as was the ‘full’ mode, so backward compatibility
+    can be maintained by not specifying the mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ‘complete’ mode returns a full dimensional factorization, which can be useful
+    for obtaining a basis for the orthogonal complement of the range space. The ‘raw’
+    mode returns arrays that contain the Householder reflectors and scaling factors
+    that can be used in the future to apply q without needing to convert to a matrix.
+    The ‘economic’ mode is simply deprecated, there isn’t much use for it and it isn’t
+    any more efficient than the ‘raw’ mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New *invert* argument to *in1d*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function *in1d* now accepts a *invert* argument which, when *True*, causes
+    the returned array to be inverted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Advanced indexing using *np.newaxis*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is now possible to use *np.newaxis*/*None* together with index arrays instead
+    of only in simple indices. This means that `array[np.newaxis, [0, 1]]` will now
+    work as expected and select the first two rows while prepending a new axis to
+    the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New ufuncs can now be registered with builtin input types and a custom output
+    type. Before this change, NumPy wouldn’t be able to find the right ufunc loop
+    function when the ufunc was called from Python, because the ufunc loop signature
+    matching logic wasn’t looking at the output operand type. Now the correct ufunc
+    loop is found, as long as the user provides an output argument with the correct
+    output type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: runtests.py
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A simple test runner script `runtests.py` was added. It also builds Numpy via
+    `setup.py build` and can be used to run tests easily during development.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support for linear algebra on stacked arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The gufunc machinery is now used for np.linalg, allowing operations on stacked
+    arrays and vectors. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: In place fancy indexing for ufuncs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The function `at` has been added to ufunc objects to allow in place ufuncs
+    with no buffering when fancy indexing is used. For example, the following will
+    increment the first and second items in the array, and will increment the third
+    item twice: `numpy.add.at(arr, [0, 1, 2, 2], 1)`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is what many have mistakenly thought `arr[[0, 1, 2, 2]] += 1` would do,
+    but that does not work as the incremented value of `arr[2]` is simply copied into
+    the third slot in `arr` twice, not incremented twice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *partition* and *argpartition*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New functions to partially sort arrays via a selection algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A `partition` by index `k` moves the `k` smallest element to the front of an
+    array. All elements before `k` are then smaller or equal than the value in position
+    `k` and all elements following `k` are then greater or equal than the value in
+    position `k`. The ordering of the values within these bounds is undefined. A sequence
+    of indices can be provided to sort all of them into their sorted position at once
+    iterative partitioning. This can be used to efficiently obtain order statistics
+    like median or percentiles of samples. `partition` has a linear time complexity
+    of `O(n)` while a full sort has `O(n log(n))`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *nanmean*, *nanvar* and *nanstd*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New nan aware statistical functions are added. In these functions the results
+    are what would be obtained if nan values were omitted from all computations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New functions *full* and *full_like*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New convenience functions to create arrays filled with a specific value; complementary
+    to the existing *zeros* and *zeros_like* functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IO compatibility with large files
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Large NPZ files >2GB can be loaded on 64-bit systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building against OpenBLAS
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is now possible to build numpy against OpenBLAS by editing site.cfg.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New constant
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Euler’s constant is now exposed in numpy as euler_gamma.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New modes for qr
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New modes ‘complete’, ‘reduced’, and ‘raw’ have been added to the qr factorization
+    and the old ‘full’ and ‘economic’ modes are deprecated. The ‘reduced’ mode replaces
+    the old ‘full’ mode and is the default as was the ‘full’ mode, so backward compatibility
+    can be maintained by not specifying the mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ‘complete’ mode returns a full dimensional factorization, which can be useful
+    for obtaining a basis for the orthogonal complement of the range space. The ‘raw’
+    mode returns arrays that contain the Householder reflectors and scaling factors
+    that can be used in the future to apply q without needing to convert to a matrix.
+    The ‘economic’ mode is simply deprecated, there isn’t much use for it and it isn’t
+    any more efficient than the ‘raw’ mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New *invert* argument to *in1d*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function *in1d* now accepts a *invert* argument which, when *True*, causes
+    the returned array to be inverted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Advanced indexing using *np.newaxis*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is now possible to use *np.newaxis*/*None* together with index arrays instead
+    of only in simple indices. This means that `array[np.newaxis, [0, 1]]` will now
+    work as expected and select the first two rows while prepending a new axis to
+    the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New ufuncs can now be registered with builtin input types and a custom output
+    type. Before this change, NumPy wouldn’t be able to find the right ufunc loop
+    function when the ufunc was called from Python, because the ufunc loop signature
+    matching logic wasn’t looking at the output operand type. Now the correct ufunc
+    loop is found, as long as the user provides an output argument with the correct
+    output type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: runtests.py
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A simple test runner script `runtests.py` was added. It also builds Numpy via
+    `setup.py build` and can be used to run tests easily during development.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Improvements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: IO performance improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Performance in reading large files was improved by chunking (see also IO compatibility).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *pad*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The *pad* function has a new implementation, greatly improving performance for
+    all inputs except *mode=* (retained for backwards compatibility). Scaling with
+    dimensionality is dramatically improved for rank >= 4.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *isnan*, *isinf*, *isfinite* and *byteswap*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*isnan*, *isinf*, *isfinite* and *byteswap* have been improved to take advantage
+    of compiler builtins to avoid expensive calls to libc. This improves performance
+    of these operations by about a factor of two on gnu libc systems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements via SSE2 vectorization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Several functions have been optimized to make use of SSE2 CPU SIMD instructions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Float32 and float64:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: base math (*add*, *subtract*, *divide*, *multiply*)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*sqrt*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*minimum/maximum*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*absolute*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bool:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_or*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_and*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_not*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This improves performance of these operations up to 4x/2x for float32/float64
+    and up to 10x for bool depending on the location of the data in the CPU caches.
+    The performance gain is greatest for in-place operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to use the improved functions the SSE2 instruction set must be enabled
+    at compile time. It is enabled by default on x86_64 systems. On x86_32 with a
+    capable CPU it must be enabled by passing the appropriate flag to the CFLAGS build
+    variable (-msse2 with gcc).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *median*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*median* is now implemented in terms of *partition* instead of *sort* which
+    reduces its time complexity from O(n log(n)) to O(n). If used with the *overwrite_input*
+    option the array will now only be partially sorted instead of fully sorted.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overridable operand flags in ufunc C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When creating a ufunc, the default ufunc operand flags can be overridden via
+    the new op_flags attribute of the ufunc object. For example, to set the operand
+    flag for the first input to read/write:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyObject *ufunc = PyUFunc_FromFuncAndData(…); ufunc->op_flags[0] = NPY_ITER_READWRITE;
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This allows a ufunc to perform an operation in place. Also, global nditer flags
+    can be overridden via the new iter_flags attribute of the ufunc object. For example,
+    to set the reduce flag for a ufunc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ufunc->iter_flags = NPY_ITER_REDUCE_OK;
+  prefs: []
+  type: TYPE_NORMAL
+- en: IO performance improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Performance in reading large files was improved by chunking (see also IO compatibility).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *pad*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The *pad* function has a new implementation, greatly improving performance for
+    all inputs except *mode=* (retained for backwards compatibility). Scaling with
+    dimensionality is dramatically improved for rank >= 4.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *isnan*, *isinf*, *isfinite* and *byteswap*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*isnan*, *isinf*, *isfinite* and *byteswap* have been improved to take advantage
+    of compiler builtins to avoid expensive calls to libc. This improves performance
+    of these operations by about a factor of two on gnu libc systems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements via SSE2 vectorization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Several functions have been optimized to make use of SSE2 CPU SIMD instructions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Float32 and float64:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: base math (*add*, *subtract*, *divide*, *multiply*)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*sqrt*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*minimum/maximum*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*absolute*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bool:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_or*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_and*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*logical_not*'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This improves performance of these operations up to 4x/2x for float32/float64
+    and up to 10x for bool depending on the location of the data in the CPU caches.
+    The performance gain is greatest for in-place operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to use the improved functions the SSE2 instruction set must be enabled
+    at compile time. It is enabled by default on x86_64 systems. On x86_32 with a
+    capable CPU it must be enabled by passing the appropriate flag to the CFLAGS build
+    variable (-msse2 with gcc).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements to *median*
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*median* is now implemented in terms of *partition* instead of *sort* which
+    reduces its time complexity from O(n log(n)) to O(n). If used with the *overwrite_input*
+    option the array will now only be partially sorted instead of fully sorted.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overridable operand flags in ufunc C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When creating a ufunc, the default ufunc operand flags can be overridden via
+    the new op_flags attribute of the ufunc object. For example, to set the operand
+    flag for the first input to read/write:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyObject *ufunc = PyUFunc_FromFuncAndData(…); ufunc->op_flags[0] = NPY_ITER_READWRITE;
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This allows a ufunc to perform an operation in place. Also, global nditer flags
+    can be overridden via the new iter_flags attribute of the ufunc object. For example,
+    to set the reduce flag for a ufunc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ufunc->iter_flags = NPY_ITER_REDUCE_OK;
+  prefs: []
+  type: TYPE_NORMAL
+- en: Changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function np.take now allows 0-d arrays as indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The separate compilation mode is now enabled by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Several changes to np.insert and np.delete:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Previously, negative indices and indices that pointed past the end of the array
+    were simply ignored. Now, this will raise a Future or Deprecation Warning. In
+    the future they will be treated like normal indexing treats them – negative indices
+    will wrap around, and out-of-bound indices will generate an error.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Previously, boolean indices were treated as if they were integers (always referring
+    to either the 0th or 1st item in the array). In the future, they will be treated
+    as masks. In this release, they raise a FutureWarning warning of this coming change.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In Numpy 1.7\. np.insert already allowed the syntax *np.insert(arr, 3, [1,2,3])*
+    to insert multiple items at a single position. In Numpy 1.8\. this is also possible
+    for *np.insert(arr, [3], [1, 2, 3])*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Padded regions from np.pad are now correctly rounded, not truncated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API Array Additions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Four new functions have been added to the array C-API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Partition
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyArray_ArgPartition
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyArray_SelectkindConverter
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyDataMem_NEW_ZEROED
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C-API Ufunc Additions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One new function has been added to the ufunc C-API that allows to register an
+    inner loop for user types using the descr.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyUFunc_RegisterLoopForDescr
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C-API Developer Improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `PyArray_Type` instance creation function `tp_new` now uses `tp_basicsize`
+    to determine how much memory to allocate. In previous releases only `sizeof(PyArrayObject)`
+    bytes of memory were allocated, often requiring C-API subtypes to reimplement
+    `tp_new`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function np.take now allows 0-d arrays as indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The separate compilation mode is now enabled by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Several changes to np.insert and np.delete:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Previously, negative indices and indices that pointed past the end of the array
+    were simply ignored. Now, this will raise a Future or Deprecation Warning. In
+    the future they will be treated like normal indexing treats them – negative indices
+    will wrap around, and out-of-bound indices will generate an error.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Previously, boolean indices were treated as if they were integers (always referring
+    to either the 0th or 1st item in the array). In the future, they will be treated
+    as masks. In this release, they raise a FutureWarning warning of this coming change.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In Numpy 1.7\. np.insert already allowed the syntax *np.insert(arr, 3, [1,2,3])*
+    to insert multiple items at a single position. In Numpy 1.8\. this is also possible
+    for *np.insert(arr, [3], [1, 2, 3])*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Padded regions from np.pad are now correctly rounded, not truncated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API Array Additions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Four new functions have been added to the array C-API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Partition
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyArray_ArgPartition
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyArray_SelectkindConverter
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyDataMem_NEW_ZEROED
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C-API Ufunc Additions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One new function has been added to the ufunc C-API that allows to register an
+    inner loop for user types using the descr.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyUFunc_RegisterLoopForDescr
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C-API Developer Improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `PyArray_Type` instance creation function `tp_new` now uses `tp_basicsize`
+    to determine how much memory to allocate. In previous releases only `sizeof(PyArrayObject)`
+    bytes of memory were allocated, often requiring C-API subtypes to reimplement
+    `tp_new`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The ‘full’ and ‘economic’ modes of qr factorization are deprecated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The use of non-integer for indices and most integer arguments has been deprecated.
+    Previously float indices and function arguments such as axes or shapes were truncated
+    to integers without warning. For example *arr.reshape(3., -1)* or *arr[0.]* will
+    trigger a deprecation warning in NumPy 1.8., and in some future version of NumPy
+    they will raise an error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The use of non-integer for indices and most integer arguments has been deprecated.
+    Previously float indices and function arguments such as axes or shapes were truncated
+    to integers without warning. For example *arr.reshape(3., -1)* or *arr[0.]* will
+    trigger a deprecation warning in NumPy 1.8., and in some future version of NumPy
+    they will raise an error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Authors
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This release contains work by the following people who contributed at least
+    one patch to this release. The names are in alphabetical order by first name:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '87'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adam Ginsburg +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adam Griffiths +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alexander Belopolsky +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alex Barth +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alex Ford +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andreas Hilboll +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andreas Kloeckner +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andreas Schwab +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Andrew Horton +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: argriffing +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Arink Verma +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bago Amirbekian +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bartosz Telenczuk +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: bebert218 +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Benjamin Root +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bill Spotz +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bradley M. Froehle
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Carwyn Pelley +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Charles Harris
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chris
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christian Brueffer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christoph Dann +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christoph Gohlke
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dan Hipschman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Daniel +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dan Miller +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: daveydave400 +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Cournapeau
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: David Warde-Farley
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Denis Laxalde
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: dmuellner +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Edward Catmur +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Egor Zindy +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: endolith
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Firing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Fode
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Moore +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eric Price +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fazlul Shahriar +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Félix Hartmann +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fernando Perez
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Frank B +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Frank Breitling +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Frederic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gabriel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: GaelVaroquaux
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guillaume Gay +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Han Genuit
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: HaroldMills +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: hklemm +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jamestwebber +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jason Madden +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jay Bourque
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jeromekelleher +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jesús Gómez +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jmozmoz +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: jnothman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Johannes Schönberger +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John Benediktsson +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John Salvatier +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: John Stechschulte +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jonathan Waltman +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joon Ro +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jos de Kloe +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joseph Martinot-Lagarde +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Josh Warner (Mac) +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jostein Bø Fløystad +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Juan Luis Cano Rodríguez +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Julian Taylor +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Julien Phalip +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: K.-Michael Aye +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kumar Appaiah +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lars Buitinck
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Leon Weber +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Luis Pedro Coelho
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marcin Juszkiewicz
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mark Wiebe
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marten van Kerkwijk +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin Baeuml +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin Spacek
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin Teichmann +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matt Davis +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matthew Brett
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Maximilian Albert +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: m-d-w +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Michael Droettboom
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: mwtoews +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nathaniel J. Smith
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nicolas Scheffer +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nils Werner +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ochoadavid +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ondřej Čertík
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ovillellas +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Paul Ivanov
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pauli Virtanen
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: peterjc
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ralf Gommers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raul Cota +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Richard Hattersley +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robert Costa +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robert Kern
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rob Ruana +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ronan Lamy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sandro Tosi
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sascha Peilicke +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sebastian Berg
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Skipper Seabold
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stefan van der Walt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Steve +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Takafumi Arakaki +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Thomas Robitaille +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tomas Tomecek +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Travis E. Oliphant
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Valentin Haenel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vladimir Rutsky +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warren Weckesser
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yaroslav Halchenko
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yury V. Zaytsev +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A total of 119 people contributed to this release. People with a “+” by their
+    names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL

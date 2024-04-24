@@ -1,0 +1,1092 @@
+- en: Datetimes and Timedeltas
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/arrays.datetime.html](https://numpy.org/doc/1.26/reference/arrays.datetime.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: New in version 1.7.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting in NumPy 1.7, there are core array data types which natively support
+    datetime functionality. The data type is called [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64"), so named because [`datetime`](https://docs.python.org/3/library/datetime.html#datetime.datetime
+    "(in Python v3.11)") is already taken by the Python standard library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Datetime64 Conventions and Assumptions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Similar to the Python [`date`](https://docs.python.org/3/library/datetime.html#datetime.date
+    "(in Python v3.11)") class, dates are expressed in the current Gregorian Calendar,
+    indefinitely extended both in the future and in the past. [[1]](#id3) Contrary
+    to Python [`date`](https://docs.python.org/3/library/datetime.html#datetime.date
+    "(in Python v3.11)"), which supports only years in the 1 AD — 9999 AD range, [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64") allows also for dates BC; years BC follow the [Astronomical
+    year numbering](https://en.wikipedia.org/wiki/Astronomical_year_numbering) convention,
+    i.e. year 2 BC is numbered −1, year 1 BC is numbered 0, year 1 AD is numbered
+    1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Time instants, say 16:23:32.234, are represented counting hours, minutes, seconds
+    and fractions from midnight: i.e. 00:00:00.000 is midnight, 12:00:00.000 is noon,
+    etc. Each calendar day has exactly 86400 seconds. This is a “naive” time, with
+    no explicit notion of timezones or specific time scales (UT1, UTC, TAI, etc.).
+    [[2]](#id4)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Basic Datetimes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The most basic way to create datetimes is from strings in ISO 8601 date or datetime
+    format. It is also possible to create datetimes from an integer by offset relative
+    to the Unix epoch (00:00:00 UTC on 1 January 1970). The unit for internal storage
+    is automatically selected from the form of the string, and can be either a [date
+    unit](#arrays-dtypes-dateunits) or a [time unit](#arrays-dtypes-timeunits). The
+    date units are years (‘Y’), months (‘M’), weeks (‘W’), and days (‘D’), while the
+    time units are hours (‘h’), minutes (‘m’), seconds (‘s’), milliseconds (‘ms’),
+    and some additional SI-prefix seconds-based units. The [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64") data type also accepts the string “NAT”, in any combination
+    of lowercase/uppercase letters, for a “Not A Time” value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A simple ISO date:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'From an integer and a date unit, 1 year since the UNIX epoch:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Using months for the unit:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Specifying just the month, but forcing a ‘days’ unit:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'From a date and time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'NAT (not a time):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: When creating an array of datetimes from a string, it is still possible to automatically
+    select the unit from the inputs, by using the datetime type with generic units.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of datetimes can be constructed from integers representing POSIX timestamps
+    with the given unit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The datetime type works with many common NumPy functions, for example [`arange`](generated/numpy.arange.html#numpy.arange
+    "numpy.arange") can be used to generate ranges of dates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'All the dates for one month:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: The datetime object represents a single moment in time. If two datetimes have
+    different units, they may still be representing the same moment of time, and converting
+    from a bigger unit like months to a smaller unit like days is considered a ‘safe’
+    cast because the moment of time is still being represented exactly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.11.0: NumPy does not store timezone information.
+    For backwards compatibility, datetime64 still parses timezone offsets, which it
+    handles by converting to UTC±00:00 (Zulu time). This behaviour is deprecated and
+    will raise an error in the future.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Datetime and Timedelta Arithmetic
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: NumPy allows the subtraction of two datetime values, an operation which produces
+    a number with a time unit. Because NumPy doesn’t have a physical quantities system
+    in its core, the [`timedelta64`](arrays.scalars.html#numpy.timedelta64 "numpy.timedelta64")
+    data type was created to complement [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64"). The arguments for [`timedelta64`](arrays.scalars.html#numpy.timedelta64
+    "numpy.timedelta64") are a number, to represent the number of units, and a date/time
+    unit, such as (D)ay, (M)onth, (Y)ear, (h)ours, (m)inutes, or (s)econds. The [`timedelta64`](arrays.scalars.html#numpy.timedelta64
+    "numpy.timedelta64") data type also accepts the string “NAT” in place of the number
+    for a “Not A Time” value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Datetimes and Timedeltas work together to provide ways for simple datetime calculations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are two Timedelta units (‘Y’, years and ‘M’, months) which are treated
+    specially, because how much time they represent changes depending on when they
+    are used. While a timedelta day unit is equivalent to 24 hours, there is no way
+    to convert a month unit into days, because different months have different numbers
+    of days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Datetime Units
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Datetime and Timedelta data types support a large number of time units,
+    as well as generic units which can be coerced into any of the other units based
+    on input data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Datetimes are always stored with an epoch of 1970-01-01T00:00\. This means the
+    supported dates are always a symmetric interval around the epoch, called “time
+    span” in the table below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The length of the span is the range of a 64-bit integer times the length of
+    the date or unit. For example, the time span for ‘W’ (week) is exactly 7 times
+    longer than the time span for ‘D’ (day), and the time span for ‘D’ (day) is exactly
+    24 times longer than the time span for ‘h’ (hour).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are the date units:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Code | Meaning | Time span (relative) | Time span (absolute) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Y | year | +/- 9.2e18 years | [9.2e18 BC, 9.2e18 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| M | month | +/- 7.6e17 years | [7.6e17 BC, 7.6e17 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| W | week | +/- 1.7e17 years | [1.7e17 BC, 1.7e17 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| D | day | +/- 2.5e16 years | [2.5e16 BC, 2.5e16 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: 'And here are the time units:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Code | Meaning | Time span (relative) | Time span (absolute) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| h | hour | +/- 1.0e15 years | [1.0e15 BC, 1.0e15 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| m | minute | +/- 1.7e13 years | [1.7e13 BC, 1.7e13 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| s | second | +/- 2.9e11 years | [2.9e11 BC, 2.9e11 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ms | millisecond | +/- 2.9e8 years | [ 2.9e8 BC, 2.9e8 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| us / μs | microsecond | +/- 2.9e5 years | [290301 BC, 294241 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ns | nanosecond | +/- 292 years | [ 1678 AD, 2262 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ps | picosecond | +/- 106 days | [ 1969 AD, 1970 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| fs | femtosecond | +/- 2.6 hours | [ 1969 AD, 1970 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| as | attosecond | +/- 9.2 seconds | [ 1969 AD, 1970 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: Business Day Functionality
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To allow the datetime to be used in contexts where only certain days of the
+    week are valid, NumPy includes a set of “busday” (business day) functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The default for busday functions is that the only valid days are Monday through
+    Friday (the usual business days). The implementation is based on a “weekmask”
+    containing 7 Boolean flags to indicate valid days; custom weekmasks are possible
+    that specify other sets of valid days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The “busday” functions can additionally check a list of “holiday” dates, specific
+    dates that are not valid days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function [`busday_offset`](generated/numpy.busday_offset.html#numpy.busday_offset
+    "numpy.busday_offset") allows you to apply offsets specified in business days
+    to datetimes with a unit of ‘D’ (day).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: When an input date falls on the weekend or a holiday, [`busday_offset`](generated/numpy.busday_offset.html#numpy.busday_offset
+    "numpy.busday_offset") first applies a rule to roll the date to a valid business
+    day, then applies the offset. The default rule is ‘raise’, which simply raises
+    an exception. The rules most typically used are ‘forward’ and ‘backward’.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: In some cases, an appropriate use of the roll and the offset is necessary to
+    get a desired answer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first business day on or after a date:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first business day strictly after a date:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: The function is also useful for computing some kinds of days like holidays.
+    In Canada and the U.S., Mother’s day is on the second Sunday in May, which can
+    be computed with a custom weekmask.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: When performance is important for manipulating many business dates with one
+    particular choice of weekmask and holidays, there is an object [`busdaycalendar`](generated/numpy.busdaycalendar.html#numpy.busdaycalendar
+    "numpy.busdaycalendar") which stores the data necessary in an optimized form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'np.is_busday():'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To test a [`datetime64`](arrays.scalars.html#numpy.datetime64 "numpy.datetime64")
+    value to see if it is a valid day, use [`is_busday`](generated/numpy.is_busday.html#numpy.is_busday
+    "numpy.is_busday").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'np.busday_count():'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To find how many valid days there are in a specified range of datetime64 dates,
+    use [`busday_count`](generated/numpy.busday_count.html#numpy.busday_count "numpy.busday_count"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you have an array of datetime64 day values, and you want a count of how
+    many of them are valid dates, you can do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Custom Weekmasks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Here are several examples of custom weekmask values. These examples specify
+    the “busday” default of Monday through Friday being valid days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Datetime64 shortcomings'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The assumption that all days are exactly 86400 seconds long makes [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64") largely compatible with Python [`datetime`](https://docs.python.org/3/library/datetime.html#module-datetime
+    "(in Python v3.11)") and “POSIX time” semantics; therefore they all share the
+    same well known shortcomings with respect to the UTC timescale and historical
+    time determination. A brief non exhaustive summary is given below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is impossible to parse valid UTC timestamps occurring during a positive leap
+    second.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Example
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '“2016-12-31 23:59:60 UTC” was a leap second, therefore “2016-12-31 23:59:60.450
+    UTC” is a valid timestamp which is not parseable by [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64"):'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Timedelta64 computations between two UTC dates can be wrong by an integer number
+    of SI seconds.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Example
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Compute the number of SI seconds between “2021-01-01 12:56:23.423 UTC” and
+    “2001-01-01 00:00:00.000 UTC”:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: however correct answer is *631198588.423* SI seconds because there were 5 leap
+    seconds between 2001 and 2021.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Timedelta64 computations for dates in the past do not return SI seconds, as
+    one would expect.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Example
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Compute the number of seconds between “000-01-01 UT” and “1600-01-01 UT”, where
+    UT is [universal time](https://en.wikipedia.org/wiki/Universal_Time):'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The computed results, *50491123200* seconds, is obtained as the elapsed number
+    of days (*584388*) times *86400* seconds; this is the number of seconds of a clock
+    in sync with earth rotation. The exact value in SI seconds can only be estimated,
+    e.g using data published in [Measurement of the Earth’s rotation: 720 BC to AD
+    2015, 2016, Royal Society’s Proceedings A 472, by Stephenson et.al.](https://doi.org/10.1098/rspa.2016.0404).
+    A sensible estimate is *50491112870 ± 90* seconds, with a difference of 10330
+    seconds.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Datetime64 Conventions and Assumptions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Similar to the Python [`date`](https://docs.python.org/3/library/datetime.html#datetime.date
+    "(in Python v3.11)") class, dates are expressed in the current Gregorian Calendar,
+    indefinitely extended both in the future and in the past. [[1]](#id3) Contrary
+    to Python [`date`](https://docs.python.org/3/library/datetime.html#datetime.date
+    "(in Python v3.11)"), which supports only years in the 1 AD — 9999 AD range, [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64") allows also for dates BC; years BC follow the [Astronomical
+    year numbering](https://en.wikipedia.org/wiki/Astronomical_year_numbering) convention,
+    i.e. year 2 BC is numbered −1, year 1 BC is numbered 0, year 1 AD is numbered
+    1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Time instants, say 16:23:32.234, are represented counting hours, minutes, seconds
+    and fractions from midnight: i.e. 00:00:00.000 is midnight, 12:00:00.000 is noon,
+    etc. Each calendar day has exactly 86400 seconds. This is a “naive” time, with
+    no explicit notion of timezones or specific time scales (UT1, UTC, TAI, etc.).
+    [[2]](#id4)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Basic Datetimes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The most basic way to create datetimes is from strings in ISO 8601 date or datetime
+    format. It is also possible to create datetimes from an integer by offset relative
+    to the Unix epoch (00:00:00 UTC on 1 January 1970). The unit for internal storage
+    is automatically selected from the form of the string, and can be either a [date
+    unit](#arrays-dtypes-dateunits) or a [time unit](#arrays-dtypes-timeunits). The
+    date units are years (‘Y’), months (‘M’), weeks (‘W’), and days (‘D’), while the
+    time units are hours (‘h’), minutes (‘m’), seconds (‘s’), milliseconds (‘ms’),
+    and some additional SI-prefix seconds-based units. The [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64") data type also accepts the string “NAT”, in any combination
+    of lowercase/uppercase letters, for a “Not A Time” value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A simple ISO date:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'From an integer and a date unit, 1 year since the UNIX epoch:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Using months for the unit:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Specifying just the month, but forcing a ‘days’ unit:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'From a date and time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'NAT (not a time):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: When creating an array of datetimes from a string, it is still possible to automatically
+    select the unit from the inputs, by using the datetime type with generic units.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of datetimes can be constructed from integers representing POSIX timestamps
+    with the given unit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: The datetime type works with many common NumPy functions, for example [`arange`](generated/numpy.arange.html#numpy.arange
+    "numpy.arange") can be used to generate ranges of dates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'All the dates for one month:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: The datetime object represents a single moment in time. If two datetimes have
+    different units, they may still be representing the same moment of time, and converting
+    from a bigger unit like months to a smaller unit like days is considered a ‘safe’
+    cast because the moment of time is still being represented exactly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.11.0: NumPy does not store timezone information.
+    For backwards compatibility, datetime64 still parses timezone offsets, which it
+    handles by converting to UTC±00:00 (Zulu time). This behaviour is deprecated and
+    will raise an error in the future.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Datetime and Timedelta Arithmetic
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: NumPy allows the subtraction of two datetime values, an operation which produces
+    a number with a time unit. Because NumPy doesn’t have a physical quantities system
+    in its core, the [`timedelta64`](arrays.scalars.html#numpy.timedelta64 "numpy.timedelta64")
+    data type was created to complement [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64"). The arguments for [`timedelta64`](arrays.scalars.html#numpy.timedelta64
+    "numpy.timedelta64") are a number, to represent the number of units, and a date/time
+    unit, such as (D)ay, (M)onth, (Y)ear, (h)ours, (m)inutes, or (s)econds. The [`timedelta64`](arrays.scalars.html#numpy.timedelta64
+    "numpy.timedelta64") data type also accepts the string “NAT” in place of the number
+    for a “Not A Time” value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: Datetimes and Timedeltas work together to provide ways for simple datetime calculations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are two Timedelta units (‘Y’, years and ‘M’, months) which are treated
+    specially, because how much time they represent changes depending on when they
+    are used. While a timedelta day unit is equivalent to 24 hours, there is no way
+    to convert a month unit into days, because different months have different numbers
+    of days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Datetime Units
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Datetime and Timedelta data types support a large number of time units,
+    as well as generic units which can be coerced into any of the other units based
+    on input data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Datetimes are always stored with an epoch of 1970-01-01T00:00\. This means the
+    supported dates are always a symmetric interval around the epoch, called “time
+    span” in the table below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The length of the span is the range of a 64-bit integer times the length of
+    the date or unit. For example, the time span for ‘W’ (week) is exactly 7 times
+    longer than the time span for ‘D’ (day), and the time span for ‘D’ (day) is exactly
+    24 times longer than the time span for ‘h’ (hour).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are the date units:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Code | Meaning | Time span (relative) | Time span (absolute) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Y | year | +/- 9.2e18 years | [9.2e18 BC, 9.2e18 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| M | month | +/- 7.6e17 years | [7.6e17 BC, 7.6e17 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| W | week | +/- 1.7e17 years | [1.7e17 BC, 1.7e17 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| D | day | +/- 2.5e16 years | [2.5e16 BC, 2.5e16 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: 'And here are the time units:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Code | Meaning | Time span (relative) | Time span (absolute) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| h | hour | +/- 1.0e15 years | [1.0e15 BC, 1.0e15 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| m | minute | +/- 1.7e13 years | [1.7e13 BC, 1.7e13 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| s | second | +/- 2.9e11 years | [2.9e11 BC, 2.9e11 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ms | millisecond | +/- 2.9e8 years | [ 2.9e8 BC, 2.9e8 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| us / μs | microsecond | +/- 2.9e5 years | [290301 BC, 294241 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ns | nanosecond | +/- 292 years | [ 1678 AD, 2262 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ps | picosecond | +/- 106 days | [ 1969 AD, 1970 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| fs | femtosecond | +/- 2.6 hours | [ 1969 AD, 1970 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| as | attosecond | +/- 9.2 seconds | [ 1969 AD, 1970 AD] |'
+  prefs: []
+  type: TYPE_TB
+- en: Business Day Functionality
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To allow the datetime to be used in contexts where only certain days of the
+    week are valid, NumPy includes a set of “busday” (business day) functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The default for busday functions is that the only valid days are Monday through
+    Friday (the usual business days). The implementation is based on a “weekmask”
+    containing 7 Boolean flags to indicate valid days; custom weekmasks are possible
+    that specify other sets of valid days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The “busday” functions can additionally check a list of “holiday” dates, specific
+    dates that are not valid days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function [`busday_offset`](generated/numpy.busday_offset.html#numpy.busday_offset
+    "numpy.busday_offset") allows you to apply offsets specified in business days
+    to datetimes with a unit of ‘D’ (day).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: When an input date falls on the weekend or a holiday, [`busday_offset`](generated/numpy.busday_offset.html#numpy.busday_offset
+    "numpy.busday_offset") first applies a rule to roll the date to a valid business
+    day, then applies the offset. The default rule is ‘raise’, which simply raises
+    an exception. The rules most typically used are ‘forward’ and ‘backward’.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: In some cases, an appropriate use of the roll and the offset is necessary to
+    get a desired answer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first business day on or after a date:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first business day strictly after a date:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: The function is also useful for computing some kinds of days like holidays.
+    In Canada and the U.S., Mother’s day is on the second Sunday in May, which can
+    be computed with a custom weekmask.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: When performance is important for manipulating many business dates with one
+    particular choice of weekmask and holidays, there is an object [`busdaycalendar`](generated/numpy.busdaycalendar.html#numpy.busdaycalendar
+    "numpy.busdaycalendar") which stores the data necessary in an optimized form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'np.is_busday():'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To test a [`datetime64`](arrays.scalars.html#numpy.datetime64 "numpy.datetime64")
+    value to see if it is a valid day, use [`is_busday`](generated/numpy.is_busday.html#numpy.is_busday
+    "numpy.is_busday").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'np.busday_count():'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To find how many valid days there are in a specified range of datetime64 dates,
+    use [`busday_count`](generated/numpy.busday_count.html#numpy.busday_count "numpy.busday_count"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you have an array of datetime64 day values, and you want a count of how
+    many of them are valid dates, you can do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: Custom Weekmasks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Here are several examples of custom weekmask values. These examples specify
+    the “busday” default of Monday through Friday being valid days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'np.is_busday():'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To test a [`datetime64`](arrays.scalars.html#numpy.datetime64 "numpy.datetime64")
+    value to see if it is a valid day, use [`is_busday`](generated/numpy.is_busday.html#numpy.is_busday
+    "numpy.is_busday").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'np.busday_count():'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To find how many valid days there are in a specified range of datetime64 dates,
+    use [`busday_count`](generated/numpy.busday_count.html#numpy.busday_count "numpy.busday_count"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you have an array of datetime64 day values, and you want a count of how
+    many of them are valid dates, you can do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: Custom Weekmasks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Here are several examples of custom weekmask values. These examples specify
+    the “busday” default of Monday through Friday being valid days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Datetime64 shortcomings'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The assumption that all days are exactly 86400 seconds long makes [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64") largely compatible with Python [`datetime`](https://docs.python.org/3/library/datetime.html#module-datetime
+    "(in Python v3.11)") and “POSIX time” semantics; therefore they all share the
+    same well known shortcomings with respect to the UTC timescale and historical
+    time determination. A brief non exhaustive summary is given below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is impossible to parse valid UTC timestamps occurring during a positive leap
+    second.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Example
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '“2016-12-31 23:59:60 UTC” was a leap second, therefore “2016-12-31 23:59:60.450
+    UTC” is a valid timestamp which is not parseable by [`datetime64`](arrays.scalars.html#numpy.datetime64
+    "numpy.datetime64"):'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Timedelta64 computations between two UTC dates can be wrong by an integer number
+    of SI seconds.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Example
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Compute the number of SI seconds between “2021-01-01 12:56:23.423 UTC” and
+    “2001-01-01 00:00:00.000 UTC”:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: however correct answer is *631198588.423* SI seconds because there were 5 leap
+    seconds between 2001 and 2021.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Timedelta64 computations for dates in the past do not return SI seconds, as
+    one would expect.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Example
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Compute the number of seconds between “000-01-01 UT” and “1600-01-01 UT”, where
+    UT is [universal time](https://en.wikipedia.org/wiki/Universal_Time):'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The computed results, *50491123200* seconds, is obtained as the elapsed number
+    of days (*584388*) times *86400* seconds; this is the number of seconds of a clock
+    in sync with earth rotation. The exact value in SI seconds can only be estimated,
+    e.g using data published in [Measurement of the Earth’s rotation: 720 BC to AD
+    2015, 2016, Royal Society’s Proceedings A 472, by Stephenson et.al.](https://doi.org/10.1098/rspa.2016.0404).
+    A sensible estimate is *50491112870 ± 90* seconds, with a difference of 10330
+    seconds.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL

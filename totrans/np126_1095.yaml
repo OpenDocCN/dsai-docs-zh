@@ -1,0 +1,3574 @@
+- en: Releasing a version
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/dev/releasing.html](https://numpy.org/doc/1.26/dev/releasing.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The following guides include detailed information on how to prepare a NumPy
+    release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## How to prepare a release'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These instructions give an overview of what is necessary to build binary releases
+    for NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Current build and release info
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Useful info can be found in the following locations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Source tree**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[INSTALL.rst](https://github.com/numpy/numpy/blob/main/INSTALL.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[pavement.py](https://github.com/numpy/numpy/blob/main/pavement.py)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**NumPy docs**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst](https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst](https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst](https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Release scripts**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy-vendor](https://github.com/numpy/numpy-vendor)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Supported platforms and versions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[NEP 29](https://numpy.org/neps/nep-0029-deprecation_policy.html#nep29 "(in
+    NumPy Enhancement Proposals)") outlines which Python versions are supported; For
+    the first half of 2020, this will be Python >= 3.6\. We test NumPy against all
+    these versions every time we merge code to main. Binary installers may be available
+    for a subset of these versions (see below).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**OS X**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: OS X versions >= 10.9 are supported, for Python version support see [NEP 29](https://numpy.org/neps/nep-0029-deprecation_policy.html#nep29
+    "(in NumPy Enhancement Proposals)"). We build binary wheels for OSX that are compatible
+    with Python.org Python, system Python, homebrew and macports - see this [OSX wheel
+    building summary](https://github.com/MacPython/wiki/wiki/Spinning-wheels) for
+    details.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**Windows**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
+    We build NumPy using the [mingw-w64 toolchain](https://mingwpy.github.io), [cibuildwheels](https://cibuildwheel.readthedocs.io/en/stable/)
+    and GitHub actions.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**Linux**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We build and ship [manylinux2014](https://www.python.org/dev/peps/pep-0513)
+    wheels for NumPy. Many Linux distributions include their own binary builds of
+    NumPy.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**BSD / Solaris**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: No binaries are provided, but successful builds on Solaris and BSD have been
+    reported.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Tool chain
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We build all our wheels on cloud infrastructure - so this list of compilers
+    is for information and debugging builds locally. See the `.travis.yml` script
+    in the [numpy wheels](https://github.com/MacPython/numpy-wheels) repo for an outdated
+    source of the build recipes using multibuild.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compilers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The same gcc version is used as the one with which Python itself is built on
+    each platform. At the moment this means:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: OS X builds on travis currently use *clang*. It appears that binary wheels for
+    OSX >= 10.6 can be safely built from the travis-ci OSX 10.9 VMs when building
+    against the Python from the Python.org installers;
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Windows builds use the [mingw-w64 toolchain](https://mingwpy.github.io);
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Manylinux2014 wheels use the gcc provided on the Manylinux docker images.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will need Cython for building the binaries. Cython compiles the `.pyx` files
+    in the NumPy distribution to `.c` files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: OpenBLAS
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: All the wheels link to a version of [OpenBLAS](https://github.com/xianyi/OpenBLAS)
+    supplied via the [openblas-libs](https://github.com/MacPython/openblas-libs) repo.
+    The shared object (or DLL) is shipped with in the wheel, renamed to prevent name
+    collisions with other OpenBLAS shared objects that may exist in the filesystem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building source archives and wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The NumPy wheels and sdist are now built using cibuildwheel with github actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building docs
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We are no longer building pdf files, only html docs. The `numpy-html.zip` needed
+    to upload to the doc server can be built with `spin docs dist`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To install the necessary doc build dependencies into your development environment,
+    run `pip install -r doc_requirements.txt`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uploading to PyPI
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The only application needed for uploading is
+  prefs: []
+  type: TYPE_NORMAL
+- en: twine (pip).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will also need a PyPI token, which is best kept on a keyring. See the twine
+    [keyring](https://twine.readthedocs.io/en/stable/#keyring-support) documentation
+    for how to do that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating author/PR lists
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You will need a personal access token [https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
+    so that scripts can access the github NumPy repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: gitpython (pip)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: pygithub (pip)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What is released
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Wheels** We currently support Python 3.8-3.10 on Windows, OSX, and Linux.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Windows: 32-bit and 64-bit wheels built using Github actions;'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'OSX: x64_86 and arm64 OSX wheels built using Github actions;'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Linux: x64_86 and aarch64 Manylinux2014 wheels built using Github actions.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Other** Release notes and changelog'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Source distribution** We build source releases in the .tar.gz format.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Release process
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Agree on a release schedule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A typical release schedule is one beta, two release candidates and a final release.
+    It’s best to discuss the timing on the mailing list first, in order for people
+    to get their commits in on time, get doc wiki edits merged, etc. After a date
+    is set, create a new maintenance/x.y.z branch, add new empty release notes for
+    the next version in the main branch and update the Trac Milestones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Make sure current branch builds a package correctly
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The CI builds wheels when a PR header begins with `REL`. Your last PR before
+    releasing should be so marked and all the tests should pass. You can also do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: For details of the build process itself, it is best to read the Step-by-Step
+    Directions below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following steps are repeated for the beta(s), release candidates(s) and
+    the final release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check deprecations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Before [the release branch is made](#branching), it should be checked that all
+    deprecated code that should be removed is actually removed, and all new deprecations
+    say in the docstring or deprecation warning what version the code will be removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the C API version number
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The C API version needs to be tracked in three places
+  prefs: []
+  type: TYPE_NORMAL
+- en: numpy/core/setup_common.py
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy/core/code_generators/cversions.txt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy/core/include/numpy/numpyconfig.h
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are three steps to the process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the API has changed, increment the C_API_VERSION in setup_common.py. The
+    API is unchanged only if any code compiled against the current API will be backward
+    compatible with the last released NumPy version. Any changes to C structures or
+    additions to the public interface will make the new API not backward compatible.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the C_API_VERSION in the first step has changed, or if the hash of the API
+    has changed, the cversions.txt file needs to be updated. To check the hash, run
+    the script numpy/core/cversions.py and note the API hash that is printed. If that
+    hash does not match the last hash in numpy/core/code_generators/cversions.txt
+    the hash has changed. Using both the appropriate C_API_VERSION and hash, add a
+    new entry to cversions.txt. If the API version was not changed, but the hash differs,
+    you will need to comment out the previous entry for that API version. For instance,
+    in NumPy 1.9 annotations were added, which changed the hash, but the API was the
+    same as in 1.8\. The hash serves as a check for API changes, but it is not definitive.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If steps 1 and 2 are done correctly, compiling the release should not give a
+    warning “API mismatch detect at the beginning of the build”.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The numpy/core/include/numpy/numpyconfig.h will need a new NPY_X_Y_API_VERSION
+    macro, where X and Y are the major and minor version numbers of the release. The
+    value given to that macro only needs to be increased from the previous version
+    if some of the functions or macros in the include files were deprecated.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The C ABI version number in numpy/core/setup_common.py should only be updated
+    for a major release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the release notes
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Use [towncrier](https://pypi.org/project/towncrier/) to build the release note
+    and commit the changes. This will remove all the fragments from `doc/release/upcoming_changes`
+    and add `doc/release/<version>-note.rst`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: towncrier build –version “<version>” git commit -m”Create release note”
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Check that the release notes are up-to-date.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Update the release notes with a Highlights section. Mention some of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: major new features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: deprecated and removed features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: supported Python versions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: for SciPy, supported NumPy version(s)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: outlook for the near future
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Step-by-step directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This is a walkthrough of the NumPy 1.21.0 release on Linux, modified for building
+    with GitHub Actions and cibuildwheels and uploading to the [anaconda.org staging
+    repository for NumPy](https://anaconda.org/multibuild-wheels-staging/numpy). The
+    commands can be copied into the command line, but be sure to replace 1.21.0 by
+    the correct version. This should be read together with the [general release guide](#prepare-release).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Facility preparation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Before beginning to make a release, use the `*_requirements.txt` files to ensure
+    that you have the needed software. Most software can be installed with pip, but
+    some will require apt-get, dnf, or whatever your system uses for software. You
+    will also need a GitHub personal access token (PAT) to push the documentation.
+    There are a few ways to streamline things:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Git can be set up to use a keyring to store your GitHub personal access token.
+    Search online for the details.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can use the `keyring` app to store the PyPI password for twine. See the
+    online twine documentation for details.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Release preparation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Add/drop Python versions
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When adding or dropping Python versions, three files need to be edited:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '.github/workflows/wheels.yml # for github cibuildwheel'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '.travis.yml # for cibuildwheel aarch64 builds'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'setup.py # for classifier and minimum version check.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Make these changes in an ordinary PR against main and backport if necessary.
+    Using the *BLD:* prefix (build label) for the commit summary will cause the wheel
+    builds to be run so that the changes will be tested, We currently release wheels
+    for new Python versions after the first Python rc once manylinux and cibuildwheel
+    support it. For Python 3.11 we were able to release within a week of the rc1 announcement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backport Pull Requests
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Changes that have been marked for this release must be backported to the maintenance/1.21.x
+    branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Update release documentation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Four documents usually need to be updated or created before making a release:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The changelog
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The release-notes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `.mailmap` file
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `doc/source/release.rst` file
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These changes should be made as an ordinary PR against the maintenance branch.
+    After release all files except `doc/source/release.rst` will need to be forward
+    ported to the main branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generate the changelog
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The changelog is generated using the changelog tool:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: where `GITHUB` contains your GitHub access token. The text will need to be checked
+    for non-standard contributor names and dependabot entries removed. It is also
+    a good idea to remove any links that may be present in the PR titles as they don’t
+    translate well to markdown, replace them with monospaced text. The non-standard
+    contributor names should be fixed by updating the `.mailmap` file, which is a
+    lot of work. It is best to make several trial runs before reaching this point
+    and ping the malefactors using a GitHub issue to get the needed information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finish the release notes
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: If this is the first release in a series the release note is generated, see
+    the release note in `doc/release/upcoming_changes/README.rst` to see how to do
+    this. Generating the release notes will also delete all the news fragment files
+    in `doc/release/upcoming_changes/`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The generated release note will always need some fixups, the introduction will
+    need to be written, and significant changes should be called out. For patch releases
+    the changelog text may also be appended, but not for the initial release as it
+    is too long. Check previous release notes to see how this is done. Note that the
+    `:orphan:` markup at the top, if present, will need changing to `.. currentmodule::
+    numpy` and the `doc/source/release.rst` index file will need updating.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the `pavement.py` file
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Check that the pavement.py file points to the correct release notes. It should
+    have been updated after the last release, but if not, fix it now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Release walkthrough
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Note that in the code snippets below, `upstream` refers to the root repository
+    on GitHub and `origin` to its fork in your personal GitHub repositories. You may
+    need to make adjustments if you have not forked the repository but simply cloned
+    it locally. You can also edit `.git/config` and add `upstream` if it isn’t already
+    present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Prepare the release commit
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Checkout the branch for the release, make sure it is up to date, and clean
+    the repository:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sanity check:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Tag the release and push the tag. This requires write permission for the numpy
+    repository:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you need to delete the tag due to error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 2\. Build wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Build wheels via cibuildwheel (preferred)
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Tagging the build at the beginning of this process will trigger a wheel build
+    via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
+    on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
+    hours. The CI run on travis (for aarch64) takes less time. You can check for uploaded
+    files at the [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    but note that it is not closely synched with what you see of the running jobs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you wish to manually trigger a wheel build, you can do so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions -> [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    there is a “Run workflow” button, click on it and choose the tag to build
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) there is a “More Options”
+    button, click on it and choose a branch to build. There does not appear to be
+    an option to build a tag.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If a wheel build fails for unrelated reasons, you can rerun it individually:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions select [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    click on the commit that contains the build you want to rerun. On the left there
+    is a list of wheel builds, select the one you want to rerun and on the resulting
+    page hit the counterclockwise arrows button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) select the failing
+    build, which will take you to the travis job for that build. Hit the restart job
+    button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that if you do need to rerun jobs, you will need to delete the uploaded
+    file, if any, in the anaconda [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    The old files will not be overwritten.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Download wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When the wheels have all been successfully built and staged, download them
+    from the Anaconda staging directory using the `tools/download-wheels.py` script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 4\. Generate the README files
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This needs to be done after all installers are downloaded, but before the pavement
+    file is updated for continued development:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 5\. Reset the maintenance branch into a development state (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Create release notes for next release and edit them to set the version. These
+    notes will be a skeleton and have little content:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Add new release notes to the documentation release list and update the `RELEASE_NOTES`
+    variable in `pavement.py`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Commit the result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 6\. Upload to PyPI
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Upload to PyPI using `twine`. A recent version of `twine` of is needed after
+    recent PyPI changes, version `3.4.1` was used here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: If one of the commands breaks in the middle, you may need to selectively upload
+    the remaining files because PyPI does not allow the same file to be uploaded twice.
+    The source file should be uploaded last to avoid synchronization problems that
+    might occur if pip users access the files while this is in process, causing pip
+    to build from source rather than downloading a binary wheel. PyPI only allows
+    a single source distribution, here we have chosen the zip archive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7\. Upload files to github
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Go to [https://github.com/numpy/numpy/releases](https://github.com/numpy/numpy/releases),
+    there should be a `v1.21.0 tag`, click on it and hit the edit button for that
+    tag. There are two ways to add files, using an editable text window and as binary
+    uploads. Start by editing the `release/README.md` that is translated from the
+    rst version using pandoc. Things that will need fixing: PR lines from the changelog,
+    if included, are wrapped and need unwrapping, links should be changed to monospaced
+    text. Then copy the contents to the clipboard and paste them into the text window.
+    It may take several tries to get it look right. Then'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Upload `release/installers/numpy-1.21.0.tar.gz` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Upload `release/README.rst` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Upload `doc/changelog/1.21.0-changelog.rst` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Check the pre-release button if this is a pre-releases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hit the `{Publish,Update} release` button at the bottom.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 8\. Upload documents to numpy.org (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You will need a GitHub personal access token to push the update.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This step is only needed for final releases and can be skipped for pre-releases
+    and most patch releases. `make merge-doc` clones the `numpy/doc` repo into `doc/build/merge`
+    and updates it with the new documentation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the release series is a new one, you will need to add a new section to the
+    `doc/build/merge/index.html` front page just after the “insert here” comment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Further, update the version-switcher json file to add the new release and update
+    the version marked *(stable)*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Otherwise, only the `zip` link should be updated with the new tag name. Since
+    we are no longer generating `pdf` files, remove the line for the `pdf` files if
+    present:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can “test run” the new documentation in a browser to make sure the links
+    work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update the stable link and update:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once everything seems satisfactory, update, commit and upload the changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 9\. Announce the release on numpy.org (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This assumes that you have forked [https://github.com/numpy/numpy.org](https://github.com/numpy/numpy.org):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: For all releases, go to the bottom of the page and add a one line link. Look
+    to the previous links for example.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For the `*.0` release in a cycle, add a new section at the top with a short
+    description of the new features and point the news link to it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'commit and push:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Go to your Github fork and make a pull request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10\. Announce to mailing lists
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The release should be announced on the numpy-discussion, scipy-devel, scipy-user,
+    and python-announce-list mailing lists. Look at previous announcements for the
+    basic template. The contributor and PR lists are the same as generated for the
+    release notes above. If you crosspost, make sure that python-announce-list is
+    BCC so that replies will not be sent to that list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11\. Post-release tasks (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Checkout main and forward port the documentation changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Go to GitHub and make a PR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12\. Update oldest-supported-numpy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: If this release is the first one to support a new Python version, or the first
+    to provide wheels for a new platform or PyPy version, the version pinnings in
+    [https://github.com/scipy/oldest-supported-numpy](https://github.com/scipy/oldest-supported-numpy)
+    should be updated. Either submit a PR with changes to `setup.cfg` there, or open
+    an issue with info on needed changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Branch walkthrough'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This guide contains a walkthrough of branching NumPy 1.21.x on Linux. The commands
+    can be copied into the command line, but be sure to replace 1.21 and 1.22 by the
+    correct versions. It is good practice to make `.mailmap` as current as possible
+    before making the branch, that may take several weeks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This should be read together with the [general release guide](#prepare-release).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Branching
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Make the branch
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This is only needed when starting a new maintenance branch. Because NumPy now
+    depends on tags to determine the version, the start of a new development cycle
+    in the main branch needs an annotated tag. That is done as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the push fails because new PRs have been merged, do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and repeat the push. Once the push succeeds, tag it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'then make the new branch and push it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prepare the main branch for further development
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Make a PR branch to prepare main for further development:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Delete the release note fragments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Create the new release notes skeleton and add to index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update `pavement.py` and update the `RELEASE_NOTES` variable to point to the
+    new notes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update `cversions.txt` to add current release. There should be no new hash
+    to worry about at this early point, just add a comment following previous practice:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Check your work, commit it, and push:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now make a pull request.  ## How to prepare a release'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These instructions give an overview of what is necessary to build binary releases
+    for NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Current build and release info
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Useful info can be found in the following locations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Source tree**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[INSTALL.rst](https://github.com/numpy/numpy/blob/main/INSTALL.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[pavement.py](https://github.com/numpy/numpy/blob/main/pavement.py)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**NumPy docs**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst](https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst](https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst](https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Release scripts**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy-vendor](https://github.com/numpy/numpy-vendor)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Supported platforms and versions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[NEP 29](https://numpy.org/neps/nep-0029-deprecation_policy.html#nep29 "(in
+    NumPy Enhancement Proposals)") outlines which Python versions are supported; For
+    the first half of 2020, this will be Python >= 3.6\. We test NumPy against all
+    these versions every time we merge code to main. Binary installers may be available
+    for a subset of these versions (see below).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**OS X**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: OS X versions >= 10.9 are supported, for Python version support see [NEP 29](https://numpy.org/neps/nep-0029-deprecation_policy.html#nep29
+    "(in NumPy Enhancement Proposals)"). We build binary wheels for OSX that are compatible
+    with Python.org Python, system Python, homebrew and macports - see this [OSX wheel
+    building summary](https://github.com/MacPython/wiki/wiki/Spinning-wheels) for
+    details.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**Windows**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
+    We build NumPy using the [mingw-w64 toolchain](https://mingwpy.github.io), [cibuildwheels](https://cibuildwheel.readthedocs.io/en/stable/)
+    and GitHub actions.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**Linux**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We build and ship [manylinux2014](https://www.python.org/dev/peps/pep-0513)
+    wheels for NumPy. Many Linux distributions include their own binary builds of
+    NumPy.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**BSD / Solaris**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: No binaries are provided, but successful builds on Solaris and BSD have been
+    reported.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Tool chain
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We build all our wheels on cloud infrastructure - so this list of compilers
+    is for information and debugging builds locally. See the `.travis.yml` script
+    in the [numpy wheels](https://github.com/MacPython/numpy-wheels) repo for an outdated
+    source of the build recipes using multibuild.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compilers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The same gcc version is used as the one with which Python itself is built on
+    each platform. At the moment this means:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: OS X builds on travis currently use *clang*. It appears that binary wheels for
+    OSX >= 10.6 can be safely built from the travis-ci OSX 10.9 VMs when building
+    against the Python from the Python.org installers;
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Windows builds use the [mingw-w64 toolchain](https://mingwpy.github.io);
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Manylinux2014 wheels use the gcc provided on the Manylinux docker images.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will need Cython for building the binaries. Cython compiles the `.pyx` files
+    in the NumPy distribution to `.c` files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: OpenBLAS
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: All the wheels link to a version of [OpenBLAS](https://github.com/xianyi/OpenBLAS)
+    supplied via the [openblas-libs](https://github.com/MacPython/openblas-libs) repo.
+    The shared object (or DLL) is shipped with in the wheel, renamed to prevent name
+    collisions with other OpenBLAS shared objects that may exist in the filesystem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building source archives and wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The NumPy wheels and sdist are now built using cibuildwheel with github actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building docs
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We are no longer building pdf files, only html docs. The `numpy-html.zip` needed
+    to upload to the doc server can be built with `spin docs dist`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To install the necessary doc build dependencies into your development environment,
+    run `pip install -r doc_requirements.txt`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uploading to PyPI
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The only application needed for uploading is
+  prefs: []
+  type: TYPE_NORMAL
+- en: twine (pip).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will also need a PyPI token, which is best kept on a keyring. See the twine
+    [keyring](https://twine.readthedocs.io/en/stable/#keyring-support) documentation
+    for how to do that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating author/PR lists
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You will need a personal access token [https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
+    so that scripts can access the github NumPy repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: gitpython (pip)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: pygithub (pip)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What is released
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Wheels** We currently support Python 3.8-3.10 on Windows, OSX, and Linux.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Windows: 32-bit and 64-bit wheels built using Github actions;'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'OSX: x64_86 and arm64 OSX wheels built using Github actions;'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Linux: x64_86 and aarch64 Manylinux2014 wheels built using Github actions.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Other** Release notes and changelog'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Source distribution** We build source releases in the .tar.gz format.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Release process
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Agree on a release schedule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A typical release schedule is one beta, two release candidates and a final release.
+    It’s best to discuss the timing on the mailing list first, in order for people
+    to get their commits in on time, get doc wiki edits merged, etc. After a date
+    is set, create a new maintenance/x.y.z branch, add new empty release notes for
+    the next version in the main branch and update the Trac Milestones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Make sure current branch builds a package correctly
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The CI builds wheels when a PR header begins with `REL`. Your last PR before
+    releasing should be so marked and all the tests should pass. You can also do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: For details of the build process itself, it is best to read the Step-by-Step
+    Directions below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following steps are repeated for the beta(s), release candidates(s) and
+    the final release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check deprecations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Before [the release branch is made](#branching), it should be checked that all
+    deprecated code that should be removed is actually removed, and all new deprecations
+    say in the docstring or deprecation warning what version the code will be removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the C API version number
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The C API version needs to be tracked in three places
+  prefs: []
+  type: TYPE_NORMAL
+- en: numpy/core/setup_common.py
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy/core/code_generators/cversions.txt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy/core/include/numpy/numpyconfig.h
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are three steps to the process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the API has changed, increment the C_API_VERSION in setup_common.py. The
+    API is unchanged only if any code compiled against the current API will be backward
+    compatible with the last released NumPy version. Any changes to C structures or
+    additions to the public interface will make the new API not backward compatible.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the C_API_VERSION in the first step has changed, or if the hash of the API
+    has changed, the cversions.txt file needs to be updated. To check the hash, run
+    the script numpy/core/cversions.py and note the API hash that is printed. If that
+    hash does not match the last hash in numpy/core/code_generators/cversions.txt
+    the hash has changed. Using both the appropriate C_API_VERSION and hash, add a
+    new entry to cversions.txt. If the API version was not changed, but the hash differs,
+    you will need to comment out the previous entry for that API version. For instance,
+    in NumPy 1.9 annotations were added, which changed the hash, but the API was the
+    same as in 1.8\. The hash serves as a check for API changes, but it is not definitive.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If steps 1 and 2 are done correctly, compiling the release should not give a
+    warning “API mismatch detect at the beginning of the build”.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The numpy/core/include/numpy/numpyconfig.h will need a new NPY_X_Y_API_VERSION
+    macro, where X and Y are the major and minor version numbers of the release. The
+    value given to that macro only needs to be increased from the previous version
+    if some of the functions or macros in the include files were deprecated.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The C ABI version number in numpy/core/setup_common.py should only be updated
+    for a major release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the release notes
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Use [towncrier](https://pypi.org/project/towncrier/) to build the release note
+    and commit the changes. This will remove all the fragments from `doc/release/upcoming_changes`
+    and add `doc/release/<version>-note.rst`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: towncrier build –version “<version>” git commit -m”Create release note”
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Check that the release notes are up-to-date.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Update the release notes with a Highlights section. Mention some of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: major new features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: deprecated and removed features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: supported Python versions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: for SciPy, supported NumPy version(s)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: outlook for the near future
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Current build and release info
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Useful info can be found in the following locations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Source tree**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[INSTALL.rst](https://github.com/numpy/numpy/blob/main/INSTALL.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[pavement.py](https://github.com/numpy/numpy/blob/main/pavement.py)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**NumPy docs**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst](https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst](https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst](https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Release scripts**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/numpy/numpy-vendor](https://github.com/numpy/numpy-vendor)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Supported platforms and versions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[NEP 29](https://numpy.org/neps/nep-0029-deprecation_policy.html#nep29 "(in
+    NumPy Enhancement Proposals)") outlines which Python versions are supported; For
+    the first half of 2020, this will be Python >= 3.6\. We test NumPy against all
+    these versions every time we merge code to main. Binary installers may be available
+    for a subset of these versions (see below).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**OS X**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: OS X versions >= 10.9 are supported, for Python version support see [NEP 29](https://numpy.org/neps/nep-0029-deprecation_policy.html#nep29
+    "(in NumPy Enhancement Proposals)"). We build binary wheels for OSX that are compatible
+    with Python.org Python, system Python, homebrew and macports - see this [OSX wheel
+    building summary](https://github.com/MacPython/wiki/wiki/Spinning-wheels) for
+    details.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**Windows**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
+    We build NumPy using the [mingw-w64 toolchain](https://mingwpy.github.io), [cibuildwheels](https://cibuildwheel.readthedocs.io/en/stable/)
+    and GitHub actions.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**Linux**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We build and ship [manylinux2014](https://www.python.org/dev/peps/pep-0513)
+    wheels for NumPy. Many Linux distributions include their own binary builds of
+    NumPy.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**BSD / Solaris**'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: No binaries are provided, but successful builds on Solaris and BSD have been
+    reported.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Tool chain
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We build all our wheels on cloud infrastructure - so this list of compilers
+    is for information and debugging builds locally. See the `.travis.yml` script
+    in the [numpy wheels](https://github.com/MacPython/numpy-wheels) repo for an outdated
+    source of the build recipes using multibuild.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compilers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The same gcc version is used as the one with which Python itself is built on
+    each platform. At the moment this means:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: OS X builds on travis currently use *clang*. It appears that binary wheels for
+    OSX >= 10.6 can be safely built from the travis-ci OSX 10.9 VMs when building
+    against the Python from the Python.org installers;
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Windows builds use the [mingw-w64 toolchain](https://mingwpy.github.io);
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Manylinux2014 wheels use the gcc provided on the Manylinux docker images.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will need Cython for building the binaries. Cython compiles the `.pyx` files
+    in the NumPy distribution to `.c` files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: OpenBLAS
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: All the wheels link to a version of [OpenBLAS](https://github.com/xianyi/OpenBLAS)
+    supplied via the [openblas-libs](https://github.com/MacPython/openblas-libs) repo.
+    The shared object (or DLL) is shipped with in the wheel, renamed to prevent name
+    collisions with other OpenBLAS shared objects that may exist in the filesystem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building source archives and wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The NumPy wheels and sdist are now built using cibuildwheel with github actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building docs
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We are no longer building pdf files, only html docs. The `numpy-html.zip` needed
+    to upload to the doc server can be built with `spin docs dist`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To install the necessary doc build dependencies into your development environment,
+    run `pip install -r doc_requirements.txt`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uploading to PyPI
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The only application needed for uploading is
+  prefs: []
+  type: TYPE_NORMAL
+- en: twine (pip).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will also need a PyPI token, which is best kept on a keyring. See the twine
+    [keyring](https://twine.readthedocs.io/en/stable/#keyring-support) documentation
+    for how to do that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating author/PR lists
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You will need a personal access token [https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
+    so that scripts can access the github NumPy repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: gitpython (pip)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: pygithub (pip)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Compilers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The same gcc version is used as the one with which Python itself is built on
+    each platform. At the moment this means:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: OS X builds on travis currently use *clang*. It appears that binary wheels for
+    OSX >= 10.6 can be safely built from the travis-ci OSX 10.9 VMs when building
+    against the Python from the Python.org installers;
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Windows builds use the [mingw-w64 toolchain](https://mingwpy.github.io);
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Manylinux2014 wheels use the gcc provided on the Manylinux docker images.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will need Cython for building the binaries. Cython compiles the `.pyx` files
+    in the NumPy distribution to `.c` files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: OpenBLAS
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: All the wheels link to a version of [OpenBLAS](https://github.com/xianyi/OpenBLAS)
+    supplied via the [openblas-libs](https://github.com/MacPython/openblas-libs) repo.
+    The shared object (or DLL) is shipped with in the wheel, renamed to prevent name
+    collisions with other OpenBLAS shared objects that may exist in the filesystem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building source archives and wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The NumPy wheels and sdist are now built using cibuildwheel with github actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building docs
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We are no longer building pdf files, only html docs. The `numpy-html.zip` needed
+    to upload to the doc server can be built with `spin docs dist`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To install the necessary doc build dependencies into your development environment,
+    run `pip install -r doc_requirements.txt`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uploading to PyPI
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The only application needed for uploading is
+  prefs: []
+  type: TYPE_NORMAL
+- en: twine (pip).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will also need a PyPI token, which is best kept on a keyring. See the twine
+    [keyring](https://twine.readthedocs.io/en/stable/#keyring-support) documentation
+    for how to do that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating author/PR lists
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You will need a personal access token [https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
+    so that scripts can access the github NumPy repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: gitpython (pip)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: pygithub (pip)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What is released
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Wheels** We currently support Python 3.8-3.10 on Windows, OSX, and Linux.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Windows: 32-bit and 64-bit wheels built using Github actions;'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'OSX: x64_86 and arm64 OSX wheels built using Github actions;'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Linux: x64_86 and aarch64 Manylinux2014 wheels built using Github actions.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Other** Release notes and changelog'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Source distribution** We build source releases in the .tar.gz format.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Release process
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Agree on a release schedule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A typical release schedule is one beta, two release candidates and a final release.
+    It’s best to discuss the timing on the mailing list first, in order for people
+    to get their commits in on time, get doc wiki edits merged, etc. After a date
+    is set, create a new maintenance/x.y.z branch, add new empty release notes for
+    the next version in the main branch and update the Trac Milestones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Make sure current branch builds a package correctly
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The CI builds wheels when a PR header begins with `REL`. Your last PR before
+    releasing should be so marked and all the tests should pass. You can also do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: For details of the build process itself, it is best to read the Step-by-Step
+    Directions below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following steps are repeated for the beta(s), release candidates(s) and
+    the final release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check deprecations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Before [the release branch is made](#branching), it should be checked that all
+    deprecated code that should be removed is actually removed, and all new deprecations
+    say in the docstring or deprecation warning what version the code will be removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the C API version number
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The C API version needs to be tracked in three places
+  prefs: []
+  type: TYPE_NORMAL
+- en: numpy/core/setup_common.py
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy/core/code_generators/cversions.txt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy/core/include/numpy/numpyconfig.h
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are three steps to the process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the API has changed, increment the C_API_VERSION in setup_common.py. The
+    API is unchanged only if any code compiled against the current API will be backward
+    compatible with the last released NumPy version. Any changes to C structures or
+    additions to the public interface will make the new API not backward compatible.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the C_API_VERSION in the first step has changed, or if the hash of the API
+    has changed, the cversions.txt file needs to be updated. To check the hash, run
+    the script numpy/core/cversions.py and note the API hash that is printed. If that
+    hash does not match the last hash in numpy/core/code_generators/cversions.txt
+    the hash has changed. Using both the appropriate C_API_VERSION and hash, add a
+    new entry to cversions.txt. If the API version was not changed, but the hash differs,
+    you will need to comment out the previous entry for that API version. For instance,
+    in NumPy 1.9 annotations were added, which changed the hash, but the API was the
+    same as in 1.8\. The hash serves as a check for API changes, but it is not definitive.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If steps 1 and 2 are done correctly, compiling the release should not give a
+    warning “API mismatch detect at the beginning of the build”.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The numpy/core/include/numpy/numpyconfig.h will need a new NPY_X_Y_API_VERSION
+    macro, where X and Y are the major and minor version numbers of the release. The
+    value given to that macro only needs to be increased from the previous version
+    if some of the functions or macros in the include files were deprecated.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The C ABI version number in numpy/core/setup_common.py should only be updated
+    for a major release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the release notes
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Use [towncrier](https://pypi.org/project/towncrier/) to build the release note
+    and commit the changes. This will remove all the fragments from `doc/release/upcoming_changes`
+    and add `doc/release/<version>-note.rst`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: towncrier build –version “<version>” git commit -m”Create release note”
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Check that the release notes are up-to-date.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Update the release notes with a Highlights section. Mention some of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: major new features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: deprecated and removed features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: supported Python versions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: for SciPy, supported NumPy version(s)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: outlook for the near future
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Agree on a release schedule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A typical release schedule is one beta, two release candidates and a final release.
+    It’s best to discuss the timing on the mailing list first, in order for people
+    to get their commits in on time, get doc wiki edits merged, etc. After a date
+    is set, create a new maintenance/x.y.z branch, add new empty release notes for
+    the next version in the main branch and update the Trac Milestones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Make sure current branch builds a package correctly
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The CI builds wheels when a PR header begins with `REL`. Your last PR before
+    releasing should be so marked and all the tests should pass. You can also do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: For details of the build process itself, it is best to read the Step-by-Step
+    Directions below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following steps are repeated for the beta(s), release candidates(s) and
+    the final release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check deprecations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Before [the release branch is made](#branching), it should be checked that all
+    deprecated code that should be removed is actually removed, and all new deprecations
+    say in the docstring or deprecation warning what version the code will be removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the C API version number
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The C API version needs to be tracked in three places
+  prefs: []
+  type: TYPE_NORMAL
+- en: numpy/core/setup_common.py
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy/core/code_generators/cversions.txt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy/core/include/numpy/numpyconfig.h
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are three steps to the process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the API has changed, increment the C_API_VERSION in setup_common.py. The
+    API is unchanged only if any code compiled against the current API will be backward
+    compatible with the last released NumPy version. Any changes to C structures or
+    additions to the public interface will make the new API not backward compatible.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the C_API_VERSION in the first step has changed, or if the hash of the API
+    has changed, the cversions.txt file needs to be updated. To check the hash, run
+    the script numpy/core/cversions.py and note the API hash that is printed. If that
+    hash does not match the last hash in numpy/core/code_generators/cversions.txt
+    the hash has changed. Using both the appropriate C_API_VERSION and hash, add a
+    new entry to cversions.txt. If the API version was not changed, but the hash differs,
+    you will need to comment out the previous entry for that API version. For instance,
+    in NumPy 1.9 annotations were added, which changed the hash, but the API was the
+    same as in 1.8\. The hash serves as a check for API changes, but it is not definitive.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If steps 1 and 2 are done correctly, compiling the release should not give a
+    warning “API mismatch detect at the beginning of the build”.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The numpy/core/include/numpy/numpyconfig.h will need a new NPY_X_Y_API_VERSION
+    macro, where X and Y are the major and minor version numbers of the release. The
+    value given to that macro only needs to be increased from the previous version
+    if some of the functions or macros in the include files were deprecated.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The C ABI version number in numpy/core/setup_common.py should only be updated
+    for a major release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the release notes
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Use [towncrier](https://pypi.org/project/towncrier/) to build the release note
+    and commit the changes. This will remove all the fragments from `doc/release/upcoming_changes`
+    and add `doc/release/<version>-note.rst`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: towncrier build –version “<version>” git commit -m”Create release note”
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Check that the release notes are up-to-date.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Update the release notes with a Highlights section. Mention some of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: major new features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: deprecated and removed features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: supported Python versions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: for SciPy, supported NumPy version(s)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: outlook for the near future
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Step-by-step directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This is a walkthrough of the NumPy 1.21.0 release on Linux, modified for building
+    with GitHub Actions and cibuildwheels and uploading to the [anaconda.org staging
+    repository for NumPy](https://anaconda.org/multibuild-wheels-staging/numpy). The
+    commands can be copied into the command line, but be sure to replace 1.21.0 by
+    the correct version. This should be read together with the [general release guide](#prepare-release).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Facility preparation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Before beginning to make a release, use the `*_requirements.txt` files to ensure
+    that you have the needed software. Most software can be installed with pip, but
+    some will require apt-get, dnf, or whatever your system uses for software. You
+    will also need a GitHub personal access token (PAT) to push the documentation.
+    There are a few ways to streamline things:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Git can be set up to use a keyring to store your GitHub personal access token.
+    Search online for the details.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can use the `keyring` app to store the PyPI password for twine. See the
+    online twine documentation for details.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Release preparation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Add/drop Python versions
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When adding or dropping Python versions, three files need to be edited:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '.github/workflows/wheels.yml # for github cibuildwheel'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '.travis.yml # for cibuildwheel aarch64 builds'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'setup.py # for classifier and minimum version check.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Make these changes in an ordinary PR against main and backport if necessary.
+    Using the *BLD:* prefix (build label) for the commit summary will cause the wheel
+    builds to be run so that the changes will be tested, We currently release wheels
+    for new Python versions after the first Python rc once manylinux and cibuildwheel
+    support it. For Python 3.11 we were able to release within a week of the rc1 announcement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backport Pull Requests
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Changes that have been marked for this release must be backported to the maintenance/1.21.x
+    branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Update release documentation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Four documents usually need to be updated or created before making a release:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The changelog
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The release-notes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `.mailmap` file
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `doc/source/release.rst` file
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These changes should be made as an ordinary PR against the maintenance branch.
+    After release all files except `doc/source/release.rst` will need to be forward
+    ported to the main branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generate the changelog
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The changelog is generated using the changelog tool:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: where `GITHUB` contains your GitHub access token. The text will need to be checked
+    for non-standard contributor names and dependabot entries removed. It is also
+    a good idea to remove any links that may be present in the PR titles as they don’t
+    translate well to markdown, replace them with monospaced text. The non-standard
+    contributor names should be fixed by updating the `.mailmap` file, which is a
+    lot of work. It is best to make several trial runs before reaching this point
+    and ping the malefactors using a GitHub issue to get the needed information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finish the release notes
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: If this is the first release in a series the release note is generated, see
+    the release note in `doc/release/upcoming_changes/README.rst` to see how to do
+    this. Generating the release notes will also delete all the news fragment files
+    in `doc/release/upcoming_changes/`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The generated release note will always need some fixups, the introduction will
+    need to be written, and significant changes should be called out. For patch releases
+    the changelog text may also be appended, but not for the initial release as it
+    is too long. Check previous release notes to see how this is done. Note that the
+    `:orphan:` markup at the top, if present, will need changing to `.. currentmodule::
+    numpy` and the `doc/source/release.rst` index file will need updating.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the `pavement.py` file
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Check that the pavement.py file points to the correct release notes. It should
+    have been updated after the last release, but if not, fix it now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Release walkthrough
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Note that in the code snippets below, `upstream` refers to the root repository
+    on GitHub and `origin` to its fork in your personal GitHub repositories. You may
+    need to make adjustments if you have not forked the repository but simply cloned
+    it locally. You can also edit `.git/config` and add `upstream` if it isn’t already
+    present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Prepare the release commit
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Checkout the branch for the release, make sure it is up to date, and clean
+    the repository:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sanity check:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Tag the release and push the tag. This requires write permission for the numpy
+    repository:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you need to delete the tag due to error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 2\. Build wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Build wheels via cibuildwheel (preferred)
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Tagging the build at the beginning of this process will trigger a wheel build
+    via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
+    on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
+    hours. The CI run on travis (for aarch64) takes less time. You can check for uploaded
+    files at the [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    but note that it is not closely synched with what you see of the running jobs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you wish to manually trigger a wheel build, you can do so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions -> [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    there is a “Run workflow” button, click on it and choose the tag to build
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) there is a “More Options”
+    button, click on it and choose a branch to build. There does not appear to be
+    an option to build a tag.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If a wheel build fails for unrelated reasons, you can rerun it individually:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions select [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    click on the commit that contains the build you want to rerun. On the left there
+    is a list of wheel builds, select the one you want to rerun and on the resulting
+    page hit the counterclockwise arrows button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) select the failing
+    build, which will take you to the travis job for that build. Hit the restart job
+    button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that if you do need to rerun jobs, you will need to delete the uploaded
+    file, if any, in the anaconda [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    The old files will not be overwritten.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Download wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When the wheels have all been successfully built and staged, download them
+    from the Anaconda staging directory using the `tools/download-wheels.py` script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 4\. Generate the README files
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This needs to be done after all installers are downloaded, but before the pavement
+    file is updated for continued development:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 5\. Reset the maintenance branch into a development state (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Create release notes for next release and edit them to set the version. These
+    notes will be a skeleton and have little content:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Add new release notes to the documentation release list and update the `RELEASE_NOTES`
+    variable in `pavement.py`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Commit the result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 6\. Upload to PyPI
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Upload to PyPI using `twine`. A recent version of `twine` of is needed after
+    recent PyPI changes, version `3.4.1` was used here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: If one of the commands breaks in the middle, you may need to selectively upload
+    the remaining files because PyPI does not allow the same file to be uploaded twice.
+    The source file should be uploaded last to avoid synchronization problems that
+    might occur if pip users access the files while this is in process, causing pip
+    to build from source rather than downloading a binary wheel. PyPI only allows
+    a single source distribution, here we have chosen the zip archive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7\. Upload files to github
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Go to [https://github.com/numpy/numpy/releases](https://github.com/numpy/numpy/releases),
+    there should be a `v1.21.0 tag`, click on it and hit the edit button for that
+    tag. There are two ways to add files, using an editable text window and as binary
+    uploads. Start by editing the `release/README.md` that is translated from the
+    rst version using pandoc. Things that will need fixing: PR lines from the changelog,
+    if included, are wrapped and need unwrapping, links should be changed to monospaced
+    text. Then copy the contents to the clipboard and paste them into the text window.
+    It may take several tries to get it look right. Then'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Upload `release/installers/numpy-1.21.0.tar.gz` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Upload `release/README.rst` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Upload `doc/changelog/1.21.0-changelog.rst` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Check the pre-release button if this is a pre-releases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hit the `{Publish,Update} release` button at the bottom.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 8\. Upload documents to numpy.org (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You will need a GitHub personal access token to push the update.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This step is only needed for final releases and can be skipped for pre-releases
+    and most patch releases. `make merge-doc` clones the `numpy/doc` repo into `doc/build/merge`
+    and updates it with the new documentation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the release series is a new one, you will need to add a new section to the
+    `doc/build/merge/index.html` front page just after the “insert here” comment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Further, update the version-switcher json file to add the new release and update
+    the version marked *(stable)*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Otherwise, only the `zip` link should be updated with the new tag name. Since
+    we are no longer generating `pdf` files, remove the line for the `pdf` files if
+    present:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can “test run” the new documentation in a browser to make sure the links
+    work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update the stable link and update:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once everything seems satisfactory, update, commit and upload the changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 9\. Announce the release on numpy.org (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This assumes that you have forked [https://github.com/numpy/numpy.org](https://github.com/numpy/numpy.org):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: For all releases, go to the bottom of the page and add a one line link. Look
+    to the previous links for example.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For the `*.0` release in a cycle, add a new section at the top with a short
+    description of the new features and point the news link to it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'commit and push:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Go to your Github fork and make a pull request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10\. Announce to mailing lists
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The release should be announced on the numpy-discussion, scipy-devel, scipy-user,
+    and python-announce-list mailing lists. Look at previous announcements for the
+    basic template. The contributor and PR lists are the same as generated for the
+    release notes above. If you crosspost, make sure that python-announce-list is
+    BCC so that replies will not be sent to that list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11\. Post-release tasks (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Checkout main and forward port the documentation changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: Go to GitHub and make a PR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12\. Update oldest-supported-numpy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: If this release is the first one to support a new Python version, or the first
+    to provide wheels for a new platform or PyPy version, the version pinnings in
+    [https://github.com/scipy/oldest-supported-numpy](https://github.com/scipy/oldest-supported-numpy)
+    should be updated. Either submit a PR with changes to `setup.cfg` there, or open
+    an issue with info on needed changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Facility preparation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Before beginning to make a release, use the `*_requirements.txt` files to ensure
+    that you have the needed software. Most software can be installed with pip, but
+    some will require apt-get, dnf, or whatever your system uses for software. You
+    will also need a GitHub personal access token (PAT) to push the documentation.
+    There are a few ways to streamline things:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Git can be set up to use a keyring to store your GitHub personal access token.
+    Search online for the details.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can use the `keyring` app to store the PyPI password for twine. See the
+    online twine documentation for details.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Release preparation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Add/drop Python versions
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When adding or dropping Python versions, three files need to be edited:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '.github/workflows/wheels.yml # for github cibuildwheel'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '.travis.yml # for cibuildwheel aarch64 builds'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'setup.py # for classifier and minimum version check.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Make these changes in an ordinary PR against main and backport if necessary.
+    Using the *BLD:* prefix (build label) for the commit summary will cause the wheel
+    builds to be run so that the changes will be tested, We currently release wheels
+    for new Python versions after the first Python rc once manylinux and cibuildwheel
+    support it. For Python 3.11 we were able to release within a week of the rc1 announcement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backport Pull Requests
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Changes that have been marked for this release must be backported to the maintenance/1.21.x
+    branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Update release documentation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Four documents usually need to be updated or created before making a release:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The changelog
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The release-notes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `.mailmap` file
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `doc/source/release.rst` file
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These changes should be made as an ordinary PR against the maintenance branch.
+    After release all files except `doc/source/release.rst` will need to be forward
+    ported to the main branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generate the changelog
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The changelog is generated using the changelog tool:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: where `GITHUB` contains your GitHub access token. The text will need to be checked
+    for non-standard contributor names and dependabot entries removed. It is also
+    a good idea to remove any links that may be present in the PR titles as they don’t
+    translate well to markdown, replace them with monospaced text. The non-standard
+    contributor names should be fixed by updating the `.mailmap` file, which is a
+    lot of work. It is best to make several trial runs before reaching this point
+    and ping the malefactors using a GitHub issue to get the needed information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finish the release notes
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: If this is the first release in a series the release note is generated, see
+    the release note in `doc/release/upcoming_changes/README.rst` to see how to do
+    this. Generating the release notes will also delete all the news fragment files
+    in `doc/release/upcoming_changes/`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The generated release note will always need some fixups, the introduction will
+    need to be written, and significant changes should be called out. For patch releases
+    the changelog text may also be appended, but not for the initial release as it
+    is too long. Check previous release notes to see how this is done. Note that the
+    `:orphan:` markup at the top, if present, will need changing to `.. currentmodule::
+    numpy` and the `doc/source/release.rst` index file will need updating.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the `pavement.py` file
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Check that the pavement.py file points to the correct release notes. It should
+    have been updated after the last release, but if not, fix it now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Add/drop Python versions
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When adding or dropping Python versions, three files need to be edited:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '.github/workflows/wheels.yml # for github cibuildwheel'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '.travis.yml # for cibuildwheel aarch64 builds'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'setup.py # for classifier and minimum version check.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Make these changes in an ordinary PR against main and backport if necessary.
+    Using the *BLD:* prefix (build label) for the commit summary will cause the wheel
+    builds to be run so that the changes will be tested, We currently release wheels
+    for new Python versions after the first Python rc once manylinux and cibuildwheel
+    support it. For Python 3.11 we were able to release within a week of the rc1 announcement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backport Pull Requests
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Changes that have been marked for this release must be backported to the maintenance/1.21.x
+    branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Update release documentation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Four documents usually need to be updated or created before making a release:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The changelog
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The release-notes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `.mailmap` file
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `doc/source/release.rst` file
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These changes should be made as an ordinary PR against the maintenance branch.
+    After release all files except `doc/source/release.rst` will need to be forward
+    ported to the main branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generate the changelog
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The changelog is generated using the changelog tool:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: where `GITHUB` contains your GitHub access token. The text will need to be checked
+    for non-standard contributor names and dependabot entries removed. It is also
+    a good idea to remove any links that may be present in the PR titles as they don’t
+    translate well to markdown, replace them with monospaced text. The non-standard
+    contributor names should be fixed by updating the `.mailmap` file, which is a
+    lot of work. It is best to make several trial runs before reaching this point
+    and ping the malefactors using a GitHub issue to get the needed information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finish the release notes
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: If this is the first release in a series the release note is generated, see
+    the release note in `doc/release/upcoming_changes/README.rst` to see how to do
+    this. Generating the release notes will also delete all the news fragment files
+    in `doc/release/upcoming_changes/`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The generated release note will always need some fixups, the introduction will
+    need to be written, and significant changes should be called out. For patch releases
+    the changelog text may also be appended, but not for the initial release as it
+    is too long. Check previous release notes to see how this is done. Note that the
+    `:orphan:` markup at the top, if present, will need changing to `.. currentmodule::
+    numpy` and the `doc/source/release.rst` index file will need updating.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the `pavement.py` file
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Check that the pavement.py file points to the correct release notes. It should
+    have been updated after the last release, but if not, fix it now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generate the changelog
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The changelog is generated using the changelog tool:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: where `GITHUB` contains your GitHub access token. The text will need to be checked
+    for non-standard contributor names and dependabot entries removed. It is also
+    a good idea to remove any links that may be present in the PR titles as they don’t
+    translate well to markdown, replace them with monospaced text. The non-standard
+    contributor names should be fixed by updating the `.mailmap` file, which is a
+    lot of work. It is best to make several trial runs before reaching this point
+    and ping the malefactors using a GitHub issue to get the needed information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finish the release notes
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: If this is the first release in a series the release note is generated, see
+    the release note in `doc/release/upcoming_changes/README.rst` to see how to do
+    this. Generating the release notes will also delete all the news fragment files
+    in `doc/release/upcoming_changes/`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The generated release note will always need some fixups, the introduction will
+    need to be written, and significant changes should be called out. For patch releases
+    the changelog text may also be appended, but not for the initial release as it
+    is too long. Check previous release notes to see how this is done. Note that the
+    `:orphan:` markup at the top, if present, will need changing to `.. currentmodule::
+    numpy` and the `doc/source/release.rst` index file will need updating.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the `pavement.py` file
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Check that the pavement.py file points to the correct release notes. It should
+    have been updated after the last release, but if not, fix it now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: Release walkthrough
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Note that in the code snippets below, `upstream` refers to the root repository
+    on GitHub and `origin` to its fork in your personal GitHub repositories. You may
+    need to make adjustments if you have not forked the repository but simply cloned
+    it locally. You can also edit `.git/config` and add `upstream` if it isn’t already
+    present.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Prepare the release commit
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Checkout the branch for the release, make sure it is up to date, and clean
+    the repository:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sanity check:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Tag the release and push the tag. This requires write permission for the numpy
+    repository:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you need to delete the tag due to error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: 2\. Build wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Build wheels via cibuildwheel (preferred)
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Tagging the build at the beginning of this process will trigger a wheel build
+    via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
+    on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
+    hours. The CI run on travis (for aarch64) takes less time. You can check for uploaded
+    files at the [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    but note that it is not closely synched with what you see of the running jobs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you wish to manually trigger a wheel build, you can do so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions -> [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    there is a “Run workflow” button, click on it and choose the tag to build
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) there is a “More Options”
+    button, click on it and choose a branch to build. There does not appear to be
+    an option to build a tag.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If a wheel build fails for unrelated reasons, you can rerun it individually:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions select [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    click on the commit that contains the build you want to rerun. On the left there
+    is a list of wheel builds, select the one you want to rerun and on the resulting
+    page hit the counterclockwise arrows button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) select the failing
+    build, which will take you to the travis job for that build. Hit the restart job
+    button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that if you do need to rerun jobs, you will need to delete the uploaded
+    file, if any, in the anaconda [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    The old files will not be overwritten.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Download wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When the wheels have all been successfully built and staged, download them
+    from the Anaconda staging directory using the `tools/download-wheels.py` script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: 4\. Generate the README files
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This needs to be done after all installers are downloaded, but before the pavement
+    file is updated for continued development:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: 5\. Reset the maintenance branch into a development state (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Create release notes for next release and edit them to set the version. These
+    notes will be a skeleton and have little content:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Add new release notes to the documentation release list and update the `RELEASE_NOTES`
+    variable in `pavement.py`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Commit the result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: 6\. Upload to PyPI
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Upload to PyPI using `twine`. A recent version of `twine` of is needed after
+    recent PyPI changes, version `3.4.1` was used here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: If one of the commands breaks in the middle, you may need to selectively upload
+    the remaining files because PyPI does not allow the same file to be uploaded twice.
+    The source file should be uploaded last to avoid synchronization problems that
+    might occur if pip users access the files while this is in process, causing pip
+    to build from source rather than downloading a binary wheel. PyPI only allows
+    a single source distribution, here we have chosen the zip archive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7\. Upload files to github
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Go to [https://github.com/numpy/numpy/releases](https://github.com/numpy/numpy/releases),
+    there should be a `v1.21.0 tag`, click on it and hit the edit button for that
+    tag. There are two ways to add files, using an editable text window and as binary
+    uploads. Start by editing the `release/README.md` that is translated from the
+    rst version using pandoc. Things that will need fixing: PR lines from the changelog,
+    if included, are wrapped and need unwrapping, links should be changed to monospaced
+    text. Then copy the contents to the clipboard and paste them into the text window.
+    It may take several tries to get it look right. Then'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Upload `release/installers/numpy-1.21.0.tar.gz` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Upload `release/README.rst` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Upload `doc/changelog/1.21.0-changelog.rst` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Check the pre-release button if this is a pre-releases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hit the `{Publish,Update} release` button at the bottom.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 8\. Upload documents to numpy.org (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You will need a GitHub personal access token to push the update.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This step is only needed for final releases and can be skipped for pre-releases
+    and most patch releases. `make merge-doc` clones the `numpy/doc` repo into `doc/build/merge`
+    and updates it with the new documentation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the release series is a new one, you will need to add a new section to the
+    `doc/build/merge/index.html` front page just after the “insert here” comment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Further, update the version-switcher json file to add the new release and update
+    the version marked *(stable)*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Otherwise, only the `zip` link should be updated with the new tag name. Since
+    we are no longer generating `pdf` files, remove the line for the `pdf` files if
+    present:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can “test run” the new documentation in a browser to make sure the links
+    work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update the stable link and update:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once everything seems satisfactory, update, commit and upload the changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: 9\. Announce the release on numpy.org (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This assumes that you have forked [https://github.com/numpy/numpy.org](https://github.com/numpy/numpy.org):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: For all releases, go to the bottom of the page and add a one line link. Look
+    to the previous links for example.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For the `*.0` release in a cycle, add a new section at the top with a short
+    description of the new features and point the news link to it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'commit and push:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Go to your Github fork and make a pull request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10\. Announce to mailing lists
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The release should be announced on the numpy-discussion, scipy-devel, scipy-user,
+    and python-announce-list mailing lists. Look at previous announcements for the
+    basic template. The contributor and PR lists are the same as generated for the
+    release notes above. If you crosspost, make sure that python-announce-list is
+    BCC so that replies will not be sent to that list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11\. Post-release tasks (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Checkout main and forward port the documentation changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: Go to GitHub and make a PR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12\. Update oldest-supported-numpy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: If this release is the first one to support a new Python version, or the first
+    to provide wheels for a new platform or PyPy version, the version pinnings in
+    [https://github.com/scipy/oldest-supported-numpy](https://github.com/scipy/oldest-supported-numpy)
+    should be updated. Either submit a PR with changes to `setup.cfg` there, or open
+    an issue with info on needed changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Prepare the release commit
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Checkout the branch for the release, make sure it is up to date, and clean
+    the repository:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sanity check:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Tag the release and push the tag. This requires write permission for the numpy
+    repository:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you need to delete the tag due to error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: 2\. Build wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Build wheels via cibuildwheel (preferred)
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Tagging the build at the beginning of this process will trigger a wheel build
+    via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
+    on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
+    hours. The CI run on travis (for aarch64) takes less time. You can check for uploaded
+    files at the [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    but note that it is not closely synched with what you see of the running jobs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you wish to manually trigger a wheel build, you can do so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions -> [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    there is a “Run workflow” button, click on it and choose the tag to build
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) there is a “More Options”
+    button, click on it and choose a branch to build. There does not appear to be
+    an option to build a tag.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If a wheel build fails for unrelated reasons, you can rerun it individually:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions select [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    click on the commit that contains the build you want to rerun. On the left there
+    is a list of wheel builds, select the one you want to rerun and on the resulting
+    page hit the counterclockwise arrows button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) select the failing
+    build, which will take you to the travis job for that build. Hit the restart job
+    button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that if you do need to rerun jobs, you will need to delete the uploaded
+    file, if any, in the anaconda [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    The old files will not be overwritten.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build wheels via cibuildwheel (preferred)
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Tagging the build at the beginning of this process will trigger a wheel build
+    via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
+    on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
+    hours. The CI run on travis (for aarch64) takes less time. You can check for uploaded
+    files at the [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    but note that it is not closely synched with what you see of the running jobs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you wish to manually trigger a wheel build, you can do so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions -> [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    there is a “Run workflow” button, click on it and choose the tag to build
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) there is a “More Options”
+    button, click on it and choose a branch to build. There does not appear to be
+    an option to build a tag.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If a wheel build fails for unrelated reasons, you can rerun it individually:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On github actions select [Wheel builder](https://github.com/numpy/numpy/actions/workflows/wheels.yml)
+    click on the commit that contains the build you want to rerun. On the left there
+    is a list of wheel builds, select the one you want to rerun and on the resulting
+    page hit the counterclockwise arrows button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On [travis](https://app.travis-ci.com/github/numpy/numpy) select the failing
+    build, which will take you to the travis job for that build. Hit the restart job
+    button.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that if you do need to rerun jobs, you will need to delete the uploaded
+    file, if any, in the anaconda [staging repository](https://anaconda.org/multibuild-wheels-staging/numpy/files),
+    The old files will not be overwritten.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Download wheels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When the wheels have all been successfully built and staged, download them
+    from the Anaconda staging directory using the `tools/download-wheels.py` script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: 4\. Generate the README files
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This needs to be done after all installers are downloaded, but before the pavement
+    file is updated for continued development:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: 5\. Reset the maintenance branch into a development state (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Create release notes for next release and edit them to set the version. These
+    notes will be a skeleton and have little content:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Add new release notes to the documentation release list and update the `RELEASE_NOTES`
+    variable in `pavement.py`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Commit the result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: 6\. Upload to PyPI
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Upload to PyPI using `twine`. A recent version of `twine` of is needed after
+    recent PyPI changes, version `3.4.1` was used here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: If one of the commands breaks in the middle, you may need to selectively upload
+    the remaining files because PyPI does not allow the same file to be uploaded twice.
+    The source file should be uploaded last to avoid synchronization problems that
+    might occur if pip users access the files while this is in process, causing pip
+    to build from source rather than downloading a binary wheel. PyPI only allows
+    a single source distribution, here we have chosen the zip archive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7\. Upload files to github
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Go to [https://github.com/numpy/numpy/releases](https://github.com/numpy/numpy/releases),
+    there should be a `v1.21.0 tag`, click on it and hit the edit button for that
+    tag. There are two ways to add files, using an editable text window and as binary
+    uploads. Start by editing the `release/README.md` that is translated from the
+    rst version using pandoc. Things that will need fixing: PR lines from the changelog,
+    if included, are wrapped and need unwrapping, links should be changed to monospaced
+    text. Then copy the contents to the clipboard and paste them into the text window.
+    It may take several tries to get it look right. Then'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Upload `release/installers/numpy-1.21.0.tar.gz` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Upload `release/README.rst` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Upload `doc/changelog/1.21.0-changelog.rst` as a binary file.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Check the pre-release button if this is a pre-releases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hit the `{Publish,Update} release` button at the bottom.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 8\. Upload documents to numpy.org (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: You will need a GitHub personal access token to push the update.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This step is only needed for final releases and can be skipped for pre-releases
+    and most patch releases. `make merge-doc` clones the `numpy/doc` repo into `doc/build/merge`
+    and updates it with the new documentation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the release series is a new one, you will need to add a new section to the
+    `doc/build/merge/index.html` front page just after the “insert here” comment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Further, update the version-switcher json file to add the new release and update
+    the version marked *(stable)*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Otherwise, only the `zip` link should be updated with the new tag name. Since
+    we are no longer generating `pdf` files, remove the line for the `pdf` files if
+    present:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can “test run” the new documentation in a browser to make sure the links
+    work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update the stable link and update:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once everything seems satisfactory, update, commit and upload the changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: 9\. Announce the release on numpy.org (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This assumes that you have forked [https://github.com/numpy/numpy.org](https://github.com/numpy/numpy.org):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: For all releases, go to the bottom of the page and add a one line link. Look
+    to the previous links for example.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For the `*.0` release in a cycle, add a new section at the top with a short
+    description of the new features and point the news link to it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'commit and push:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: Go to your Github fork and make a pull request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10\. Announce to mailing lists
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The release should be announced on the numpy-discussion, scipy-devel, scipy-user,
+    and python-announce-list mailing lists. Look at previous announcements for the
+    basic template. The contributor and PR lists are the same as generated for the
+    release notes above. If you crosspost, make sure that python-announce-list is
+    BCC so that replies will not be sent to that list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11\. Post-release tasks (skip for prereleases)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Checkout main and forward port the documentation changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: Go to GitHub and make a PR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12\. Update oldest-supported-numpy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: If this release is the first one to support a new Python version, or the first
+    to provide wheels for a new platform or PyPy version, the version pinnings in
+    [https://github.com/scipy/oldest-supported-numpy](https://github.com/scipy/oldest-supported-numpy)
+    should be updated. Either submit a PR with changes to `setup.cfg` there, or open
+    an issue with info on needed changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Branch walkthrough'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This guide contains a walkthrough of branching NumPy 1.21.x on Linux. The commands
+    can be copied into the command line, but be sure to replace 1.21 and 1.22 by the
+    correct versions. It is good practice to make `.mailmap` as current as possible
+    before making the branch, that may take several weeks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This should be read together with the [general release guide](#prepare-release).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Branching
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Make the branch
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This is only needed when starting a new maintenance branch. Because NumPy now
+    depends on tags to determine the version, the start of a new development cycle
+    in the main branch needs an annotated tag. That is done as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the push fails because new PRs have been merged, do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and repeat the push. Once the push succeeds, tag it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'then make the new branch and push it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prepare the main branch for further development
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Make a PR branch to prepare main for further development:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Delete the release note fragments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Create the new release notes skeleton and add to index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update `pavement.py` and update the `RELEASE_NOTES` variable to point to the
+    new notes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update `cversions.txt` to add current release. There should be no new hash
+    to worry about at this early point, just add a comment following previous practice:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Check your work, commit it, and push:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now make a pull request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Branching
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Make the branch
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This is only needed when starting a new maintenance branch. Because NumPy now
+    depends on tags to determine the version, the start of a new development cycle
+    in the main branch needs an annotated tag. That is done as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the push fails because new PRs have been merged, do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and repeat the push. Once the push succeeds, tag it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'then make the new branch and push it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prepare the main branch for further development
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Make a PR branch to prepare main for further development:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Delete the release note fragments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Create the new release notes skeleton and add to index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update `pavement.py` and update the `RELEASE_NOTES` variable to point to the
+    new notes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update `cversions.txt` to add current release. There should be no new hash
+    to worry about at this early point, just add a comment following previous practice:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Check your work, commit it, and push:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now make a pull request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Make the branch
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This is only needed when starting a new maintenance branch. Because NumPy now
+    depends on tags to determine the version, the start of a new development cycle
+    in the main branch needs an annotated tag. That is done as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the push fails because new PRs have been merged, do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and repeat the push. Once the push succeeds, tag it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'then make the new branch and push it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prepare the main branch for further development
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Make a PR branch to prepare main for further development:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Delete the release note fragments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Create the new release notes skeleton and add to index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update `pavement.py` and update the `RELEASE_NOTES` variable to point to the
+    new notes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Update `cversions.txt` to add current release. There should be no new hash
+    to worry about at this early point, just add a comment following previous practice:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Check your work, commit it, and push:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now make a pull request.
+  prefs: []
+  type: TYPE_NORMAL

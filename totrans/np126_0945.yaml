@@ -1,0 +1,535 @@
+- en: Polynomials
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/routines.polynomials.html](https://numpy.org/doc/1.26/reference/routines.polynomials.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Polynomials in NumPy can be *created*, *manipulated*, and even *fitted* using
+    the [convenience classes](routines.polynomials.classes.html) of the [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") package, introduced in NumPy 1.4.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Prior to NumPy 1.4, [`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d") was the class of choice and it is still available in order to
+    maintain backward compatibility. However, the newer [`polynomial package`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") is more complete and its *convenience classes* provide a more
+    consistent, better-behaved interface for working with polynomial expressions.
+    Therefore [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") is recommended for new coding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Terminology**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The term *polynomial module* refers to the old API defined in `numpy.lib.polynomial`,
+    which includes the [`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d "numpy.poly1d")
+    class and the polynomial functions prefixed with *poly* accessible from the [`numpy`](index.html#module-numpy
+    "numpy") namespace (e.g. [`numpy.polyadd`](generated/numpy.polyadd.html#numpy.polyadd
+    "numpy.polyadd"), [`numpy.polyval`](generated/numpy.polyval.html#numpy.polyval
+    "numpy.polyval"), [`numpy.polyfit`](generated/numpy.polyfit.html#numpy.polyfit
+    "numpy.polyfit"), etc.).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The term *polynomial package* refers to the new API defined in [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial"), which includes the convenience classes for the different
+    kinds of polynomials (`numpy.polynomial.Polynomial`, `numpy.polynomial.Chebyshev`,
+    etc.).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Transitioning from [`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d") to [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial")
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As noted above, the [`poly1d class`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d") and associated functions defined in `numpy.lib.polynomial`, such
+    as [`numpy.polyfit`](generated/numpy.polyfit.html#numpy.polyfit "numpy.polyfit")
+    and [`numpy.poly`](generated/numpy.poly.html#numpy.poly "numpy.poly"), are considered
+    legacy and should **not** be used in new code. Since NumPy version 1.4, the [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") package is preferred for working with polynomials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quick Reference
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The following table highlights some of the main differences between the legacy
+    polynomial module and the polynomial package for common tasks. The [`Polynomial`](generated/numpy.polynomial.polynomial.Polynomial.html#numpy.polynomial.polynomial.Polynomial
+    "numpy.polynomial.polynomial.Polynomial") class is imported for brevity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '| **How to…** | Legacy ([`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d")) | [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Create a polynomial object from coefficients [[1]](#id2) | `p = np.poly1d([1,
+    2, 3])` | `p = Polynomial([3, 2, 1])` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Create a polynomial object from roots | `r = np.poly([-1, 1])` `p = np.poly1d(r)`
+    | `p = Polynomial.fromroots([-1, 1])` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fit a polynomial of degree `deg` to data | `np.polyfit(x, y, deg)` | `Polynomial.fit(x,
+    y, deg)` |'
+  prefs: []
+  type: TYPE_TB
+- en: Transition Guide
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are significant differences between `numpy.lib.polynomial` and [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial"). The most significant difference is the ordering of the coefficients
+    for the polynomial expressions. The various routines in [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") all deal with series whose coefficients go from degree zero
+    upward, which is the *reverse order* of the poly1d convention. The easy way to
+    remember this is that indices correspond to degree, i.e., `coef[i]` is the coefficient
+    of the term of degree *i*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Though the difference in convention may be confusing, it is straightforward
+    to convert from the legacy polynomial API to the new. For example, the following
+    demonstrates how you would convert a [`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d") instance representing the expression \(x^{2} + 2x + 3\) to a [`Polynomial`](generated/numpy.polynomial.polynomial.Polynomial.html#numpy.polynomial.polynomial.Polynomial
+    "numpy.polynomial.polynomial.Polynomial") instance representing the same expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In addition to the `coef` attribute, polynomials from the polynomial package
+    also have `domain` and `window` attributes. These attributes are most relevant
+    when fitting polynomials to data, though it should be noted that polynomials with
+    different `domain` and `window` attributes are not considered equal, and can’t
+    be mixed in arithmetic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the documentation for the [convenience classes](routines.polynomials.classes)
+    for further details on the `domain` and `window` attributes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another major difference between the legacy polynomial module and the polynomial
+    package is polynomial fitting. In the old module, fitting was done via the [`polyfit`](generated/numpy.polyfit.html#numpy.polyfit
+    "numpy.polyfit") function. In the polynomial package, the [`fit`](generated/numpy.polynomial.polynomial.Polynomial.fit.html#numpy.polynomial.polynomial.Polynomial.fit
+    "numpy.polynomial.polynomial.Polynomial.fit") class method is preferred. For example,
+    consider a simple linear fit to the following data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the legacy polynomial module, a linear fit (i.e. polynomial of degree
+    1) could be applied to these data with [`polyfit`](generated/numpy.polyfit.html#numpy.polyfit
+    "numpy.polyfit"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the new polynomial API, the [`fit`](generated/numpy.polynomial.polynomial.Polynomial.fit.html#numpy.polynomial.polynomial.Polynomial.fit
+    "numpy.polynomial.polynomial.Polynomial.fit") class method is preferred:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the coefficients are given *in the scaled domain* defined by the linear
+    mapping between the `window` and `domain`. [`convert`](generated/numpy.polynomial.polynomial.Polynomial.convert.html#numpy.polynomial.polynomial.Polynomial.convert
+    "numpy.polynomial.polynomial.Polynomial.convert") can be used to get the coefficients
+    in the unscaled data domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Documentation for the [`polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") Package
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In addition to standard power series polynomials, the polynomial package provides
+    several additional kinds of polynomials including Chebyshev, Hermite (two subtypes),
+    Laguerre, and Legendre polynomials. Each of these has an associated *convenience
+    class* available from the [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") namespace that provides a consistent interface for working
+    with polynomials regardless of their type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Using the Convenience Classes](routines.polynomials.classes.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Documentation pertaining to specific functions defined for each kind of polynomial
+    individually can be found in the corresponding module documentation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Power Series (`numpy.polynomial.polynomial`)](routines.polynomials.polynomial.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Chebyshev Series (`numpy.polynomial.chebyshev`)](routines.polynomials.chebyshev.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Hermite Series, “Physicists” (`numpy.polynomial.hermite`)](routines.polynomials.hermite.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[HermiteE Series, “Probabilists” (`numpy.polynomial.hermite_e`)](routines.polynomials.hermite_e.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Laguerre Series (`numpy.polynomial.laguerre`)](routines.polynomials.laguerre.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Legendre Series (`numpy.polynomial.legendre`)](routines.polynomials.legendre.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Polyutils](routines.polynomials.polyutils.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Documentation for Legacy Polynomials
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Poly1d](routines.polynomials.poly1d.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Basics](routines.polynomials.poly1d.html#basics)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Fitting](routines.polynomials.poly1d.html#fitting)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Calculus](routines.polynomials.poly1d.html#calculus)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Arithmetic](routines.polynomials.poly1d.html#arithmetic)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Warnings](routines.polynomials.poly1d.html#warnings)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Transitioning from [`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d") to [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial")
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As noted above, the [`poly1d class`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d") and associated functions defined in `numpy.lib.polynomial`, such
+    as [`numpy.polyfit`](generated/numpy.polyfit.html#numpy.polyfit "numpy.polyfit")
+    and [`numpy.poly`](generated/numpy.poly.html#numpy.poly "numpy.poly"), are considered
+    legacy and should **not** be used in new code. Since NumPy version 1.4, the [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") package is preferred for working with polynomials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quick Reference
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The following table highlights some of the main differences between the legacy
+    polynomial module and the polynomial package for common tasks. The [`Polynomial`](generated/numpy.polynomial.polynomial.Polynomial.html#numpy.polynomial.polynomial.Polynomial
+    "numpy.polynomial.polynomial.Polynomial") class is imported for brevity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '| **How to…** | Legacy ([`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d")) | [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Create a polynomial object from coefficients [[1]](#id2) | `p = np.poly1d([1,
+    2, 3])` | `p = Polynomial([3, 2, 1])` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Create a polynomial object from roots | `r = np.poly([-1, 1])` `p = np.poly1d(r)`
+    | `p = Polynomial.fromroots([-1, 1])` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fit a polynomial of degree `deg` to data | `np.polyfit(x, y, deg)` | `Polynomial.fit(x,
+    y, deg)` |'
+  prefs: []
+  type: TYPE_TB
+- en: Transition Guide
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are significant differences between `numpy.lib.polynomial` and [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial"). The most significant difference is the ordering of the coefficients
+    for the polynomial expressions. The various routines in [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") all deal with series whose coefficients go from degree zero
+    upward, which is the *reverse order* of the poly1d convention. The easy way to
+    remember this is that indices correspond to degree, i.e., `coef[i]` is the coefficient
+    of the term of degree *i*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Though the difference in convention may be confusing, it is straightforward
+    to convert from the legacy polynomial API to the new. For example, the following
+    demonstrates how you would convert a [`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d") instance representing the expression \(x^{2} + 2x + 3\) to a [`Polynomial`](generated/numpy.polynomial.polynomial.Polynomial.html#numpy.polynomial.polynomial.Polynomial
+    "numpy.polynomial.polynomial.Polynomial") instance representing the same expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In addition to the `coef` attribute, polynomials from the polynomial package
+    also have `domain` and `window` attributes. These attributes are most relevant
+    when fitting polynomials to data, though it should be noted that polynomials with
+    different `domain` and `window` attributes are not considered equal, and can’t
+    be mixed in arithmetic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the documentation for the [convenience classes](routines.polynomials.classes)
+    for further details on the `domain` and `window` attributes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another major difference between the legacy polynomial module and the polynomial
+    package is polynomial fitting. In the old module, fitting was done via the [`polyfit`](generated/numpy.polyfit.html#numpy.polyfit
+    "numpy.polyfit") function. In the polynomial package, the [`fit`](generated/numpy.polynomial.polynomial.Polynomial.fit.html#numpy.polynomial.polynomial.Polynomial.fit
+    "numpy.polynomial.polynomial.Polynomial.fit") class method is preferred. For example,
+    consider a simple linear fit to the following data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the legacy polynomial module, a linear fit (i.e. polynomial of degree
+    1) could be applied to these data with [`polyfit`](generated/numpy.polyfit.html#numpy.polyfit
+    "numpy.polyfit"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the new polynomial API, the [`fit`](generated/numpy.polynomial.polynomial.Polynomial.fit.html#numpy.polynomial.polynomial.Polynomial.fit
+    "numpy.polynomial.polynomial.Polynomial.fit") class method is preferred:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the coefficients are given *in the scaled domain* defined by the linear
+    mapping between the `window` and `domain`. [`convert`](generated/numpy.polynomial.polynomial.Polynomial.convert.html#numpy.polynomial.polynomial.Polynomial.convert
+    "numpy.polynomial.polynomial.Polynomial.convert") can be used to get the coefficients
+    in the unscaled data domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Quick Reference
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The following table highlights some of the main differences between the legacy
+    polynomial module and the polynomial package for common tasks. The [`Polynomial`](generated/numpy.polynomial.polynomial.Polynomial.html#numpy.polynomial.polynomial.Polynomial
+    "numpy.polynomial.polynomial.Polynomial") class is imported for brevity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '| **How to…** | Legacy ([`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d")) | [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Create a polynomial object from coefficients [[1]](#id2) | `p = np.poly1d([1,
+    2, 3])` | `p = Polynomial([3, 2, 1])` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Create a polynomial object from roots | `r = np.poly([-1, 1])` `p = np.poly1d(r)`
+    | `p = Polynomial.fromroots([-1, 1])` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fit a polynomial of degree `deg` to data | `np.polyfit(x, y, deg)` | `Polynomial.fit(x,
+    y, deg)` |'
+  prefs: []
+  type: TYPE_TB
+- en: Transition Guide
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are significant differences between `numpy.lib.polynomial` and [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial"). The most significant difference is the ordering of the coefficients
+    for the polynomial expressions. The various routines in [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") all deal with series whose coefficients go from degree zero
+    upward, which is the *reverse order* of the poly1d convention. The easy way to
+    remember this is that indices correspond to degree, i.e., `coef[i]` is the coefficient
+    of the term of degree *i*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Though the difference in convention may be confusing, it is straightforward
+    to convert from the legacy polynomial API to the new. For example, the following
+    demonstrates how you would convert a [`numpy.poly1d`](generated/numpy.poly1d.html#numpy.poly1d
+    "numpy.poly1d") instance representing the expression \(x^{2} + 2x + 3\) to a [`Polynomial`](generated/numpy.polynomial.polynomial.Polynomial.html#numpy.polynomial.polynomial.Polynomial
+    "numpy.polynomial.polynomial.Polynomial") instance representing the same expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In addition to the `coef` attribute, polynomials from the polynomial package
+    also have `domain` and `window` attributes. These attributes are most relevant
+    when fitting polynomials to data, though it should be noted that polynomials with
+    different `domain` and `window` attributes are not considered equal, and can’t
+    be mixed in arithmetic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the documentation for the [convenience classes](routines.polynomials.classes)
+    for further details on the `domain` and `window` attributes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another major difference between the legacy polynomial module and the polynomial
+    package is polynomial fitting. In the old module, fitting was done via the [`polyfit`](generated/numpy.polyfit.html#numpy.polyfit
+    "numpy.polyfit") function. In the polynomial package, the [`fit`](generated/numpy.polynomial.polynomial.Polynomial.fit.html#numpy.polynomial.polynomial.Polynomial.fit
+    "numpy.polynomial.polynomial.Polynomial.fit") class method is preferred. For example,
+    consider a simple linear fit to the following data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the legacy polynomial module, a linear fit (i.e. polynomial of degree
+    1) could be applied to these data with [`polyfit`](generated/numpy.polyfit.html#numpy.polyfit
+    "numpy.polyfit"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the new polynomial API, the [`fit`](generated/numpy.polynomial.polynomial.Polynomial.fit.html#numpy.polynomial.polynomial.Polynomial.fit
+    "numpy.polynomial.polynomial.Polynomial.fit") class method is preferred:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the coefficients are given *in the scaled domain* defined by the linear
+    mapping between the `window` and `domain`. [`convert`](generated/numpy.polynomial.polynomial.Polynomial.convert.html#numpy.polynomial.polynomial.Polynomial.convert
+    "numpy.polynomial.polynomial.Polynomial.convert") can be used to get the coefficients
+    in the unscaled data domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Documentation for the [`polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") Package
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In addition to standard power series polynomials, the polynomial package provides
+    several additional kinds of polynomials including Chebyshev, Hermite (two subtypes),
+    Laguerre, and Legendre polynomials. Each of these has an associated *convenience
+    class* available from the [`numpy.polynomial`](routines.polynomials.package.html#module-numpy.polynomial
+    "numpy.polynomial") namespace that provides a consistent interface for working
+    with polynomials regardless of their type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Using the Convenience Classes](routines.polynomials.classes.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Documentation pertaining to specific functions defined for each kind of polynomial
+    individually can be found in the corresponding module documentation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Power Series (`numpy.polynomial.polynomial`)](routines.polynomials.polynomial.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Chebyshev Series (`numpy.polynomial.chebyshev`)](routines.polynomials.chebyshev.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Hermite Series, “Physicists” (`numpy.polynomial.hermite`)](routines.polynomials.hermite.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[HermiteE Series, “Probabilists” (`numpy.polynomial.hermite_e`)](routines.polynomials.hermite_e.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Laguerre Series (`numpy.polynomial.laguerre`)](routines.polynomials.laguerre.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Legendre Series (`numpy.polynomial.legendre`)](routines.polynomials.legendre.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Polyutils](routines.polynomials.polyutils.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Documentation for Legacy Polynomials
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Poly1d](routines.polynomials.poly1d.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Basics](routines.polynomials.poly1d.html#basics)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Fitting](routines.polynomials.poly1d.html#fitting)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Calculus](routines.polynomials.poly1d.html#calculus)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Arithmetic](routines.polynomials.poly1d.html#arithmetic)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Warnings](routines.polynomials.poly1d.html#warnings)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL

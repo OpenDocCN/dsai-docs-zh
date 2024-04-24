@@ -1,0 +1,2162 @@
+- en: NumPy distutils - users guide
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/distutils_guide.html](https://numpy.org/doc/1.26/reference/distutils_guide.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`numpy.distutils` is deprecated, and will be removed for Python >= 3.12\. For
+    more details, see [Status of numpy.distutils and migration advice](distutils_status_migration.html#distutils-status-migration)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SciPy structure
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Currently SciPy project consists of two packages:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy — it provides packages like:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.distutils - extension to Python distutils
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.f2py - a tool to bind Fortran/C codes to Python
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.core - future replacement of Numeric and numarray packages
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.lib - extra utility functions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.testing - numpy-style tools for unit testing
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: etc
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SciPy — a collection of scientific tools for Python.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The aim of this document is to describe how to add new tools to SciPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Requirements for SciPy packages
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: SciPy consists of Python packages, called SciPy packages, that are available
+    to Python users via the `scipy` namespace. Each SciPy package may contain other
+    SciPy packages. And so on. Therefore, the SciPy directory tree is a tree of packages
+    with arbitrary depth and width. Any SciPy package may depend on NumPy packages
+    but the dependence on other SciPy packages should be kept minimal or zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A SciPy package contains, in addition to its sources, the following files and
+    directories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`setup.py` — building script'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`__init__.py` — package initializer'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`tests/` — directory of unittests'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Their contents are described below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `setup.py` file
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In order to add a Python package to SciPy, its build script (`setup.py`) must
+    meet certain requirements. The most important requirement is that the package
+    define a `configuration(parent_package='',top_path=None)` function which returns
+    a dictionary suitable for passing to `numpy.distutils.core.setup(..)`. To simplify
+    the construction of this dictionary, `numpy.distutils.misc_util` provides the
+    `Configuration` class, described below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: SciPy pure Python package example
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Below is an example of a minimal `setup.py` file for a pure SciPy package:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: The arguments of the `configuration` function specify the name of parent SciPy
+    package (`parent_package`) and the directory location of the main `setup.py` script
+    (`top_path`). These arguments, along with the name of the current package, should
+    be passed to the `Configuration` constructor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `Configuration` constructor has a fourth optional argument, `package_path`,
+    that can be used when package files are located in a different location than the
+    directory of the `setup.py` file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remaining `Configuration` arguments are all keyword arguments that will be used
+    to initialize attributes of `Configuration` instance. Usually, these keywords
+    are the same as the ones that `setup(..)` function would expect, for example,
+    `packages`, `ext_modules`, `data_files`, `include_dirs`, `libraries`, `headers`,
+    `scripts`, `package_dir`, etc. However, the direct specification of these keywords
+    is not recommended as the content of these keyword arguments will not be processed
+    or checked for the consistency of SciPy building system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, `Configuration` has `.todict()` method that returns all the configuration
+    data as a dictionary suitable for passing on to the `setup(..)` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Configuration` instance attributes'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In addition to attributes that can be specified via keyword arguments to `Configuration`
+    constructor, `Configuration` instance (let us denote as `config`) has the following
+    attributes that can be useful in writing setup scripts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`config.name` - full name of the current package. The names of parent packages
+    can be extracted as `config.name.split(''.'')`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.local_path` - path to the location of current `setup.py` file.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.top_path` - path to the location of main `setup.py` file.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Configuration` instance methods'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`config.todict()` — returns configuration dictionary suitable for passing to
+    `numpy.distutils.core.setup(..)` function.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.paths(*paths) --- applies ``glob.glob(..)` to items of `paths` if necessary.
+    Fixes `paths` item that is relative to `config.local_path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_subpackage(subpackage_name,subpackage_path=None)` — returns a list
+    of subpackage configurations. Subpackage is looked in the current directory under
+    the name `subpackage_name` but the path can be specified also via optional `subpackage_path`
+    argument. If `subpackage_name` is specified as `None` then the subpackage name
+    will be taken the basename of `subpackage_path`. Any `*` used for subpackage names
+    are expanded as wildcards.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_subpackage(subpackage_name,subpackage_path=None)` — add SciPy subpackage
+    configuration to the current one. The meaning and usage of arguments is explained
+    above, see `config.get_subpackage()` method.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_data_files(*files)` — prepend `files` to `data_files` list. If
+    `files` item is a tuple then its first element defines the suffix of where data
+    files are copied relative to package installation directory and the second element
+    specifies the path to data files. By default data files are copied under package
+    installation directory. For example,'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: will install data files to the following locations
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Path to data files can be a function taking no arguments and returning path(s)
+    to data files – this is a useful when data files are generated while building
+    the package. (XXX: explain the step when this function are called exactly)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`config.add_data_dir(data_path)` — add directory `data_path` recursively to
+    `data_files`. The whole directory tree starting at `data_path` will be copied
+    under package installation directory. If `data_path` is a tuple then its first
+    element defines the suffix of where data files are copied relative to package
+    installation directory and the second element specifies the path to data directory.
+    By default, data directory are copied under package installation directory under
+    the basename of `data_path`. For example,'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: will install data files to the following locations
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`config.add_include_dirs(*paths)` — prepend `paths` to `include_dirs` list.
+    This list will be visible to all extension modules of the current package.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_headers(*files)` — prepend `files` to `headers` list. By default,
+    headers will be installed under `<prefix>/include/pythonX.X/<config.name.replace(''.'',''/'')>/`
+    directory. If `files` item is a tuple then it’s first argument specifies the installation
+    suffix relative to `<prefix>/include/pythonX.X/` path. This is a Python distutils
+    method; its use is discouraged for NumPy and SciPy in favour of `config.add_data_files(*files)`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_scripts(*files)` — prepend `files` to `scripts` list. Scripts will
+    be installed under `<prefix>/bin/` directory.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_extension(name,sources,**kw)` — create and add an `Extension` instance
+    to `ext_modules` list. The first argument `name` defines the name of the extension
+    module that will be installed under `config.name` package. The second argument
+    is a list of sources. `add_extension` method takes also keyword arguments that
+    are passed on to the `Extension` constructor. The list of allowed keywords is
+    the following: `include_dirs`, `define_macros`, `undef_macros`, `library_dirs`,
+    `libraries`, `runtime_library_dirs`, `extra_objects`, `extra_compile_args`, `extra_link_args`,
+    `export_symbols`, `swig_opts`, `depends`, `language`, `f2py_options`, `module_dirs`,
+    `extra_info`, `extra_f77_compile_args`, `extra_f90_compile_args`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that `config.paths` method is applied to all lists that may contain paths.
+    `extra_info` is a dictionary or a list of dictionaries that content will be appended
+    to keyword arguments. The list `depends` contains paths to files or directories
+    that the sources of the extension module depend on. If any path in the `depends`
+    list is newer than the extension module, then the module will be rebuilt.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The list of sources may contain functions (‘source generators’) with a pattern
+    `def <funcname>(ext, build_dir): return <source(s) or None>`. If `funcname` returns
+    `None`, no sources are generated. And if the `Extension` instance has no sources
+    after processing all source generators, no extension module will be built. This
+    is the recommended way to conditionally define extension modules. Source generator
+    functions are called by the `build_src` sub-command of `numpy.distutils`.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'For example, here is a typical source generator function:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The first argument contains the Extension instance that can be useful to access
+    its attributes like `depends`, `sources`, etc. lists and modify them during the
+    building process. The second argument gives a path to a build directory that must
+    be used when creating files to a disk.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`config.add_library(name, sources, **build_info)` — add a library to `libraries`
+    list. Allowed keywords arguments are `depends`, `macros`, `include_dirs`, `extra_compiler_args`,
+    `f2py_options`, `extra_f77_compile_args`, `extra_f90_compile_args`. See `.add_extension()`
+    method for more information on arguments.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.have_f77c()` — return True if Fortran 77 compiler is available (read:
+    a simple Fortran 77 code compiled successfully).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.have_f90c()` — return True if Fortran 90 compiler is available (read:
+    a simple Fortran 90 code compiled successfully).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_version()` — return version string of the current package, `None`
+    if version information could not be detected. This methods scans files `__version__.py`,
+    `<packagename>_version.py`, `version.py`, `__svn_version__.py` for string variables
+    `version`, `__version__`, `<packagename>_version`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.make_svn_version_py()` — appends a data function to `data_files` list
+    that will generate `__svn_version__.py` file to the current package directory.
+    The file will be removed from the source directory when Python exits.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_build_temp_dir()` — return a path to a temporary directory. This
+    is the place where one should build temporary files.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_distribution()` — return distutils `Distribution` instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_config_cmd()` — returns `numpy.distutils` config command instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_info(*names)` —'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '### Conversion of `.src` files using Templates'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy distutils supports automatic conversion of source files named <somefile>.src.
+    This facility can be used to maintain very similar code blocks requiring only
+    simple changes between blocks. During the build phase of setup, if a template
+    file named <somefile>.src is encountered, a new file named <somefile> is constructed
+    from the template and placed in the build directory to be used instead. Two forms
+    of template conversion are supported. The first form occurs for files named <file>.ext.src
+    where ext is a recognized Fortran extension (f, f90, f95, f77, for, ftn, pyf).
+    The second form is used for all other cases.  ### Fortran files'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This template converter will replicate all **function** and **subroutine**
+    blocks in the file with names that contain ‘<…>’ according to the rules in ‘<…>’.
+    The number of comma-separated words in ‘<…>’ determines the number of times the
+    block is repeated. What these words are indicates what that repeat rule, ‘<…>’,
+    should be replaced with in each block. All of the repeat rules in a block must
+    contain the same number of comma-separated words indicating the number of times
+    that block should be repeated. If the word in the repeat rule needs a comma, leftarrow,
+    or rightarrow, then prepend it with a backslash ‘ ''. If a word in the repeat
+    rule matches ‘ \<index>’ then it will be replaced with the <index>-th word in
+    the same repeat specification. There are two forms for the repeat rule: named
+    and short.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Named repeat rule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A named repeat rule is useful when the same set of repeats must be used several
+    times in a block. It is specified using <rule1=item1, item2, item3,…, itemN>,
+    where N is the number of times the block should be repeated. On each repeat of
+    the block, the entire expression, ‘<…>’ will be replaced first with item1, and
+    then with item2, and so forth until N repeats are accomplished. Once a named repeat
+    specification has been introduced, the same repeat rule may be used **in the current
+    block** by referring only to the name (i.e. <rule1>).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Short repeat rule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A short repeat rule looks like <item1, item2, item3, …, itemN>. The rule specifies
+    that the entire expression, ‘<…>’ should be replaced first with item1, and then
+    with item2, and so forth until N repeats are accomplished.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pre-defined names
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The following predefined named repeat rules are available:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <prefix=s,d,c,z>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <_c=s,d,c,z>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <_t=real, double precision, complex, double complex>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ftype=real, double precision, complex, double complex>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ctype=float, double, complex_float, complex_double>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ftypereal=float, double precision, \0, \1>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ctypereal=float, double, \0, \1>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Other files
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Non-Fortran files use a separate syntax for defining template blocks that should
+    be repeated using a variable expansion similar to the named repeat rules of the
+    Fortran-specific repeats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy Distutils preprocesses C source files (extension: `.c.src`) written in
+    a custom templating language to generate C code. The `@` symbol is used to wrap
+    macro-style variables to empower a string substitution mechanism that might describe
+    (for instance) a set of data types.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The template language blocks are delimited by `/**begin repeat` and `/**end
+    repeat**/` lines, which may also be nested using consecutively numbered delimiting
+    lines such as `/**begin repeat1` and `/**end repeat1**/`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`/**begin repeat` on a line by itself marks the beginning of a segment that
+    should be repeated.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Named variable expansions are defined using `#name=item1, item2, item3, ...,
+    itemN#` and placed on successive lines. These variables are replaced in each repeat
+    block with corresponding word. All named variables in the same repeat block must
+    define the same number of words.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In specifying the repeat rule for a named variable, `item*N` is short- hand
+    for `item, item, ..., item` repeated N times. In addition, parenthesis in combination
+    with `*N` can be used for grouping several items that should be repeated. Thus,
+    `#name=(item1, item2)*4#` is equivalent to `#name=item1, item2, item1, item2,
+    item1, item2, item1, item2#`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`*/` on a line by itself marks the end of the variable expansion naming. The
+    next line is the first line that will be repeated using the named rules.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Inside the block to be repeated, the variables that should be expanded are specified
+    as `@name@`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`/**end repeat**/` on a line by itself marks the previous line as the last
+    line of the block to be repeated.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: A loop in the NumPy C source code may have a `@TYPE@` variable, targeted for
+    string substitution, which is preprocessed to a number of otherwise identical
+    loops with several strings such as `INT`, `LONG`, `UINT`, `ULONG`. The `@TYPE@`
+    style syntax thus reduces code duplication and maintenance burden by mimicking
+    languages that have generic type support.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The above rules may be clearer in the following template source example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preprocessing of generically-typed C source files (whether in NumPy proper
+    or in any third party package using NumPy Distutils) is performed by [conv_template.py](https://github.com/numpy/numpy/blob/main/numpy/distutils/conv_template.py).
+    The type-specific C files generated (extension: `.c`) by these modules during
+    the build process are ready to be compiled. This form of generic typing is also
+    supported for C header files (preprocessed to produce `.h` files).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Useful functions in `numpy.distutils.misc_util`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_numpy_include_dirs()` — return a list of NumPy base include directories.
+    NumPy base include directories contain header files such as `numpy/arrayobject.h`,
+    `numpy/funcobject.h` etc. For installed NumPy the returned list has length 1 but
+    when building NumPy the list may contain more directories, for example, a path
+    to `config.h` file that `numpy/base/setup.py` file generates and is used by `numpy`
+    header files.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`append_path(prefix,path)` — smart append `path` to `prefix`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`gpaths(paths, local_path='''')` — apply glob to paths and prepend `local_path`
+    if needed.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`njoin(*path)` — join pathname components + convert `/`-separated path to `os.sep`-separated
+    path and resolve `..`, `.` from paths. Ex. `njoin(''a'',[''b'',''./c''],''..'',''g'')
+    -> os.path.join(''a'',''b'',''g'')`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`minrelpath(path)` — resolves dots in `path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`rel_path(path, parent_path)` — return `path` relative to `parent_path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`def get_cmd(cmdname,_cache={})` — returns `numpy.distutils` command instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`all_strings(lst)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`has_f_sources(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`has_cxx_sources(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`filter_sources(sources)` — return `c_sources, cxx_sources, f_sources, fmodule_sources`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_dependencies(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`is_local_src_dir(directory)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_ext_source_files(ext)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_script_files(scripts)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_lib_source_files(lib)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_data_files(data)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`dot_join(*args)` — join non-zero arguments with a dot.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_frame(level=0)` — return frame object from call stack with given level.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`cyg2win32(path)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`mingw32()` — return `True` when using mingw32 environment.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`terminal_has_colors()`, `red_text(s)`, `green_text(s)`, `yellow_text(s)`,
+    `blue_text(s)`, `cyan_text(s)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_path(mod_name,parent_path=None)` — return path of a module relative to
+    parent_path when given. Handles also `__main__` and `__builtin__` modules.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`allpath(name)` — replaces `/` with `os.sep` in `name`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`cxx_ext_match`, `fortran_ext_match`, `f90_ext_match`, `f90_module_name_match`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.system_info` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_info(name,notfound_action=0)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`combine_paths(*args,**kws)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`show_all()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.cpuinfo` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`cpuinfo`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.log` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`set_verbosity(v)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.exec_command` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_pythonexe()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`find_executable(exe, path=None)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`exec_command( command, execute_in='''', use_shell=None, use_tee=None, **env
+    )`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `__init__.py` file
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The header of a typical SciPy `__init__.py` is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extra features in NumPy Distutils
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Specifying config_fc options for libraries in setup.py script
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is possible to specify config_fc options in setup.py scripts. For example,
+    using
+  prefs: []
+  type: TYPE_NORMAL
+- en: config.add_library(‘library’,
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: sources=[…], config_fc={‘noopt’:(__file__,1)})
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: will compile the `library` sources without optimization flags.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s recommended to specify only those config_fc options in such a way that
+    are compiler independent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting extra Fortran 77 compiler options from source
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Some old Fortran codes need special compiler options in order to work correctly.
+    In order to specify compiler options per source file, `numpy.distutils` Fortran
+    compiler looks for the following pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: in the first 20 lines of the source and use the `f77flags` for specified type
+    of the fcompiler (the first character `C` is optional).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TODO: This feature can be easily extended for Fortran 90 codes as well. Let
+    us know if you would need such a feature.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SciPy structure
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Currently SciPy project consists of two packages:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy — it provides packages like:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.distutils - extension to Python distutils
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.f2py - a tool to bind Fortran/C codes to Python
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.core - future replacement of Numeric and numarray packages
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.lib - extra utility functions
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: numpy.testing - numpy-style tools for unit testing
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: etc
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SciPy — a collection of scientific tools for Python.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The aim of this document is to describe how to add new tools to SciPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Requirements for SciPy packages
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: SciPy consists of Python packages, called SciPy packages, that are available
+    to Python users via the `scipy` namespace. Each SciPy package may contain other
+    SciPy packages. And so on. Therefore, the SciPy directory tree is a tree of packages
+    with arbitrary depth and width. Any SciPy package may depend on NumPy packages
+    but the dependence on other SciPy packages should be kept minimal or zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A SciPy package contains, in addition to its sources, the following files and
+    directories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`setup.py` — building script'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`__init__.py` — package initializer'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`tests/` — directory of unittests'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Their contents are described below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `setup.py` file
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In order to add a Python package to SciPy, its build script (`setup.py`) must
+    meet certain requirements. The most important requirement is that the package
+    define a `configuration(parent_package='',top_path=None)` function which returns
+    a dictionary suitable for passing to `numpy.distutils.core.setup(..)`. To simplify
+    the construction of this dictionary, `numpy.distutils.misc_util` provides the
+    `Configuration` class, described below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: SciPy pure Python package example
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Below is an example of a minimal `setup.py` file for a pure SciPy package:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The arguments of the `configuration` function specify the name of parent SciPy
+    package (`parent_package`) and the directory location of the main `setup.py` script
+    (`top_path`). These arguments, along with the name of the current package, should
+    be passed to the `Configuration` constructor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `Configuration` constructor has a fourth optional argument, `package_path`,
+    that can be used when package files are located in a different location than the
+    directory of the `setup.py` file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remaining `Configuration` arguments are all keyword arguments that will be used
+    to initialize attributes of `Configuration` instance. Usually, these keywords
+    are the same as the ones that `setup(..)` function would expect, for example,
+    `packages`, `ext_modules`, `data_files`, `include_dirs`, `libraries`, `headers`,
+    `scripts`, `package_dir`, etc. However, the direct specification of these keywords
+    is not recommended as the content of these keyword arguments will not be processed
+    or checked for the consistency of SciPy building system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, `Configuration` has `.todict()` method that returns all the configuration
+    data as a dictionary suitable for passing on to the `setup(..)` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Configuration` instance attributes'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In addition to attributes that can be specified via keyword arguments to `Configuration`
+    constructor, `Configuration` instance (let us denote as `config`) has the following
+    attributes that can be useful in writing setup scripts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`config.name` - full name of the current package. The names of parent packages
+    can be extracted as `config.name.split(''.'')`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.local_path` - path to the location of current `setup.py` file.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.top_path` - path to the location of main `setup.py` file.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Configuration` instance methods'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`config.todict()` — returns configuration dictionary suitable for passing to
+    `numpy.distutils.core.setup(..)` function.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.paths(*paths) --- applies ``glob.glob(..)` to items of `paths` if necessary.
+    Fixes `paths` item that is relative to `config.local_path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_subpackage(subpackage_name,subpackage_path=None)` — returns a list
+    of subpackage configurations. Subpackage is looked in the current directory under
+    the name `subpackage_name` but the path can be specified also via optional `subpackage_path`
+    argument. If `subpackage_name` is specified as `None` then the subpackage name
+    will be taken the basename of `subpackage_path`. Any `*` used for subpackage names
+    are expanded as wildcards.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_subpackage(subpackage_name,subpackage_path=None)` — add SciPy subpackage
+    configuration to the current one. The meaning and usage of arguments is explained
+    above, see `config.get_subpackage()` method.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_data_files(*files)` — prepend `files` to `data_files` list. If
+    `files` item is a tuple then its first element defines the suffix of where data
+    files are copied relative to package installation directory and the second element
+    specifies the path to data files. By default data files are copied under package
+    installation directory. For example,'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: will install data files to the following locations
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Path to data files can be a function taking no arguments and returning path(s)
+    to data files – this is a useful when data files are generated while building
+    the package. (XXX: explain the step when this function are called exactly)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`config.add_data_dir(data_path)` — add directory `data_path` recursively to
+    `data_files`. The whole directory tree starting at `data_path` will be copied
+    under package installation directory. If `data_path` is a tuple then its first
+    element defines the suffix of where data files are copied relative to package
+    installation directory and the second element specifies the path to data directory.
+    By default, data directory are copied under package installation directory under
+    the basename of `data_path`. For example,'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: will install data files to the following locations
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`config.add_include_dirs(*paths)` — prepend `paths` to `include_dirs` list.
+    This list will be visible to all extension modules of the current package.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_headers(*files)` — prepend `files` to `headers` list. By default,
+    headers will be installed under `<prefix>/include/pythonX.X/<config.name.replace(''.'',''/'')>/`
+    directory. If `files` item is a tuple then it’s first argument specifies the installation
+    suffix relative to `<prefix>/include/pythonX.X/` path. This is a Python distutils
+    method; its use is discouraged for NumPy and SciPy in favour of `config.add_data_files(*files)`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_scripts(*files)` — prepend `files` to `scripts` list. Scripts will
+    be installed under `<prefix>/bin/` directory.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_extension(name,sources,**kw)` — create and add an `Extension` instance
+    to `ext_modules` list. The first argument `name` defines the name of the extension
+    module that will be installed under `config.name` package. The second argument
+    is a list of sources. `add_extension` method takes also keyword arguments that
+    are passed on to the `Extension` constructor. The list of allowed keywords is
+    the following: `include_dirs`, `define_macros`, `undef_macros`, `library_dirs`,
+    `libraries`, `runtime_library_dirs`, `extra_objects`, `extra_compile_args`, `extra_link_args`,
+    `export_symbols`, `swig_opts`, `depends`, `language`, `f2py_options`, `module_dirs`,
+    `extra_info`, `extra_f77_compile_args`, `extra_f90_compile_args`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that `config.paths` method is applied to all lists that may contain paths.
+    `extra_info` is a dictionary or a list of dictionaries that content will be appended
+    to keyword arguments. The list `depends` contains paths to files or directories
+    that the sources of the extension module depend on. If any path in the `depends`
+    list is newer than the extension module, then the module will be rebuilt.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The list of sources may contain functions (‘source generators’) with a pattern
+    `def <funcname>(ext, build_dir): return <source(s) or None>`. If `funcname` returns
+    `None`, no sources are generated. And if the `Extension` instance has no sources
+    after processing all source generators, no extension module will be built. This
+    is the recommended way to conditionally define extension modules. Source generator
+    functions are called by the `build_src` sub-command of `numpy.distutils`.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'For example, here is a typical source generator function:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The first argument contains the Extension instance that can be useful to access
+    its attributes like `depends`, `sources`, etc. lists and modify them during the
+    building process. The second argument gives a path to a build directory that must
+    be used when creating files to a disk.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`config.add_library(name, sources, **build_info)` — add a library to `libraries`
+    list. Allowed keywords arguments are `depends`, `macros`, `include_dirs`, `extra_compiler_args`,
+    `f2py_options`, `extra_f77_compile_args`, `extra_f90_compile_args`. See `.add_extension()`
+    method for more information on arguments.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.have_f77c()` — return True if Fortran 77 compiler is available (read:
+    a simple Fortran 77 code compiled successfully).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.have_f90c()` — return True if Fortran 90 compiler is available (read:
+    a simple Fortran 90 code compiled successfully).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_version()` — return version string of the current package, `None`
+    if version information could not be detected. This methods scans files `__version__.py`,
+    `<packagename>_version.py`, `version.py`, `__svn_version__.py` for string variables
+    `version`, `__version__`, `<packagename>_version`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.make_svn_version_py()` — appends a data function to `data_files` list
+    that will generate `__svn_version__.py` file to the current package directory.
+    The file will be removed from the source directory when Python exits.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_build_temp_dir()` — return a path to a temporary directory. This
+    is the place where one should build temporary files.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_distribution()` — return distutils `Distribution` instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_config_cmd()` — returns `numpy.distutils` config command instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_info(*names)` —'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '### Conversion of `.src` files using Templates'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy distutils supports automatic conversion of source files named <somefile>.src.
+    This facility can be used to maintain very similar code blocks requiring only
+    simple changes between blocks. During the build phase of setup, if a template
+    file named <somefile>.src is encountered, a new file named <somefile> is constructed
+    from the template and placed in the build directory to be used instead. Two forms
+    of template conversion are supported. The first form occurs for files named <file>.ext.src
+    where ext is a recognized Fortran extension (f, f90, f95, f77, for, ftn, pyf).
+    The second form is used for all other cases.  ### Fortran files'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This template converter will replicate all **function** and **subroutine**
+    blocks in the file with names that contain ‘<…>’ according to the rules in ‘<…>’.
+    The number of comma-separated words in ‘<…>’ determines the number of times the
+    block is repeated. What these words are indicates what that repeat rule, ‘<…>’,
+    should be replaced with in each block. All of the repeat rules in a block must
+    contain the same number of comma-separated words indicating the number of times
+    that block should be repeated. If the word in the repeat rule needs a comma, leftarrow,
+    or rightarrow, then prepend it with a backslash ‘ ''. If a word in the repeat
+    rule matches ‘ \<index>’ then it will be replaced with the <index>-th word in
+    the same repeat specification. There are two forms for the repeat rule: named
+    and short.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Named repeat rule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A named repeat rule is useful when the same set of repeats must be used several
+    times in a block. It is specified using <rule1=item1, item2, item3,…, itemN>,
+    where N is the number of times the block should be repeated. On each repeat of
+    the block, the entire expression, ‘<…>’ will be replaced first with item1, and
+    then with item2, and so forth until N repeats are accomplished. Once a named repeat
+    specification has been introduced, the same repeat rule may be used **in the current
+    block** by referring only to the name (i.e. <rule1>).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Short repeat rule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A short repeat rule looks like <item1, item2, item3, …, itemN>. The rule specifies
+    that the entire expression, ‘<…>’ should be replaced first with item1, and then
+    with item2, and so forth until N repeats are accomplished.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pre-defined names
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The following predefined named repeat rules are available:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <prefix=s,d,c,z>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <_c=s,d,c,z>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <_t=real, double precision, complex, double complex>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ftype=real, double precision, complex, double complex>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ctype=float, double, complex_float, complex_double>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ftypereal=float, double precision, \0, \1>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ctypereal=float, double, \0, \1>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Other files
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Non-Fortran files use a separate syntax for defining template blocks that should
+    be repeated using a variable expansion similar to the named repeat rules of the
+    Fortran-specific repeats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy Distutils preprocesses C source files (extension: `.c.src`) written in
+    a custom templating language to generate C code. The `@` symbol is used to wrap
+    macro-style variables to empower a string substitution mechanism that might describe
+    (for instance) a set of data types.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The template language blocks are delimited by `/**begin repeat` and `/**end
+    repeat**/` lines, which may also be nested using consecutively numbered delimiting
+    lines such as `/**begin repeat1` and `/**end repeat1**/`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`/**begin repeat` on a line by itself marks the beginning of a segment that
+    should be repeated.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Named variable expansions are defined using `#name=item1, item2, item3, ...,
+    itemN#` and placed on successive lines. These variables are replaced in each repeat
+    block with corresponding word. All named variables in the same repeat block must
+    define the same number of words.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In specifying the repeat rule for a named variable, `item*N` is short- hand
+    for `item, item, ..., item` repeated N times. In addition, parenthesis in combination
+    with `*N` can be used for grouping several items that should be repeated. Thus,
+    `#name=(item1, item2)*4#` is equivalent to `#name=item1, item2, item1, item2,
+    item1, item2, item1, item2#`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`*/` on a line by itself marks the end of the variable expansion naming. The
+    next line is the first line that will be repeated using the named rules.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Inside the block to be repeated, the variables that should be expanded are specified
+    as `@name@`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`/**end repeat**/` on a line by itself marks the previous line as the last
+    line of the block to be repeated.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: A loop in the NumPy C source code may have a `@TYPE@` variable, targeted for
+    string substitution, which is preprocessed to a number of otherwise identical
+    loops with several strings such as `INT`, `LONG`, `UINT`, `ULONG`. The `@TYPE@`
+    style syntax thus reduces code duplication and maintenance burden by mimicking
+    languages that have generic type support.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The above rules may be clearer in the following template source example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preprocessing of generically-typed C source files (whether in NumPy proper
+    or in any third party package using NumPy Distutils) is performed by [conv_template.py](https://github.com/numpy/numpy/blob/main/numpy/distutils/conv_template.py).
+    The type-specific C files generated (extension: `.c`) by these modules during
+    the build process are ready to be compiled. This form of generic typing is also
+    supported for C header files (preprocessed to produce `.h` files).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Useful functions in `numpy.distutils.misc_util`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_numpy_include_dirs()` — return a list of NumPy base include directories.
+    NumPy base include directories contain header files such as `numpy/arrayobject.h`,
+    `numpy/funcobject.h` etc. For installed NumPy the returned list has length 1 but
+    when building NumPy the list may contain more directories, for example, a path
+    to `config.h` file that `numpy/base/setup.py` file generates and is used by `numpy`
+    header files.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`append_path(prefix,path)` — smart append `path` to `prefix`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`gpaths(paths, local_path='''')` — apply glob to paths and prepend `local_path`
+    if needed.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`njoin(*path)` — join pathname components + convert `/`-separated path to `os.sep`-separated
+    path and resolve `..`, `.` from paths. Ex. `njoin(''a'',[''b'',''./c''],''..'',''g'')
+    -> os.path.join(''a'',''b'',''g'')`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`minrelpath(path)` — resolves dots in `path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`rel_path(path, parent_path)` — return `path` relative to `parent_path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`def get_cmd(cmdname,_cache={})` — returns `numpy.distutils` command instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`all_strings(lst)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`has_f_sources(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`has_cxx_sources(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`filter_sources(sources)` — return `c_sources, cxx_sources, f_sources, fmodule_sources`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_dependencies(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`is_local_src_dir(directory)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_ext_source_files(ext)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_script_files(scripts)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_lib_source_files(lib)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_data_files(data)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`dot_join(*args)` — join non-zero arguments with a dot.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_frame(level=0)` — return frame object from call stack with given level.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`cyg2win32(path)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`mingw32()` — return `True` when using mingw32 environment.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`terminal_has_colors()`, `red_text(s)`, `green_text(s)`, `yellow_text(s)`,
+    `blue_text(s)`, `cyan_text(s)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_path(mod_name,parent_path=None)` — return path of a module relative to
+    parent_path when given. Handles also `__main__` and `__builtin__` modules.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`allpath(name)` — replaces `/` with `os.sep` in `name`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`cxx_ext_match`, `fortran_ext_match`, `f90_ext_match`, `f90_module_name_match`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.system_info` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_info(name,notfound_action=0)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`combine_paths(*args,**kws)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`show_all()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.cpuinfo` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`cpuinfo`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.log` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`set_verbosity(v)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.exec_command` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_pythonexe()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`find_executable(exe, path=None)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`exec_command( command, execute_in='''', use_shell=None, use_tee=None, **env
+    )`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SciPy pure Python package example
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Below is an example of a minimal `setup.py` file for a pure SciPy package:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The arguments of the `configuration` function specify the name of parent SciPy
+    package (`parent_package`) and the directory location of the main `setup.py` script
+    (`top_path`). These arguments, along with the name of the current package, should
+    be passed to the `Configuration` constructor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `Configuration` constructor has a fourth optional argument, `package_path`,
+    that can be used when package files are located in a different location than the
+    directory of the `setup.py` file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remaining `Configuration` arguments are all keyword arguments that will be used
+    to initialize attributes of `Configuration` instance. Usually, these keywords
+    are the same as the ones that `setup(..)` function would expect, for example,
+    `packages`, `ext_modules`, `data_files`, `include_dirs`, `libraries`, `headers`,
+    `scripts`, `package_dir`, etc. However, the direct specification of these keywords
+    is not recommended as the content of these keyword arguments will not be processed
+    or checked for the consistency of SciPy building system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, `Configuration` has `.todict()` method that returns all the configuration
+    data as a dictionary suitable for passing on to the `setup(..)` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Configuration` instance attributes'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In addition to attributes that can be specified via keyword arguments to `Configuration`
+    constructor, `Configuration` instance (let us denote as `config`) has the following
+    attributes that can be useful in writing setup scripts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`config.name` - full name of the current package. The names of parent packages
+    can be extracted as `config.name.split(''.'')`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.local_path` - path to the location of current `setup.py` file.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.top_path` - path to the location of main `setup.py` file.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Configuration` instance methods'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`config.todict()` — returns configuration dictionary suitable for passing to
+    `numpy.distutils.core.setup(..)` function.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.paths(*paths) --- applies ``glob.glob(..)` to items of `paths` if necessary.
+    Fixes `paths` item that is relative to `config.local_path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_subpackage(subpackage_name,subpackage_path=None)` — returns a list
+    of subpackage configurations. Subpackage is looked in the current directory under
+    the name `subpackage_name` but the path can be specified also via optional `subpackage_path`
+    argument. If `subpackage_name` is specified as `None` then the subpackage name
+    will be taken the basename of `subpackage_path`. Any `*` used for subpackage names
+    are expanded as wildcards.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_subpackage(subpackage_name,subpackage_path=None)` — add SciPy subpackage
+    configuration to the current one. The meaning and usage of arguments is explained
+    above, see `config.get_subpackage()` method.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_data_files(*files)` — prepend `files` to `data_files` list. If
+    `files` item is a tuple then its first element defines the suffix of where data
+    files are copied relative to package installation directory and the second element
+    specifies the path to data files. By default data files are copied under package
+    installation directory. For example,'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: will install data files to the following locations
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Path to data files can be a function taking no arguments and returning path(s)
+    to data files – this is a useful when data files are generated while building
+    the package. (XXX: explain the step when this function are called exactly)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`config.add_data_dir(data_path)` — add directory `data_path` recursively to
+    `data_files`. The whole directory tree starting at `data_path` will be copied
+    under package installation directory. If `data_path` is a tuple then its first
+    element defines the suffix of where data files are copied relative to package
+    installation directory and the second element specifies the path to data directory.
+    By default, data directory are copied under package installation directory under
+    the basename of `data_path`. For example,'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: will install data files to the following locations
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '`config.add_include_dirs(*paths)` — prepend `paths` to `include_dirs` list.
+    This list will be visible to all extension modules of the current package.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_headers(*files)` — prepend `files` to `headers` list. By default,
+    headers will be installed under `<prefix>/include/pythonX.X/<config.name.replace(''.'',''/'')>/`
+    directory. If `files` item is a tuple then it’s first argument specifies the installation
+    suffix relative to `<prefix>/include/pythonX.X/` path. This is a Python distutils
+    method; its use is discouraged for NumPy and SciPy in favour of `config.add_data_files(*files)`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_scripts(*files)` — prepend `files` to `scripts` list. Scripts will
+    be installed under `<prefix>/bin/` directory.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.add_extension(name,sources,**kw)` — create and add an `Extension` instance
+    to `ext_modules` list. The first argument `name` defines the name of the extension
+    module that will be installed under `config.name` package. The second argument
+    is a list of sources. `add_extension` method takes also keyword arguments that
+    are passed on to the `Extension` constructor. The list of allowed keywords is
+    the following: `include_dirs`, `define_macros`, `undef_macros`, `library_dirs`,
+    `libraries`, `runtime_library_dirs`, `extra_objects`, `extra_compile_args`, `extra_link_args`,
+    `export_symbols`, `swig_opts`, `depends`, `language`, `f2py_options`, `module_dirs`,
+    `extra_info`, `extra_f77_compile_args`, `extra_f90_compile_args`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that `config.paths` method is applied to all lists that may contain paths.
+    `extra_info` is a dictionary or a list of dictionaries that content will be appended
+    to keyword arguments. The list `depends` contains paths to files or directories
+    that the sources of the extension module depend on. If any path in the `depends`
+    list is newer than the extension module, then the module will be rebuilt.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The list of sources may contain functions (‘source generators’) with a pattern
+    `def <funcname>(ext, build_dir): return <source(s) or None>`. If `funcname` returns
+    `None`, no sources are generated. And if the `Extension` instance has no sources
+    after processing all source generators, no extension module will be built. This
+    is the recommended way to conditionally define extension modules. Source generator
+    functions are called by the `build_src` sub-command of `numpy.distutils`.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'For example, here is a typical source generator function:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The first argument contains the Extension instance that can be useful to access
+    its attributes like `depends`, `sources`, etc. lists and modify them during the
+    building process. The second argument gives a path to a build directory that must
+    be used when creating files to a disk.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`config.add_library(name, sources, **build_info)` — add a library to `libraries`
+    list. Allowed keywords arguments are `depends`, `macros`, `include_dirs`, `extra_compiler_args`,
+    `f2py_options`, `extra_f77_compile_args`, `extra_f90_compile_args`. See `.add_extension()`
+    method for more information on arguments.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.have_f77c()` — return True if Fortran 77 compiler is available (read:
+    a simple Fortran 77 code compiled successfully).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.have_f90c()` — return True if Fortran 90 compiler is available (read:
+    a simple Fortran 90 code compiled successfully).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_version()` — return version string of the current package, `None`
+    if version information could not be detected. This methods scans files `__version__.py`,
+    `<packagename>_version.py`, `version.py`, `__svn_version__.py` for string variables
+    `version`, `__version__`, `<packagename>_version`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.make_svn_version_py()` — appends a data function to `data_files` list
+    that will generate `__svn_version__.py` file to the current package directory.
+    The file will be removed from the source directory when Python exits.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_build_temp_dir()` — return a path to a temporary directory. This
+    is the place where one should build temporary files.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_distribution()` — return distutils `Distribution` instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_config_cmd()` — returns `numpy.distutils` config command instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`config.get_info(*names)` —'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '### Conversion of `.src` files using Templates'
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy distutils supports automatic conversion of source files named <somefile>.src.
+    This facility can be used to maintain very similar code blocks requiring only
+    simple changes between blocks. During the build phase of setup, if a template
+    file named <somefile>.src is encountered, a new file named <somefile> is constructed
+    from the template and placed in the build directory to be used instead. Two forms
+    of template conversion are supported. The first form occurs for files named <file>.ext.src
+    where ext is a recognized Fortran extension (f, f90, f95, f77, for, ftn, pyf).
+    The second form is used for all other cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Fortran files'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This template converter will replicate all **function** and **subroutine**
+    blocks in the file with names that contain ‘<…>’ according to the rules in ‘<…>’.
+    The number of comma-separated words in ‘<…>’ determines the number of times the
+    block is repeated. What these words are indicates what that repeat rule, ‘<…>’,
+    should be replaced with in each block. All of the repeat rules in a block must
+    contain the same number of comma-separated words indicating the number of times
+    that block should be repeated. If the word in the repeat rule needs a comma, leftarrow,
+    or rightarrow, then prepend it with a backslash ‘ ''. If a word in the repeat
+    rule matches ‘ \<index>’ then it will be replaced with the <index>-th word in
+    the same repeat specification. There are two forms for the repeat rule: named
+    and short.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Named repeat rule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A named repeat rule is useful when the same set of repeats must be used several
+    times in a block. It is specified using <rule1=item1, item2, item3,…, itemN>,
+    where N is the number of times the block should be repeated. On each repeat of
+    the block, the entire expression, ‘<…>’ will be replaced first with item1, and
+    then with item2, and so forth until N repeats are accomplished. Once a named repeat
+    specification has been introduced, the same repeat rule may be used **in the current
+    block** by referring only to the name (i.e. <rule1>).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Short repeat rule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A short repeat rule looks like <item1, item2, item3, …, itemN>. The rule specifies
+    that the entire expression, ‘<…>’ should be replaced first with item1, and then
+    with item2, and so forth until N repeats are accomplished.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pre-defined names
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The following predefined named repeat rules are available:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <prefix=s,d,c,z>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <_c=s,d,c,z>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <_t=real, double precision, complex, double complex>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ftype=real, double precision, complex, double complex>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ctype=float, double, complex_float, complex_double>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ftypereal=float, double precision, \0, \1>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ctypereal=float, double, \0, \1>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Named repeat rule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A named repeat rule is useful when the same set of repeats must be used several
+    times in a block. It is specified using <rule1=item1, item2, item3,…, itemN>,
+    where N is the number of times the block should be repeated. On each repeat of
+    the block, the entire expression, ‘<…>’ will be replaced first with item1, and
+    then with item2, and so forth until N repeats are accomplished. Once a named repeat
+    specification has been introduced, the same repeat rule may be used **in the current
+    block** by referring only to the name (i.e. <rule1>).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Short repeat rule
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A short repeat rule looks like <item1, item2, item3, …, itemN>. The rule specifies
+    that the entire expression, ‘<…>’ should be replaced first with item1, and then
+    with item2, and so forth until N repeats are accomplished.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pre-defined names
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The following predefined named repeat rules are available:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <prefix=s,d,c,z>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <_c=s,d,c,z>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <_t=real, double precision, complex, double complex>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ftype=real, double precision, complex, double complex>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ctype=float, double, complex_float, complex_double>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ftypereal=float, double precision, \0, \1>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: <ctypereal=float, double, \0, \1>
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Other files
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Non-Fortran files use a separate syntax for defining template blocks that should
+    be repeated using a variable expansion similar to the named repeat rules of the
+    Fortran-specific repeats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy Distutils preprocesses C source files (extension: `.c.src`) written in
+    a custom templating language to generate C code. The `@` symbol is used to wrap
+    macro-style variables to empower a string substitution mechanism that might describe
+    (for instance) a set of data types.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The template language blocks are delimited by `/**begin repeat` and `/**end
+    repeat**/` lines, which may also be nested using consecutively numbered delimiting
+    lines such as `/**begin repeat1` and `/**end repeat1**/`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`/**begin repeat` on a line by itself marks the beginning of a segment that
+    should be repeated.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Named variable expansions are defined using `#name=item1, item2, item3, ...,
+    itemN#` and placed on successive lines. These variables are replaced in each repeat
+    block with corresponding word. All named variables in the same repeat block must
+    define the same number of words.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In specifying the repeat rule for a named variable, `item*N` is short- hand
+    for `item, item, ..., item` repeated N times. In addition, parenthesis in combination
+    with `*N` can be used for grouping several items that should be repeated. Thus,
+    `#name=(item1, item2)*4#` is equivalent to `#name=item1, item2, item1, item2,
+    item1, item2, item1, item2#`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`*/` on a line by itself marks the end of the variable expansion naming. The
+    next line is the first line that will be repeated using the named rules.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Inside the block to be repeated, the variables that should be expanded are specified
+    as `@name@`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`/**end repeat**/` on a line by itself marks the previous line as the last
+    line of the block to be repeated.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: A loop in the NumPy C source code may have a `@TYPE@` variable, targeted for
+    string substitution, which is preprocessed to a number of otherwise identical
+    loops with several strings such as `INT`, `LONG`, `UINT`, `ULONG`. The `@TYPE@`
+    style syntax thus reduces code duplication and maintenance burden by mimicking
+    languages that have generic type support.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The above rules may be clearer in the following template source example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preprocessing of generically-typed C source files (whether in NumPy proper
+    or in any third party package using NumPy Distutils) is performed by [conv_template.py](https://github.com/numpy/numpy/blob/main/numpy/distutils/conv_template.py).
+    The type-specific C files generated (extension: `.c`) by these modules during
+    the build process are ready to be compiled. This form of generic typing is also
+    supported for C header files (preprocessed to produce `.h` files).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Useful functions in `numpy.distutils.misc_util`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_numpy_include_dirs()` — return a list of NumPy base include directories.
+    NumPy base include directories contain header files such as `numpy/arrayobject.h`,
+    `numpy/funcobject.h` etc. For installed NumPy the returned list has length 1 but
+    when building NumPy the list may contain more directories, for example, a path
+    to `config.h` file that `numpy/base/setup.py` file generates and is used by `numpy`
+    header files.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`append_path(prefix,path)` — smart append `path` to `prefix`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`gpaths(paths, local_path='''')` — apply glob to paths and prepend `local_path`
+    if needed.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`njoin(*path)` — join pathname components + convert `/`-separated path to `os.sep`-separated
+    path and resolve `..`, `.` from paths. Ex. `njoin(''a'',[''b'',''./c''],''..'',''g'')
+    -> os.path.join(''a'',''b'',''g'')`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`minrelpath(path)` — resolves dots in `path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`rel_path(path, parent_path)` — return `path` relative to `parent_path`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`def get_cmd(cmdname,_cache={})` — returns `numpy.distutils` command instance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`all_strings(lst)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`has_f_sources(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`has_cxx_sources(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`filter_sources(sources)` — return `c_sources, cxx_sources, f_sources, fmodule_sources`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_dependencies(sources)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`is_local_src_dir(directory)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_ext_source_files(ext)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_script_files(scripts)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_lib_source_files(lib)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_data_files(data)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`dot_join(*args)` — join non-zero arguments with a dot.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_frame(level=0)` — return frame object from call stack with given level.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`cyg2win32(path)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`mingw32()` — return `True` when using mingw32 environment.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`terminal_has_colors()`, `red_text(s)`, `green_text(s)`, `yellow_text(s)`,
+    `blue_text(s)`, `cyan_text(s)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`get_path(mod_name,parent_path=None)` — return path of a module relative to
+    parent_path when given. Handles also `__main__` and `__builtin__` modules.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`allpath(name)` — replaces `/` with `os.sep` in `name`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`cxx_ext_match`, `fortran_ext_match`, `f90_ext_match`, `f90_module_name_match`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.system_info` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_info(name,notfound_action=0)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`combine_paths(*args,**kws)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`show_all()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.cpuinfo` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`cpuinfo`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.log` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`set_verbosity(v)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.distutils.exec_command` module'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`get_pythonexe()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`find_executable(exe, path=None)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`exec_command( command, execute_in='''', use_shell=None, use_tee=None, **env
+    )`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `__init__.py` file
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The header of a typical SciPy `__init__.py` is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extra features in NumPy Distutils
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Specifying config_fc options for libraries in setup.py script
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is possible to specify config_fc options in setup.py scripts. For example,
+    using
+  prefs: []
+  type: TYPE_NORMAL
+- en: config.add_library(‘library’,
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: sources=[…], config_fc={‘noopt’:(__file__,1)})
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: will compile the `library` sources without optimization flags.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s recommended to specify only those config_fc options in such a way that
+    are compiler independent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting extra Fortran 77 compiler options from source
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Some old Fortran codes need special compiler options in order to work correctly.
+    In order to specify compiler options per source file, `numpy.distutils` Fortran
+    compiler looks for the following pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: in the first 20 lines of the source and use the `f77flags` for specified type
+    of the fcompiler (the first character `C` is optional).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TODO: This feature can be easily extended for Fortran 90 codes as well. Let
+    us know if you would need such a feature.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specifying config_fc options for libraries in setup.py script
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is possible to specify config_fc options in setup.py scripts. For example,
+    using
+  prefs: []
+  type: TYPE_NORMAL
+- en: config.add_library(‘library’,
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: sources=[…], config_fc={‘noopt’:(__file__,1)})
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: will compile the `library` sources without optimization flags.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s recommended to specify only those config_fc options in such a way that
+    are compiler independent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting extra Fortran 77 compiler options from source
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Some old Fortran codes need special compiler options in order to work correctly.
+    In order to specify compiler options per source file, `numpy.distutils` Fortran
+    compiler looks for the following pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: in the first 20 lines of the source and use the `f77flags` for specified type
+    of the fcompiler (the first character `C` is optional).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TODO: This feature can be easily extended for Fortran 90 codes as well. Let
+    us know if you would need such a feature.'
+  prefs: []
+  type: TYPE_NORMAL

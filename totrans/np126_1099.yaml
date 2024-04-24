@@ -1,0 +1,1243 @@
+- en: NumPy 1.26.0 Release Notes
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/release/1.26.0-notes.html](https://numpy.org/doc/1.26/release/1.26.0-notes.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The NumPy 1.26.0 release is a continuation of the 1.25.x release cycle with
+    the addition of Python 3.12.0 support. Python 3.12 dropped distutils, consequently
+    supporting it required finding a replacement for the setup.py/distutils based
+    build system NumPy was using. We have chosen to use the Meson build system instead,
+    and this is the first NumPy release supporting it. This is also the first release
+    that supports Cython 3.0 in addition to retaining 0.29.X compatibility. Supporting
+    those two upgrades was a large project, over 100 files have been touched in this
+    release. The changelog doesn’t capture the full extent of the work, special thanks
+    to Ralf Gommers, Sayed Adel, Stéfan van der Walt, and Matti Picus who did much
+    of the work in the main development branch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The highlights of this release are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python 3.12.0 support.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cython 3.0.0 compatibility.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use of the Meson build system
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Updated SIMD support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: f2py fixes, meson and bind(x) support
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for the updated Accelerate BLAS/LAPACK library
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The Python versions supported in this release are 3.9-3.12.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New Features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Array API v2022.12 support in `numpy.array_api`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`numpy.array_api` now full supports the [v2022.12 version](https://data-apis.org/array-api/2022.12)
+    of the array API standard. Note that this does not yet include the optional `fft`
+    extension in the standard.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-23789](https://github.com/numpy/numpy/pull/23789))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support for the updated Accelerate BLAS/LAPACK library
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Support for the updated Accelerate BLAS/LAPACK library, including ILP64 (64-bit
+    integer) support, in macOS 13.3 has been added. This brings arm64 support, and
+    significant performance improvements of up to 10x for commonly used linear algebra
+    operations. When Accelerate is selected at build time, the 13.3+ version will
+    automatically be used if available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24053](https://github.com/numpy/numpy/pull/24053))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`meson` backend for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`f2py` in compile mode (i.e. `f2py -c`) now accepts the `--backend meson` option.
+    This is the default option for Python `3.12` on-wards. Older versions will still
+    default to `--backend distutils`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To support this in realistic use-cases, in compile mode `f2py` takes a `--dep`
+    flag one or many times which maps to `dependency()` calls in the `meson` backend,
+    and does nothing in the `distutils` backend.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are no changes for users of `f2py` only as a code generator, i.e. without
+    `-c`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24532](https://github.com/numpy/numpy/pull/24532))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`bind(c)` support for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Both functions and subroutines can be annotated with `bind(c)`. `f2py` will
+    handle both the correct type mapping, and preserve the unique label for other
+    `C` interfaces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Note:** `bind(c, name = ''routine_name_other_than_fortran_routine'')` is
+    not honored by the `f2py` bindings by design, since `bind(c)` with the `name`
+    is meant to guarantee only the same name in `C` and `Fortran`, not in `Python`
+    and `Fortran`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24555](https://github.com/numpy/numpy/pull/24555))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Improvements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`iso_c_binding` support for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Previously, users would have to define their own custom `f2cmap` file to use
+    type mappings defined by the Fortran2003 `iso_c_binding` intrinsic module. These
+    type maps are now natively supported by `f2py`
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24555](https://github.com/numpy/numpy/pull/24555))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build system changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this release, NumPy has switched to Meson as the build system and meson-python
+    as the build backend. Installing NumPy or building a wheel can be done with standard
+    tools like `pip` and `pypa/build`. The following are supported:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regular installs: `pip install numpy` or (in a cloned repo) `pip install .`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Building a wheel: `python -m build` (preferred), or `pip wheel .`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Editable installs: `pip install -e . --no-build-isolation`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Development builds through the custom CLI implemented with [spin](https://github.com/scientific-python/spin):
+    `spin build`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All the regular `pip` and `pypa/build` flags (e.g., `--no-build-isolation`)
+    should work as expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy-specific build customization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Many of the NumPy-specific ways of customizing builds have changed. The `NPY_*`
+    environment variables which control BLAS/LAPACK, SIMD, threading, and other such
+    options are no longer supported, nor is a `site.cfg` file to select BLAS and LAPACK.
+    Instead, there are command-line flags that can be passed to the build via `pip`/`build`’s
+    config-settings interface. These flags are all listed in the `meson_options.txt`
+    file in the root of the repo. Detailed documented will be available before the
+    final 1.26.0 release; for now please see [the SciPy “building from source” docs](http://scipy.github.io/devdocs/building/index.html)
+    since most build customization works in an almost identical way in SciPy as it
+    does in NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build dependencies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: While the runtime dependencies of NumPy have not changed, the build dependencies
+    have. Because we temporarily vendor Meson and meson-python, there are several
+    new dependencies - please see the `[build-system]` section of `pyproject.toml`
+    for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Troubleshooting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This build system change is quite large. In case of unexpected issues, it is
+    still possible to use a `setup.py`-based build as a temporary workaround (on Python
+    3.9-3.11, not 3.12), by copying `pyproject.toml.setuppy` to `pyproject.toml`.
+    However, please open an issue with details on the NumPy issue tracker. We aim
+    to phase out `setup.py` builds as soon as possible, and therefore would like to
+    see all potential blockers surfaced early on in the 1.26.0 release cycle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Contributors
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A total of 20 people contributed to this release. People with a “+” by their
+    names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '@DWesl'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Albert Steppi +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bas van Beek
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Charles Harris
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Developer-Ecosystem-Engineering
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Filipe Laíns +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jake Vanderplas
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Liang Yan +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marten van Kerkwijk
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matti Picus
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Melissa Weber Mendonça
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Namami Shanker
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nathan Goldbaum
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ralf Gommers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rohit Goswami
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sayed Adel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sebastian Berg
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stefan van der Walt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tyler Reddy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warren Weckesser
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pull requests merged
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A total of 59 pull requests were merged for this release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[#24305](https://github.com/numpy/numpy/pull/24305): MAINT: Prepare 1.26.x
+    branch for development'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24308](https://github.com/numpy/numpy/pull/24308): MAINT: Massive update
+    of files from main for numpy 1.26'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24322](https://github.com/numpy/numpy/pull/24322): CI: fix wheel builds on
+    the 1.26.x branch'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24326](https://github.com/numpy/numpy/pull/24326): BLD: update openblas to
+    newer version'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24327](https://github.com/numpy/numpy/pull/24327): TYP: Trim down the `_NestedSequence.__getitem__`
+    signature'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24328](https://github.com/numpy/numpy/pull/24328): BUG: fix choose refcount
+    leak'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24337](https://github.com/numpy/numpy/pull/24337): TST: fix running the test
+    suite in builds without BLAS/LAPACK'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24338](https://github.com/numpy/numpy/pull/24338): BUG: random: Fix generation
+    of nan by dirichlet.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24340](https://github.com/numpy/numpy/pull/24340): MAINT: Dependabot updates
+    from main'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24342](https://github.com/numpy/numpy/pull/24342): MAINT: Add back NPY_RUN_MYPY_IN_TESTSUITE=1'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24353](https://github.com/numpy/numpy/pull/24353): MAINT: Update `extbuild.py`
+    from main.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24356](https://github.com/numpy/numpy/pull/24356): TST: fix distutils tests
+    for deprecations in recent setuptools…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24375](https://github.com/numpy/numpy/pull/24375): MAINT: Update cibuildwheel
+    to version 2.15.0'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24381](https://github.com/numpy/numpy/pull/24381): MAINT: Fix codespaces
+    setup.sh script'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24403](https://github.com/numpy/numpy/pull/24403): ENH: Vendor meson for
+    multi-target build support'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24404](https://github.com/numpy/numpy/pull/24404): BLD: vendor meson-python
+    to make the Windows builds with SIMD…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24405](https://github.com/numpy/numpy/pull/24405): BLD, SIMD: The meson CPU
+    dispatcher implementation'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24406](https://github.com/numpy/numpy/pull/24406): MAINT: Remove versioneer'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24409](https://github.com/numpy/numpy/pull/24409): REL: Prepare for the NumPy
+    1.26.0b1 release.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24453](https://github.com/numpy/numpy/pull/24453): MAINT: Pin upper version
+    of sphinx.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24455](https://github.com/numpy/numpy/pull/24455): ENH: Add prefix to _ALIGN
+    Macro'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24456](https://github.com/numpy/numpy/pull/24456): BUG: cleanup warnings
+    [skip azp][skip circle][skip travis][skip…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24460](https://github.com/numpy/numpy/pull/24460): MAINT: Upgrade to spin
+    0.5'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24495](https://github.com/numpy/numpy/pull/24495): BUG: `asv dev` has been
+    removed, use `asv run`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24496](https://github.com/numpy/numpy/pull/24496): BUG: Fix meson build failure
+    due to unchanged inplace auto-generated…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24521](https://github.com/numpy/numpy/pull/24521): BUG: fix issue with git-version
+    script, needs a shebang to run'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24522](https://github.com/numpy/numpy/pull/24522): BUG: Use a default assignment
+    for git_hash [skip ci]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24524](https://github.com/numpy/numpy/pull/24524): BUG: fix NPY_cast_info
+    error handling in choose'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24526](https://github.com/numpy/numpy/pull/24526): BUG: Fix common block
+    handling in f2py'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24541](https://github.com/numpy/numpy/pull/24541): CI,TYP: Bump mypy to 1.4.1'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24542](https://github.com/numpy/numpy/pull/24542): BUG: Fix assumed length
+    f2py regression'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24544](https://github.com/numpy/numpy/pull/24544): MAINT: Harmonize fortranobject'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24545](https://github.com/numpy/numpy/pull/24545): TYP: add kind argument
+    to numpy.isin type specification'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24561](https://github.com/numpy/numpy/pull/24561): BUG: fix comparisons between
+    masked and unmasked structured arrays'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24590](https://github.com/numpy/numpy/pull/24590): CI: Exclude import libraries
+    from list of DLLs on Cygwin.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24591](https://github.com/numpy/numpy/pull/24591): BLD: fix `_umath_linalg`
+    dependencies'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24594](https://github.com/numpy/numpy/pull/24594): MAINT: Stop testing on
+    ppc64le.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24602](https://github.com/numpy/numpy/pull/24602): BLD: meson-cpu: fix SIMD
+    support on platforms with no features'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24606](https://github.com/numpy/numpy/pull/24606): BUG: Change Cython `binding`
+    directive to “False”.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24613](https://github.com/numpy/numpy/pull/24613): ENH: Adopt new macOS Accelerate
+    BLAS/LAPACK Interfaces, including…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24614](https://github.com/numpy/numpy/pull/24614): DOC: Update building docs
+    to use Meson'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24615](https://github.com/numpy/numpy/pull/24615): TYP: Add the missing `casting`
+    keyword to `np.clip`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24616](https://github.com/numpy/numpy/pull/24616): TST: convert cython test
+    from setup.py to meson'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24617](https://github.com/numpy/numpy/pull/24617): MAINT: Fixup `fromnumeric.pyi`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24622](https://github.com/numpy/numpy/pull/24622): BUG, ENH: Fix `iso_c_binding`
+    type maps and fix `bind(c)`…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24629](https://github.com/numpy/numpy/pull/24629): TYP: Allow `binary_repr`
+    to accept any object implementing…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24630](https://github.com/numpy/numpy/pull/24630): TYP: Explicitly declare
+    `dtype` and `generic` hashable'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24637](https://github.com/numpy/numpy/pull/24637): ENH: Refactor the typing
+    “reveal” tests using [`typing.assert_type`](https://docs.python.org/3/library/typing.html#typing.assert_type
+    "(in Python v3.11)")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24638](https://github.com/numpy/numpy/pull/24638): MAINT: Bump actions/checkout
+    from 3.6.0 to 4.0.0'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24647](https://github.com/numpy/numpy/pull/24647): ENH: `meson` backend for
+    `f2py`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24648](https://github.com/numpy/numpy/pull/24648): MAINT: Refactor partial
+    load Workaround for Clang'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24653](https://github.com/numpy/numpy/pull/24653): REL: Prepare for the NumPy
+    1.26.0rc1 release.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24659](https://github.com/numpy/numpy/pull/24659): BLD: allow specifying
+    the long double format to avoid the runtime…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24665](https://github.com/numpy/numpy/pull/24665): BLD: fix bug in random.mtrand
+    extension, don’t link libnpyrandom'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24675](https://github.com/numpy/numpy/pull/24675): BLD: build wheels for
+    32-bit Python on Windows, using MSVC'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24700](https://github.com/numpy/numpy/pull/24700): BLD: fix issue with compiler
+    selection during cross compilation'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24701](https://github.com/numpy/numpy/pull/24701): BUG: Fix data stmt handling
+    for complex values in f2py'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24707](https://github.com/numpy/numpy/pull/24707): TYP: Add annotations for
+    the py3.12 buffer protocol'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24718](https://github.com/numpy/numpy/pull/24718): DOC: fix a few doc build
+    issues on 1.26.x and update *spin docs*…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New Features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Array API v2022.12 support in `numpy.array_api`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`numpy.array_api` now full supports the [v2022.12 version](https://data-apis.org/array-api/2022.12)
+    of the array API standard. Note that this does not yet include the optional `fft`
+    extension in the standard.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-23789](https://github.com/numpy/numpy/pull/23789))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support for the updated Accelerate BLAS/LAPACK library
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Support for the updated Accelerate BLAS/LAPACK library, including ILP64 (64-bit
+    integer) support, in macOS 13.3 has been added. This brings arm64 support, and
+    significant performance improvements of up to 10x for commonly used linear algebra
+    operations. When Accelerate is selected at build time, the 13.3+ version will
+    automatically be used if available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24053](https://github.com/numpy/numpy/pull/24053))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`meson` backend for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`f2py` in compile mode (i.e. `f2py -c`) now accepts the `--backend meson` option.
+    This is the default option for Python `3.12` on-wards. Older versions will still
+    default to `--backend distutils`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To support this in realistic use-cases, in compile mode `f2py` takes a `--dep`
+    flag one or many times which maps to `dependency()` calls in the `meson` backend,
+    and does nothing in the `distutils` backend.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are no changes for users of `f2py` only as a code generator, i.e. without
+    `-c`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24532](https://github.com/numpy/numpy/pull/24532))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`bind(c)` support for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Both functions and subroutines can be annotated with `bind(c)`. `f2py` will
+    handle both the correct type mapping, and preserve the unique label for other
+    `C` interfaces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Note:** `bind(c, name = ''routine_name_other_than_fortran_routine'')` is
+    not honored by the `f2py` bindings by design, since `bind(c)` with the `name`
+    is meant to guarantee only the same name in `C` and `Fortran`, not in `Python`
+    and `Fortran`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24555](https://github.com/numpy/numpy/pull/24555))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Array API v2022.12 support in `numpy.array_api`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`numpy.array_api` now full supports the [v2022.12 version](https://data-apis.org/array-api/2022.12)
+    of the array API standard. Note that this does not yet include the optional `fft`
+    extension in the standard.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-23789](https://github.com/numpy/numpy/pull/23789))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support for the updated Accelerate BLAS/LAPACK library
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Support for the updated Accelerate BLAS/LAPACK library, including ILP64 (64-bit
+    integer) support, in macOS 13.3 has been added. This brings arm64 support, and
+    significant performance improvements of up to 10x for commonly used linear algebra
+    operations. When Accelerate is selected at build time, the 13.3+ version will
+    automatically be used if available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24053](https://github.com/numpy/numpy/pull/24053))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`meson` backend for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`f2py` in compile mode (i.e. `f2py -c`) now accepts the `--backend meson` option.
+    This is the default option for Python `3.12` on-wards. Older versions will still
+    default to `--backend distutils`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To support this in realistic use-cases, in compile mode `f2py` takes a `--dep`
+    flag one or many times which maps to `dependency()` calls in the `meson` backend,
+    and does nothing in the `distutils` backend.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are no changes for users of `f2py` only as a code generator, i.e. without
+    `-c`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24532](https://github.com/numpy/numpy/pull/24532))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`bind(c)` support for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Both functions and subroutines can be annotated with `bind(c)`. `f2py` will
+    handle both the correct type mapping, and preserve the unique label for other
+    `C` interfaces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Note:** `bind(c, name = ''routine_name_other_than_fortran_routine'')` is
+    not honored by the `f2py` bindings by design, since `bind(c)` with the `name`
+    is meant to guarantee only the same name in `C` and `Fortran`, not in `Python`
+    and `Fortran`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24555](https://github.com/numpy/numpy/pull/24555))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Improvements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`iso_c_binding` support for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Previously, users would have to define their own custom `f2cmap` file to use
+    type mappings defined by the Fortran2003 `iso_c_binding` intrinsic module. These
+    type maps are now natively supported by `f2py`
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24555](https://github.com/numpy/numpy/pull/24555))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`iso_c_binding` support for `f2py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Previously, users would have to define their own custom `f2cmap` file to use
+    type mappings defined by the Fortran2003 `iso_c_binding` intrinsic module. These
+    type maps are now natively supported by `f2py`
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-24555](https://github.com/numpy/numpy/pull/24555))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build system changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this release, NumPy has switched to Meson as the build system and meson-python
+    as the build backend. Installing NumPy or building a wheel can be done with standard
+    tools like `pip` and `pypa/build`. The following are supported:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regular installs: `pip install numpy` or (in a cloned repo) `pip install .`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Building a wheel: `python -m build` (preferred), or `pip wheel .`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Editable installs: `pip install -e . --no-build-isolation`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Development builds through the custom CLI implemented with [spin](https://github.com/scientific-python/spin):
+    `spin build`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All the regular `pip` and `pypa/build` flags (e.g., `--no-build-isolation`)
+    should work as expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy-specific build customization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Many of the NumPy-specific ways of customizing builds have changed. The `NPY_*`
+    environment variables which control BLAS/LAPACK, SIMD, threading, and other such
+    options are no longer supported, nor is a `site.cfg` file to select BLAS and LAPACK.
+    Instead, there are command-line flags that can be passed to the build via `pip`/`build`’s
+    config-settings interface. These flags are all listed in the `meson_options.txt`
+    file in the root of the repo. Detailed documented will be available before the
+    final 1.26.0 release; for now please see [the SciPy “building from source” docs](http://scipy.github.io/devdocs/building/index.html)
+    since most build customization works in an almost identical way in SciPy as it
+    does in NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build dependencies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: While the runtime dependencies of NumPy have not changed, the build dependencies
+    have. Because we temporarily vendor Meson and meson-python, there are several
+    new dependencies - please see the `[build-system]` section of `pyproject.toml`
+    for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Troubleshooting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This build system change is quite large. In case of unexpected issues, it is
+    still possible to use a `setup.py`-based build as a temporary workaround (on Python
+    3.9-3.11, not 3.12), by copying `pyproject.toml.setuppy` to `pyproject.toml`.
+    However, please open an issue with details on the NumPy issue tracker. We aim
+    to phase out `setup.py` builds as soon as possible, and therefore would like to
+    see all potential blockers surfaced early on in the 1.26.0 release cycle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy-specific build customization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Many of the NumPy-specific ways of customizing builds have changed. The `NPY_*`
+    environment variables which control BLAS/LAPACK, SIMD, threading, and other such
+    options are no longer supported, nor is a `site.cfg` file to select BLAS and LAPACK.
+    Instead, there are command-line flags that can be passed to the build via `pip`/`build`’s
+    config-settings interface. These flags are all listed in the `meson_options.txt`
+    file in the root of the repo. Detailed documented will be available before the
+    final 1.26.0 release; for now please see [the SciPy “building from source” docs](http://scipy.github.io/devdocs/building/index.html)
+    since most build customization works in an almost identical way in SciPy as it
+    does in NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build dependencies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: While the runtime dependencies of NumPy have not changed, the build dependencies
+    have. Because we temporarily vendor Meson and meson-python, there are several
+    new dependencies - please see the `[build-system]` section of `pyproject.toml`
+    for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Troubleshooting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This build system change is quite large. In case of unexpected issues, it is
+    still possible to use a `setup.py`-based build as a temporary workaround (on Python
+    3.9-3.11, not 3.12), by copying `pyproject.toml.setuppy` to `pyproject.toml`.
+    However, please open an issue with details on the NumPy issue tracker. We aim
+    to phase out `setup.py` builds as soon as possible, and therefore would like to
+    see all potential blockers surfaced early on in the 1.26.0 release cycle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Contributors
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A total of 20 people contributed to this release. People with a “+” by their
+    names contributed a patch for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '@DWesl'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Albert Steppi +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bas van Beek
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Charles Harris
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Developer-Ecosystem-Engineering
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Filipe Laíns +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jake Vanderplas
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Liang Yan +
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marten van Kerkwijk
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matti Picus
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Melissa Weber Mendonça
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Namami Shanker
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nathan Goldbaum
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ralf Gommers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rohit Goswami
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sayed Adel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sebastian Berg
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stefan van der Walt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tyler Reddy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warren Weckesser
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pull requests merged
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A total of 59 pull requests were merged for this release.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[#24305](https://github.com/numpy/numpy/pull/24305): MAINT: Prepare 1.26.x
+    branch for development'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24308](https://github.com/numpy/numpy/pull/24308): MAINT: Massive update
+    of files from main for numpy 1.26'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24322](https://github.com/numpy/numpy/pull/24322): CI: fix wheel builds on
+    the 1.26.x branch'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24326](https://github.com/numpy/numpy/pull/24326): BLD: update openblas to
+    newer version'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24327](https://github.com/numpy/numpy/pull/24327): TYP: Trim down the `_NestedSequence.__getitem__`
+    signature'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24328](https://github.com/numpy/numpy/pull/24328): BUG: fix choose refcount
+    leak'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24337](https://github.com/numpy/numpy/pull/24337): TST: fix running the test
+    suite in builds without BLAS/LAPACK'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24338](https://github.com/numpy/numpy/pull/24338): BUG: random: Fix generation
+    of nan by dirichlet.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24340](https://github.com/numpy/numpy/pull/24340): MAINT: Dependabot updates
+    from main'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24342](https://github.com/numpy/numpy/pull/24342): MAINT: Add back NPY_RUN_MYPY_IN_TESTSUITE=1'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24353](https://github.com/numpy/numpy/pull/24353): MAINT: Update `extbuild.py`
+    from main.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24356](https://github.com/numpy/numpy/pull/24356): TST: fix distutils tests
+    for deprecations in recent setuptools…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24375](https://github.com/numpy/numpy/pull/24375): MAINT: Update cibuildwheel
+    to version 2.15.0'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24381](https://github.com/numpy/numpy/pull/24381): MAINT: Fix codespaces
+    setup.sh script'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24403](https://github.com/numpy/numpy/pull/24403): ENH: Vendor meson for
+    multi-target build support'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24404](https://github.com/numpy/numpy/pull/24404): BLD: vendor meson-python
+    to make the Windows builds with SIMD…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24405](https://github.com/numpy/numpy/pull/24405): BLD, SIMD: The meson CPU
+    dispatcher implementation'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24406](https://github.com/numpy/numpy/pull/24406): MAINT: Remove versioneer'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24409](https://github.com/numpy/numpy/pull/24409): REL: Prepare for the NumPy
+    1.26.0b1 release.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24453](https://github.com/numpy/numpy/pull/24453): MAINT: Pin upper version
+    of sphinx.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24455](https://github.com/numpy/numpy/pull/24455): ENH: Add prefix to _ALIGN
+    Macro'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24456](https://github.com/numpy/numpy/pull/24456): BUG: cleanup warnings
+    [skip azp][skip circle][skip travis][skip…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24460](https://github.com/numpy/numpy/pull/24460): MAINT: Upgrade to spin
+    0.5'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24495](https://github.com/numpy/numpy/pull/24495): BUG: `asv dev` has been
+    removed, use `asv run`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24496](https://github.com/numpy/numpy/pull/24496): BUG: Fix meson build failure
+    due to unchanged inplace auto-generated…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24521](https://github.com/numpy/numpy/pull/24521): BUG: fix issue with git-version
+    script, needs a shebang to run'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24522](https://github.com/numpy/numpy/pull/24522): BUG: Use a default assignment
+    for git_hash [skip ci]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24524](https://github.com/numpy/numpy/pull/24524): BUG: fix NPY_cast_info
+    error handling in choose'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24526](https://github.com/numpy/numpy/pull/24526): BUG: Fix common block
+    handling in f2py'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24541](https://github.com/numpy/numpy/pull/24541): CI,TYP: Bump mypy to 1.4.1'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24542](https://github.com/numpy/numpy/pull/24542): BUG: Fix assumed length
+    f2py regression'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24544](https://github.com/numpy/numpy/pull/24544): MAINT: Harmonize fortranobject'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24545](https://github.com/numpy/numpy/pull/24545): TYP: add kind argument
+    to numpy.isin type specification'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24561](https://github.com/numpy/numpy/pull/24561): BUG: fix comparisons between
+    masked and unmasked structured arrays'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24590](https://github.com/numpy/numpy/pull/24590): CI: Exclude import libraries
+    from list of DLLs on Cygwin.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24591](https://github.com/numpy/numpy/pull/24591): BLD: fix `_umath_linalg`
+    dependencies'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24594](https://github.com/numpy/numpy/pull/24594): MAINT: Stop testing on
+    ppc64le.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24602](https://github.com/numpy/numpy/pull/24602): BLD: meson-cpu: fix SIMD
+    support on platforms with no features'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24606](https://github.com/numpy/numpy/pull/24606): BUG: Change Cython `binding`
+    directive to “False”.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24613](https://github.com/numpy/numpy/pull/24613): ENH: Adopt new macOS Accelerate
+    BLAS/LAPACK Interfaces, including…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24614](https://github.com/numpy/numpy/pull/24614): DOC: Update building docs
+    to use Meson'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24615](https://github.com/numpy/numpy/pull/24615): TYP: Add the missing `casting`
+    keyword to `np.clip`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24616](https://github.com/numpy/numpy/pull/24616): TST: convert cython test
+    from setup.py to meson'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24617](https://github.com/numpy/numpy/pull/24617): MAINT: Fixup `fromnumeric.pyi`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24622](https://github.com/numpy/numpy/pull/24622): BUG, ENH: Fix `iso_c_binding`
+    type maps and fix `bind(c)`…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24629](https://github.com/numpy/numpy/pull/24629): TYP: Allow `binary_repr`
+    to accept any object implementing…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24630](https://github.com/numpy/numpy/pull/24630): TYP: Explicitly declare
+    `dtype` and `generic` hashable'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24637](https://github.com/numpy/numpy/pull/24637): ENH: Refactor the typing
+    “reveal” tests using [`typing.assert_type`](https://docs.python.org/3/library/typing.html#typing.assert_type
+    "(in Python v3.11)")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24638](https://github.com/numpy/numpy/pull/24638): MAINT: Bump actions/checkout
+    from 3.6.0 to 4.0.0'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24647](https://github.com/numpy/numpy/pull/24647): ENH: `meson` backend for
+    `f2py`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24648](https://github.com/numpy/numpy/pull/24648): MAINT: Refactor partial
+    load Workaround for Clang'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24653](https://github.com/numpy/numpy/pull/24653): REL: Prepare for the NumPy
+    1.26.0rc1 release.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24659](https://github.com/numpy/numpy/pull/24659): BLD: allow specifying
+    the long double format to avoid the runtime…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24665](https://github.com/numpy/numpy/pull/24665): BLD: fix bug in random.mtrand
+    extension, don’t link libnpyrandom'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24675](https://github.com/numpy/numpy/pull/24675): BLD: build wheels for
+    32-bit Python on Windows, using MSVC'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24700](https://github.com/numpy/numpy/pull/24700): BLD: fix issue with compiler
+    selection during cross compilation'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24701](https://github.com/numpy/numpy/pull/24701): BUG: Fix data stmt handling
+    for complex values in f2py'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24707](https://github.com/numpy/numpy/pull/24707): TYP: Add annotations for
+    the py3.12 buffer protocol'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[#24718](https://github.com/numpy/numpy/pull/24718): DOC: fix a few doc build
+    issues on 1.26.x and update *spin docs*…'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

@@ -1,0 +1,1917 @@
+- en: NumPy 1.24 Release Notes
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/release/1.24.0-notes.html](https://numpy.org/doc/1.26/release/1.24.0-notes.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The NumPy 1.24.0 release continues the ongoing work to improve the handling
+    and promotion of dtypes, increase the execution speed, and clarify the documentation.
+    There are also a large number of new and expired deprecations due to changes in
+    promotion and cleanups. This might be called a deprecation release. Highlights
+    are
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many new deprecations, check them out.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Many expired deprecations,
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New F2PY features and fixes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: New “dtype” and “casting” keywords for stacking functions.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See below for the details,
+  prefs: []
+  type: TYPE_NORMAL
+- en: This release supports Python versions 3.8-3.11.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Deprecate fastCopyAndTranspose and PyArray_CopyAndTranspose
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The `numpy.fastCopyAndTranspose` function has been deprecated. Use the corresponding
+    copy and transpose methods directly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: The underlying C function `PyArray_CopyAndTranspose` has also been deprecated
+    from the NumPy C-API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conversion of out-of-bound Python integers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Attempting a conversion from a Python integer to a NumPy value will now always
+    check whether the result can be represented by NumPy. This means the following
+    examples will fail in the future and give a `DeprecationWarning` now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Many of these did succeed before. Such code was mainly useful for unsigned integers
+    with negative values such as `np.uint8(-1)` giving `np.iinfo(np.uint8).max`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that conversion between NumPy integers is unaffected, so that `np.array(-1).astype(np.uint8)`
+    continues to work and use C integer overflow logic. For negative values, it will
+    also work to view the array: `np.array(-1, dtype=np.int8).view(np.uint8)`. In
+    some cases, using `np.iinfo(np.uint8).max` or `val % 2**8` may also work well.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In rare cases input data may mix both negative values and very large unsigned
+    values (i.e. `-1` and `2**63`). There it is unfortunately necessary to use `%`
+    on the Python value or use signed or unsigned conversion depending on whether
+    negative values are expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecate `msort`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `numpy.msort` function is deprecated. Use `np.sort(a, axis=0)` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`np.str0` and similar are now deprecated'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The scalar type aliases ending in a 0 bit size: `np.object0`, `np.str0`, `np.bytes0`,
+    `np.void0`, `np.int0`, `np.uint0` as well as `np.bool8` are now deprecated and
+    will eventually be removed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expired deprecations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `normed` keyword argument has been removed from *np.histogram*, *np.histogram2d*,
+    and *np.histogramdd*. Use `density` instead. If `normed` was passed by position,
+    `density` is now used.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-21645](https://github.com/numpy/numpy/pull/21645))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Ragged array creation will now always raise a `ValueError` unless `dtype=object`
+    is passed. This includes very deeply nested sequences.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22004](https://github.com/numpy/numpy/pull/22004))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Support for Visual Studio 2015 and earlier has been removed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for the Windows Interix POSIX interop layer has been removed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22139](https://github.com/numpy/numpy/pull/22139))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Support for Cygwin < 3.3 has been removed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22159](https://github.com/numpy/numpy/pull/22159))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The mini() method of `np.ma.MaskedArray` has been removed. Use either `np.ma.MaskedArray.min()`
+    or `np.ma.minimum.reduce()`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The single-argument form of `np.ma.minimum` and `np.ma.maximum` has been removed.
+    Use `np.ma.minimum.reduce()` or `np.ma.maximum.reduce()` instead.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22228](https://github.com/numpy/numpy/pull/22228))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Passing dtype instances other than the canonical (mainly native byte-order)
+    ones to `dtype=` or `signature=` in ufuncs will now raise a `TypeError`. We recommend
+    passing the strings `"int8"` or scalar types `np.int8` since the byte-order, datetime/timedelta
+    unit, etc. are never enforced. (Initially deprecated in NumPy 1.21.)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22540](https://github.com/numpy/numpy/pull/22540))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The `dtype=` argument to comparison ufuncs is now applied correctly. That means
+    that only `bool` and `object` are valid values and `dtype=object` is enforced.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22541](https://github.com/numpy/numpy/pull/22541))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The deprecation for the aliases `np.object`, `np.bool`, `np.float`, `np.complex`,
+    `np.str`, and `np.int` is expired (introduces NumPy 1.20). Some of these will
+    now give a FutureWarning in addition to raising an error since they will be mapped
+    to the NumPy scalars in the future.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Compatibility notes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`array.fill(scalar)` may behave slightly different'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`numpy.ndarray.fill` may in some cases behave slightly different now due to
+    the fact that the logic is aligned with item assignment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Previously casting may have produced slightly different answers when using values
+    that could not be represented in the target `dtype` or when the target had `object`
+    dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subarray to object cast now copies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Casting a dtype that includes a subarray to an object will now ensure a copy
+    of the subarray. Previously an unsafe view was returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Is now always false. While previously it was true for the specific cast.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returned arrays respect uniqueness of dtype kwarg objects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When the `dtype` keyword argument is used with `np.array` or [`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
+    "numpy.asarray"), the dtype of the returned array now always exactly matches the
+    dtype provided by the caller.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In some cases this change means that a *view* rather than the input array is
+    returned. The following is an example for this on 64bit Linux where `long` and
+    `longlong` are the same precision but different `dtypes`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Before the change, the `dtype` did not match because `new is arr` was `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
+  prefs: []
+  type: TYPE_NORMAL
+- en: DLPack export raises `BufferError`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When an array buffer cannot be exported via DLPack a `BufferError` is now always
+    raised where previously `TypeError` or `RuntimeError` was raised. This allows
+    falling back to the buffer protocol or `__array_interface__` when DLPack was tried
+    first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy builds are no longer tested on GCC-6
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Ubuntu 18.04 is deprecated for GitHub actions and GCC-6 is not available on
+    Ubuntu 20.04, so builds using that compiler are no longer tested. We still test
+    builds using GCC-7 and GCC-8.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New Features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: New attribute `symbol` added to polynomial classes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The polynomial classes in the `numpy.polynomial` package have a new `symbol`
+    attribute which is used to represent the indeterminate of the polynomial. This
+    can be used to change the value of the variable when printing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that the polynomial classes only support 1D polynomials, so operations
+    that involve polynomials with different symbols are disallowed when the result
+    would be multivariate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The symbol can be any valid Python identifier. The default is `symbol=x`, consistent
+    with existing behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
+  prefs: []
+  type: TYPE_NORMAL
+- en: F2PY support for Fortran `character` strings
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'F2PY now supports wrapping Fortran functions with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: character (e.g. `character x`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'character array (e.g. `character, dimension(n) :: x`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: character string (e.g. `character(len=10) x`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'and character string array (e.g. `character(len=10), dimension(n, m) :: x`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: arguments, including passing Python unicode strings as Fortran character string
+    arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function `np.show_runtime`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A new function `numpy.show_runtime` has been added to display the runtime information
+    of the machine in addition to `numpy.show_config` which displays the build-related
+    information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`strict` option for `testing.assert_array_equal`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `strict` option is now available for `testing.assert_array_equal`. Setting
+    `strict=True` will disable the broadcasting behaviour for scalars and ensure that
+    input arrays have the same data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New parameter `equal_nan` added to `np.unique`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`np.unique` was changed in 1.21 to treat all `NaN` values as equal and return
+    a single `NaN`. Setting `equal_nan=False` will restore pre-1.21 behavior to treat
+    `NaNs` as unique. Defaults to `True`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.stack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.stack`.
+    To use them, write `np.stack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.vstack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.vstack`.
+    To use them, write `np.vstack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.hstack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.hstack`.
+    To use them, write `np.hstack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
+  prefs: []
+  type: TYPE_NORMAL
+- en: The bit generator underlying the singleton RandomState can be changed
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The singleton `RandomState` instance exposed in the `numpy.random` module is
+    initialized at startup with the `MT19937` bit generator. The new function `set_bit_generator`
+    allows the default bit generator to be replaced with a user-provided bit generator.
+    This function has been introduced to provide a method allowing seamless integration
+    of a high-quality, modern bit generator in new code with existing code that makes
+    use of the singleton-provided random variate generating functions. The companion
+    function `get_bit_generator` returns the current bit generator being used by the
+    singleton `RandomState`. This is provided to simplify restoring the original source
+    of randomness if required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The preferred method to generate reproducible random numbers is to use a modern
+    bit generator in an instance of `Generator`. The function `default_rng` simplifies
+    instantiation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same bit generator can then be shared with the singleton instance so that
+    calling functions in the `random` module will use the same bit generator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The swap is permanent (until reversed) and so any call to functions in the
+    `random` module will use the new bit generator. The original can be restored if
+    required for code to run correctly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`np.void` now has a `dtype` argument'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: NumPy now allows constructing structured void scalars directly by passing the
+    `dtype` argument to `np.void`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Improvements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: F2PY Improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The generated extension modules don’t use the deprecated NumPy-C API anymore
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improved `f2py` generated exception messages
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numerous bug and `flake8` warning fixes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: various CPP macros that one can use within C-expressions of signature files
+    are prefixed with `f2py_`. For example, one should use `f2py_len(x)` instead of
+    `len(x)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A new construct `character(f2py_len=...)` is introduced to support returning
+    assumed length character strings (e.g. `character(len=*)`) from wrapper functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A hook to support rewriting `f2py` internal data structures after reading all
+    its input files is introduced. This is required, for instance, for BC of SciPy
+    support where character arguments are treated as character strings arguments in
+    `C` expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  prefs: []
+  type: TYPE_NORMAL
+- en: IBM zSystems Vector Extension Facility (SIMD)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Added support for SIMD extensions of zSystem (z13, z14, z15), through the universal
+    intrinsics interface. This support leads to performance improvements for all SIMD
+    kernels implemented using the universal intrinsics, including the following operations:
+    rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal, tanh, sin, cos,
+    equal, not_equal, greater, greater_equal, less, less_equal, maximum, minimum,
+    fmax, fmin, argmax, argmin, add, subtract, multiply, divide.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy now gives floating point errors in casts
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In most cases, NumPy previously did not give floating point warnings or errors
+    when these happened during casts. For examples, casts like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Should now generally give floating point warnings. These warnings should warn
+    that floating point overflow occurred. For errors when converting floating point
+    values to integers users should expect invalid value warnings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Users can modify the behavior of these warnings using `np.errstate`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that for float to int casts, the exact warnings that are given may be
+    platform dependent. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'May give a result equivalent to (the intermediate cast means no warning is
+    given):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'May return an undefined result, with a warning set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: The precise behavior is subject to the C99 standard and its implementation in
+    both software and hardware.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
+  prefs: []
+  type: TYPE_NORMAL
+- en: F2PY supports the value attribute
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The Fortran standard requires that variables declared with the `value` attribute
+    must be passed by value instead of reference. F2PY now supports this use pattern
+    correctly. So `integer, intent(in), value :: x` in Fortran codes will have correct
+    wrappers generated.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Added pickle support for third-party BitGenerators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The pickle format for bit generators was extended to allow each bit generator
+    to supply its own constructor when during pickling. Previous versions of NumPy
+    only supported unpickling `Generator` instances created with one of the core set
+    of bit generators supplied with NumPy. Attempting to unpickle a `Generator` that
+    used a third-party bit generators would fail since the constructor used during
+    the unpickling was only aware of the bit generators included in NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
+  prefs: []
+  type: TYPE_NORMAL
+- en: arange() now explicitly fails with dtype=str
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Previously, the `np.arange(n, dtype=str)` function worked for `n=1` and `n=2`,
+    but would raise a non-specific exception message for other values of `n`. Now,
+    it raises a *TypeError* informing that `arange` does not support string dtypes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`numpy.typing` protocols are now runtime checkable'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The protocols used in `numpy.typing.ArrayLike` and `numpy.typing.DTypeLike`
+    are now properly marked as runtime checkable, making them easier to use for runtime
+    type checkers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements and changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Faster version of `np.isin` and `np.in1d` for integer arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`np.in1d` (used by `np.isin`) can now switch to a faster algorithm (up to >10x
+    faster) when it is passed two integer arrays. This is often automatically used,
+    but you can use `kind="sort"` or `kind="table"` to force the old or new method,
+    respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Faster comparison operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The comparison functions (`numpy.equal`, `numpy.not_equal`, `numpy.less`, `numpy.less_equal`,
+    `numpy.greater` and `numpy.greater_equal`) are now much faster as they are now
+    vectorized with universal intrinsics. For a CPU with SIMD extension AVX512BW,
+    the performance gain is up to 2.57x, 1.65x and 19.15x for integer, float and boolean
+    data types, respectively (with N=50000).
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21483](https://github.com/numpy/numpy/pull/21483))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Better reporting of integer division overflow
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Integer division overflow of scalars and arrays used to provide a `RuntimeWarning`
+    and the return value was undefined leading to crashes at rare occasions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Integer division overflow now returns the input dtype’s minimum value and raise
+    the following `RuntimeWarning`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-21506](https://github.com/numpy/numpy/pull/21506))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`masked_invalid` now modifies the mask in-place'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When used with `copy=False`, `numpy.ma.masked_invalid` now modifies the input
+    masked array in-place. This makes it behave identically to `masked_where` and
+    better matches the documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22046](https://github.com/numpy/numpy/pull/22046))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`nditer`/`NpyIter` allows all allocating all operands'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The NumPy iterator available through `np.nditer` in Python and as `NpyIter`
+    in C now supports allocating all arrays. The iterator shape defaults to `()` in
+    this case. The operands dtype must be provided, since a “common dtype” cannot
+    be inferred from the other inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22457](https://github.com/numpy/numpy/pull/22457))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Deprecate fastCopyAndTranspose and PyArray_CopyAndTranspose
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The `numpy.fastCopyAndTranspose` function has been deprecated. Use the corresponding
+    copy and transpose methods directly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: The underlying C function `PyArray_CopyAndTranspose` has also been deprecated
+    from the NumPy C-API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conversion of out-of-bound Python integers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Attempting a conversion from a Python integer to a NumPy value will now always
+    check whether the result can be represented by NumPy. This means the following
+    examples will fail in the future and give a `DeprecationWarning` now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Many of these did succeed before. Such code was mainly useful for unsigned integers
+    with negative values such as `np.uint8(-1)` giving `np.iinfo(np.uint8).max`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that conversion between NumPy integers is unaffected, so that `np.array(-1).astype(np.uint8)`
+    continues to work and use C integer overflow logic. For negative values, it will
+    also work to view the array: `np.array(-1, dtype=np.int8).view(np.uint8)`. In
+    some cases, using `np.iinfo(np.uint8).max` or `val % 2**8` may also work well.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In rare cases input data may mix both negative values and very large unsigned
+    values (i.e. `-1` and `2**63`). There it is unfortunately necessary to use `%`
+    on the Python value or use signed or unsigned conversion depending on whether
+    negative values are expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecate `msort`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `numpy.msort` function is deprecated. Use `np.sort(a, axis=0)` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`np.str0` and similar are now deprecated'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The scalar type aliases ending in a 0 bit size: `np.object0`, `np.str0`, `np.bytes0`,
+    `np.void0`, `np.int0`, `np.uint0` as well as `np.bool8` are now deprecated and
+    will eventually be removed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecate fastCopyAndTranspose and PyArray_CopyAndTranspose
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The `numpy.fastCopyAndTranspose` function has been deprecated. Use the corresponding
+    copy and transpose methods directly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: The underlying C function `PyArray_CopyAndTranspose` has also been deprecated
+    from the NumPy C-API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conversion of out-of-bound Python integers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Attempting a conversion from a Python integer to a NumPy value will now always
+    check whether the result can be represented by NumPy. This means the following
+    examples will fail in the future and give a `DeprecationWarning` now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Many of these did succeed before. Such code was mainly useful for unsigned integers
+    with negative values such as `np.uint8(-1)` giving `np.iinfo(np.uint8).max`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that conversion between NumPy integers is unaffected, so that `np.array(-1).astype(np.uint8)`
+    continues to work and use C integer overflow logic. For negative values, it will
+    also work to view the array: `np.array(-1, dtype=np.int8).view(np.uint8)`. In
+    some cases, using `np.iinfo(np.uint8).max` or `val % 2**8` may also work well.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In rare cases input data may mix both negative values and very large unsigned
+    values (i.e. `-1` and `2**63`). There it is unfortunately necessary to use `%`
+    on the Python value or use signed or unsigned conversion depending on whether
+    negative values are expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecate `msort`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `numpy.msort` function is deprecated. Use `np.sort(a, axis=0)` instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`np.str0` and similar are now deprecated'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The scalar type aliases ending in a 0 bit size: `np.object0`, `np.str0`, `np.bytes0`,
+    `np.void0`, `np.int0`, `np.uint0` as well as `np.bool8` are now deprecated and
+    will eventually be removed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expired deprecations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `normed` keyword argument has been removed from *np.histogram*, *np.histogram2d*,
+    and *np.histogramdd*. Use `density` instead. If `normed` was passed by position,
+    `density` is now used.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-21645](https://github.com/numpy/numpy/pull/21645))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Ragged array creation will now always raise a `ValueError` unless `dtype=object`
+    is passed. This includes very deeply nested sequences.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22004](https://github.com/numpy/numpy/pull/22004))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Support for Visual Studio 2015 and earlier has been removed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for the Windows Interix POSIX interop layer has been removed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22139](https://github.com/numpy/numpy/pull/22139))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Support for Cygwin < 3.3 has been removed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22159](https://github.com/numpy/numpy/pull/22159))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The mini() method of `np.ma.MaskedArray` has been removed. Use either `np.ma.MaskedArray.min()`
+    or `np.ma.minimum.reduce()`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The single-argument form of `np.ma.minimum` and `np.ma.maximum` has been removed.
+    Use `np.ma.minimum.reduce()` or `np.ma.maximum.reduce()` instead.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22228](https://github.com/numpy/numpy/pull/22228))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Passing dtype instances other than the canonical (mainly native byte-order)
+    ones to `dtype=` or `signature=` in ufuncs will now raise a `TypeError`. We recommend
+    passing the strings `"int8"` or scalar types `np.int8` since the byte-order, datetime/timedelta
+    unit, etc. are never enforced. (Initially deprecated in NumPy 1.21.)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22540](https://github.com/numpy/numpy/pull/22540))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The `dtype=` argument to comparison ufuncs is now applied correctly. That means
+    that only `bool` and `object` are valid values and `dtype=object` is enforced.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22541](https://github.com/numpy/numpy/pull/22541))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The deprecation for the aliases `np.object`, `np.bool`, `np.float`, `np.complex`,
+    `np.str`, and `np.int` is expired (introduces NumPy 1.20). Some of these will
+    now give a FutureWarning in addition to raising an error since they will be mapped
+    to the NumPy scalars in the future.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Compatibility notes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`array.fill(scalar)` may behave slightly different'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`numpy.ndarray.fill` may in some cases behave slightly different now due to
+    the fact that the logic is aligned with item assignment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Previously casting may have produced slightly different answers when using values
+    that could not be represented in the target `dtype` or when the target had `object`
+    dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subarray to object cast now copies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Casting a dtype that includes a subarray to an object will now ensure a copy
+    of the subarray. Previously an unsafe view was returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Is now always false. While previously it was true for the specific cast.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returned arrays respect uniqueness of dtype kwarg objects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When the `dtype` keyword argument is used with `np.array` or [`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
+    "numpy.asarray"), the dtype of the returned array now always exactly matches the
+    dtype provided by the caller.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In some cases this change means that a *view* rather than the input array is
+    returned. The following is an example for this on 64bit Linux where `long` and
+    `longlong` are the same precision but different `dtypes`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Before the change, the `dtype` did not match because `new is arr` was `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
+  prefs: []
+  type: TYPE_NORMAL
+- en: DLPack export raises `BufferError`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When an array buffer cannot be exported via DLPack a `BufferError` is now always
+    raised where previously `TypeError` or `RuntimeError` was raised. This allows
+    falling back to the buffer protocol or `__array_interface__` when DLPack was tried
+    first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy builds are no longer tested on GCC-6
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Ubuntu 18.04 is deprecated for GitHub actions and GCC-6 is not available on
+    Ubuntu 20.04, so builds using that compiler are no longer tested. We still test
+    builds using GCC-7 and GCC-8.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`array.fill(scalar)` may behave slightly different'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`numpy.ndarray.fill` may in some cases behave slightly different now due to
+    the fact that the logic is aligned with item assignment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Previously casting may have produced slightly different answers when using values
+    that could not be represented in the target `dtype` or when the target had `object`
+    dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subarray to object cast now copies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Casting a dtype that includes a subarray to an object will now ensure a copy
+    of the subarray. Previously an unsafe view was returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Is now always false. While previously it was true for the specific cast.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returned arrays respect uniqueness of dtype kwarg objects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When the `dtype` keyword argument is used with `np.array` or [`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
+    "numpy.asarray"), the dtype of the returned array now always exactly matches the
+    dtype provided by the caller.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In some cases this change means that a *view* rather than the input array is
+    returned. The following is an example for this on 64bit Linux where `long` and
+    `longlong` are the same precision but different `dtypes`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Before the change, the `dtype` did not match because `new is arr` was `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
+  prefs: []
+  type: TYPE_NORMAL
+- en: DLPack export raises `BufferError`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When an array buffer cannot be exported via DLPack a `BufferError` is now always
+    raised where previously `TypeError` or `RuntimeError` was raised. This allows
+    falling back to the buffer protocol or `__array_interface__` when DLPack was tried
+    first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy builds are no longer tested on GCC-6
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Ubuntu 18.04 is deprecated for GitHub actions and GCC-6 is not available on
+    Ubuntu 20.04, so builds using that compiler are no longer tested. We still test
+    builds using GCC-7 and GCC-8.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New Features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: New attribute `symbol` added to polynomial classes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The polynomial classes in the `numpy.polynomial` package have a new `symbol`
+    attribute which is used to represent the indeterminate of the polynomial. This
+    can be used to change the value of the variable when printing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that the polynomial classes only support 1D polynomials, so operations
+    that involve polynomials with different symbols are disallowed when the result
+    would be multivariate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: The symbol can be any valid Python identifier. The default is `symbol=x`, consistent
+    with existing behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
+  prefs: []
+  type: TYPE_NORMAL
+- en: F2PY support for Fortran `character` strings
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'F2PY now supports wrapping Fortran functions with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: character (e.g. `character x`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'character array (e.g. `character, dimension(n) :: x`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: character string (e.g. `character(len=10) x`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'and character string array (e.g. `character(len=10), dimension(n, m) :: x`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: arguments, including passing Python unicode strings as Fortran character string
+    arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function `np.show_runtime`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A new function `numpy.show_runtime` has been added to display the runtime information
+    of the machine in addition to `numpy.show_config` which displays the build-related
+    information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`strict` option for `testing.assert_array_equal`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `strict` option is now available for `testing.assert_array_equal`. Setting
+    `strict=True` will disable the broadcasting behaviour for scalars and ensure that
+    input arrays have the same data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New parameter `equal_nan` added to `np.unique`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`np.unique` was changed in 1.21 to treat all `NaN` values as equal and return
+    a single `NaN`. Setting `equal_nan=False` will restore pre-1.21 behavior to treat
+    `NaNs` as unique. Defaults to `True`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.stack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.stack`.
+    To use them, write `np.stack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.vstack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.vstack`.
+    To use them, write `np.vstack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.hstack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.hstack`.
+    To use them, write `np.hstack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
+  prefs: []
+  type: TYPE_NORMAL
+- en: The bit generator underlying the singleton RandomState can be changed
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The singleton `RandomState` instance exposed in the `numpy.random` module is
+    initialized at startup with the `MT19937` bit generator. The new function `set_bit_generator`
+    allows the default bit generator to be replaced with a user-provided bit generator.
+    This function has been introduced to provide a method allowing seamless integration
+    of a high-quality, modern bit generator in new code with existing code that makes
+    use of the singleton-provided random variate generating functions. The companion
+    function `get_bit_generator` returns the current bit generator being used by the
+    singleton `RandomState`. This is provided to simplify restoring the original source
+    of randomness if required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The preferred method to generate reproducible random numbers is to use a modern
+    bit generator in an instance of `Generator`. The function `default_rng` simplifies
+    instantiation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same bit generator can then be shared with the singleton instance so that
+    calling functions in the `random` module will use the same bit generator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The swap is permanent (until reversed) and so any call to functions in the
+    `random` module will use the new bit generator. The original can be restored if
+    required for code to run correctly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`np.void` now has a `dtype` argument'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: NumPy now allows constructing structured void scalars directly by passing the
+    `dtype` argument to `np.void`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New attribute `symbol` added to polynomial classes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The polynomial classes in the `numpy.polynomial` package have a new `symbol`
+    attribute which is used to represent the indeterminate of the polynomial. This
+    can be used to change the value of the variable when printing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that the polynomial classes only support 1D polynomials, so operations
+    that involve polynomials with different symbols are disallowed when the result
+    would be multivariate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: The symbol can be any valid Python identifier. The default is `symbol=x`, consistent
+    with existing behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
+  prefs: []
+  type: TYPE_NORMAL
+- en: F2PY support for Fortran `character` strings
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'F2PY now supports wrapping Fortran functions with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: character (e.g. `character x`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'character array (e.g. `character, dimension(n) :: x`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: character string (e.g. `character(len=10) x`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'and character string array (e.g. `character(len=10), dimension(n, m) :: x`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: arguments, including passing Python unicode strings as Fortran character string
+    arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function `np.show_runtime`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A new function `numpy.show_runtime` has been added to display the runtime information
+    of the machine in addition to `numpy.show_config` which displays the build-related
+    information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`strict` option for `testing.assert_array_equal`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `strict` option is now available for `testing.assert_array_equal`. Setting
+    `strict=True` will disable the broadcasting behaviour for scalars and ensure that
+    input arrays have the same data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
+  prefs: []
+  type: TYPE_NORMAL
+- en: New parameter `equal_nan` added to `np.unique`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`np.unique` was changed in 1.21 to treat all `NaN` values as equal and return
+    a single `NaN`. Setting `equal_nan=False` will restore pre-1.21 behavior to treat
+    `NaNs` as unique. Defaults to `True`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.stack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.stack`.
+    To use them, write `np.stack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.vstack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.vstack`.
+    To use them, write `np.vstack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`casting` and `dtype` keyword arguments for `numpy.hstack`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `casting` and `dtype` keyword arguments are now available for `numpy.hstack`.
+    To use them, write `np.hstack(..., dtype=None, casting='same_kind')`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
+  prefs: []
+  type: TYPE_NORMAL
+- en: The bit generator underlying the singleton RandomState can be changed
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The singleton `RandomState` instance exposed in the `numpy.random` module is
+    initialized at startup with the `MT19937` bit generator. The new function `set_bit_generator`
+    allows the default bit generator to be replaced with a user-provided bit generator.
+    This function has been introduced to provide a method allowing seamless integration
+    of a high-quality, modern bit generator in new code with existing code that makes
+    use of the singleton-provided random variate generating functions. The companion
+    function `get_bit_generator` returns the current bit generator being used by the
+    singleton `RandomState`. This is provided to simplify restoring the original source
+    of randomness if required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The preferred method to generate reproducible random numbers is to use a modern
+    bit generator in an instance of `Generator`. The function `default_rng` simplifies
+    instantiation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same bit generator can then be shared with the singleton instance so that
+    calling functions in the `random` module will use the same bit generator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The swap is permanent (until reversed) and so any call to functions in the
+    `random` module will use the new bit generator. The original can be restored if
+    required for code to run correctly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`np.void` now has a `dtype` argument'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: NumPy now allows constructing structured void scalars directly by passing the
+    `dtype` argument to `np.void`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Improvements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: F2PY Improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The generated extension modules don’t use the deprecated NumPy-C API anymore
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improved `f2py` generated exception messages
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numerous bug and `flake8` warning fixes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: various CPP macros that one can use within C-expressions of signature files
+    are prefixed with `f2py_`. For example, one should use `f2py_len(x)` instead of
+    `len(x)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A new construct `character(f2py_len=...)` is introduced to support returning
+    assumed length character strings (e.g. `character(len=*)`) from wrapper functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A hook to support rewriting `f2py` internal data structures after reading all
+    its input files is introduced. This is required, for instance, for BC of SciPy
+    support where character arguments are treated as character strings arguments in
+    `C` expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  prefs: []
+  type: TYPE_NORMAL
+- en: IBM zSystems Vector Extension Facility (SIMD)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Added support for SIMD extensions of zSystem (z13, z14, z15), through the universal
+    intrinsics interface. This support leads to performance improvements for all SIMD
+    kernels implemented using the universal intrinsics, including the following operations:
+    rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal, tanh, sin, cos,
+    equal, not_equal, greater, greater_equal, less, less_equal, maximum, minimum,
+    fmax, fmin, argmax, argmin, add, subtract, multiply, divide.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy now gives floating point errors in casts
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In most cases, NumPy previously did not give floating point warnings or errors
+    when these happened during casts. For examples, casts like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Should now generally give floating point warnings. These warnings should warn
+    that floating point overflow occurred. For errors when converting floating point
+    values to integers users should expect invalid value warnings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Users can modify the behavior of these warnings using `np.errstate`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that for float to int casts, the exact warnings that are given may be
+    platform dependent. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'May give a result equivalent to (the intermediate cast means no warning is
+    given):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'May return an undefined result, with a warning set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: The precise behavior is subject to the C99 standard and its implementation in
+    both software and hardware.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
+  prefs: []
+  type: TYPE_NORMAL
+- en: F2PY supports the value attribute
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The Fortran standard requires that variables declared with the `value` attribute
+    must be passed by value instead of reference. F2PY now supports this use pattern
+    correctly. So `integer, intent(in), value :: x` in Fortran codes will have correct
+    wrappers generated.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Added pickle support for third-party BitGenerators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The pickle format for bit generators was extended to allow each bit generator
+    to supply its own constructor when during pickling. Previous versions of NumPy
+    only supported unpickling `Generator` instances created with one of the core set
+    of bit generators supplied with NumPy. Attempting to unpickle a `Generator` that
+    used a third-party bit generators would fail since the constructor used during
+    the unpickling was only aware of the bit generators included in NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
+  prefs: []
+  type: TYPE_NORMAL
+- en: arange() now explicitly fails with dtype=str
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Previously, the `np.arange(n, dtype=str)` function worked for `n=1` and `n=2`,
+    but would raise a non-specific exception message for other values of `n`. Now,
+    it raises a *TypeError* informing that `arange` does not support string dtypes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`numpy.typing` protocols are now runtime checkable'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The protocols used in `numpy.typing.ArrayLike` and `numpy.typing.DTypeLike`
+    are now properly marked as runtime checkable, making them easier to use for runtime
+    type checkers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
+  prefs: []
+  type: TYPE_NORMAL
+- en: F2PY Improvements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The generated extension modules don’t use the deprecated NumPy-C API anymore
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Improved `f2py` generated exception messages
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Numerous bug and `flake8` warning fixes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: various CPP macros that one can use within C-expressions of signature files
+    are prefixed with `f2py_`. For example, one should use `f2py_len(x)` instead of
+    `len(x)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A new construct `character(f2py_len=...)` is introduced to support returning
+    assumed length character strings (e.g. `character(len=*)`) from wrapper functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A hook to support rewriting `f2py` internal data structures after reading all
+    its input files is introduced. This is required, for instance, for BC of SciPy
+    support where character arguments are treated as character strings arguments in
+    `C` expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  prefs: []
+  type: TYPE_NORMAL
+- en: IBM zSystems Vector Extension Facility (SIMD)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Added support for SIMD extensions of zSystem (z13, z14, z15), through the universal
+    intrinsics interface. This support leads to performance improvements for all SIMD
+    kernels implemented using the universal intrinsics, including the following operations:
+    rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal, tanh, sin, cos,
+    equal, not_equal, greater, greater_equal, less, less_equal, maximum, minimum,
+    fmax, fmin, argmax, argmin, add, subtract, multiply, divide.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy now gives floating point errors in casts
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In most cases, NumPy previously did not give floating point warnings or errors
+    when these happened during casts. For examples, casts like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Should now generally give floating point warnings. These warnings should warn
+    that floating point overflow occurred. For errors when converting floating point
+    values to integers users should expect invalid value warnings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Users can modify the behavior of these warnings using `np.errstate`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that for float to int casts, the exact warnings that are given may be
+    platform dependent. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'May give a result equivalent to (the intermediate cast means no warning is
+    given):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'May return an undefined result, with a warning set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: The precise behavior is subject to the C99 standard and its implementation in
+    both software and hardware.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
+  prefs: []
+  type: TYPE_NORMAL
+- en: F2PY supports the value attribute
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The Fortran standard requires that variables declared with the `value` attribute
+    must be passed by value instead of reference. F2PY now supports this use pattern
+    correctly. So `integer, intent(in), value :: x` in Fortran codes will have correct
+    wrappers generated.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Added pickle support for third-party BitGenerators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The pickle format for bit generators was extended to allow each bit generator
+    to supply its own constructor when during pickling. Previous versions of NumPy
+    only supported unpickling `Generator` instances created with one of the core set
+    of bit generators supplied with NumPy. Attempting to unpickle a `Generator` that
+    used a third-party bit generators would fail since the constructor used during
+    the unpickling was only aware of the bit generators included in NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
+  prefs: []
+  type: TYPE_NORMAL
+- en: arange() now explicitly fails with dtype=str
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Previously, the `np.arange(n, dtype=str)` function worked for `n=1` and `n=2`,
+    but would raise a non-specific exception message for other values of `n`. Now,
+    it raises a *TypeError* informing that `arange` does not support string dtypes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`numpy.typing` protocols are now runtime checkable'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The protocols used in `numpy.typing.ArrayLike` and `numpy.typing.DTypeLike`
+    are now properly marked as runtime checkable, making them easier to use for runtime
+    type checkers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance improvements and changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Faster version of `np.isin` and `np.in1d` for integer arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`np.in1d` (used by `np.isin`) can now switch to a faster algorithm (up to >10x
+    faster) when it is passed two integer arrays. This is often automatically used,
+    but you can use `kind="sort"` or `kind="table"` to force the old or new method,
+    respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Faster comparison operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The comparison functions (`numpy.equal`, `numpy.not_equal`, `numpy.less`, `numpy.less_equal`,
+    `numpy.greater` and `numpy.greater_equal`) are now much faster as they are now
+    vectorized with universal intrinsics. For a CPU with SIMD extension AVX512BW,
+    the performance gain is up to 2.57x, 1.65x and 19.15x for integer, float and boolean
+    data types, respectively (with N=50000).
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21483](https://github.com/numpy/numpy/pull/21483))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Faster version of `np.isin` and `np.in1d` for integer arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`np.in1d` (used by `np.isin`) can now switch to a faster algorithm (up to >10x
+    faster) when it is passed two integer arrays. This is often automatically used,
+    but you can use `kind="sort"` or `kind="table"` to force the old or new method,
+    respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Faster comparison operators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The comparison functions (`numpy.equal`, `numpy.not_equal`, `numpy.less`, `numpy.less_equal`,
+    `numpy.greater` and `numpy.greater_equal`) are now much faster as they are now
+    vectorized with universal intrinsics. For a CPU with SIMD extension AVX512BW,
+    the performance gain is up to 2.57x, 1.65x and 19.15x for integer, float and boolean
+    data types, respectively (with N=50000).
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-21483](https://github.com/numpy/numpy/pull/21483))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Better reporting of integer division overflow
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Integer division overflow of scalars and arrays used to provide a `RuntimeWarning`
+    and the return value was undefined leading to crashes at rare occasions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Integer division overflow now returns the input dtype’s minimum value and raise
+    the following `RuntimeWarning`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-21506](https://github.com/numpy/numpy/pull/21506))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`masked_invalid` now modifies the mask in-place'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When used with `copy=False`, `numpy.ma.masked_invalid` now modifies the input
+    masked array in-place. This makes it behave identically to `masked_where` and
+    better matches the documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22046](https://github.com/numpy/numpy/pull/22046))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`nditer`/`NpyIter` allows all allocating all operands'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The NumPy iterator available through `np.nditer` in Python and as `NpyIter`
+    in C now supports allocating all arrays. The iterator shape defaults to `()` in
+    this case. The operands dtype must be provided, since a “common dtype” cannot
+    be inferred from the other inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22457](https://github.com/numpy/numpy/pull/22457))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Better reporting of integer division overflow
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Integer division overflow of scalars and arrays used to provide a `RuntimeWarning`
+    and the return value was undefined leading to crashes at rare occasions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Integer division overflow now returns the input dtype’s minimum value and raise
+    the following `RuntimeWarning`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([gh-21506](https://github.com/numpy/numpy/pull/21506))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`masked_invalid` now modifies the mask in-place'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When used with `copy=False`, `numpy.ma.masked_invalid` now modifies the input
+    masked array in-place. This makes it behave identically to `masked_where` and
+    better matches the documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22046](https://github.com/numpy/numpy/pull/22046))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`nditer`/`NpyIter` allows all allocating all operands'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The NumPy iterator available through `np.nditer` in Python and as `NpyIter`
+    in C now supports allocating all arrays. The iterator shape defaults to `()` in
+    this case. The operands dtype must be provided, since a “common dtype” cannot
+    be inferred from the other inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ([gh-22457](https://github.com/numpy/numpy/pull/22457))
+  prefs: []
+  type: TYPE_NORMAL

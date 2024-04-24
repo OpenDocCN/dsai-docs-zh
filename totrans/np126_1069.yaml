@@ -1,0 +1,4629 @@
+- en: Python Types and C-Structures
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/c-api/types-and-structures.html](https://numpy.org/doc/1.26/reference/c-api/types-and-structures.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Several new types are defined in the C-code. Most of these are accessible from
+    Python, but a few are not exposed due to their limited use. Every new Python type
+    has an associated [PyObject](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(in Python v3.11)")* with an internal structure that includes a pointer to a
+    “method table” that defines how the new object behaves in Python. When you receive
+    a Python object into C code, you always get a pointer to a [`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(in Python v3.11)") structure. Because a [`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(in Python v3.11)") structure is very generic and defines only [`PyObject_HEAD`](https://docs.python.org/3/c-api/structures.html#c.PyObject_HEAD
+    "(in Python v3.11)"), by itself it is not very interesting. However, different
+    objects contain more details after the [`PyObject_HEAD`](https://docs.python.org/3/c-api/structures.html#c.PyObject_HEAD
+    "(in Python v3.11)") (but you have to cast to the correct type to access them
+    — or use accessor functions or macros).
+  prefs: []
+  type: TYPE_NORMAL
+- en: New Python Types Defined
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Python types are the functional equivalent in C of classes in Python. By constructing
+    a new Python type you make available a new object for Python. The ndarray object
+    is an example of a new type defined in C. New types are defined in C by two basic
+    steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: creating a C-structure (usually named `Py{Name}Object`) that is binary- compatible
+    with the [`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(in Python v3.11)") structure itself but holds the additional information needed
+    for that particular object;
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: populating the [`PyTypeObject`](https://docs.python.org/3/c-api/type.html#c.PyTypeObject
+    "(in Python v3.11)") table (pointed to by the ob_type member of the [`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(in Python v3.11)") structure) with pointers to functions that implement the
+    desired behavior for the type.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Instead of special method names which define behavior for Python classes, there
+    are “function tables” which point to functions that implement the desired results.
+    Since Python 2.2, the PyTypeObject itself has become dynamic which allows C types
+    that can be “sub-typed “from other C-types in C, and sub-classed in Python. The
+    children types inherit the attributes and methods from their parent(s).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two major new types: the ndarray ( [`PyArray_Type`](#c.PyArray_Type
+    "PyArray_Type") ) and the ufunc ( [`PyUFunc_Type`](#c.PyUFunc_Type "PyUFunc_Type")
+    ). Additional types play a supportive role: the [`PyArrayIter_Type`](#c.PyArrayIter_Type
+    "PyArrayIter_Type"), the [`PyArrayMultiIter_Type`](#c.PyArrayMultiIter_Type "PyArrayMultiIter_Type"),
+    and the [`PyArrayDescr_Type`](#c.PyArrayDescr_Type "PyArrayDescr_Type") . The
+    [`PyArrayIter_Type`](#c.PyArrayIter_Type "PyArrayIter_Type") is the type for a
+    flat iterator for an ndarray (the object that is returned when getting the flat
+    attribute). The [`PyArrayMultiIter_Type`](#c.PyArrayMultiIter_Type "PyArrayMultiIter_Type")
+    is the type of the object returned when calling `broadcast` (). It handles iteration
+    and broadcasting over a collection of nested sequences. Also, the [`PyArrayDescr_Type`](#c.PyArrayDescr_Type
+    "PyArrayDescr_Type") is the data-type-descriptor type whose instances describe
+    the data. Finally, there are 21 new scalar-array types which are new Python scalars
+    corresponding to each of the fundamental data types available for arrays. An additional
+    10 other types are place holders that allow the array scalars to fit into a hierarchy
+    of actual Python types.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Type and PyArrayObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Python type of the ndarray is [`PyArray_Type`](#c.PyArray_Type "PyArray_Type").
+    In C, every ndarray is a pointer to a [`PyArrayObject`](#c.PyArrayObject "PyArrayObject")
+    structure. The ob_type member of this structure contains a pointer to the [`PyArray_Type`](#c.PyArray_Type
+    "PyArray_Type") typeobject.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayObject`](#c.PyArrayObject "PyArrayObject") C-structure contains
+    all of the required information for an array. All instances of an ndarray (and
+    its subclasses) will have this structure. For future compatibility, these structure
+    members should normally be accessed using the provided macros. If you need a shorter
+    name, then you can make use of [`NPY_AO`](#c.NPY_AO "NPY_AO") (deprecated) which
+    is defined to be equivalent to [`PyArrayObject`](#c.PyArrayObject "PyArrayObject").
+    Direct access to the struct fields are deprecated. Use the `PyArray_*(arr)` form
+    instead. As of NumPy 1.20, the size of this struct is not considered part of the
+    NumPy ABI (see note at the end of the member list).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is needed by all Python objects. It consists of (at least) a reference
+    count member ( `ob_refcnt` ) and a pointer to the typeobject ( `ob_type` ). (Other
+    elements may also be present if Python was compiled with special options see Include/object.h
+    in the Python source tree for more information). The ob_type member points to
+    a Python type object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accessible via [`PyArray_DATA`](array.html#c.PyArray_DATA "PyArray_DATA"), this
+    data member is a pointer to the first element of the array. This pointer can (and
+    normally should) be recast to the data type of the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: An integer providing the number of dimensions for this array. When nd is 0,
+    the array is sometimes called a rank-0 array. Such arrays have undefined dimensions
+    and strides and cannot be accessed. Macro [`PyArray_NDIM`](array.html#c.PyArray_NDIM
+    "PyArray_NDIM") defined in `ndarraytypes.h` points to this data member. [`NPY_MAXDIMS`](array.html#c.NPY_MAXDIMS
+    "NPY_MAXDIMS") is the largest number of dimensions for any array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of integers providing the shape in each dimension as long as nd \(\geq\)
+    1\. The integer is always large enough to hold a pointer on the platform, so the
+    dimension size is only limited by memory. [`PyArray_DIMS`](array.html#c.PyArray_DIMS
+    "PyArray_DIMS") is the macro associated with this data member.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of integers providing for each dimension the number of bytes that must
+    be skipped to get to the next element in that dimension. Associated with macro
+    [`PyArray_STRIDES`](array.html#c.PyArray_STRIDES "PyArray_STRIDES").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Pointed to by [`PyArray_BASE`](array.html#c.PyArray_BASE "PyArray_BASE"), this
+    member is used to hold a pointer to another Python object that is related to this
+    array. There are two use cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If this array does not own its own memory, then base points to the Python object
+    that owns it (perhaps another array object)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If this array has the [`NPY_ARRAY_WRITEBACKIFCOPY`](array.html#c.NPY_ARRAY_WRITEBACKIFCOPY
+    "NPY_ARRAY_WRITEBACKIFCOPY") flag set, then this array is a working copy of a
+    “misbehaved” array.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When `PyArray_ResolveWritebackIfCopy` is called, the array pointed to by base
+    will be updated with the contents of this array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a data-type descriptor object (see below). The data-type descriptor
+    object is an instance of a new built-in type which allows a generic description
+    of memory. There is a descriptor structure for each data type supported. This
+    descriptor structure contains useful information about the type as well as a pointer
+    to a table of function pointers to implement specific functionality. As the name
+    suggests, it is associated with the macro [`PyArray_DESCR`](array.html#c.PyArray_DESCR
+    "PyArray_DESCR").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pointed to by the macro [`PyArray_FLAGS`](array.html#c.PyArray_FLAGS "PyArray_FLAGS"),
+    this data member represents the flags indicating how the memory pointed to by
+    data is to be interpreted. Possible flags are [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"), [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS"), [`NPY_ARRAY_OWNDATA`](array.html#c.NPY_ARRAY_OWNDATA
+    "NPY_ARRAY_OWNDATA"), [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED "NPY_ARRAY_ALIGNED"),
+    [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE "NPY_ARRAY_WRITEABLE"),
+    [`NPY_ARRAY_WRITEBACKIFCOPY`](array.html#c.NPY_ARRAY_WRITEBACKIFCOPY "NPY_ARRAY_WRITEBACKIFCOPY").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: This member allows array objects to have weak references (using the weakref
+    module).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Further members are considered private and version dependent. If the size of
+    the struct is important for your code, special care must be taken. A possible
+    use-case when this is relevant is subclassing in C. If your code relies on `sizeof(PyArrayObject)`
+    to be constant, you must add the following check at import time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: To ensure that your code does not have to be compiled for a specific NumPy version,
+    you may add a constant, leaving room for changes in NumPy. A solution guaranteed
+    to be compatible with any future NumPy version requires the use of a runtime calculate
+    offset and allocation size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayDescr_Type and PyArray_Descr
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayDescr_Type`](#c.PyArrayDescr_Type "PyArrayDescr_Type") is the built-in
+    type of the data-type-descriptor objects used to describe how the bytes comprising
+    the array are to be interpreted. There are 21 statically-defined [`PyArray_Descr`](#c.PyArray_Descr
+    "PyArray_Descr") objects for the built-in data-types. While these participate
+    in reference counting, their reference count should never reach zero. There is
+    also a dynamic table of user-defined [`PyArray_Descr`](#c.PyArray_Descr "PyArray_Descr")
+    objects that is also maintained. Once a data-type-descriptor object is “registered”
+    it should never be deallocated either. The function [`PyArray_DescrFromType`](array.html#c.PyArray_DescrFromType
+    "PyArray_DescrFromType") (…) can be used to retrieve a [`PyArray_Descr`](#c.PyArray_Descr
+    "PyArray_Descr") object from an enumerated type-number (either built-in or user-
+    defined).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`PyArray_Descr`](#c.PyArray_Descr "PyArray_Descr") structure lies at the
+    heart of the [`PyArrayDescr_Type`](#c.PyArrayDescr_Type "PyArrayDescr_Type").
+    While it is described here for completeness, it should be considered internal
+    to NumPy and manipulated via `PyArrayDescr_*` or `PyDataType*` functions and macros.
+    The size of this structure is subject to change across versions of NumPy. To ensure
+    compatibility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Never declare a non-pointer instance of the struct
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never perform pointer arithmetic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never use `sizeof(PyArray_Descr)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'It has the following structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pointer to a typeobject that is the corresponding Python type for the elements
+    of this array. For the builtin types, this points to the corresponding array scalar.
+    For user-defined types, this should point to a user-defined typeobject. This typeobject
+    can either inherit from array scalars or not. If it does not inherit from array
+    scalars, then the [`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM") and
+    [`NPY_USE_SETITEM`](#c.NPY_USE_SETITEM "NPY_USE_SETITEM") flags should be set
+    in the `flags` member.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: A character code indicating the kind of array (using the array interface typestring
+    notation). A ‘b’ represents Boolean, a ‘i’ represents signed integer, a ‘u’ represents
+    unsigned integer, ‘f’ represents floating point, ‘c’ represents complex floating
+    point, ‘S’ represents 8-bit zero-terminated bytes, ‘U’ represents 32-bit/character
+    unicode string, and ‘V’ represents arbitrary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: A traditional character code indicating the data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A character indicating the byte-order: ‘>’ (big-endian), ‘<’ (little- endian),
+    ‘=’ (native), ‘|’ (irrelevant, ignore). All builtin data- types have byteorder
+    ‘=’.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A data-type bit-flag that determines if the data-type exhibits object- array
+    like behavior. Each bit in this member is a flag which are named as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_HASOBJECT`](#c.NPY_ITEM_HASOBJECT "NPY_ITEM_HASOBJECT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE "NPY_LIST_PICKLE")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_IS_POINTER`](#c.NPY_ITEM_IS_POINTER "NPY_ITEM_IS_POINTER")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_USE_SETITEM`](#c.NPY_USE_SETITEM "NPY_USE_SETITEM")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_FROM_FIELDS`](#c.NPY_FROM_FIELDS "NPY_FROM_FIELDS")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_OBJECT_DTYPE_FLAGS`](#c.NPY_OBJECT_DTYPE_FLAGS "NPY_OBJECT_DTYPE_FLAGS")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: A number that uniquely identifies the data type. For new data-types, this number
+    is assigned when the data-type is registered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: For data types that are always the same size (such as long), this holds the
+    size of the data type. For flexible data types where different arrays can have
+    a different elementsize, this should be 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A number providing alignment information for this data type. Specifically,
+    it shows how far from the start of a 2-element structure (whose first element
+    is a `char` ), the compiler places an item of this type: `offsetof(struct {char
+    c; type v;}, v)`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: If this is non- `NULL`, then this data-type descriptor is a C-style contiguous
+    array of another data-type descriptor. In other-words, each element that this
+    descriptor describes is actually an array of some other base descriptor. This
+    is most useful as the data-type descriptor for a field in another data-type descriptor.
+    The fields member should be `NULL` if this is non- `NULL` (the fields member of
+    the base descriptor can be non- `NULL` however).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: The data-type-descriptor object of the base-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: The shape (always C-style contiguous) of the sub-array as a Python tuple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: If this is non-NULL, then this data-type-descriptor has fields described by
+    a Python dictionary whose keys are names (and also titles if given) and whose
+    values are tuples that describe the fields. Recall that a data-type-descriptor
+    always describes a fixed-length set of bytes. A field is a named sub-region of
+    that total, fixed-length collection. A field is described by a tuple composed
+    of another data- type-descriptor and a byte offset. Optionally, the tuple may
+    contain a title which is normally a Python string. These tuples are placed in
+    this dictionary keyed by name (and also title if given).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: An ordered tuple of field names. It is NULL if no field is defined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a structure containing functions that the type needs to implement
+    internal features. These functions are not the same thing as the universal functions
+    (ufuncs) described later. Their signatures can vary arbitrarily.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Metadata about this dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Metadata specific to the C implementation of the particular dtype. Added for
+    NumPy 1.7.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Currently unused. Reserved for future use in caching hash values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates that items of this data-type must be reference counted (using [`Py_INCREF`](https://docs.python.org/3/c-api/refcounting.html#c.Py_INCREF
+    "(in Python v3.11)") and [`Py_DECREF`](https://docs.python.org/3/c-api/refcounting.html#c.Py_DECREF
+    "(in Python v3.11)") ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Same as [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates arrays of this data-type must be converted to a list before pickling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates the item is a pointer to some other data-type
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates memory for this data-type must be initialized (set to 0) on creation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates this data-type requires the Python C-API during access (so don’t give
+    up the GIL if array access is going to be needed).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: On array access use the `f->getitem` function pointer instead of the standard
+    conversion to an array scalar. Must use if you don’t define an array scalar to
+    go along with the data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: When creating a 0-d array from an array scalar use `f->setitem` instead of the
+    standard copy from an array scalar. Must use if you don’t define an array scalar
+    to go along with the data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: The bits that are inherited for the parent data-type if these bits are set in
+    any field of the data-type. Currently ( [`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")
+    | [`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE "NPY_LIST_PICKLE") | [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT
+    "NPY_ITEM_REFCOUNT") | [`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")
+    ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Bits set for the object data-type: ( [`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE
+    "NPY_LIST_PICKLE") | [`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM")
+    | [`NPY_ITEM_IS_POINTER`](#c.NPY_ITEM_IS_POINTER "NPY_ITEM_IS_POINTER") | [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT
+    "NPY_ITEM_REFCOUNT") | [`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")
+    | [`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return true if all the given flags are set for the data-type object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Equivalent to [`PyDataType_FLAGCHK`](#c.PyDataType_FLAGCHK "PyDataType_FLAGCHK")
+    (*dtype*, [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Functions implementing internal features. Not all of these function pointers
+    must be defined for a given type. The required members are `nonzero`, `copyswap`,
+    `copyswapn`, `setitem`, `getitem`, and `cast`. These are assumed to be non- `NULL`
+    and `NULL` entries will cause a program crash. The other functions may be `NULL`
+    which will just mean reduced functionality for that data-type. (Also, the nonzero
+    function will be filled in with a default function if it is `NULL` when you register
+    a user-defined data-type).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: The concept of a behaved segment is used in the description of the function
+    pointers. A behaved segment is one that is aligned and in native machine byte-order
+    for the data-type. The `nonzero`, `copyswap`, `copyswapn`, `getitem`, and `setitem`
+    functions can (and must) deal with mis-behaved arrays. The other functions require
+    behaved memory segments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to cast from the current type to all of the other
+    builtin types. Each function casts a contiguous, aligned, and notswapped buffer
+    pointed at by *from* to a contiguous, aligned, and notswapped buffer pointed at
+    by *to* The number of items to cast is given by *n*, and the arguments *fromarr*
+    and *toarr* are interpreted as PyArrayObjects for flexible arrays to get itemsize
+    information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that returns a standard Python object from a single
+    element of the array object *arr* pointed to by *data*. This function must be
+    able to deal with “misbehaved “(misaligned and/or swapped) arrays correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that sets the Python object *item* into the array, *arr*,
+    at the position pointed to by *data* . This function deals with “misbehaved” arrays.
+    If successful, a zero is returned, otherwise, a negative one is returned (and
+    a Python error set).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: These members are both pointers to functions to copy data from *src* to *dest*
+    and *swap* if indicated. The value of arr is only used for flexible ( [`NPY_STRING`](dtype.html#c.NPY_TYPES.NPY_STRING
+    "NPY_STRING"), [`NPY_UNICODE`](dtype.html#c.NPY_TYPES.NPY_UNICODE "NPY_UNICODE"),
+    and [`NPY_VOID`](dtype.html#c.NPY_TYPES.NPY_VOID "NPY_VOID") ) arrays (and is
+    obtained from `arr->descr->elsize` ). The second function copies a single value,
+    while the first loops over n values with the provided strides. These functions
+    can deal with misbehaved *src* data. If *src* is NULL then no copy is performed.
+    If *swap* is 0, then no byteswapping occurs. It is assumed that *dest* and *src*
+    do not overlap. If they overlap, then use `memmove` (…) first followed by `copyswap(n)`
+    with NULL valued `src`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that compares two elements of the array, `arr`, pointed
+    to by `d1` and `d2`. This function requires behaved (aligned and not swapped)
+    arrays. The return value is 1 if * `d1` > * `d2`, 0 if * `d1` == * `d2`, and -1
+    if * `d1` < * `d2`. The array object `arr` is used to retrieve itemsize and field
+    information for flexible arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that retrieves the index of the largest of `n` elements
+    in `arr` beginning at the element pointed to by `data`. This function requires
+    that the memory segment be contiguous and behaved. The return value is always
+    0\. The index of the largest element is returned in `max_ind`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that multiplies two `n` -length sequences together,
+    adds them, and places the result in element pointed to by `op` of `arr`. The start
+    of the two sequences are pointed to by `ip1` and `ip2`. To get to the next element
+    in each sequence requires a jump of `is1` and `is2` *bytes*, respectively. This
+    function requires behaved (though not necessarily contiguous) memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that scans (scanf style) one element of the corresponding
+    type from the file descriptor `fd` into the array memory pointed to by `ip`. The
+    array is assumed to be behaved. The last argument `arr` is the array to be scanned
+    into. Returns number of receiving arguments successfully assigned (which may be
+    zero in case a matching failure occurred before the first receiving argument was
+    assigned), or EOF if input failure occurs before the first receiving argument
+    was assigned. This function should be called without holding the Python GIL, and
+    has to grab it for error reporting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that converts the string pointed to by `str` to one
+    element of the corresponding type and places it in the memory location pointed
+    to by `ip`. After the conversion is completed, `*endptr` points to the rest of
+    the string. The last argument `arr` is the array into which ip points (needed
+    for variable-size data- types). Returns 0 on success or -1 on failure. Requires
+    a behaved array. This function should be called without holding the Python GIL,
+    and has to grab it for error reporting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that returns TRUE if the item of `arr` pointed to by
+    `data` is nonzero. This function can deal with misbehaved arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that fills a contiguous array of given length with data.
+    The first two elements of the array must already be filled- in. From these two
+    values, a delta will be computed and the values from item 3 to the end will be
+    computed by repeatedly adding this computed delta. The data buffer must be well-behaved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that fills a contiguous `buffer` of the given `length`
+    with a single scalar `value` whose address is given. The final argument is the
+    array which is needed to get the itemsize for variable-length arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to a particular sorting algorithms. A particular
+    sorting algorithm is obtained using a key (so far [`NPY_QUICKSORT`](array.html#c.NPY_SORTKIND.NPY_QUICKSORT
+    "NPY_QUICKSORT"), [`NPY_HEAPSORT`](array.html#c.NPY_SORTKIND.NPY_HEAPSORT "NPY_HEAPSORT"),
+    and [`NPY_MERGESORT`](array.html#c.NPY_SORTKIND.NPY_MERGESORT "NPY_MERGESORT")
+    are defined). These sorts are done in-place assuming contiguous and aligned data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to sorting algorithms for this data type. The
+    same sorting algorithms as for sort are available. The indices producing the sort
+    are returned in `result` (which must be initialized with indices 0 to `length-1`
+    inclusive).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or a dictionary containing low-level casting functions for user-
+    defined data-types. Each function is wrapped in a [PyCapsule](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(in Python v3.11)")* and keyed by the data-type number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: A function to determine how scalars of this type should be interpreted. The
+    argument is `NULL` or a 0-dimensional array containing the data (if that is needed
+    to determine the kind of scalar). The return value must be of type [`NPY_SCALARKIND`](array.html#c.NPY_SCALARKIND
+    "NPY_SCALARKIND").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or an array of [`NPY_NSCALARKINDS`](array.html#c.NPY_SCALARKIND.NPY_NSCALARKINDS
+    "NPY_NSCALARKINDS") pointers. These pointers should each be either `NULL` or a
+    pointer to an array of integers (terminated by [`NPY_NOTYPE`](dtype.html#c.NPY_NOTYPE
+    "NPY_NOTYPE")) indicating data-types that a scalar of this data-type of the specified
+    kind can be cast to safely (this usually means without losing precision).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or an array of integers (terminated by [`NPY_NOTYPE`](dtype.html#c.NPY_NOTYPE
+    "NPY_NOTYPE") ) indicated data-types that this data-type can be cast to safely
+    (this usually means without losing precision).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.17: The use of this function will give a deprecation
+    warning when `np.clip`. Instead of this function, the datatype must instead use
+    `PyUFunc_RegisterLoopForDescr` to attach a custom loop to `np.core.umath.clip`,
+    `np.minimum`, and `np.maximum`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that reads `n_in` items from `in`, and writes to `out` the read value
+    if it is within the limits pointed to by `min` and `max`, or the corresponding
+    limit if outside. The memory segments must be contiguous and behaved, and either
+    `min` or `max` may be `NULL`, but not both.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that takes a pointer `in` to an array of `n_in` items, a pointer
+    `mask` to an array of `n_in` boolean values, and a pointer `vals` to an array
+    of `nv` items. Items from `vals` are copied into `in` wherever the value in `mask`
+    is non-zero, tiling `vals` as needed if `nv < n_in`. All arrays must be contiguous
+    and behaved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that takes a pointer `src` to a C contiguous, behaved segment, interpreted
+    as a 3-dimensional array of shape `(n_outer, nindarray, nelem)`, a pointer `indarray`
+    to a contiguous, behaved segment of `m_middle` integer indices, and a pointer
+    `dest` to a C contiguous, behaved segment, interpreted as a 3-dimensional array
+    of shape `(n_outer, m_middle, nelem)`. The indices in `indarray` are used to index
+    `src` along the second dimension, and copy the corresponding chunks of `nelem`
+    items into `dest`. `clipmode` (which can take on the values [`NPY_RAISE`](array.html#c.NPY_CLIPMODE.NPY_RAISE
+    "NPY_RAISE"), [`NPY_WRAP`](array.html#c.NPY_CLIPMODE.NPY_WRAP "NPY_WRAP") or [`NPY_CLIP`](array.html#c.NPY_CLIPMODE.NPY_CLIP
+    "NPY_CLIP")) determines how will indices smaller than 0 or larger than `nindarray`
+    will be handled.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that retrieves the index of the smallest of `n` elements
+    in `arr` beginning at the element pointed to by `data`. This function requires
+    that the memory segment be contiguous and behaved. The return value is always
+    0\. The index of the smallest element is returned in `min_ind`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`PyArray_Type`](#c.PyArray_Type "PyArray_Type") typeobject implements many
+    of the features of [`Python objects`](https://docs.python.org/3/c-api/type.html#c.PyTypeObject
+    "(in Python v3.11)") including the [`tp_as_number`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_number
+    "(in Python v3.11)"), [`tp_as_sequence`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_sequence
+    "(in Python v3.11)"), [`tp_as_mapping`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_mapping
+    "(in Python v3.11)"), and [`tp_as_buffer`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_buffer
+    "(in Python v3.11)") interfaces. The [`rich comparison`](https://docs.python.org/3/c-api/typeobj.html#c.richcmpfunc
+    "(in Python v3.11)")) is also used along with new-style attribute lookup for member
+    ([`tp_members`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_members
+    "(in Python v3.11)")) and properties ([`tp_getset`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_getset
+    "(in Python v3.11)")). The [`PyArray_Type`](#c.PyArray_Type "PyArray_Type") can
+    also be sub-typed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `tp_as_number` methods use a generic approach to call whatever function
+    has been registered for handling the operation. When the `_multiarray_umath module`
+    is imported, it sets the numeric operations for all arrays to the corresponding
+    ufuncs. This choice can be changed with [`PyUFunc_ReplaceLoopBySignature`](ufunc.html#c.PyUFunc_ReplaceLoopBySignature
+    "PyUFunc_ReplaceLoopBySignature") The `tp_str` and `tp_repr` methods can also
+    be altered using [`PyArray_SetStringFunction`](array.html#c.PyArray_SetStringFunction
+    "PyArray_SetStringFunction").
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyUFunc_Type and PyUFuncObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: The ufunc object is implemented by creation of the [`PyUFunc_Type`](#c.PyUFunc_Type
+    "PyUFunc_Type"). It is a very simple type that implements only basic getattribute
+    behavior, printing behavior, and has call behavior which allows these objects
+    to act like functions. The basic idea behind the ufunc is to hold a reference
+    to fast 1-dimensional (vector) loops for each data type that supports the operation.
+    These one-dimensional loops all have the same signature and are the key to creating
+    a new ufunc. They are called by the generic looping code as appropriate to implement
+    the N-dimensional function. There are also some generic 1-d loops defined for
+    floating and complexfloating arrays that allow you to define a ufunc using a single
+    scalar function (*e.g.* atanh).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The core of the ufunc is the [`PyUFuncObject`](#c.PyUFuncObject "PyUFuncObject")
+    which contains all the information needed to call the underlying C-code loops
+    that perform the actual work. While it is described here for completeness, it
+    should be considered internal to NumPy and manipulated via `PyUFunc_*` functions.
+    The size of this structure is subject to change across versions of NumPy. To ensure
+    compatibility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Never declare a non-pointer instance of the struct
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never perform pointer arithmetic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never use `sizeof(PyUFuncObject)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'It has the following structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of input arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of output arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total number of arguments (*nin* + *nout*). This must be less than [`NPY_MAXARGS`](array.html#c.NPY_MAXARGS
+    "NPY_MAXARGS").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either [`PyUFunc_One`](ufunc.html#c.PyUFunc_One "PyUFunc_One"), [`PyUFunc_Zero`](ufunc.html#c.PyUFunc_Zero
+    "PyUFunc_Zero"), [`PyUFunc_MinusOne`](ufunc.html#c.PyUFunc_MinusOne "PyUFunc_MinusOne"),
+    [`PyUFunc_None`](ufunc.html#c.PyUFunc_None "PyUFunc_None"), [`PyUFunc_ReorderableNone`](ufunc.html#c.PyUFunc_ReorderableNone
+    "PyUFunc_ReorderableNone"), or [`PyUFunc_IdentityValue`](ufunc.html#c.PyUFunc_IdentityValue
+    "PyUFunc_IdentityValue") to indicate the identity for this operation. It is only
+    used for a reduce-like call on an empty array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers — one for each data type supported by the ufunc.
+    This is the vector loop that is called to implement the underlying function *dims*
+    [0] times. The first argument, *args*, is an array of *nargs* pointers to behaved
+    memory. Pointers to the data for the input arguments are first, followed by the
+    pointers to the data for the output arguments. How many bytes must be skipped
+    to get to the next element in the sequence is specified by the corresponding entry
+    in the *steps* array. The last argument allows the loop to receive extra information.
+    This is commonly used so that a single, generic vector loop can be used for multiple
+    functions. In this case, the actual scalar function to call is passed in as *extradata*.
+    The size of this function pointer array is ntypes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extra data to be passed to the 1-d vector loops or `NULL` if no extra-data is
+    needed. This C-array must be the same size ( *i.e.* ntypes) as the functions array.
+    `NULL` is used if extra_data is not needed. Several C-API calls for UFuncs are
+    just 1-d vector loops that make use of this extra data to receive a pointer to
+    the actual function to call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of supported data types for the ufunc. This number specifies how
+    many different 1-d loops (of the builtin data types) are available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: Unused.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: A string name for the ufunc. This is used dynamically to build the __doc__ attribute
+    of ufuncs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of \(nargs \times ntypes\) 8-bit type_numbers which contains the type
+    signature for the function for each of the supported (builtin) data types. For
+    each of the *ntypes* functions, the corresponding set of type numbers in this
+    array shows how the *args* argument should be interpreted in the 1-d vector loop.
+    These type numbers do not have to be the same type and mixed-type ufuncs are supported.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: Documentation for the ufunc. Should not contain the function signature as this
+    is generated dynamically when __doc__ is retrieved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any dynamically allocated memory. Currently, this is used for dynamic ufuncs
+    created from a python function to store room for the types, data, and name members.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: For ufuncs dynamically created from python functions, this member holds a reference
+    to the underlying Python function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: A dictionary of user-defined 1-d vector loops (stored as CObject ptrs) for user-defined
+    types. A loop may be registered by the user for any user-defined type. It is retrieved
+    by type number. User defined type numbers are always larger than [`NPY_USERDEF`](dtype.html#c.NPY_USERDEF
+    "NPY_USERDEF").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: 0 for scalar ufuncs; 1 for generalized ufuncs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: Number of distinct core dimension names in the signature
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: Number of core dimensions of each argument
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Dimension indices in a flattened form; indices of argument `k` are stored in
+    `core_dim_ixs[core_offsets[k] : core_offsets[k] + core_numdims[k]]`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: Position of 1st core dimension of each argument in `core_dim_ixs`, equivalent
+    to cumsum(`core_num_dims`)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: Core signature string
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: A function which resolves the types and fills an array with the dtypes for the
+    inputs and outputs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.22: Some fallback support for this slot exists,
+    but will be removed eventually. A universal function that relied on this will
+    have to be ported eventually. See [NEP 41](https://numpy.org/neps/nep-0041-improved-dtype-support.html#nep41
+    "(in NumPy Enhancement Proposals)") and [NEP 43](https://numpy.org/neps/nep-0043-extensible-ufuncs.html#nep43
+    "(in NumPy Enhancement Proposals)")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: For a possible future loop selector with a different signature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: Override the default operand flags for each ufunc operand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: Override the default nditer flags for the ufunc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Added in API version 0x0000000D
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: For each distinct core dimension, the possible [frozen](generalized-ufuncs.html#frozen)
+    size if [`UFUNC_CORE_DIM_SIZE_INFERRED`](#c.UFUNC_CORE_DIM_SIZE_INFERRED "UFUNC_CORE_DIM_SIZE_INFERRED")
+    is `0`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: For each distinct core dimension, a set of flags ( [`UFUNC_CORE_DIM_CAN_IGNORE`](#c.UFUNC_CORE_DIM_CAN_IGNORE
+    "UFUNC_CORE_DIM_CAN_IGNORE") and [`UFUNC_CORE_DIM_SIZE_INFERRED`](#c.UFUNC_CORE_DIM_SIZE_INFERRED
+    "UFUNC_CORE_DIM_SIZE_INFERRED"))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: Identity for reduction, when [`PyUFuncObject.identity`](#c.PyUFuncObject.identity
+    "PyUFuncObject.identity") is equal to [`PyUFunc_IdentityValue`](ufunc.html#c.PyUFunc_IdentityValue
+    "PyUFunc_IdentityValue").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: if the dim name ends in `?`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: if the dim size will be determined from the operands and not from a [frozen](generalized-ufuncs.html#frozen)
+    signature
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayIter_Type and PyArrayIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is an iterator object that makes it easy to loop over an N-dimensional
+    array. It is the object returned from the flat attribute of an ndarray. It is
+    also used extensively throughout the implementation internals to loop over an
+    N-dimensional array. The tp_as_mapping interface is implemented so that the iterator
+    object can be indexed (using 1-d indexing), and a few methods are implemented
+    through the tp_methods table. This object implements the next method and can be
+    used anywhere an iterator can be used in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The C-structure corresponding to an object of [`PyArrayIter_Type`](#c.PyArrayIter_Type
+    "PyArrayIter_Type") is the [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject").
+    The [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject") is used to
+    keep track of a pointer into an N-dimensional array. It contains associated information
+    used to quickly march through the array. The pointer can be adjusted in three
+    basic ways: 1) advance to the “next” position in the array in a C-style contiguous
+    fashion, 2) advance to an arbitrary N-dimensional coordinate in the array, and
+    3) advance to an arbitrary one-dimensional index into the array. The members of
+    the [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject") structure
+    are used in these calculations. Iterator objects keep their own dimension and
+    strides information about an array. This can be adjusted as needed for “broadcasting,”
+    or to loop over only specific dimensions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: \(N-1\) where \(N\) is the number of dimensions in the underlying array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: The current 1-d index into the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total size of the underlying array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: An \(N\) -dimensional index into the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: The size of the array minus 1 in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: The strides of the array. How many bytes needed to jump to the next element
+    in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: How many bytes needed to jump from the end of a dimension back to its beginning.
+    Note that `backstrides[k] == strides[k] * dims_m1[k]`, but it is stored here as
+    an optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: This array is used in computing an N-d index from a 1-d index. It contains needed
+    products of the dimensions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to the underlying ndarray this iterator was created to represent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: This member points to an element in the ndarray indicated by the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: This flag is true if the underlying array is [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"). It is used to simplify calculations when possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use an array iterator on a C-level is explained more fully in later sections.
+    Typically, you do not need to concern yourself with the internal structure of
+    the iterator object, and merely interact with it through the use of the macros
+    [`PyArray_ITER_NEXT`](array.html#c.PyArray_ITER_NEXT "PyArray_ITER_NEXT") (it),
+    [`PyArray_ITER_GOTO`](array.html#c.PyArray_ITER_GOTO "PyArray_ITER_GOTO") (it,
+    dest), or [`PyArray_ITER_GOTO1D`](array.html#c.PyArray_ITER_GOTO1D "PyArray_ITER_GOTO1D")
+    (it, index). All of these macros require the argument *it* to be a [PyArrayIterObject](#c.PyArrayIterObject
+    "PyArrayIterObject")*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayMultiIter_Type and PyArrayMultiIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: This type provides an iterator that encapsulates the concept of broadcasting.
+    It allows \(N\) arrays to be broadcast together so that the loop progresses in
+    C-style contiguous fashion over the broadcasted array. The corresponding C-structure
+    is the [`PyArrayMultiIterObject`](#c.PyArrayMultiIterObject "PyArrayMultiIterObject")
+    whose memory layout must begin any object, *obj*, passed in to the [`PyArray_Broadcast`](array.html#c.PyArray_Broadcast
+    "PyArray_Broadcast") (obj) function. Broadcasting is performed by adjusting array
+    iterators so that each iterator represents the broadcasted shape and size, but
+    has its strides adjusted so that the correct element from the array is used at
+    each iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of arrays that need to be broadcast to the same shape.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total broadcasted size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: The current (1-d) index into the broadcasted result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of dimensions in the broadcasted result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: The shape of the broadcasted result (only `nd` slots are used).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of iterator objects that holds the iterators for the arrays to be broadcast
+    together. On return, the iterators are adjusted for broadcasting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is an iterator object that makes it easy to loop over an N-dimensional
+    neighborhood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: The C-structure corresponding to an object of [`PyArrayNeighborhoodIter_Type`](#c.PyArrayNeighborhoodIter_Type
+    "PyArrayNeighborhoodIter_Type") is the [`PyArrayNeighborhoodIterObject`](#c.PyArrayNeighborhoodIterObject
+    "PyArrayNeighborhoodIterObject").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: PyArrayFlags_Type and PyArrayFlagsObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: When the flags attribute is retrieved from Python, a special builtin object
+    of this type is constructed. This special type makes it easier to work with the
+    different flags by accessing them as attributes or by accessing them as if the
+    object were a dictionary with the flag names as entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: ScalarArrayTypes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There is a Python type for each of the different built-in data types that can
+    be present in the array. Most of these are simple wrappers around the corresponding
+    data type in C. The C-names for these types are `Py{TYPE}ArrType_Type` where `{TYPE}`
+    can be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**, **UByte**,
+    **UShort**, **UInt**, **ULong**, **ULongLong**, **Half**, **Float**, **Double**,
+    **LongDouble**, **CFloat**, **CDouble**, **CLongDouble**, **String**, **Unicode**,
+    **Void**, and **Object**.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: These type names are part of the C-API and can therefore be created in extension
+    C-code. There is also a `PyIntpArrType_Type` and a `PyUIntpArrType_Type` that
+    are simple substitutes for one of the integer types that can hold a pointer on
+    the platform. The structure of these scalar objects is not exposed to C-code.
+    The function [`PyArray_ScalarAsCtype`](array.html#c.PyArray_ScalarAsCtype "PyArray_ScalarAsCtype")
+    (..) can be used to extract the C-type value from the array scalar and the function
+    [`PyArray_Scalar`](array.html#c.PyArray_Scalar "PyArray_Scalar") (…) can be used
+    to construct an array scalar from a C-value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other C-Structures
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A few new C-structures were found to be useful in the development of NumPy.
+    These C-structures are used in at least one C-API call and are therefore documented
+    here. The main reason these structures were defined is to make it easy to use
+    the Python ParseTuple C-API to convert from Python objects to a useful C-Object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Dims
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This structure is very useful when shape and/or strides information is supposed
+    to be interpreted. The structure is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: The members of this structure are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a list of ([`npy_intp`](dtype.html#c.npy_intp "npy_intp")) integers
+    which usually represent array shape or array strides.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: The length of the list of integers. It is assumed safe to access *ptr* [0] to
+    *ptr* [len-1].
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Chunk
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is equivalent to the buffer object structure in Python up to the ptr member.
+    On 32-bit platforms (*i.e.* if [`NPY_SIZEOF_INT`](config.html#c.NPY_SIZEOF_INT
+    "NPY_SIZEOF_INT") == [`NPY_SIZEOF_INTP`](config.html#c.NPY_SIZEOF_INTP "NPY_SIZEOF_INTP")),
+    the len member also matches an equivalent member of the buffer object. It is useful
+    to represent a generic single-segment chunk of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: The members are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Python object this chunk of memory comes from. Needed so that memory can
+    be accounted for properly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to the start of the single-segment chunk of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: The length of the segment in bytes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any data flags (*e.g.* [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE
+    "NPY_ARRAY_WRITEABLE") ) that should be used to interpret the memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayInterface
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The array interface protocol](../arrays.interface.html#arrays-interface)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayInterface`](#c.PyArrayInterface "PyArrayInterface") structure is
+    defined so that NumPy and other extension modules can use the rapid array interface
+    protocol. The [`__array_struct__`](../arrays.interface.html#object.__array_struct__
+    "object.__array_struct__") method of an object that supports the rapid array interface
+    protocol should return a [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(in Python v3.11)") that contains a pointer to a [`PyArrayInterface`](#c.PyArrayInterface
+    "PyArrayInterface") structure with the relevant details of the array. After the
+    new array is created, the attribute should be `DECREF`’d which will free the [`PyArrayInterface`](#c.PyArrayInterface
+    "PyArrayInterface") structure. Remember to `INCREF` the object (whose [`__array_struct__`](../arrays.interface.html#object.__array_struct__
+    "object.__array_struct__") attribute was retrieved) and point the base member
+    of the new [`PyArrayObject`](#c.PyArrayObject "PyArrayObject") to this same object.
+    In this way the memory for the array will be managed correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: the integer 2 as a sanity check.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: the number of dimensions in the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: A character indicating what kind of array is present according to the typestring
+    convention with ‘t’ -> bitfield, ‘b’ -> Boolean, ‘i’ -> signed integer, ‘u’ ->
+    unsigned integer, ‘f’ -> floating point, ‘c’ -> complex floating point, ‘O’ ->
+    object, ‘S’ -> (byte-)string, ‘U’ -> unicode, ‘V’ -> void.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of bytes each item in the array requires.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any of the bits [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS") (1), [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS") (2), [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED
+    "NPY_ARRAY_ALIGNED") (0x100), [`NPY_ARRAY_NOTSWAPPED`](array.html#c.NPY_ARRAY_NOTSWAPPED
+    "NPY_ARRAY_NOTSWAPPED") (0x200), or [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE
+    "NPY_ARRAY_WRITEABLE") (0x400) to indicate something about the data. The [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED
+    "NPY_ARRAY_ALIGNED"), [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"), and [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS") flags can actually be determined from the other parameters.
+    The flag [`NPY_ARR_HAS_DESCR`](../arrays.interface.html#c.NPY_ARR_HAS_DESCR "NPY_ARR_HAS_DESCR")
+    (0x800) can also be set to indicate to objects consuming the version 3 array interface
+    that the descr member of the structure is present (it will be ignored by objects
+    consuming version 2 of the array interface).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array containing the size of the array in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array containing the number of bytes to jump to get to the next element in
+    each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE155]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer *to* the first element of the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: A Python object describing the data-type in more detail (same as the *descr*
+    key in [`__array_interface__`](../arrays.interface.html#object.__array_interface__
+    "object.__array_interface__")). This can be `NULL` if *typekind* and *itemsize*
+    provide enough information. This field is also ignored unless [`NPY_ARR_HAS_DESCR`](../arrays.interface.html#c.NPY_ARR_HAS_DESCR
+    "NPY_ARR_HAS_DESCR") flag is on in *flags*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Internally used structures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Internally, the code uses some additional Python objects primarily for memory
+    management. These types are not accessible directly from Python, and are not exposed
+    to the C-API. They are included here only for completeness and assistance in understanding
+    the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: A simple linked-list of C-structures containing the information needed to define
+    a 1-d loop for a ufunc for every defined signature of a user-defined data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: Advanced indexing is handled with this Python type. It is simply a loose wrapper
+    around the C-structure containing the variables needed for advanced array indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: The C-structure associated with [`PyArrayMapIter_Type`](#c.PyArrayMapIter_Type
+    "PyArrayMapIter_Type"). This structure is useful if you are trying to understand
+    the advanced-index mapping code. It is defined in the `arrayobject.h` header.
+    This type is not exposed to Python and could be replaced with a C-structure. As
+    a Python type it takes advantage of reference- counted memory management.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New Python Types Defined
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Python types are the functional equivalent in C of classes in Python. By constructing
+    a new Python type you make available a new object for Python. The ndarray object
+    is an example of a new type defined in C. New types are defined in C by two basic
+    steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: creating a C-structure (usually named `Py{Name}Object`) that is binary- compatible
+    with the [`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(in Python v3.11)") structure itself but holds the additional information needed
+    for that particular object;
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: populating the [`PyTypeObject`](https://docs.python.org/3/c-api/type.html#c.PyTypeObject
+    "(in Python v3.11)") table (pointed to by the ob_type member of the [`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(in Python v3.11)") structure) with pointers to functions that implement the
+    desired behavior for the type.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Instead of special method names which define behavior for Python classes, there
+    are “function tables” which point to functions that implement the desired results.
+    Since Python 2.2, the PyTypeObject itself has become dynamic which allows C types
+    that can be “sub-typed “from other C-types in C, and sub-classed in Python. The
+    children types inherit the attributes and methods from their parent(s).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two major new types: the ndarray ( [`PyArray_Type`](#c.PyArray_Type
+    "PyArray_Type") ) and the ufunc ( [`PyUFunc_Type`](#c.PyUFunc_Type "PyUFunc_Type")
+    ). Additional types play a supportive role: the [`PyArrayIter_Type`](#c.PyArrayIter_Type
+    "PyArrayIter_Type"), the [`PyArrayMultiIter_Type`](#c.PyArrayMultiIter_Type "PyArrayMultiIter_Type"),
+    and the [`PyArrayDescr_Type`](#c.PyArrayDescr_Type "PyArrayDescr_Type") . The
+    [`PyArrayIter_Type`](#c.PyArrayIter_Type "PyArrayIter_Type") is the type for a
+    flat iterator for an ndarray (the object that is returned when getting the flat
+    attribute). The [`PyArrayMultiIter_Type`](#c.PyArrayMultiIter_Type "PyArrayMultiIter_Type")
+    is the type of the object returned when calling `broadcast` (). It handles iteration
+    and broadcasting over a collection of nested sequences. Also, the [`PyArrayDescr_Type`](#c.PyArrayDescr_Type
+    "PyArrayDescr_Type") is the data-type-descriptor type whose instances describe
+    the data. Finally, there are 21 new scalar-array types which are new Python scalars
+    corresponding to each of the fundamental data types available for arrays. An additional
+    10 other types are place holders that allow the array scalars to fit into a hierarchy
+    of actual Python types.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Type and PyArrayObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE160]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Python type of the ndarray is [`PyArray_Type`](#c.PyArray_Type "PyArray_Type").
+    In C, every ndarray is a pointer to a [`PyArrayObject`](#c.PyArrayObject "PyArrayObject")
+    structure. The ob_type member of this structure contains a pointer to the [`PyArray_Type`](#c.PyArray_Type
+    "PyArray_Type") typeobject.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE161]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE162]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayObject`](#c.PyArrayObject "PyArrayObject") C-structure contains
+    all of the required information for an array. All instances of an ndarray (and
+    its subclasses) will have this structure. For future compatibility, these structure
+    members should normally be accessed using the provided macros. If you need a shorter
+    name, then you can make use of [`NPY_AO`](#c.NPY_AO "NPY_AO") (deprecated) which
+    is defined to be equivalent to [`PyArrayObject`](#c.PyArrayObject "PyArrayObject").
+    Direct access to the struct fields are deprecated. Use the `PyArray_*(arr)` form
+    instead. As of NumPy 1.20, the size of this struct is not considered part of the
+    NumPy ABI (see note at the end of the member list).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE163]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE164]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is needed by all Python objects. It consists of (at least) a reference
+    count member ( `ob_refcnt` ) and a pointer to the typeobject ( `ob_type` ). (Other
+    elements may also be present if Python was compiled with special options see Include/object.h
+    in the Python source tree for more information). The ob_type member points to
+    a Python type object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE165]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accessible via [`PyArray_DATA`](array.html#c.PyArray_DATA "PyArray_DATA"), this
+    data member is a pointer to the first element of the array. This pointer can (and
+    normally should) be recast to the data type of the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE166]'
+  prefs: []
+  type: TYPE_PRE
+- en: An integer providing the number of dimensions for this array. When nd is 0,
+    the array is sometimes called a rank-0 array. Such arrays have undefined dimensions
+    and strides and cannot be accessed. Macro [`PyArray_NDIM`](array.html#c.PyArray_NDIM
+    "PyArray_NDIM") defined in `ndarraytypes.h` points to this data member. [`NPY_MAXDIMS`](array.html#c.NPY_MAXDIMS
+    "NPY_MAXDIMS") is the largest number of dimensions for any array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE167]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of integers providing the shape in each dimension as long as nd \(\geq\)
+    1\. The integer is always large enough to hold a pointer on the platform, so the
+    dimension size is only limited by memory. [`PyArray_DIMS`](array.html#c.PyArray_DIMS
+    "PyArray_DIMS") is the macro associated with this data member.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE168]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of integers providing for each dimension the number of bytes that must
+    be skipped to get to the next element in that dimension. Associated with macro
+    [`PyArray_STRIDES`](array.html#c.PyArray_STRIDES "PyArray_STRIDES").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE169]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Pointed to by [`PyArray_BASE`](array.html#c.PyArray_BASE "PyArray_BASE"), this
+    member is used to hold a pointer to another Python object that is related to this
+    array. There are two use cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If this array does not own its own memory, then base points to the Python object
+    that owns it (perhaps another array object)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If this array has the [`NPY_ARRAY_WRITEBACKIFCOPY`](array.html#c.NPY_ARRAY_WRITEBACKIFCOPY
+    "NPY_ARRAY_WRITEBACKIFCOPY") flag set, then this array is a working copy of a
+    “misbehaved” array.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When `PyArray_ResolveWritebackIfCopy` is called, the array pointed to by base
+    will be updated with the contents of this array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE170]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a data-type descriptor object (see below). The data-type descriptor
+    object is an instance of a new built-in type which allows a generic description
+    of memory. There is a descriptor structure for each data type supported. This
+    descriptor structure contains useful information about the type as well as a pointer
+    to a table of function pointers to implement specific functionality. As the name
+    suggests, it is associated with the macro [`PyArray_DESCR`](array.html#c.PyArray_DESCR
+    "PyArray_DESCR").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE171]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pointed to by the macro [`PyArray_FLAGS`](array.html#c.PyArray_FLAGS "PyArray_FLAGS"),
+    this data member represents the flags indicating how the memory pointed to by
+    data is to be interpreted. Possible flags are [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"), [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS"), [`NPY_ARRAY_OWNDATA`](array.html#c.NPY_ARRAY_OWNDATA
+    "NPY_ARRAY_OWNDATA"), [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED "NPY_ARRAY_ALIGNED"),
+    [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE "NPY_ARRAY_WRITEABLE"),
+    [`NPY_ARRAY_WRITEBACKIFCOPY`](array.html#c.NPY_ARRAY_WRITEBACKIFCOPY "NPY_ARRAY_WRITEBACKIFCOPY").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE172]'
+  prefs: []
+  type: TYPE_PRE
+- en: This member allows array objects to have weak references (using the weakref
+    module).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Further members are considered private and version dependent. If the size of
+    the struct is important for your code, special care must be taken. A possible
+    use-case when this is relevant is subclassing in C. If your code relies on `sizeof(PyArrayObject)`
+    to be constant, you must add the following check at import time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE173]'
+  prefs: []
+  type: TYPE_PRE
+- en: To ensure that your code does not have to be compiled for a specific NumPy version,
+    you may add a constant, leaving room for changes in NumPy. A solution guaranteed
+    to be compatible with any future NumPy version requires the use of a runtime calculate
+    offset and allocation size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayDescr_Type and PyArray_Descr
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE174]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayDescr_Type`](#c.PyArrayDescr_Type "PyArrayDescr_Type") is the built-in
+    type of the data-type-descriptor objects used to describe how the bytes comprising
+    the array are to be interpreted. There are 21 statically-defined [`PyArray_Descr`](#c.PyArray_Descr
+    "PyArray_Descr") objects for the built-in data-types. While these participate
+    in reference counting, their reference count should never reach zero. There is
+    also a dynamic table of user-defined [`PyArray_Descr`](#c.PyArray_Descr "PyArray_Descr")
+    objects that is also maintained. Once a data-type-descriptor object is “registered”
+    it should never be deallocated either. The function [`PyArray_DescrFromType`](array.html#c.PyArray_DescrFromType
+    "PyArray_DescrFromType") (…) can be used to retrieve a [`PyArray_Descr`](#c.PyArray_Descr
+    "PyArray_Descr") object from an enumerated type-number (either built-in or user-
+    defined).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE175]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`PyArray_Descr`](#c.PyArray_Descr "PyArray_Descr") structure lies at the
+    heart of the [`PyArrayDescr_Type`](#c.PyArrayDescr_Type "PyArrayDescr_Type").
+    While it is described here for completeness, it should be considered internal
+    to NumPy and manipulated via `PyArrayDescr_*` or `PyDataType*` functions and macros.
+    The size of this structure is subject to change across versions of NumPy. To ensure
+    compatibility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Never declare a non-pointer instance of the struct
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never perform pointer arithmetic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never use `sizeof(PyArray_Descr)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'It has the following structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE176]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE177]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pointer to a typeobject that is the corresponding Python type for the elements
+    of this array. For the builtin types, this points to the corresponding array scalar.
+    For user-defined types, this should point to a user-defined typeobject. This typeobject
+    can either inherit from array scalars or not. If it does not inherit from array
+    scalars, then the [`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM") and
+    [`NPY_USE_SETITEM`](#c.NPY_USE_SETITEM "NPY_USE_SETITEM") flags should be set
+    in the `flags` member.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE178]'
+  prefs: []
+  type: TYPE_PRE
+- en: A character code indicating the kind of array (using the array interface typestring
+    notation). A ‘b’ represents Boolean, a ‘i’ represents signed integer, a ‘u’ represents
+    unsigned integer, ‘f’ represents floating point, ‘c’ represents complex floating
+    point, ‘S’ represents 8-bit zero-terminated bytes, ‘U’ represents 32-bit/character
+    unicode string, and ‘V’ represents arbitrary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE179]'
+  prefs: []
+  type: TYPE_PRE
+- en: A traditional character code indicating the data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE180]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A character indicating the byte-order: ‘>’ (big-endian), ‘<’ (little- endian),
+    ‘=’ (native), ‘|’ (irrelevant, ignore). All builtin data- types have byteorder
+    ‘=’.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE181]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A data-type bit-flag that determines if the data-type exhibits object- array
+    like behavior. Each bit in this member is a flag which are named as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_HASOBJECT`](#c.NPY_ITEM_HASOBJECT "NPY_ITEM_HASOBJECT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE "NPY_LIST_PICKLE")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_IS_POINTER`](#c.NPY_ITEM_IS_POINTER "NPY_ITEM_IS_POINTER")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_USE_SETITEM`](#c.NPY_USE_SETITEM "NPY_USE_SETITEM")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_FROM_FIELDS`](#c.NPY_FROM_FIELDS "NPY_FROM_FIELDS")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_OBJECT_DTYPE_FLAGS`](#c.NPY_OBJECT_DTYPE_FLAGS "NPY_OBJECT_DTYPE_FLAGS")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE182]'
+  prefs: []
+  type: TYPE_PRE
+- en: A number that uniquely identifies the data type. For new data-types, this number
+    is assigned when the data-type is registered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE183]'
+  prefs: []
+  type: TYPE_PRE
+- en: For data types that are always the same size (such as long), this holds the
+    size of the data type. For flexible data types where different arrays can have
+    a different elementsize, this should be 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE184]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A number providing alignment information for this data type. Specifically,
+    it shows how far from the start of a 2-element structure (whose first element
+    is a `char` ), the compiler places an item of this type: `offsetof(struct {char
+    c; type v;}, v)`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE185]'
+  prefs: []
+  type: TYPE_PRE
+- en: If this is non- `NULL`, then this data-type descriptor is a C-style contiguous
+    array of another data-type descriptor. In other-words, each element that this
+    descriptor describes is actually an array of some other base descriptor. This
+    is most useful as the data-type descriptor for a field in another data-type descriptor.
+    The fields member should be `NULL` if this is non- `NULL` (the fields member of
+    the base descriptor can be non- `NULL` however).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE186]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE187]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE188]'
+  prefs: []
+  type: TYPE_PRE
+- en: The data-type-descriptor object of the base-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE189]'
+  prefs: []
+  type: TYPE_PRE
+- en: The shape (always C-style contiguous) of the sub-array as a Python tuple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE190]'
+  prefs: []
+  type: TYPE_PRE
+- en: If this is non-NULL, then this data-type-descriptor has fields described by
+    a Python dictionary whose keys are names (and also titles if given) and whose
+    values are tuples that describe the fields. Recall that a data-type-descriptor
+    always describes a fixed-length set of bytes. A field is a named sub-region of
+    that total, fixed-length collection. A field is described by a tuple composed
+    of another data- type-descriptor and a byte offset. Optionally, the tuple may
+    contain a title which is normally a Python string. These tuples are placed in
+    this dictionary keyed by name (and also title if given).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE191]'
+  prefs: []
+  type: TYPE_PRE
+- en: An ordered tuple of field names. It is NULL if no field is defined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE192]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a structure containing functions that the type needs to implement
+    internal features. These functions are not the same thing as the universal functions
+    (ufuncs) described later. Their signatures can vary arbitrarily.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE193]'
+  prefs: []
+  type: TYPE_PRE
+- en: Metadata about this dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE194]'
+  prefs: []
+  type: TYPE_PRE
+- en: Metadata specific to the C implementation of the particular dtype. Added for
+    NumPy 1.7.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE195]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE196]'
+  prefs: []
+  type: TYPE_PRE
+- en: Currently unused. Reserved for future use in caching hash values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE197]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates that items of this data-type must be reference counted (using [`Py_INCREF`](https://docs.python.org/3/c-api/refcounting.html#c.Py_INCREF
+    "(in Python v3.11)") and [`Py_DECREF`](https://docs.python.org/3/c-api/refcounting.html#c.Py_DECREF
+    "(in Python v3.11)") ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE198]'
+  prefs: []
+  type: TYPE_PRE
+- en: Same as [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE199]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates arrays of this data-type must be converted to a list before pickling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE200]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates the item is a pointer to some other data-type
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE201]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates memory for this data-type must be initialized (set to 0) on creation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE202]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates this data-type requires the Python C-API during access (so don’t give
+    up the GIL if array access is going to be needed).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE203]'
+  prefs: []
+  type: TYPE_PRE
+- en: On array access use the `f->getitem` function pointer instead of the standard
+    conversion to an array scalar. Must use if you don’t define an array scalar to
+    go along with the data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE204]'
+  prefs: []
+  type: TYPE_PRE
+- en: When creating a 0-d array from an array scalar use `f->setitem` instead of the
+    standard copy from an array scalar. Must use if you don’t define an array scalar
+    to go along with the data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE205]'
+  prefs: []
+  type: TYPE_PRE
+- en: The bits that are inherited for the parent data-type if these bits are set in
+    any field of the data-type. Currently ( [`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")
+    | [`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE "NPY_LIST_PICKLE") | [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT
+    "NPY_ITEM_REFCOUNT") | [`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")
+    ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE206]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Bits set for the object data-type: ( [`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE
+    "NPY_LIST_PICKLE") | [`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM")
+    | [`NPY_ITEM_IS_POINTER`](#c.NPY_ITEM_IS_POINTER "NPY_ITEM_IS_POINTER") | [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT
+    "NPY_ITEM_REFCOUNT") | [`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")
+    | [`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE207]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return true if all the given flags are set for the data-type object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE208]'
+  prefs: []
+  type: TYPE_PRE
+- en: Equivalent to [`PyDataType_FLAGCHK`](#c.PyDataType_FLAGCHK "PyDataType_FLAGCHK")
+    (*dtype*, [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE209]'
+  prefs: []
+  type: TYPE_PRE
+- en: Functions implementing internal features. Not all of these function pointers
+    must be defined for a given type. The required members are `nonzero`, `copyswap`,
+    `copyswapn`, `setitem`, `getitem`, and `cast`. These are assumed to be non- `NULL`
+    and `NULL` entries will cause a program crash. The other functions may be `NULL`
+    which will just mean reduced functionality for that data-type. (Also, the nonzero
+    function will be filled in with a default function if it is `NULL` when you register
+    a user-defined data-type).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE210]'
+  prefs: []
+  type: TYPE_PRE
+- en: The concept of a behaved segment is used in the description of the function
+    pointers. A behaved segment is one that is aligned and in native machine byte-order
+    for the data-type. The `nonzero`, `copyswap`, `copyswapn`, `getitem`, and `setitem`
+    functions can (and must) deal with mis-behaved arrays. The other functions require
+    behaved memory segments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE211]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to cast from the current type to all of the other
+    builtin types. Each function casts a contiguous, aligned, and notswapped buffer
+    pointed at by *from* to a contiguous, aligned, and notswapped buffer pointed at
+    by *to* The number of items to cast is given by *n*, and the arguments *fromarr*
+    and *toarr* are interpreted as PyArrayObjects for flexible arrays to get itemsize
+    information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE212]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that returns a standard Python object from a single
+    element of the array object *arr* pointed to by *data*. This function must be
+    able to deal with “misbehaved “(misaligned and/or swapped) arrays correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE213]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that sets the Python object *item* into the array, *arr*,
+    at the position pointed to by *data* . This function deals with “misbehaved” arrays.
+    If successful, a zero is returned, otherwise, a negative one is returned (and
+    a Python error set).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE214]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE215]'
+  prefs: []
+  type: TYPE_PRE
+- en: These members are both pointers to functions to copy data from *src* to *dest*
+    and *swap* if indicated. The value of arr is only used for flexible ( [`NPY_STRING`](dtype.html#c.NPY_TYPES.NPY_STRING
+    "NPY_STRING"), [`NPY_UNICODE`](dtype.html#c.NPY_TYPES.NPY_UNICODE "NPY_UNICODE"),
+    and [`NPY_VOID`](dtype.html#c.NPY_TYPES.NPY_VOID "NPY_VOID") ) arrays (and is
+    obtained from `arr->descr->elsize` ). The second function copies a single value,
+    while the first loops over n values with the provided strides. These functions
+    can deal with misbehaved *src* data. If *src* is NULL then no copy is performed.
+    If *swap* is 0, then no byteswapping occurs. It is assumed that *dest* and *src*
+    do not overlap. If they overlap, then use `memmove` (…) first followed by `copyswap(n)`
+    with NULL valued `src`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE216]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that compares two elements of the array, `arr`, pointed
+    to by `d1` and `d2`. This function requires behaved (aligned and not swapped)
+    arrays. The return value is 1 if * `d1` > * `d2`, 0 if * `d1` == * `d2`, and -1
+    if * `d1` < * `d2`. The array object `arr` is used to retrieve itemsize and field
+    information for flexible arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE217]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that retrieves the index of the largest of `n` elements
+    in `arr` beginning at the element pointed to by `data`. This function requires
+    that the memory segment be contiguous and behaved. The return value is always
+    0\. The index of the largest element is returned in `max_ind`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE218]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that multiplies two `n` -length sequences together,
+    adds them, and places the result in element pointed to by `op` of `arr`. The start
+    of the two sequences are pointed to by `ip1` and `ip2`. To get to the next element
+    in each sequence requires a jump of `is1` and `is2` *bytes*, respectively. This
+    function requires behaved (though not necessarily contiguous) memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE219]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that scans (scanf style) one element of the corresponding
+    type from the file descriptor `fd` into the array memory pointed to by `ip`. The
+    array is assumed to be behaved. The last argument `arr` is the array to be scanned
+    into. Returns number of receiving arguments successfully assigned (which may be
+    zero in case a matching failure occurred before the first receiving argument was
+    assigned), or EOF if input failure occurs before the first receiving argument
+    was assigned. This function should be called without holding the Python GIL, and
+    has to grab it for error reporting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE220]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that converts the string pointed to by `str` to one
+    element of the corresponding type and places it in the memory location pointed
+    to by `ip`. After the conversion is completed, `*endptr` points to the rest of
+    the string. The last argument `arr` is the array into which ip points (needed
+    for variable-size data- types). Returns 0 on success or -1 on failure. Requires
+    a behaved array. This function should be called without holding the Python GIL,
+    and has to grab it for error reporting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE221]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that returns TRUE if the item of `arr` pointed to by
+    `data` is nonzero. This function can deal with misbehaved arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE222]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that fills a contiguous array of given length with data.
+    The first two elements of the array must already be filled- in. From these two
+    values, a delta will be computed and the values from item 3 to the end will be
+    computed by repeatedly adding this computed delta. The data buffer must be well-behaved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE223]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that fills a contiguous `buffer` of the given `length`
+    with a single scalar `value` whose address is given. The final argument is the
+    array which is needed to get the itemsize for variable-length arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE224]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to a particular sorting algorithms. A particular
+    sorting algorithm is obtained using a key (so far [`NPY_QUICKSORT`](array.html#c.NPY_SORTKIND.NPY_QUICKSORT
+    "NPY_QUICKSORT"), [`NPY_HEAPSORT`](array.html#c.NPY_SORTKIND.NPY_HEAPSORT "NPY_HEAPSORT"),
+    and [`NPY_MERGESORT`](array.html#c.NPY_SORTKIND.NPY_MERGESORT "NPY_MERGESORT")
+    are defined). These sorts are done in-place assuming contiguous and aligned data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE225]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to sorting algorithms for this data type. The
+    same sorting algorithms as for sort are available. The indices producing the sort
+    are returned in `result` (which must be initialized with indices 0 to `length-1`
+    inclusive).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE226]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or a dictionary containing low-level casting functions for user-
+    defined data-types. Each function is wrapped in a [PyCapsule](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(in Python v3.11)")* and keyed by the data-type number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE227]'
+  prefs: []
+  type: TYPE_PRE
+- en: A function to determine how scalars of this type should be interpreted. The
+    argument is `NULL` or a 0-dimensional array containing the data (if that is needed
+    to determine the kind of scalar). The return value must be of type [`NPY_SCALARKIND`](array.html#c.NPY_SCALARKIND
+    "NPY_SCALARKIND").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE228]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or an array of [`NPY_NSCALARKINDS`](array.html#c.NPY_SCALARKIND.NPY_NSCALARKINDS
+    "NPY_NSCALARKINDS") pointers. These pointers should each be either `NULL` or a
+    pointer to an array of integers (terminated by [`NPY_NOTYPE`](dtype.html#c.NPY_NOTYPE
+    "NPY_NOTYPE")) indicating data-types that a scalar of this data-type of the specified
+    kind can be cast to safely (this usually means without losing precision).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE229]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or an array of integers (terminated by [`NPY_NOTYPE`](dtype.html#c.NPY_NOTYPE
+    "NPY_NOTYPE") ) indicated data-types that this data-type can be cast to safely
+    (this usually means without losing precision).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE230]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.17: The use of this function will give a deprecation
+    warning when `np.clip`. Instead of this function, the datatype must instead use
+    `PyUFunc_RegisterLoopForDescr` to attach a custom loop to `np.core.umath.clip`,
+    `np.minimum`, and `np.maximum`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that reads `n_in` items from `in`, and writes to `out` the read value
+    if it is within the limits pointed to by `min` and `max`, or the corresponding
+    limit if outside. The memory segments must be contiguous and behaved, and either
+    `min` or `max` may be `NULL`, but not both.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE231]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that takes a pointer `in` to an array of `n_in` items, a pointer
+    `mask` to an array of `n_in` boolean values, and a pointer `vals` to an array
+    of `nv` items. Items from `vals` are copied into `in` wherever the value in `mask`
+    is non-zero, tiling `vals` as needed if `nv < n_in`. All arrays must be contiguous
+    and behaved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE232]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that takes a pointer `src` to a C contiguous, behaved segment, interpreted
+    as a 3-dimensional array of shape `(n_outer, nindarray, nelem)`, a pointer `indarray`
+    to a contiguous, behaved segment of `m_middle` integer indices, and a pointer
+    `dest` to a C contiguous, behaved segment, interpreted as a 3-dimensional array
+    of shape `(n_outer, m_middle, nelem)`. The indices in `indarray` are used to index
+    `src` along the second dimension, and copy the corresponding chunks of `nelem`
+    items into `dest`. `clipmode` (which can take on the values [`NPY_RAISE`](array.html#c.NPY_CLIPMODE.NPY_RAISE
+    "NPY_RAISE"), [`NPY_WRAP`](array.html#c.NPY_CLIPMODE.NPY_WRAP "NPY_WRAP") or [`NPY_CLIP`](array.html#c.NPY_CLIPMODE.NPY_CLIP
+    "NPY_CLIP")) determines how will indices smaller than 0 or larger than `nindarray`
+    will be handled.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE233]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that retrieves the index of the smallest of `n` elements
+    in `arr` beginning at the element pointed to by `data`. This function requires
+    that the memory segment be contiguous and behaved. The return value is always
+    0\. The index of the smallest element is returned in `min_ind`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`PyArray_Type`](#c.PyArray_Type "PyArray_Type") typeobject implements many
+    of the features of [`Python objects`](https://docs.python.org/3/c-api/type.html#c.PyTypeObject
+    "(in Python v3.11)") including the [`tp_as_number`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_number
+    "(in Python v3.11)"), [`tp_as_sequence`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_sequence
+    "(in Python v3.11)"), [`tp_as_mapping`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_mapping
+    "(in Python v3.11)"), and [`tp_as_buffer`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_buffer
+    "(in Python v3.11)") interfaces. The [`rich comparison`](https://docs.python.org/3/c-api/typeobj.html#c.richcmpfunc
+    "(in Python v3.11)")) is also used along with new-style attribute lookup for member
+    ([`tp_members`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_members
+    "(in Python v3.11)")) and properties ([`tp_getset`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_getset
+    "(in Python v3.11)")). The [`PyArray_Type`](#c.PyArray_Type "PyArray_Type") can
+    also be sub-typed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `tp_as_number` methods use a generic approach to call whatever function
+    has been registered for handling the operation. When the `_multiarray_umath module`
+    is imported, it sets the numeric operations for all arrays to the corresponding
+    ufuncs. This choice can be changed with [`PyUFunc_ReplaceLoopBySignature`](ufunc.html#c.PyUFunc_ReplaceLoopBySignature
+    "PyUFunc_ReplaceLoopBySignature") The `tp_str` and `tp_repr` methods can also
+    be altered using [`PyArray_SetStringFunction`](array.html#c.PyArray_SetStringFunction
+    "PyArray_SetStringFunction").
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyUFunc_Type and PyUFuncObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE234]'
+  prefs: []
+  type: TYPE_PRE
+- en: The ufunc object is implemented by creation of the [`PyUFunc_Type`](#c.PyUFunc_Type
+    "PyUFunc_Type"). It is a very simple type that implements only basic getattribute
+    behavior, printing behavior, and has call behavior which allows these objects
+    to act like functions. The basic idea behind the ufunc is to hold a reference
+    to fast 1-dimensional (vector) loops for each data type that supports the operation.
+    These one-dimensional loops all have the same signature and are the key to creating
+    a new ufunc. They are called by the generic looping code as appropriate to implement
+    the N-dimensional function. There are also some generic 1-d loops defined for
+    floating and complexfloating arrays that allow you to define a ufunc using a single
+    scalar function (*e.g.* atanh).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE235]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The core of the ufunc is the [`PyUFuncObject`](#c.PyUFuncObject "PyUFuncObject")
+    which contains all the information needed to call the underlying C-code loops
+    that perform the actual work. While it is described here for completeness, it
+    should be considered internal to NumPy and manipulated via `PyUFunc_*` functions.
+    The size of this structure is subject to change across versions of NumPy. To ensure
+    compatibility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Never declare a non-pointer instance of the struct
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never perform pointer arithmetic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never use `sizeof(PyUFuncObject)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'It has the following structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE236]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE237]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of input arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE238]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of output arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE239]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total number of arguments (*nin* + *nout*). This must be less than [`NPY_MAXARGS`](array.html#c.NPY_MAXARGS
+    "NPY_MAXARGS").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE240]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either [`PyUFunc_One`](ufunc.html#c.PyUFunc_One "PyUFunc_One"), [`PyUFunc_Zero`](ufunc.html#c.PyUFunc_Zero
+    "PyUFunc_Zero"), [`PyUFunc_MinusOne`](ufunc.html#c.PyUFunc_MinusOne "PyUFunc_MinusOne"),
+    [`PyUFunc_None`](ufunc.html#c.PyUFunc_None "PyUFunc_None"), [`PyUFunc_ReorderableNone`](ufunc.html#c.PyUFunc_ReorderableNone
+    "PyUFunc_ReorderableNone"), or [`PyUFunc_IdentityValue`](ufunc.html#c.PyUFunc_IdentityValue
+    "PyUFunc_IdentityValue") to indicate the identity for this operation. It is only
+    used for a reduce-like call on an empty array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE241]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers — one for each data type supported by the ufunc.
+    This is the vector loop that is called to implement the underlying function *dims*
+    [0] times. The first argument, *args*, is an array of *nargs* pointers to behaved
+    memory. Pointers to the data for the input arguments are first, followed by the
+    pointers to the data for the output arguments. How many bytes must be skipped
+    to get to the next element in the sequence is specified by the corresponding entry
+    in the *steps* array. The last argument allows the loop to receive extra information.
+    This is commonly used so that a single, generic vector loop can be used for multiple
+    functions. In this case, the actual scalar function to call is passed in as *extradata*.
+    The size of this function pointer array is ntypes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE242]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extra data to be passed to the 1-d vector loops or `NULL` if no extra-data is
+    needed. This C-array must be the same size ( *i.e.* ntypes) as the functions array.
+    `NULL` is used if extra_data is not needed. Several C-API calls for UFuncs are
+    just 1-d vector loops that make use of this extra data to receive a pointer to
+    the actual function to call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE243]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of supported data types for the ufunc. This number specifies how
+    many different 1-d loops (of the builtin data types) are available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE244]'
+  prefs: []
+  type: TYPE_PRE
+- en: Unused.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE245]'
+  prefs: []
+  type: TYPE_PRE
+- en: A string name for the ufunc. This is used dynamically to build the __doc__ attribute
+    of ufuncs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE246]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of \(nargs \times ntypes\) 8-bit type_numbers which contains the type
+    signature for the function for each of the supported (builtin) data types. For
+    each of the *ntypes* functions, the corresponding set of type numbers in this
+    array shows how the *args* argument should be interpreted in the 1-d vector loop.
+    These type numbers do not have to be the same type and mixed-type ufuncs are supported.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE247]'
+  prefs: []
+  type: TYPE_PRE
+- en: Documentation for the ufunc. Should not contain the function signature as this
+    is generated dynamically when __doc__ is retrieved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE248]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any dynamically allocated memory. Currently, this is used for dynamic ufuncs
+    created from a python function to store room for the types, data, and name members.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE249]'
+  prefs: []
+  type: TYPE_PRE
+- en: For ufuncs dynamically created from python functions, this member holds a reference
+    to the underlying Python function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE250]'
+  prefs: []
+  type: TYPE_PRE
+- en: A dictionary of user-defined 1-d vector loops (stored as CObject ptrs) for user-defined
+    types. A loop may be registered by the user for any user-defined type. It is retrieved
+    by type number. User defined type numbers are always larger than [`NPY_USERDEF`](dtype.html#c.NPY_USERDEF
+    "NPY_USERDEF").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE251]'
+  prefs: []
+  type: TYPE_PRE
+- en: 0 for scalar ufuncs; 1 for generalized ufuncs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE252]'
+  prefs: []
+  type: TYPE_PRE
+- en: Number of distinct core dimension names in the signature
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE253]'
+  prefs: []
+  type: TYPE_PRE
+- en: Number of core dimensions of each argument
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE254]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Dimension indices in a flattened form; indices of argument `k` are stored in
+    `core_dim_ixs[core_offsets[k] : core_offsets[k] + core_numdims[k]]`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE255]'
+  prefs: []
+  type: TYPE_PRE
+- en: Position of 1st core dimension of each argument in `core_dim_ixs`, equivalent
+    to cumsum(`core_num_dims`)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE256]'
+  prefs: []
+  type: TYPE_PRE
+- en: Core signature string
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE257]'
+  prefs: []
+  type: TYPE_PRE
+- en: A function which resolves the types and fills an array with the dtypes for the
+    inputs and outputs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE258]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.22: Some fallback support for this slot exists,
+    but will be removed eventually. A universal function that relied on this will
+    have to be ported eventually. See [NEP 41](https://numpy.org/neps/nep-0041-improved-dtype-support.html#nep41
+    "(in NumPy Enhancement Proposals)") and [NEP 43](https://numpy.org/neps/nep-0043-extensible-ufuncs.html#nep43
+    "(in NumPy Enhancement Proposals)")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE259]'
+  prefs: []
+  type: TYPE_PRE
+- en: For a possible future loop selector with a different signature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE260]'
+  prefs: []
+  type: TYPE_PRE
+- en: Override the default operand flags for each ufunc operand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE261]'
+  prefs: []
+  type: TYPE_PRE
+- en: Override the default nditer flags for the ufunc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Added in API version 0x0000000D
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE262]'
+  prefs: []
+  type: TYPE_PRE
+- en: For each distinct core dimension, the possible [frozen](generalized-ufuncs.html#frozen)
+    size if [`UFUNC_CORE_DIM_SIZE_INFERRED`](#c.UFUNC_CORE_DIM_SIZE_INFERRED "UFUNC_CORE_DIM_SIZE_INFERRED")
+    is `0`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE263]'
+  prefs: []
+  type: TYPE_PRE
+- en: For each distinct core dimension, a set of flags ( [`UFUNC_CORE_DIM_CAN_IGNORE`](#c.UFUNC_CORE_DIM_CAN_IGNORE
+    "UFUNC_CORE_DIM_CAN_IGNORE") and [`UFUNC_CORE_DIM_SIZE_INFERRED`](#c.UFUNC_CORE_DIM_SIZE_INFERRED
+    "UFUNC_CORE_DIM_SIZE_INFERRED"))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE264]'
+  prefs: []
+  type: TYPE_PRE
+- en: Identity for reduction, when [`PyUFuncObject.identity`](#c.PyUFuncObject.identity
+    "PyUFuncObject.identity") is equal to [`PyUFunc_IdentityValue`](ufunc.html#c.PyUFunc_IdentityValue
+    "PyUFunc_IdentityValue").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE265]'
+  prefs: []
+  type: TYPE_PRE
+- en: if the dim name ends in `?`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE266]'
+  prefs: []
+  type: TYPE_PRE
+- en: if the dim size will be determined from the operands and not from a [frozen](generalized-ufuncs.html#frozen)
+    signature
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayIter_Type and PyArrayIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE267]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is an iterator object that makes it easy to loop over an N-dimensional
+    array. It is the object returned from the flat attribute of an ndarray. It is
+    also used extensively throughout the implementation internals to loop over an
+    N-dimensional array. The tp_as_mapping interface is implemented so that the iterator
+    object can be indexed (using 1-d indexing), and a few methods are implemented
+    through the tp_methods table. This object implements the next method and can be
+    used anywhere an iterator can be used in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE268]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The C-structure corresponding to an object of [`PyArrayIter_Type`](#c.PyArrayIter_Type
+    "PyArrayIter_Type") is the [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject").
+    The [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject") is used to
+    keep track of a pointer into an N-dimensional array. It contains associated information
+    used to quickly march through the array. The pointer can be adjusted in three
+    basic ways: 1) advance to the “next” position in the array in a C-style contiguous
+    fashion, 2) advance to an arbitrary N-dimensional coordinate in the array, and
+    3) advance to an arbitrary one-dimensional index into the array. The members of
+    the [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject") structure
+    are used in these calculations. Iterator objects keep their own dimension and
+    strides information about an array. This can be adjusted as needed for “broadcasting,”
+    or to loop over only specific dimensions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE269]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE270]'
+  prefs: []
+  type: TYPE_PRE
+- en: \(N-1\) where \(N\) is the number of dimensions in the underlying array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE271]'
+  prefs: []
+  type: TYPE_PRE
+- en: The current 1-d index into the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE272]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total size of the underlying array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE273]'
+  prefs: []
+  type: TYPE_PRE
+- en: An \(N\) -dimensional index into the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE274]'
+  prefs: []
+  type: TYPE_PRE
+- en: The size of the array minus 1 in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE275]'
+  prefs: []
+  type: TYPE_PRE
+- en: The strides of the array. How many bytes needed to jump to the next element
+    in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE276]'
+  prefs: []
+  type: TYPE_PRE
+- en: How many bytes needed to jump from the end of a dimension back to its beginning.
+    Note that `backstrides[k] == strides[k] * dims_m1[k]`, but it is stored here as
+    an optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE277]'
+  prefs: []
+  type: TYPE_PRE
+- en: This array is used in computing an N-d index from a 1-d index. It contains needed
+    products of the dimensions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE278]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to the underlying ndarray this iterator was created to represent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE279]'
+  prefs: []
+  type: TYPE_PRE
+- en: This member points to an element in the ndarray indicated by the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE280]'
+  prefs: []
+  type: TYPE_PRE
+- en: This flag is true if the underlying array is [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"). It is used to simplify calculations when possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use an array iterator on a C-level is explained more fully in later sections.
+    Typically, you do not need to concern yourself with the internal structure of
+    the iterator object, and merely interact with it through the use of the macros
+    [`PyArray_ITER_NEXT`](array.html#c.PyArray_ITER_NEXT "PyArray_ITER_NEXT") (it),
+    [`PyArray_ITER_GOTO`](array.html#c.PyArray_ITER_GOTO "PyArray_ITER_GOTO") (it,
+    dest), or [`PyArray_ITER_GOTO1D`](array.html#c.PyArray_ITER_GOTO1D "PyArray_ITER_GOTO1D")
+    (it, index). All of these macros require the argument *it* to be a [PyArrayIterObject](#c.PyArrayIterObject
+    "PyArrayIterObject")*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayMultiIter_Type and PyArrayMultiIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE281]'
+  prefs: []
+  type: TYPE_PRE
+- en: This type provides an iterator that encapsulates the concept of broadcasting.
+    It allows \(N\) arrays to be broadcast together so that the loop progresses in
+    C-style contiguous fashion over the broadcasted array. The corresponding C-structure
+    is the [`PyArrayMultiIterObject`](#c.PyArrayMultiIterObject "PyArrayMultiIterObject")
+    whose memory layout must begin any object, *obj*, passed in to the [`PyArray_Broadcast`](array.html#c.PyArray_Broadcast
+    "PyArray_Broadcast") (obj) function. Broadcasting is performed by adjusting array
+    iterators so that each iterator represents the broadcasted shape and size, but
+    has its strides adjusted so that the correct element from the array is used at
+    each iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE282]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE283]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE284]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of arrays that need to be broadcast to the same shape.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE285]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total broadcasted size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE286]'
+  prefs: []
+  type: TYPE_PRE
+- en: The current (1-d) index into the broadcasted result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE287]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of dimensions in the broadcasted result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE288]'
+  prefs: []
+  type: TYPE_PRE
+- en: The shape of the broadcasted result (only `nd` slots are used).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE289]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of iterator objects that holds the iterators for the arrays to be broadcast
+    together. On return, the iterators are adjusted for broadcasting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE290]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is an iterator object that makes it easy to loop over an N-dimensional
+    neighborhood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE291]'
+  prefs: []
+  type: TYPE_PRE
+- en: The C-structure corresponding to an object of [`PyArrayNeighborhoodIter_Type`](#c.PyArrayNeighborhoodIter_Type
+    "PyArrayNeighborhoodIter_Type") is the [`PyArrayNeighborhoodIterObject`](#c.PyArrayNeighborhoodIterObject
+    "PyArrayNeighborhoodIterObject").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE292]'
+  prefs: []
+  type: TYPE_PRE
+- en: PyArrayFlags_Type and PyArrayFlagsObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE293]'
+  prefs: []
+  type: TYPE_PRE
+- en: When the flags attribute is retrieved from Python, a special builtin object
+    of this type is constructed. This special type makes it easier to work with the
+    different flags by accessing them as attributes or by accessing them as if the
+    object were a dictionary with the flag names as entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE294]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE295]'
+  prefs: []
+  type: TYPE_PRE
+- en: ScalarArrayTypes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There is a Python type for each of the different built-in data types that can
+    be present in the array. Most of these are simple wrappers around the corresponding
+    data type in C. The C-names for these types are `Py{TYPE}ArrType_Type` where `{TYPE}`
+    can be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**, **UByte**,
+    **UShort**, **UInt**, **ULong**, **ULongLong**, **Half**, **Float**, **Double**,
+    **LongDouble**, **CFloat**, **CDouble**, **CLongDouble**, **String**, **Unicode**,
+    **Void**, and **Object**.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: These type names are part of the C-API and can therefore be created in extension
+    C-code. There is also a `PyIntpArrType_Type` and a `PyUIntpArrType_Type` that
+    are simple substitutes for one of the integer types that can hold a pointer on
+    the platform. The structure of these scalar objects is not exposed to C-code.
+    The function [`PyArray_ScalarAsCtype`](array.html#c.PyArray_ScalarAsCtype "PyArray_ScalarAsCtype")
+    (..) can be used to extract the C-type value from the array scalar and the function
+    [`PyArray_Scalar`](array.html#c.PyArray_Scalar "PyArray_Scalar") (…) can be used
+    to construct an array scalar from a C-value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Type and PyArrayObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE296]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Python type of the ndarray is [`PyArray_Type`](#c.PyArray_Type "PyArray_Type").
+    In C, every ndarray is a pointer to a [`PyArrayObject`](#c.PyArrayObject "PyArrayObject")
+    structure. The ob_type member of this structure contains a pointer to the [`PyArray_Type`](#c.PyArray_Type
+    "PyArray_Type") typeobject.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE297]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE298]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayObject`](#c.PyArrayObject "PyArrayObject") C-structure contains
+    all of the required information for an array. All instances of an ndarray (and
+    its subclasses) will have this structure. For future compatibility, these structure
+    members should normally be accessed using the provided macros. If you need a shorter
+    name, then you can make use of [`NPY_AO`](#c.NPY_AO "NPY_AO") (deprecated) which
+    is defined to be equivalent to [`PyArrayObject`](#c.PyArrayObject "PyArrayObject").
+    Direct access to the struct fields are deprecated. Use the `PyArray_*(arr)` form
+    instead. As of NumPy 1.20, the size of this struct is not considered part of the
+    NumPy ABI (see note at the end of the member list).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE299]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE300]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is needed by all Python objects. It consists of (at least) a reference
+    count member ( `ob_refcnt` ) and a pointer to the typeobject ( `ob_type` ). (Other
+    elements may also be present if Python was compiled with special options see Include/object.h
+    in the Python source tree for more information). The ob_type member points to
+    a Python type object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE301]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accessible via [`PyArray_DATA`](array.html#c.PyArray_DATA "PyArray_DATA"), this
+    data member is a pointer to the first element of the array. This pointer can (and
+    normally should) be recast to the data type of the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE302]'
+  prefs: []
+  type: TYPE_PRE
+- en: An integer providing the number of dimensions for this array. When nd is 0,
+    the array is sometimes called a rank-0 array. Such arrays have undefined dimensions
+    and strides and cannot be accessed. Macro [`PyArray_NDIM`](array.html#c.PyArray_NDIM
+    "PyArray_NDIM") defined in `ndarraytypes.h` points to this data member. [`NPY_MAXDIMS`](array.html#c.NPY_MAXDIMS
+    "NPY_MAXDIMS") is the largest number of dimensions for any array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE303]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of integers providing the shape in each dimension as long as nd \(\geq\)
+    1\. The integer is always large enough to hold a pointer on the platform, so the
+    dimension size is only limited by memory. [`PyArray_DIMS`](array.html#c.PyArray_DIMS
+    "PyArray_DIMS") is the macro associated with this data member.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE304]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of integers providing for each dimension the number of bytes that must
+    be skipped to get to the next element in that dimension. Associated with macro
+    [`PyArray_STRIDES`](array.html#c.PyArray_STRIDES "PyArray_STRIDES").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE305]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Pointed to by [`PyArray_BASE`](array.html#c.PyArray_BASE "PyArray_BASE"), this
+    member is used to hold a pointer to another Python object that is related to this
+    array. There are two use cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If this array does not own its own memory, then base points to the Python object
+    that owns it (perhaps another array object)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If this array has the [`NPY_ARRAY_WRITEBACKIFCOPY`](array.html#c.NPY_ARRAY_WRITEBACKIFCOPY
+    "NPY_ARRAY_WRITEBACKIFCOPY") flag set, then this array is a working copy of a
+    “misbehaved” array.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When `PyArray_ResolveWritebackIfCopy` is called, the array pointed to by base
+    will be updated with the contents of this array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE306]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a data-type descriptor object (see below). The data-type descriptor
+    object is an instance of a new built-in type which allows a generic description
+    of memory. There is a descriptor structure for each data type supported. This
+    descriptor structure contains useful information about the type as well as a pointer
+    to a table of function pointers to implement specific functionality. As the name
+    suggests, it is associated with the macro [`PyArray_DESCR`](array.html#c.PyArray_DESCR
+    "PyArray_DESCR").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE307]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pointed to by the macro [`PyArray_FLAGS`](array.html#c.PyArray_FLAGS "PyArray_FLAGS"),
+    this data member represents the flags indicating how the memory pointed to by
+    data is to be interpreted. Possible flags are [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"), [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS"), [`NPY_ARRAY_OWNDATA`](array.html#c.NPY_ARRAY_OWNDATA
+    "NPY_ARRAY_OWNDATA"), [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED "NPY_ARRAY_ALIGNED"),
+    [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE "NPY_ARRAY_WRITEABLE"),
+    [`NPY_ARRAY_WRITEBACKIFCOPY`](array.html#c.NPY_ARRAY_WRITEBACKIFCOPY "NPY_ARRAY_WRITEBACKIFCOPY").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE308]'
+  prefs: []
+  type: TYPE_PRE
+- en: This member allows array objects to have weak references (using the weakref
+    module).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Further members are considered private and version dependent. If the size of
+    the struct is important for your code, special care must be taken. A possible
+    use-case when this is relevant is subclassing in C. If your code relies on `sizeof(PyArrayObject)`
+    to be constant, you must add the following check at import time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE309]'
+  prefs: []
+  type: TYPE_PRE
+- en: To ensure that your code does not have to be compiled for a specific NumPy version,
+    you may add a constant, leaving room for changes in NumPy. A solution guaranteed
+    to be compatible with any future NumPy version requires the use of a runtime calculate
+    offset and allocation size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayDescr_Type and PyArray_Descr
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE310]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayDescr_Type`](#c.PyArrayDescr_Type "PyArrayDescr_Type") is the built-in
+    type of the data-type-descriptor objects used to describe how the bytes comprising
+    the array are to be interpreted. There are 21 statically-defined [`PyArray_Descr`](#c.PyArray_Descr
+    "PyArray_Descr") objects for the built-in data-types. While these participate
+    in reference counting, their reference count should never reach zero. There is
+    also a dynamic table of user-defined [`PyArray_Descr`](#c.PyArray_Descr "PyArray_Descr")
+    objects that is also maintained. Once a data-type-descriptor object is “registered”
+    it should never be deallocated either. The function [`PyArray_DescrFromType`](array.html#c.PyArray_DescrFromType
+    "PyArray_DescrFromType") (…) can be used to retrieve a [`PyArray_Descr`](#c.PyArray_Descr
+    "PyArray_Descr") object from an enumerated type-number (either built-in or user-
+    defined).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE311]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`PyArray_Descr`](#c.PyArray_Descr "PyArray_Descr") structure lies at the
+    heart of the [`PyArrayDescr_Type`](#c.PyArrayDescr_Type "PyArrayDescr_Type").
+    While it is described here for completeness, it should be considered internal
+    to NumPy and manipulated via `PyArrayDescr_*` or `PyDataType*` functions and macros.
+    The size of this structure is subject to change across versions of NumPy. To ensure
+    compatibility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Never declare a non-pointer instance of the struct
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never perform pointer arithmetic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never use `sizeof(PyArray_Descr)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'It has the following structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE312]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE313]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pointer to a typeobject that is the corresponding Python type for the elements
+    of this array. For the builtin types, this points to the corresponding array scalar.
+    For user-defined types, this should point to a user-defined typeobject. This typeobject
+    can either inherit from array scalars or not. If it does not inherit from array
+    scalars, then the [`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM") and
+    [`NPY_USE_SETITEM`](#c.NPY_USE_SETITEM "NPY_USE_SETITEM") flags should be set
+    in the `flags` member.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE314]'
+  prefs: []
+  type: TYPE_PRE
+- en: A character code indicating the kind of array (using the array interface typestring
+    notation). A ‘b’ represents Boolean, a ‘i’ represents signed integer, a ‘u’ represents
+    unsigned integer, ‘f’ represents floating point, ‘c’ represents complex floating
+    point, ‘S’ represents 8-bit zero-terminated bytes, ‘U’ represents 32-bit/character
+    unicode string, and ‘V’ represents arbitrary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE315]'
+  prefs: []
+  type: TYPE_PRE
+- en: A traditional character code indicating the data type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE316]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A character indicating the byte-order: ‘>’ (big-endian), ‘<’ (little- endian),
+    ‘=’ (native), ‘|’ (irrelevant, ignore). All builtin data- types have byteorder
+    ‘=’.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE317]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A data-type bit-flag that determines if the data-type exhibits object- array
+    like behavior. Each bit in this member is a flag which are named as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_HASOBJECT`](#c.NPY_ITEM_HASOBJECT "NPY_ITEM_HASOBJECT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE "NPY_LIST_PICKLE")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_ITEM_IS_POINTER`](#c.NPY_ITEM_IS_POINTER "NPY_ITEM_IS_POINTER")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_USE_SETITEM`](#c.NPY_USE_SETITEM "NPY_USE_SETITEM")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_FROM_FIELDS`](#c.NPY_FROM_FIELDS "NPY_FROM_FIELDS")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`NPY_OBJECT_DTYPE_FLAGS`](#c.NPY_OBJECT_DTYPE_FLAGS "NPY_OBJECT_DTYPE_FLAGS")'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE318]'
+  prefs: []
+  type: TYPE_PRE
+- en: A number that uniquely identifies the data type. For new data-types, this number
+    is assigned when the data-type is registered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE319]'
+  prefs: []
+  type: TYPE_PRE
+- en: For data types that are always the same size (such as long), this holds the
+    size of the data type. For flexible data types where different arrays can have
+    a different elementsize, this should be 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE320]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A number providing alignment information for this data type. Specifically,
+    it shows how far from the start of a 2-element structure (whose first element
+    is a `char` ), the compiler places an item of this type: `offsetof(struct {char
+    c; type v;}, v)`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE321]'
+  prefs: []
+  type: TYPE_PRE
+- en: If this is non- `NULL`, then this data-type descriptor is a C-style contiguous
+    array of another data-type descriptor. In other-words, each element that this
+    descriptor describes is actually an array of some other base descriptor. This
+    is most useful as the data-type descriptor for a field in another data-type descriptor.
+    The fields member should be `NULL` if this is non- `NULL` (the fields member of
+    the base descriptor can be non- `NULL` however).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE322]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE323]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE324]'
+  prefs: []
+  type: TYPE_PRE
+- en: The data-type-descriptor object of the base-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE325]'
+  prefs: []
+  type: TYPE_PRE
+- en: The shape (always C-style contiguous) of the sub-array as a Python tuple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE326]'
+  prefs: []
+  type: TYPE_PRE
+- en: If this is non-NULL, then this data-type-descriptor has fields described by
+    a Python dictionary whose keys are names (and also titles if given) and whose
+    values are tuples that describe the fields. Recall that a data-type-descriptor
+    always describes a fixed-length set of bytes. A field is a named sub-region of
+    that total, fixed-length collection. A field is described by a tuple composed
+    of another data- type-descriptor and a byte offset. Optionally, the tuple may
+    contain a title which is normally a Python string. These tuples are placed in
+    this dictionary keyed by name (and also title if given).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE327]'
+  prefs: []
+  type: TYPE_PRE
+- en: An ordered tuple of field names. It is NULL if no field is defined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE328]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a structure containing functions that the type needs to implement
+    internal features. These functions are not the same thing as the universal functions
+    (ufuncs) described later. Their signatures can vary arbitrarily.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE329]'
+  prefs: []
+  type: TYPE_PRE
+- en: Metadata about this dtype.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE330]'
+  prefs: []
+  type: TYPE_PRE
+- en: Metadata specific to the C implementation of the particular dtype. Added for
+    NumPy 1.7.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE331]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE332]'
+  prefs: []
+  type: TYPE_PRE
+- en: Currently unused. Reserved for future use in caching hash values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE333]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates that items of this data-type must be reference counted (using [`Py_INCREF`](https://docs.python.org/3/c-api/refcounting.html#c.Py_INCREF
+    "(in Python v3.11)") and [`Py_DECREF`](https://docs.python.org/3/c-api/refcounting.html#c.Py_DECREF
+    "(in Python v3.11)") ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE334]'
+  prefs: []
+  type: TYPE_PRE
+- en: Same as [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE335]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates arrays of this data-type must be converted to a list before pickling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE336]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates the item is a pointer to some other data-type
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE337]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates memory for this data-type must be initialized (set to 0) on creation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE338]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indicates this data-type requires the Python C-API during access (so don’t give
+    up the GIL if array access is going to be needed).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE339]'
+  prefs: []
+  type: TYPE_PRE
+- en: On array access use the `f->getitem` function pointer instead of the standard
+    conversion to an array scalar. Must use if you don’t define an array scalar to
+    go along with the data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE340]'
+  prefs: []
+  type: TYPE_PRE
+- en: When creating a 0-d array from an array scalar use `f->setitem` instead of the
+    standard copy from an array scalar. Must use if you don’t define an array scalar
+    to go along with the data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE341]'
+  prefs: []
+  type: TYPE_PRE
+- en: The bits that are inherited for the parent data-type if these bits are set in
+    any field of the data-type. Currently ( [`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")
+    | [`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE "NPY_LIST_PICKLE") | [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT
+    "NPY_ITEM_REFCOUNT") | [`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")
+    ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE342]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Bits set for the object data-type: ( [`NPY_LIST_PICKLE`](#c.NPY_LIST_PICKLE
+    "NPY_LIST_PICKLE") | [`NPY_USE_GETITEM`](#c.NPY_USE_GETITEM "NPY_USE_GETITEM")
+    | [`NPY_ITEM_IS_POINTER`](#c.NPY_ITEM_IS_POINTER "NPY_ITEM_IS_POINTER") | [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT
+    "NPY_ITEM_REFCOUNT") | [`NPY_NEEDS_INIT`](#c.NPY_NEEDS_INIT "NPY_NEEDS_INIT")
+    | [`NPY_NEEDS_PYAPI`](#c.NPY_NEEDS_PYAPI "NPY_NEEDS_PYAPI")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE343]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return true if all the given flags are set for the data-type object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE344]'
+  prefs: []
+  type: TYPE_PRE
+- en: Equivalent to [`PyDataType_FLAGCHK`](#c.PyDataType_FLAGCHK "PyDataType_FLAGCHK")
+    (*dtype*, [`NPY_ITEM_REFCOUNT`](#c.NPY_ITEM_REFCOUNT "NPY_ITEM_REFCOUNT")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE345]'
+  prefs: []
+  type: TYPE_PRE
+- en: Functions implementing internal features. Not all of these function pointers
+    must be defined for a given type. The required members are `nonzero`, `copyswap`,
+    `copyswapn`, `setitem`, `getitem`, and `cast`. These are assumed to be non- `NULL`
+    and `NULL` entries will cause a program crash. The other functions may be `NULL`
+    which will just mean reduced functionality for that data-type. (Also, the nonzero
+    function will be filled in with a default function if it is `NULL` when you register
+    a user-defined data-type).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE346]'
+  prefs: []
+  type: TYPE_PRE
+- en: The concept of a behaved segment is used in the description of the function
+    pointers. A behaved segment is one that is aligned and in native machine byte-order
+    for the data-type. The `nonzero`, `copyswap`, `copyswapn`, `getitem`, and `setitem`
+    functions can (and must) deal with mis-behaved arrays. The other functions require
+    behaved memory segments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE347]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to cast from the current type to all of the other
+    builtin types. Each function casts a contiguous, aligned, and notswapped buffer
+    pointed at by *from* to a contiguous, aligned, and notswapped buffer pointed at
+    by *to* The number of items to cast is given by *n*, and the arguments *fromarr*
+    and *toarr* are interpreted as PyArrayObjects for flexible arrays to get itemsize
+    information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE348]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that returns a standard Python object from a single
+    element of the array object *arr* pointed to by *data*. This function must be
+    able to deal with “misbehaved “(misaligned and/or swapped) arrays correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE349]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that sets the Python object *item* into the array, *arr*,
+    at the position pointed to by *data* . This function deals with “misbehaved” arrays.
+    If successful, a zero is returned, otherwise, a negative one is returned (and
+    a Python error set).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE350]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE351]'
+  prefs: []
+  type: TYPE_PRE
+- en: These members are both pointers to functions to copy data from *src* to *dest*
+    and *swap* if indicated. The value of arr is only used for flexible ( [`NPY_STRING`](dtype.html#c.NPY_TYPES.NPY_STRING
+    "NPY_STRING"), [`NPY_UNICODE`](dtype.html#c.NPY_TYPES.NPY_UNICODE "NPY_UNICODE"),
+    and [`NPY_VOID`](dtype.html#c.NPY_TYPES.NPY_VOID "NPY_VOID") ) arrays (and is
+    obtained from `arr->descr->elsize` ). The second function copies a single value,
+    while the first loops over n values with the provided strides. These functions
+    can deal with misbehaved *src* data. If *src* is NULL then no copy is performed.
+    If *swap* is 0, then no byteswapping occurs. It is assumed that *dest* and *src*
+    do not overlap. If they overlap, then use `memmove` (…) first followed by `copyswap(n)`
+    with NULL valued `src`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE352]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that compares two elements of the array, `arr`, pointed
+    to by `d1` and `d2`. This function requires behaved (aligned and not swapped)
+    arrays. The return value is 1 if * `d1` > * `d2`, 0 if * `d1` == * `d2`, and -1
+    if * `d1` < * `d2`. The array object `arr` is used to retrieve itemsize and field
+    information for flexible arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE353]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that retrieves the index of the largest of `n` elements
+    in `arr` beginning at the element pointed to by `data`. This function requires
+    that the memory segment be contiguous and behaved. The return value is always
+    0\. The index of the largest element is returned in `max_ind`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE354]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that multiplies two `n` -length sequences together,
+    adds them, and places the result in element pointed to by `op` of `arr`. The start
+    of the two sequences are pointed to by `ip1` and `ip2`. To get to the next element
+    in each sequence requires a jump of `is1` and `is2` *bytes*, respectively. This
+    function requires behaved (though not necessarily contiguous) memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE355]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that scans (scanf style) one element of the corresponding
+    type from the file descriptor `fd` into the array memory pointed to by `ip`. The
+    array is assumed to be behaved. The last argument `arr` is the array to be scanned
+    into. Returns number of receiving arguments successfully assigned (which may be
+    zero in case a matching failure occurred before the first receiving argument was
+    assigned), or EOF if input failure occurs before the first receiving argument
+    was assigned. This function should be called without holding the Python GIL, and
+    has to grab it for error reporting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE356]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that converts the string pointed to by `str` to one
+    element of the corresponding type and places it in the memory location pointed
+    to by `ip`. After the conversion is completed, `*endptr` points to the rest of
+    the string. The last argument `arr` is the array into which ip points (needed
+    for variable-size data- types). Returns 0 on success or -1 on failure. Requires
+    a behaved array. This function should be called without holding the Python GIL,
+    and has to grab it for error reporting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE357]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that returns TRUE if the item of `arr` pointed to by
+    `data` is nonzero. This function can deal with misbehaved arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE358]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that fills a contiguous array of given length with data.
+    The first two elements of the array must already be filled- in. From these two
+    values, a delta will be computed and the values from item 3 to the end will be
+    computed by repeatedly adding this computed delta. The data buffer must be well-behaved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE359]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that fills a contiguous `buffer` of the given `length`
+    with a single scalar `value` whose address is given. The final argument is the
+    array which is needed to get the itemsize for variable-length arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE360]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to a particular sorting algorithms. A particular
+    sorting algorithm is obtained using a key (so far [`NPY_QUICKSORT`](array.html#c.NPY_SORTKIND.NPY_QUICKSORT
+    "NPY_QUICKSORT"), [`NPY_HEAPSORT`](array.html#c.NPY_SORTKIND.NPY_HEAPSORT "NPY_HEAPSORT"),
+    and [`NPY_MERGESORT`](array.html#c.NPY_SORTKIND.NPY_MERGESORT "NPY_MERGESORT")
+    are defined). These sorts are done in-place assuming contiguous and aligned data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE361]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers to sorting algorithms for this data type. The
+    same sorting algorithms as for sort are available. The indices producing the sort
+    are returned in `result` (which must be initialized with indices 0 to `length-1`
+    inclusive).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE362]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or a dictionary containing low-level casting functions for user-
+    defined data-types. Each function is wrapped in a [PyCapsule](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(in Python v3.11)")* and keyed by the data-type number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE363]'
+  prefs: []
+  type: TYPE_PRE
+- en: A function to determine how scalars of this type should be interpreted. The
+    argument is `NULL` or a 0-dimensional array containing the data (if that is needed
+    to determine the kind of scalar). The return value must be of type [`NPY_SCALARKIND`](array.html#c.NPY_SCALARKIND
+    "NPY_SCALARKIND").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE364]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or an array of [`NPY_NSCALARKINDS`](array.html#c.NPY_SCALARKIND.NPY_NSCALARKINDS
+    "NPY_NSCALARKINDS") pointers. These pointers should each be either `NULL` or a
+    pointer to an array of integers (terminated by [`NPY_NOTYPE`](dtype.html#c.NPY_NOTYPE
+    "NPY_NOTYPE")) indicating data-types that a scalar of this data-type of the specified
+    kind can be cast to safely (this usually means without losing precision).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE365]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either `NULL` or an array of integers (terminated by [`NPY_NOTYPE`](dtype.html#c.NPY_NOTYPE
+    "NPY_NOTYPE") ) indicated data-types that this data-type can be cast to safely
+    (this usually means without losing precision).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE366]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.17: The use of this function will give a deprecation
+    warning when `np.clip`. Instead of this function, the datatype must instead use
+    `PyUFunc_RegisterLoopForDescr` to attach a custom loop to `np.core.umath.clip`,
+    `np.minimum`, and `np.maximum`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that reads `n_in` items from `in`, and writes to `out` the read value
+    if it is within the limits pointed to by `min` and `max`, or the corresponding
+    limit if outside. The memory segments must be contiguous and behaved, and either
+    `min` or `max` may be `NULL`, but not both.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE367]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that takes a pointer `in` to an array of `n_in` items, a pointer
+    `mask` to an array of `n_in` boolean values, and a pointer `vals` to an array
+    of `nv` items. Items from `vals` are copied into `in` wherever the value in `mask`
+    is non-zero, tiling `vals` as needed if `nv < n_in`. All arrays must be contiguous
+    and behaved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE368]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.19: Setting this function is deprecated and should
+    always be `NULL`, if set, it will be ignored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function that takes a pointer `src` to a C contiguous, behaved segment, interpreted
+    as a 3-dimensional array of shape `(n_outer, nindarray, nelem)`, a pointer `indarray`
+    to a contiguous, behaved segment of `m_middle` integer indices, and a pointer
+    `dest` to a C contiguous, behaved segment, interpreted as a 3-dimensional array
+    of shape `(n_outer, m_middle, nelem)`. The indices in `indarray` are used to index
+    `src` along the second dimension, and copy the corresponding chunks of `nelem`
+    items into `dest`. `clipmode` (which can take on the values [`NPY_RAISE`](array.html#c.NPY_CLIPMODE.NPY_RAISE
+    "NPY_RAISE"), [`NPY_WRAP`](array.html#c.NPY_CLIPMODE.NPY_WRAP "NPY_WRAP") or [`NPY_CLIP`](array.html#c.NPY_CLIPMODE.NPY_CLIP
+    "NPY_CLIP")) determines how will indices smaller than 0 or larger than `nindarray`
+    will be handled.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE369]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a function that retrieves the index of the smallest of `n` elements
+    in `arr` beginning at the element pointed to by `data`. This function requires
+    that the memory segment be contiguous and behaved. The return value is always
+    0\. The index of the smallest element is returned in `min_ind`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`PyArray_Type`](#c.PyArray_Type "PyArray_Type") typeobject implements many
+    of the features of [`Python objects`](https://docs.python.org/3/c-api/type.html#c.PyTypeObject
+    "(in Python v3.11)") including the [`tp_as_number`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_number
+    "(in Python v3.11)"), [`tp_as_sequence`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_sequence
+    "(in Python v3.11)"), [`tp_as_mapping`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_mapping
+    "(in Python v3.11)"), and [`tp_as_buffer`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_as_buffer
+    "(in Python v3.11)") interfaces. The [`rich comparison`](https://docs.python.org/3/c-api/typeobj.html#c.richcmpfunc
+    "(in Python v3.11)")) is also used along with new-style attribute lookup for member
+    ([`tp_members`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_members
+    "(in Python v3.11)")) and properties ([`tp_getset`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_getset
+    "(in Python v3.11)")). The [`PyArray_Type`](#c.PyArray_Type "PyArray_Type") can
+    also be sub-typed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `tp_as_number` methods use a generic approach to call whatever function
+    has been registered for handling the operation. When the `_multiarray_umath module`
+    is imported, it sets the numeric operations for all arrays to the corresponding
+    ufuncs. This choice can be changed with [`PyUFunc_ReplaceLoopBySignature`](ufunc.html#c.PyUFunc_ReplaceLoopBySignature
+    "PyUFunc_ReplaceLoopBySignature") The `tp_str` and `tp_repr` methods can also
+    be altered using [`PyArray_SetStringFunction`](array.html#c.PyArray_SetStringFunction
+    "PyArray_SetStringFunction").
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyUFunc_Type and PyUFuncObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE370]'
+  prefs: []
+  type: TYPE_PRE
+- en: The ufunc object is implemented by creation of the [`PyUFunc_Type`](#c.PyUFunc_Type
+    "PyUFunc_Type"). It is a very simple type that implements only basic getattribute
+    behavior, printing behavior, and has call behavior which allows these objects
+    to act like functions. The basic idea behind the ufunc is to hold a reference
+    to fast 1-dimensional (vector) loops for each data type that supports the operation.
+    These one-dimensional loops all have the same signature and are the key to creating
+    a new ufunc. They are called by the generic looping code as appropriate to implement
+    the N-dimensional function. There are also some generic 1-d loops defined for
+    floating and complexfloating arrays that allow you to define a ufunc using a single
+    scalar function (*e.g.* atanh).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE371]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The core of the ufunc is the [`PyUFuncObject`](#c.PyUFuncObject "PyUFuncObject")
+    which contains all the information needed to call the underlying C-code loops
+    that perform the actual work. While it is described here for completeness, it
+    should be considered internal to NumPy and manipulated via `PyUFunc_*` functions.
+    The size of this structure is subject to change across versions of NumPy. To ensure
+    compatibility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Never declare a non-pointer instance of the struct
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never perform pointer arithmetic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Never use `sizeof(PyUFuncObject)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'It has the following structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE372]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE373]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of input arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE374]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of output arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE375]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total number of arguments (*nin* + *nout*). This must be less than [`NPY_MAXARGS`](array.html#c.NPY_MAXARGS
+    "NPY_MAXARGS").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE376]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either [`PyUFunc_One`](ufunc.html#c.PyUFunc_One "PyUFunc_One"), [`PyUFunc_Zero`](ufunc.html#c.PyUFunc_Zero
+    "PyUFunc_Zero"), [`PyUFunc_MinusOne`](ufunc.html#c.PyUFunc_MinusOne "PyUFunc_MinusOne"),
+    [`PyUFunc_None`](ufunc.html#c.PyUFunc_None "PyUFunc_None"), [`PyUFunc_ReorderableNone`](ufunc.html#c.PyUFunc_ReorderableNone
+    "PyUFunc_ReorderableNone"), or [`PyUFunc_IdentityValue`](ufunc.html#c.PyUFunc_IdentityValue
+    "PyUFunc_IdentityValue") to indicate the identity for this operation. It is only
+    used for a reduce-like call on an empty array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE377]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of function pointers — one for each data type supported by the ufunc.
+    This is the vector loop that is called to implement the underlying function *dims*
+    [0] times. The first argument, *args*, is an array of *nargs* pointers to behaved
+    memory. Pointers to the data for the input arguments are first, followed by the
+    pointers to the data for the output arguments. How many bytes must be skipped
+    to get to the next element in the sequence is specified by the corresponding entry
+    in the *steps* array. The last argument allows the loop to receive extra information.
+    This is commonly used so that a single, generic vector loop can be used for multiple
+    functions. In this case, the actual scalar function to call is passed in as *extradata*.
+    The size of this function pointer array is ntypes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE378]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extra data to be passed to the 1-d vector loops or `NULL` if no extra-data is
+    needed. This C-array must be the same size ( *i.e.* ntypes) as the functions array.
+    `NULL` is used if extra_data is not needed. Several C-API calls for UFuncs are
+    just 1-d vector loops that make use of this extra data to receive a pointer to
+    the actual function to call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE379]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of supported data types for the ufunc. This number specifies how
+    many different 1-d loops (of the builtin data types) are available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE380]'
+  prefs: []
+  type: TYPE_PRE
+- en: Unused.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE381]'
+  prefs: []
+  type: TYPE_PRE
+- en: A string name for the ufunc. This is used dynamically to build the __doc__ attribute
+    of ufuncs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE382]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of \(nargs \times ntypes\) 8-bit type_numbers which contains the type
+    signature for the function for each of the supported (builtin) data types. For
+    each of the *ntypes* functions, the corresponding set of type numbers in this
+    array shows how the *args* argument should be interpreted in the 1-d vector loop.
+    These type numbers do not have to be the same type and mixed-type ufuncs are supported.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE383]'
+  prefs: []
+  type: TYPE_PRE
+- en: Documentation for the ufunc. Should not contain the function signature as this
+    is generated dynamically when __doc__ is retrieved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE384]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any dynamically allocated memory. Currently, this is used for dynamic ufuncs
+    created from a python function to store room for the types, data, and name members.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE385]'
+  prefs: []
+  type: TYPE_PRE
+- en: For ufuncs dynamically created from python functions, this member holds a reference
+    to the underlying Python function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE386]'
+  prefs: []
+  type: TYPE_PRE
+- en: A dictionary of user-defined 1-d vector loops (stored as CObject ptrs) for user-defined
+    types. A loop may be registered by the user for any user-defined type. It is retrieved
+    by type number. User defined type numbers are always larger than [`NPY_USERDEF`](dtype.html#c.NPY_USERDEF
+    "NPY_USERDEF").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE387]'
+  prefs: []
+  type: TYPE_PRE
+- en: 0 for scalar ufuncs; 1 for generalized ufuncs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE388]'
+  prefs: []
+  type: TYPE_PRE
+- en: Number of distinct core dimension names in the signature
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE389]'
+  prefs: []
+  type: TYPE_PRE
+- en: Number of core dimensions of each argument
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE390]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Dimension indices in a flattened form; indices of argument `k` are stored in
+    `core_dim_ixs[core_offsets[k] : core_offsets[k] + core_numdims[k]]`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE391]'
+  prefs: []
+  type: TYPE_PRE
+- en: Position of 1st core dimension of each argument in `core_dim_ixs`, equivalent
+    to cumsum(`core_num_dims`)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE392]'
+  prefs: []
+  type: TYPE_PRE
+- en: Core signature string
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE393]'
+  prefs: []
+  type: TYPE_PRE
+- en: A function which resolves the types and fills an array with the dtypes for the
+    inputs and outputs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE394]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Deprecated since version 1.22: Some fallback support for this slot exists,
+    but will be removed eventually. A universal function that relied on this will
+    have to be ported eventually. See [NEP 41](https://numpy.org/neps/nep-0041-improved-dtype-support.html#nep41
+    "(in NumPy Enhancement Proposals)") and [NEP 43](https://numpy.org/neps/nep-0043-extensible-ufuncs.html#nep43
+    "(in NumPy Enhancement Proposals)")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE395]'
+  prefs: []
+  type: TYPE_PRE
+- en: For a possible future loop selector with a different signature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE396]'
+  prefs: []
+  type: TYPE_PRE
+- en: Override the default operand flags for each ufunc operand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE397]'
+  prefs: []
+  type: TYPE_PRE
+- en: Override the default nditer flags for the ufunc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Added in API version 0x0000000D
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE398]'
+  prefs: []
+  type: TYPE_PRE
+- en: For each distinct core dimension, the possible [frozen](generalized-ufuncs.html#frozen)
+    size if [`UFUNC_CORE_DIM_SIZE_INFERRED`](#c.UFUNC_CORE_DIM_SIZE_INFERRED "UFUNC_CORE_DIM_SIZE_INFERRED")
+    is `0`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE399]'
+  prefs: []
+  type: TYPE_PRE
+- en: For each distinct core dimension, a set of flags ( [`UFUNC_CORE_DIM_CAN_IGNORE`](#c.UFUNC_CORE_DIM_CAN_IGNORE
+    "UFUNC_CORE_DIM_CAN_IGNORE") and [`UFUNC_CORE_DIM_SIZE_INFERRED`](#c.UFUNC_CORE_DIM_SIZE_INFERRED
+    "UFUNC_CORE_DIM_SIZE_INFERRED"))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE400]'
+  prefs: []
+  type: TYPE_PRE
+- en: Identity for reduction, when [`PyUFuncObject.identity`](#c.PyUFuncObject.identity
+    "PyUFuncObject.identity") is equal to [`PyUFunc_IdentityValue`](ufunc.html#c.PyUFunc_IdentityValue
+    "PyUFunc_IdentityValue").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE401]'
+  prefs: []
+  type: TYPE_PRE
+- en: if the dim name ends in `?`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE402]'
+  prefs: []
+  type: TYPE_PRE
+- en: if the dim size will be determined from the operands and not from a [frozen](generalized-ufuncs.html#frozen)
+    signature
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayIter_Type and PyArrayIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE403]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is an iterator object that makes it easy to loop over an N-dimensional
+    array. It is the object returned from the flat attribute of an ndarray. It is
+    also used extensively throughout the implementation internals to loop over an
+    N-dimensional array. The tp_as_mapping interface is implemented so that the iterator
+    object can be indexed (using 1-d indexing), and a few methods are implemented
+    through the tp_methods table. This object implements the next method and can be
+    used anywhere an iterator can be used in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE404]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The C-structure corresponding to an object of [`PyArrayIter_Type`](#c.PyArrayIter_Type
+    "PyArrayIter_Type") is the [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject").
+    The [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject") is used to
+    keep track of a pointer into an N-dimensional array. It contains associated information
+    used to quickly march through the array. The pointer can be adjusted in three
+    basic ways: 1) advance to the “next” position in the array in a C-style contiguous
+    fashion, 2) advance to an arbitrary N-dimensional coordinate in the array, and
+    3) advance to an arbitrary one-dimensional index into the array. The members of
+    the [`PyArrayIterObject`](#c.PyArrayIterObject "PyArrayIterObject") structure
+    are used in these calculations. Iterator objects keep their own dimension and
+    strides information about an array. This can be adjusted as needed for “broadcasting,”
+    or to loop over only specific dimensions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE405]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE406]'
+  prefs: []
+  type: TYPE_PRE
+- en: \(N-1\) where \(N\) is the number of dimensions in the underlying array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE407]'
+  prefs: []
+  type: TYPE_PRE
+- en: The current 1-d index into the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE408]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total size of the underlying array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE409]'
+  prefs: []
+  type: TYPE_PRE
+- en: An \(N\) -dimensional index into the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE410]'
+  prefs: []
+  type: TYPE_PRE
+- en: The size of the array minus 1 in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE411]'
+  prefs: []
+  type: TYPE_PRE
+- en: The strides of the array. How many bytes needed to jump to the next element
+    in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE412]'
+  prefs: []
+  type: TYPE_PRE
+- en: How many bytes needed to jump from the end of a dimension back to its beginning.
+    Note that `backstrides[k] == strides[k] * dims_m1[k]`, but it is stored here as
+    an optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE413]'
+  prefs: []
+  type: TYPE_PRE
+- en: This array is used in computing an N-d index from a 1-d index. It contains needed
+    products of the dimensions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE414]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to the underlying ndarray this iterator was created to represent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE415]'
+  prefs: []
+  type: TYPE_PRE
+- en: This member points to an element in the ndarray indicated by the index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE416]'
+  prefs: []
+  type: TYPE_PRE
+- en: This flag is true if the underlying array is [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"). It is used to simplify calculations when possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use an array iterator on a C-level is explained more fully in later sections.
+    Typically, you do not need to concern yourself with the internal structure of
+    the iterator object, and merely interact with it through the use of the macros
+    [`PyArray_ITER_NEXT`](array.html#c.PyArray_ITER_NEXT "PyArray_ITER_NEXT") (it),
+    [`PyArray_ITER_GOTO`](array.html#c.PyArray_ITER_GOTO "PyArray_ITER_GOTO") (it,
+    dest), or [`PyArray_ITER_GOTO1D`](array.html#c.PyArray_ITER_GOTO1D "PyArray_ITER_GOTO1D")
+    (it, index). All of these macros require the argument *it* to be a [PyArrayIterObject](#c.PyArrayIterObject
+    "PyArrayIterObject")*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayMultiIter_Type and PyArrayMultiIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE417]'
+  prefs: []
+  type: TYPE_PRE
+- en: This type provides an iterator that encapsulates the concept of broadcasting.
+    It allows \(N\) arrays to be broadcast together so that the loop progresses in
+    C-style contiguous fashion over the broadcasted array. The corresponding C-structure
+    is the [`PyArrayMultiIterObject`](#c.PyArrayMultiIterObject "PyArrayMultiIterObject")
+    whose memory layout must begin any object, *obj*, passed in to the [`PyArray_Broadcast`](array.html#c.PyArray_Broadcast
+    "PyArray_Broadcast") (obj) function. Broadcasting is performed by adjusting array
+    iterators so that each iterator represents the broadcasted shape and size, but
+    has its strides adjusted so that the correct element from the array is used at
+    each iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE418]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE419]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE420]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of arrays that need to be broadcast to the same shape.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE421]'
+  prefs: []
+  type: TYPE_PRE
+- en: The total broadcasted size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE422]'
+  prefs: []
+  type: TYPE_PRE
+- en: The current (1-d) index into the broadcasted result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE423]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of dimensions in the broadcasted result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE424]'
+  prefs: []
+  type: TYPE_PRE
+- en: The shape of the broadcasted result (only `nd` slots are used).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE425]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array of iterator objects that holds the iterators for the arrays to be broadcast
+    together. On return, the iterators are adjusted for broadcasting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE426]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is an iterator object that makes it easy to loop over an N-dimensional
+    neighborhood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE427]'
+  prefs: []
+  type: TYPE_PRE
+- en: The C-structure corresponding to an object of [`PyArrayNeighborhoodIter_Type`](#c.PyArrayNeighborhoodIter_Type
+    "PyArrayNeighborhoodIter_Type") is the [`PyArrayNeighborhoodIterObject`](#c.PyArrayNeighborhoodIterObject
+    "PyArrayNeighborhoodIterObject").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE428]'
+  prefs: []
+  type: TYPE_PRE
+- en: PyArrayFlags_Type and PyArrayFlagsObject
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE429]'
+  prefs: []
+  type: TYPE_PRE
+- en: When the flags attribute is retrieved from Python, a special builtin object
+    of this type is constructed. This special type makes it easier to work with the
+    different flags by accessing them as attributes or by accessing them as if the
+    object were a dictionary with the flag names as entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE430]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE431]'
+  prefs: []
+  type: TYPE_PRE
+- en: ScalarArrayTypes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There is a Python type for each of the different built-in data types that can
+    be present in the array. Most of these are simple wrappers around the corresponding
+    data type in C. The C-names for these types are `Py{TYPE}ArrType_Type` where `{TYPE}`
+    can be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**, **UByte**,
+    **UShort**, **UInt**, **ULong**, **ULongLong**, **Half**, **Float**, **Double**,
+    **LongDouble**, **CFloat**, **CDouble**, **CLongDouble**, **String**, **Unicode**,
+    **Void**, and **Object**.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: These type names are part of the C-API and can therefore be created in extension
+    C-code. There is also a `PyIntpArrType_Type` and a `PyUIntpArrType_Type` that
+    are simple substitutes for one of the integer types that can hold a pointer on
+    the platform. The structure of these scalar objects is not exposed to C-code.
+    The function [`PyArray_ScalarAsCtype`](array.html#c.PyArray_ScalarAsCtype "PyArray_ScalarAsCtype")
+    (..) can be used to extract the C-type value from the array scalar and the function
+    [`PyArray_Scalar`](array.html#c.PyArray_Scalar "PyArray_Scalar") (…) can be used
+    to construct an array scalar from a C-value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other C-Structures
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A few new C-structures were found to be useful in the development of NumPy.
+    These C-structures are used in at least one C-API call and are therefore documented
+    here. The main reason these structures were defined is to make it easy to use
+    the Python ParseTuple C-API to convert from Python objects to a useful C-Object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Dims
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE432]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This structure is very useful when shape and/or strides information is supposed
+    to be interpreted. The structure is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE433]'
+  prefs: []
+  type: TYPE_PRE
+- en: The members of this structure are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE434]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a list of ([`npy_intp`](dtype.html#c.npy_intp "npy_intp")) integers
+    which usually represent array shape or array strides.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE435]'
+  prefs: []
+  type: TYPE_PRE
+- en: The length of the list of integers. It is assumed safe to access *ptr* [0] to
+    *ptr* [len-1].
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Chunk
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE436]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is equivalent to the buffer object structure in Python up to the ptr member.
+    On 32-bit platforms (*i.e.* if [`NPY_SIZEOF_INT`](config.html#c.NPY_SIZEOF_INT
+    "NPY_SIZEOF_INT") == [`NPY_SIZEOF_INTP`](config.html#c.NPY_SIZEOF_INTP "NPY_SIZEOF_INTP")),
+    the len member also matches an equivalent member of the buffer object. It is useful
+    to represent a generic single-segment chunk of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE437]'
+  prefs: []
+  type: TYPE_PRE
+- en: The members are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE438]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Python object this chunk of memory comes from. Needed so that memory can
+    be accounted for properly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE439]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to the start of the single-segment chunk of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE440]'
+  prefs: []
+  type: TYPE_PRE
+- en: The length of the segment in bytes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE441]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any data flags (*e.g.* [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE
+    "NPY_ARRAY_WRITEABLE") ) that should be used to interpret the memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayInterface
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The array interface protocol](../arrays.interface.html#arrays-interface)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE442]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayInterface`](#c.PyArrayInterface "PyArrayInterface") structure is
+    defined so that NumPy and other extension modules can use the rapid array interface
+    protocol. The [`__array_struct__`](../arrays.interface.html#object.__array_struct__
+    "object.__array_struct__") method of an object that supports the rapid array interface
+    protocol should return a [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(in Python v3.11)") that contains a pointer to a [`PyArrayInterface`](#c.PyArrayInterface
+    "PyArrayInterface") structure with the relevant details of the array. After the
+    new array is created, the attribute should be `DECREF`’d which will free the [`PyArrayInterface`](#c.PyArrayInterface
+    "PyArrayInterface") structure. Remember to `INCREF` the object (whose [`__array_struct__`](../arrays.interface.html#object.__array_struct__
+    "object.__array_struct__") attribute was retrieved) and point the base member
+    of the new [`PyArrayObject`](#c.PyArrayObject "PyArrayObject") to this same object.
+    In this way the memory for the array will be managed correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE443]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE444]'
+  prefs: []
+  type: TYPE_PRE
+- en: the integer 2 as a sanity check.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE445]'
+  prefs: []
+  type: TYPE_PRE
+- en: the number of dimensions in the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE446]'
+  prefs: []
+  type: TYPE_PRE
+- en: A character indicating what kind of array is present according to the typestring
+    convention with ‘t’ -> bitfield, ‘b’ -> Boolean, ‘i’ -> signed integer, ‘u’ ->
+    unsigned integer, ‘f’ -> floating point, ‘c’ -> complex floating point, ‘O’ ->
+    object, ‘S’ -> (byte-)string, ‘U’ -> unicode, ‘V’ -> void.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE447]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of bytes each item in the array requires.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE448]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any of the bits [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS") (1), [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS") (2), [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED
+    "NPY_ARRAY_ALIGNED") (0x100), [`NPY_ARRAY_NOTSWAPPED`](array.html#c.NPY_ARRAY_NOTSWAPPED
+    "NPY_ARRAY_NOTSWAPPED") (0x200), or [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE
+    "NPY_ARRAY_WRITEABLE") (0x400) to indicate something about the data. The [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED
+    "NPY_ARRAY_ALIGNED"), [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"), and [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS") flags can actually be determined from the other parameters.
+    The flag [`NPY_ARR_HAS_DESCR`](../arrays.interface.html#c.NPY_ARR_HAS_DESCR "NPY_ARR_HAS_DESCR")
+    (0x800) can also be set to indicate to objects consuming the version 3 array interface
+    that the descr member of the structure is present (it will be ignored by objects
+    consuming version 2 of the array interface).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE449]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array containing the size of the array in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE450]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array containing the number of bytes to jump to get to the next element in
+    each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE451]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer *to* the first element of the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE452]'
+  prefs: []
+  type: TYPE_PRE
+- en: A Python object describing the data-type in more detail (same as the *descr*
+    key in [`__array_interface__`](../arrays.interface.html#object.__array_interface__
+    "object.__array_interface__")). This can be `NULL` if *typekind* and *itemsize*
+    provide enough information. This field is also ignored unless [`NPY_ARR_HAS_DESCR`](../arrays.interface.html#c.NPY_ARR_HAS_DESCR
+    "NPY_ARR_HAS_DESCR") flag is on in *flags*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Internally used structures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Internally, the code uses some additional Python objects primarily for memory
+    management. These types are not accessible directly from Python, and are not exposed
+    to the C-API. They are included here only for completeness and assistance in understanding
+    the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE453]'
+  prefs: []
+  type: TYPE_PRE
+- en: A simple linked-list of C-structures containing the information needed to define
+    a 1-d loop for a ufunc for every defined signature of a user-defined data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE454]'
+  prefs: []
+  type: TYPE_PRE
+- en: Advanced indexing is handled with this Python type. It is simply a loose wrapper
+    around the C-structure containing the variables needed for advanced array indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE455]'
+  prefs: []
+  type: TYPE_PRE
+- en: The C-structure associated with [`PyArrayMapIter_Type`](#c.PyArrayMapIter_Type
+    "PyArrayMapIter_Type"). This structure is useful if you are trying to understand
+    the advanced-index mapping code. It is defined in the `arrayobject.h` header.
+    This type is not exposed to Python and could be replaced with a C-structure. As
+    a Python type it takes advantage of reference- counted memory management.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Dims
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE456]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This structure is very useful when shape and/or strides information is supposed
+    to be interpreted. The structure is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE457]'
+  prefs: []
+  type: TYPE_PRE
+- en: The members of this structure are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE458]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to a list of ([`npy_intp`](dtype.html#c.npy_intp "npy_intp")) integers
+    which usually represent array shape or array strides.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE459]'
+  prefs: []
+  type: TYPE_PRE
+- en: The length of the list of integers. It is assumed safe to access *ptr* [0] to
+    *ptr* [len-1].
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArray_Chunk
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE460]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is equivalent to the buffer object structure in Python up to the ptr member.
+    On 32-bit platforms (*i.e.* if [`NPY_SIZEOF_INT`](config.html#c.NPY_SIZEOF_INT
+    "NPY_SIZEOF_INT") == [`NPY_SIZEOF_INTP`](config.html#c.NPY_SIZEOF_INTP "NPY_SIZEOF_INTP")),
+    the len member also matches an equivalent member of the buffer object. It is useful
+    to represent a generic single-segment chunk of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE461]'
+  prefs: []
+  type: TYPE_PRE
+- en: The members are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE462]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Python object this chunk of memory comes from. Needed so that memory can
+    be accounted for properly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE463]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer to the start of the single-segment chunk of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE464]'
+  prefs: []
+  type: TYPE_PRE
+- en: The length of the segment in bytes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE465]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any data flags (*e.g.* [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE
+    "NPY_ARRAY_WRITEABLE") ) that should be used to interpret the memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyArrayInterface
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The array interface protocol](../arrays.interface.html#arrays-interface)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE466]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`PyArrayInterface`](#c.PyArrayInterface "PyArrayInterface") structure is
+    defined so that NumPy and other extension modules can use the rapid array interface
+    protocol. The [`__array_struct__`](../arrays.interface.html#object.__array_struct__
+    "object.__array_struct__") method of an object that supports the rapid array interface
+    protocol should return a [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(in Python v3.11)") that contains a pointer to a [`PyArrayInterface`](#c.PyArrayInterface
+    "PyArrayInterface") structure with the relevant details of the array. After the
+    new array is created, the attribute should be `DECREF`’d which will free the [`PyArrayInterface`](#c.PyArrayInterface
+    "PyArrayInterface") structure. Remember to `INCREF` the object (whose [`__array_struct__`](../arrays.interface.html#object.__array_struct__
+    "object.__array_struct__") attribute was retrieved) and point the base member
+    of the new [`PyArrayObject`](#c.PyArrayObject "PyArrayObject") to this same object.
+    In this way the memory for the array will be managed correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE467]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE468]'
+  prefs: []
+  type: TYPE_PRE
+- en: the integer 2 as a sanity check.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE469]'
+  prefs: []
+  type: TYPE_PRE
+- en: the number of dimensions in the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE470]'
+  prefs: []
+  type: TYPE_PRE
+- en: A character indicating what kind of array is present according to the typestring
+    convention with ‘t’ -> bitfield, ‘b’ -> Boolean, ‘i’ -> signed integer, ‘u’ ->
+    unsigned integer, ‘f’ -> floating point, ‘c’ -> complex floating point, ‘O’ ->
+    object, ‘S’ -> (byte-)string, ‘U’ -> unicode, ‘V’ -> void.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE471]'
+  prefs: []
+  type: TYPE_PRE
+- en: The number of bytes each item in the array requires.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE472]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any of the bits [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS") (1), [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS") (2), [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED
+    "NPY_ARRAY_ALIGNED") (0x100), [`NPY_ARRAY_NOTSWAPPED`](array.html#c.NPY_ARRAY_NOTSWAPPED
+    "NPY_ARRAY_NOTSWAPPED") (0x200), or [`NPY_ARRAY_WRITEABLE`](array.html#c.NPY_ARRAY_WRITEABLE
+    "NPY_ARRAY_WRITEABLE") (0x400) to indicate something about the data. The [`NPY_ARRAY_ALIGNED`](array.html#c.NPY_ARRAY_ALIGNED
+    "NPY_ARRAY_ALIGNED"), [`NPY_ARRAY_C_CONTIGUOUS`](array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS"), and [`NPY_ARRAY_F_CONTIGUOUS`](array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS") flags can actually be determined from the other parameters.
+    The flag [`NPY_ARR_HAS_DESCR`](../arrays.interface.html#c.NPY_ARR_HAS_DESCR "NPY_ARR_HAS_DESCR")
+    (0x800) can also be set to indicate to objects consuming the version 3 array interface
+    that the descr member of the structure is present (it will be ignored by objects
+    consuming version 2 of the array interface).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE473]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array containing the size of the array in each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE474]'
+  prefs: []
+  type: TYPE_PRE
+- en: An array containing the number of bytes to jump to get to the next element in
+    each dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE475]'
+  prefs: []
+  type: TYPE_PRE
+- en: A pointer *to* the first element of the array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE476]'
+  prefs: []
+  type: TYPE_PRE
+- en: A Python object describing the data-type in more detail (same as the *descr*
+    key in [`__array_interface__`](../arrays.interface.html#object.__array_interface__
+    "object.__array_interface__")). This can be `NULL` if *typekind* and *itemsize*
+    provide enough information. This field is also ignored unless [`NPY_ARR_HAS_DESCR`](../arrays.interface.html#c.NPY_ARR_HAS_DESCR
+    "NPY_ARR_HAS_DESCR") flag is on in *flags*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Internally used structures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Internally, the code uses some additional Python objects primarily for memory
+    management. These types are not accessible directly from Python, and are not exposed
+    to the C-API. They are included here only for completeness and assistance in understanding
+    the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE477]'
+  prefs: []
+  type: TYPE_PRE
+- en: A simple linked-list of C-structures containing the information needed to define
+    a 1-d loop for a ufunc for every defined signature of a user-defined data-type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE478]'
+  prefs: []
+  type: TYPE_PRE
+- en: Advanced indexing is handled with this Python type. It is simply a loose wrapper
+    around the C-structure containing the variables needed for advanced array indexing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE479]'
+  prefs: []
+  type: TYPE_PRE
+- en: The C-structure associated with [`PyArrayMapIter_Type`](#c.PyArrayMapIter_Type
+    "PyArrayMapIter_Type"). This structure is useful if you are trying to understand
+    the advanced-index mapping code. It is defined in the `arrayobject.h` header.
+    This type is not exposed to Python and could be replaced with a C-structure. As
+    a Python type it takes advantage of reference- counted memory management.
+  prefs: []
+  type: TYPE_NORMAL

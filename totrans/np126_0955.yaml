@@ -1,0 +1,592 @@
+- en: Random sampling (numpy.random)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/random/index.html](https://numpy.org/doc/1.26/reference/random/index.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## Quick Start'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`numpy.random`](#module-numpy.random "numpy.random") module implements
+    pseudo-random number generators (PRNGs or RNGs, for short) with the ability to
+    draw samples from a variety of probability distributions. In general, users will
+    create a [`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
+    instance with [`default_rng`](generator.html#numpy.random.default_rng "numpy.random.default_rng")
+    and call the various methods on it to obtain samples from different distributions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Our RNGs are deterministic sequences and can be reproduced by specifying a seed
+    integer to derive its initial state. By default, with no seed provided, [`default_rng`](generator.html#numpy.random.default_rng
+    "numpy.random.default_rng") will create seed the RNG from nondeterministic data
+    from the operating system and therefore generate different numbers each time.
+    The pseudo-random sequences will be independent for all practical purposes, at
+    least those purposes for which our pseudo-randomness was good for in the first
+    place.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pseudo-random number generators implemented in this module are designed
+    for statistical modeling and simulation. They are not suitable for security or
+    cryptographic purposes. See the [`secrets`](https://docs.python.org/3/library/secrets.html#module-secrets
+    "(in Python v3.11)") module from the standard library for such use cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Seeds should be large positive integers. [`default_rng`](generator.html#numpy.random.default_rng
+    "numpy.random.default_rng") can take positive integers of any size. We recommend
+    using very large, unique numbers to ensure that your seed is different from anyone
+    else’s. This is good practice to ensure that your results are statistically independent
+    from theirs unless you are intentionally *trying* to reproduce their result. A
+    convenient way to get such a seed number is to use [`secrets.randbits`](https://docs.python.org/3/library/secrets.html#secrets.randbits
+    "(in Python v3.11)") to get an arbitrary 128-bit integer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the documentation on [`default_rng`](generator.html#numpy.random.default_rng
+    "numpy.random.default_rng") and [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") for more advanced options for controlling the seed
+    in specialized scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
+    and its associated infrastructure was introduced in NumPy version 1.17.0\. There
+    is still a lot of code that uses the older [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState") and the functions in [`numpy.random`](#module-numpy.random
+    "numpy.random"). While there are no plans to remove them at this time, we do recommend
+    transitioning to [`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
+    as you can. The algorithms are faster, more flexible, and will receive more improvements
+    in the future. For the most part, [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") can be used as a replacement for [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState"). See [Legacy Random Generation](legacy.html#legacy)
+    for information on the legacy infrastructure, [What’s New or Different](new-or-different.html#new-or-different)
+    for information on transitioning, and [NEP 19](https://numpy.org/neps/nep-0019-rng-policy.html#nep19
+    "(in NumPy Enhancement Proposals)") for some of the reasoning for the transition.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Design
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Users primarily interact with [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") instances. Each [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") instance owns a [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") instance that implements the core RNG algorithm.
+    The [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") has a limited set of responsibilities. It manages
+    state and provides functions to produce random doubles and random unsigned 32-
+    and 64-bit values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
+    takes the bit generator-provided stream and transforms them into more useful distributions,
+    e.g., simulated normal random values. This structure allows alternative bit generators
+    to be used with little code duplication.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy implements several different [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") classes implementing different RNG algorithms. [`default_rng`](generator.html#numpy.random.default_rng
+    "numpy.random.default_rng") currently uses [`PCG64`](bit_generators/pcg64.html#numpy.random.PCG64
+    "numpy.random.PCG64") as the default [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator"). It has better statistical properties and performance
+    than the [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937 "numpy.random.MT19937")
+    algorithm used in the legacy [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState"). See [Bit Generators](bit_generators/index.html#random-bit-generators)
+    for more details on the supported BitGenerators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`default_rng`](generator.html#numpy.random.default_rng "numpy.random.default_rng")
+    and BitGenerators delegate the conversion of seeds into RNG states to [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") internally. [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") implements a sophisticated algorithm that intermediates
+    between the user’s input and the internal implementation details of each [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") algorithm, each of which can require different amounts
+    of bits for its state. Importantly, it lets you use arbitrary-sized integers and
+    arbitrary sequences of such integers to mix together into the RNG state. This
+    is a useful primitive for constructing a [flexible pattern for parallel RNG streams](parallel.html#seedsequence-spawn).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For backward compatibility, we still maintain the legacy [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState") class. It continues to use the [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937
+    "numpy.random.MT19937") algorithm by default, and old seeds continue to reproduce
+    the same results. The convenience [Functions in numpy.random](legacy.html#functions-in-numpy-random)
+    are still aliases to the methods on a single global [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState") instance. See [Legacy Random Generation](legacy.html#legacy)
+    for the complete details. See [What’s New or Different](new-or-different.html#new-or-different)
+    for a detailed comparison between [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") and [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parallel Generation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The included generators can be used in parallel, distributed applications in
+    a number of ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[SeedSequence spawning](parallel.html#seedsequence-spawn)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Sequence of Integer Seeds](parallel.html#sequence-of-seeds)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Independent Streams](parallel.html#independent-streams)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Jumping the BitGenerator state](parallel.html#parallel-jumped)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Users with a very large amount of parallelism will want to consult [Upgrading
+    PCG64 with PCG64DXSM](upgrading-pcg64.html#upgrading-pcg64).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concepts
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Random Generator](generator.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Legacy Generator (RandomState)](legacy.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Bit Generators](bit_generators/index.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Seeding and Entropy](bit_generators/index.html#seeding-and-entropy)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Upgrading PCG64 with PCG64DXSM](upgrading-pcg64.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Compatibility Policy](compatibility.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Parallel Applications](parallel.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`SeedSequence` spawning](parallel.html#seedsequence-spawning)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Sequence of Integer Seeds](parallel.html#sequence-of-integer-seeds)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Independent Streams](parallel.html#independent-streams)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Jumping the BitGenerator state](parallel.html#jumping-the-bitgenerator-state)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Multithreaded Generation](multithreading.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[What’s New or Different](new-or-different.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Comparing Performance](performance.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Recommendation](performance.html#recommendation)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Timings](performance.html#timings)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Performance on different Operating Systems](performance.html#performance-on-different-operating-systems)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[C API for random](c-api.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Examples of using Numba, Cython, CFFI](extending.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Numba](extending.html#numba)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Cython](extending.html#cython)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[CFFI](extending.html#cffi)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[New Bit Generators](extending.html#new-bit-generators)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Examples](extending.html#examples)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Original Source of the Generator and BitGenerators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This package was developed independently of NumPy and was integrated in version
+    1.17.0\. The original repo is at [https://github.com/bashtage/randomgen](https://github.com/bashtage/randomgen).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Quick Start'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`numpy.random`](#module-numpy.random "numpy.random") module implements
+    pseudo-random number generators (PRNGs or RNGs, for short) with the ability to
+    draw samples from a variety of probability distributions. In general, users will
+    create a [`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
+    instance with [`default_rng`](generator.html#numpy.random.default_rng "numpy.random.default_rng")
+    and call the various methods on it to obtain samples from different distributions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Our RNGs are deterministic sequences and can be reproduced by specifying a seed
+    integer to derive its initial state. By default, with no seed provided, [`default_rng`](generator.html#numpy.random.default_rng
+    "numpy.random.default_rng") will create seed the RNG from nondeterministic data
+    from the operating system and therefore generate different numbers each time.
+    The pseudo-random sequences will be independent for all practical purposes, at
+    least those purposes for which our pseudo-randomness was good for in the first
+    place.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pseudo-random number generators implemented in this module are designed
+    for statistical modeling and simulation. They are not suitable for security or
+    cryptographic purposes. See the [`secrets`](https://docs.python.org/3/library/secrets.html#module-secrets
+    "(in Python v3.11)") module from the standard library for such use cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Seeds should be large positive integers. [`default_rng`](generator.html#numpy.random.default_rng
+    "numpy.random.default_rng") can take positive integers of any size. We recommend
+    using very large, unique numbers to ensure that your seed is different from anyone
+    else’s. This is good practice to ensure that your results are statistically independent
+    from theirs unless you are intentionally *trying* to reproduce their result. A
+    convenient way to get such a seed number is to use [`secrets.randbits`](https://docs.python.org/3/library/secrets.html#secrets.randbits
+    "(in Python v3.11)") to get an arbitrary 128-bit integer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the documentation on [`default_rng`](generator.html#numpy.random.default_rng
+    "numpy.random.default_rng") and [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") for more advanced options for controlling the seed
+    in specialized scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
+    and its associated infrastructure was introduced in NumPy version 1.17.0\. There
+    is still a lot of code that uses the older [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState") and the functions in [`numpy.random`](#module-numpy.random
+    "numpy.random"). While there are no plans to remove them at this time, we do recommend
+    transitioning to [`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
+    as you can. The algorithms are faster, more flexible, and will receive more improvements
+    in the future. For the most part, [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") can be used as a replacement for [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState"). See [Legacy Random Generation](legacy.html#legacy)
+    for information on the legacy infrastructure, [What’s New or Different](new-or-different.html#new-or-different)
+    for information on transitioning, and [NEP 19](https://numpy.org/neps/nep-0019-rng-policy.html#nep19
+    "(in NumPy Enhancement Proposals)") for some of the reasoning for the transition.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Design
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Users primarily interact with [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") instances. Each [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") instance owns a [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") instance that implements the core RNG algorithm.
+    The [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") has a limited set of responsibilities. It manages
+    state and provides functions to produce random doubles and random unsigned 32-
+    and 64-bit values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
+    takes the bit generator-provided stream and transforms them into more useful distributions,
+    e.g., simulated normal random values. This structure allows alternative bit generators
+    to be used with little code duplication.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy implements several different [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") classes implementing different RNG algorithms. [`default_rng`](generator.html#numpy.random.default_rng
+    "numpy.random.default_rng") currently uses [`PCG64`](bit_generators/pcg64.html#numpy.random.PCG64
+    "numpy.random.PCG64") as the default [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator"). It has better statistical properties and performance
+    than the [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937 "numpy.random.MT19937")
+    algorithm used in the legacy [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState"). See [Bit Generators](bit_generators/index.html#random-bit-generators)
+    for more details on the supported BitGenerators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`default_rng`](generator.html#numpy.random.default_rng "numpy.random.default_rng")
+    and BitGenerators delegate the conversion of seeds into RNG states to [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") internally. [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") implements a sophisticated algorithm that intermediates
+    between the user’s input and the internal implementation details of each [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") algorithm, each of which can require different amounts
+    of bits for its state. Importantly, it lets you use arbitrary-sized integers and
+    arbitrary sequences of such integers to mix together into the RNG state. This
+    is a useful primitive for constructing a [flexible pattern for parallel RNG streams](parallel.html#seedsequence-spawn).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For backward compatibility, we still maintain the legacy [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState") class. It continues to use the [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937
+    "numpy.random.MT19937") algorithm by default, and old seeds continue to reproduce
+    the same results. The convenience [Functions in numpy.random](legacy.html#functions-in-numpy-random)
+    are still aliases to the methods on a single global [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState") instance. See [Legacy Random Generation](legacy.html#legacy)
+    for the complete details. See [What’s New or Different](new-or-different.html#new-or-different)
+    for a detailed comparison between [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") and [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parallel Generation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The included generators can be used in parallel, distributed applications in
+    a number of ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[SeedSequence spawning](parallel.html#seedsequence-spawn)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Sequence of Integer Seeds](parallel.html#sequence-of-seeds)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Independent Streams](parallel.html#independent-streams)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Jumping the BitGenerator state](parallel.html#parallel-jumped)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Users with a very large amount of parallelism will want to consult [Upgrading
+    PCG64 with PCG64DXSM](upgrading-pcg64.html#upgrading-pcg64).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parallel Generation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The included generators can be used in parallel, distributed applications in
+    a number of ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[SeedSequence spawning](parallel.html#seedsequence-spawn)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Sequence of Integer Seeds](parallel.html#sequence-of-seeds)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Independent Streams](parallel.html#independent-streams)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Jumping the BitGenerator state](parallel.html#parallel-jumped)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Users with a very large amount of parallelism will want to consult [Upgrading
+    PCG64 with PCG64DXSM](upgrading-pcg64.html#upgrading-pcg64).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concepts
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Random Generator](generator.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Legacy Generator (RandomState)](legacy.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Bit Generators](bit_generators/index.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Seeding and Entropy](bit_generators/index.html#seeding-and-entropy)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Upgrading PCG64 with PCG64DXSM](upgrading-pcg64.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Compatibility Policy](compatibility.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Parallel Applications](parallel.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`SeedSequence` spawning](parallel.html#seedsequence-spawning)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Sequence of Integer Seeds](parallel.html#sequence-of-integer-seeds)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Independent Streams](parallel.html#independent-streams)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Jumping the BitGenerator state](parallel.html#jumping-the-bitgenerator-state)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Multithreaded Generation](multithreading.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[What’s New or Different](new-or-different.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Comparing Performance](performance.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Recommendation](performance.html#recommendation)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Timings](performance.html#timings)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Performance on different Operating Systems](performance.html#performance-on-different-operating-systems)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[C API for random](c-api.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Examples of using Numba, Cython, CFFI](extending.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Numba](extending.html#numba)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Cython](extending.html#cython)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[CFFI](extending.html#cffi)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[New Bit Generators](extending.html#new-bit-generators)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Examples](extending.html#examples)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Original Source of the Generator and BitGenerators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This package was developed independently of NumPy and was integrated in version
+    1.17.0\. The original repo is at [https://github.com/bashtage/randomgen](https://github.com/bashtage/randomgen).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Original Source of the Generator and BitGenerators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This package was developed independently of NumPy and was integrated in version
+    1.17.0\. The original repo is at [https://github.com/bashtage/randomgen](https://github.com/bashtage/randomgen).
+  prefs: []
+  type: TYPE_NORMAL

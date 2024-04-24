@@ -1,0 +1,431 @@
+- en: Parallel Random Number Generation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/random/parallel.html](https://numpy.org/doc/1.26/reference/random/parallel.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: There are four main strategies implemented that can be used to produce repeatable
+    pseudo-random numbers across multiple processes (local or distributed).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") spawning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy allows you to spawn new (with very high probability) independent [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") and [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") instances via their `spawn()` method. This spawning
+    is implemented by the [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") used for initializing the bit generators random stream.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") [implements an algorithm](http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html)
+    to process a user-provided seed, typically as an integer of some size, and to
+    convert it into an initial state for a [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator"). It uses hashing techniques to ensure that low-quality
+    seeds are turned into high quality initial states (at least, with very high probability).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937 "numpy.random.MT19937")
+    has a state consisting of 624 *uint32* integers. A naive way to take a 32-bit
+    integer seed would be to just set the last element of the state to the 32-bit
+    seed and leave the rest 0s. This is a valid state for [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937
+    "numpy.random.MT19937"), but not a good one. The Mersenne Twister algorithm [suffers
+    if there are too many 0s](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html).
+    Similarly, two adjacent 32-bit integer seeds (i.e. `12345` and `12346`) would
+    produce very similar streams.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") avoids these problems by using successions of integer
+    hashes with good [avalanche properties](https://en.wikipedia.org/wiki/Avalanche_effect)
+    to ensure that flipping any bit in the input has about a 50% chance of flipping
+    any bit in the output. Two input seeds that are very close to each other will
+    produce initial states that are very far from each other (with very high probability).
+    It is also constructed in such a way that you can provide arbitrary-sized integers
+    or lists of integers. [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") will take all of the bits that you provide and mix
+    them together to produce however many bits the consuming [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") needs to initialize itself.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These properties together mean that we can safely mix together the usual user-provided
+    seed with simple incrementing counters to get [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") states that are (to very high probability) independent
+    of each other. We can wrap this together into an API that is easy to use and difficult
+    to misuse.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For convenience the direct use of [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") is not necessary. The above `streams` can be spawned
+    directly from a parent generator via [`spawn`](generated/numpy.random.Generator.spawn.html#numpy.random.Generator.spawn
+    "numpy.random.Generator.spawn"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Child objects can also spawn to make grandchildren, and so on. Each child has
+    a [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") with its position in the tree of spawned child objects
+    mixed in with the user-provided seed to generate independent (with very high probability)
+    streams.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: This feature lets you make local decisions about when and how to split up streams
+    without coordination between processes. You do not have to preallocate space to
+    avoid overlapping or request streams from a common global service. This general
+    “tree-hashing” scheme is [not unique to numpy](https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf)
+    but not yet widespread. Python has increasingly-flexible mechanisms for parallelization
+    available, and this scheme fits in very well with that kind of use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using this scheme, an upper bound on the probability of a collision can be
+    estimated if one knows the number of streams that you derive. [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") hashes its inputs, both the seed and the spawn-tree-path,
+    down to a 128-bit pool by default. The probability that there is a collision in
+    that pool, pessimistically-estimated ([[1]](#id3)), will be about \(n^2*2^{-128}\)
+    where *n* is the number of streams spawned. If a program uses an aggressive million
+    streams, about \(2^{20}\), then the probability that at least one pair of them
+    are identical is about \(2^{-88}\), which is in solidly-ignorable territory ([[2]](#id4)).  ##
+    Sequence of Integer Seeds'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As discussed in the previous section, [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") can not only take an integer seed, it can also take
+    an arbitrary-length sequence of (non-negative) integers. If one exercises a little
+    care, one can use this feature to design *ad hoc* schemes for getting safe parallel
+    PRNG streams with similar safety guarantees as spawning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, one common use case is that a worker process is passed one root
+    seed integer for the whole calculation and also an integer worker ID (or something
+    more granular like a job ID, batch ID, or something similar). If these IDs are
+    created deterministically and uniquely, then one can derive reproducible parallel
+    PRNG streams by combining the ID and the root seed integer in a list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can be used to replace a number of unsafe strategies that have been used
+    in the past which try to combine the root seed and the ID back into a single integer
+    seed value. For example, it is common to see users add the worker ID to the root
+    seed, especially with the legacy [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState") code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is true that for any one run of a parallel program constructed this way,
+    each worker will have distinct streams. However, it is quite likely that multiple
+    invocations of the program with different seeds will get overlapping sets of worker
+    seeds. It is not uncommon (in the author’s self-experience) to change the root
+    seed merely by an increment or two when doing these repeat runs. If the worker
+    seeds are also derived by small increments of the worker ID, then subsets of the
+    workers will return identical results, causing a bias in the overall ensemble
+    of results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Combining the worker ID and the root seed as a list of integers eliminates this
+    risk. Lazy seeding practices will still be fairly safe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This scheme does require that the extra IDs be unique and deterministically
+    created. This may require coordination between the worker processes. It is recommended
+    to place the varying IDs *before* the unvarying root seed. [`spawn`](bit_generators/generated/numpy.random.SeedSequence.spawn.html#numpy.random.SeedSequence.spawn
+    "numpy.random.SeedSequence.spawn") *appends* integers after the user-provided
+    seed, so if you might be mixing both this *ad hoc* mechanism and spawning, or
+    passing your objects down to library code that might be spawning, then it is a
+    little bit safer to prepend your worker IDs rather than append them to avoid a
+    collision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With those caveats in mind, the safety guarantees against collision are about
+    the same as with spawning, discussed in the previous section. The algorithmic
+    mechanisms are the same.  ## Independent Streams'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Philox`](bit_generators/philox.html#numpy.random.Philox "numpy.random.Philox")
+    is a counter-based RNG based which generates values by encrypting an incrementing
+    counter using weak cryptographic primitives. The seed determines the key that
+    is used for the encryption. Unique keys create unique, independent streams. [`Philox`](bit_generators/philox.html#numpy.random.Philox
+    "numpy.random.Philox") lets you bypass the seeding algorithm to directly set the
+    128-bit key. Similar, but different, keys will still create independent streams.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This scheme does require that you avoid reusing stream IDs. This may require
+    coordination between the parallel processes.  ## Jumping the BitGenerator state'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`jumped` advances the state of the BitGenerator *as-if* a large number of random
+    numbers have been drawn, and returns a new instance with this state. The specific
+    number of draws varies by BitGenerator, and ranges from \(2^{64}\) to \(2^{128}\).
+    Additionally, the *as-if* draws also depend on the size of the default random
+    number produced by the specific BitGenerator. The BitGenerators that support `jumped`,
+    along with the period of the BitGenerator, the size of the jump and the bits in
+    the default unsigned random are listed below.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| BitGenerator | Period | Jump Size | Bits per Draw |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MT19937 | \(2^{19937}-1\) | \(2^{128}\) | 32 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PCG64 | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PCG64DXSM | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Philox | \(2^{256}\) | \(2^{128}\) | 64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '`jumped` can be used to produce long blocks which should be long enough to
+    not overlap.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When using `jumped`, one does have to take care not to jump to a stream that
+    was already used. In the above example, one could not later use `blocked_rng[0].jumped()`
+    as it would overlap with `blocked_rng[1]`. Like with the independent streams,
+    if the main process here wants to split off 10 more streams by jumping, then it
+    needs to start with `range(10, 20)`, otherwise it would recreate the same streams.
+    On the other hand, if you carefully construct the streams, then you are guaranteed
+    to have streams that do not overlap.  ## [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") spawning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy allows you to spawn new (with very high probability) independent [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") and [`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator") instances via their `spawn()` method. This spawning
+    is implemented by the [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") used for initializing the bit generators random stream.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") [implements an algorithm](http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html)
+    to process a user-provided seed, typically as an integer of some size, and to
+    convert it into an initial state for a [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator"). It uses hashing techniques to ensure that low-quality
+    seeds are turned into high quality initial states (at least, with very high probability).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937 "numpy.random.MT19937")
+    has a state consisting of 624 *uint32* integers. A naive way to take a 32-bit
+    integer seed would be to just set the last element of the state to the 32-bit
+    seed and leave the rest 0s. This is a valid state for [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937
+    "numpy.random.MT19937"), but not a good one. The Mersenne Twister algorithm [suffers
+    if there are too many 0s](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html).
+    Similarly, two adjacent 32-bit integer seeds (i.e. `12345` and `12346`) would
+    produce very similar streams.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") avoids these problems by using successions of integer
+    hashes with good [avalanche properties](https://en.wikipedia.org/wiki/Avalanche_effect)
+    to ensure that flipping any bit in the input has about a 50% chance of flipping
+    any bit in the output. Two input seeds that are very close to each other will
+    produce initial states that are very far from each other (with very high probability).
+    It is also constructed in such a way that you can provide arbitrary-sized integers
+    or lists of integers. [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") will take all of the bits that you provide and mix
+    them together to produce however many bits the consuming [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") needs to initialize itself.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These properties together mean that we can safely mix together the usual user-provided
+    seed with simple incrementing counters to get [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") states that are (to very high probability) independent
+    of each other. We can wrap this together into an API that is easy to use and difficult
+    to misuse.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For convenience the direct use of [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") is not necessary. The above `streams` can be spawned
+    directly from a parent generator via [`spawn`](generated/numpy.random.Generator.spawn.html#numpy.random.Generator.spawn
+    "numpy.random.Generator.spawn"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Child objects can also spawn to make grandchildren, and so on. Each child has
+    a [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") with its position in the tree of spawned child objects
+    mixed in with the user-provided seed to generate independent (with very high probability)
+    streams.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: This feature lets you make local decisions about when and how to split up streams
+    without coordination between processes. You do not have to preallocate space to
+    avoid overlapping or request streams from a common global service. This general
+    “tree-hashing” scheme is [not unique to numpy](https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf)
+    but not yet widespread. Python has increasingly-flexible mechanisms for parallelization
+    available, and this scheme fits in very well with that kind of use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using this scheme, an upper bound on the probability of a collision can be estimated
+    if one knows the number of streams that you derive. [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") hashes its inputs, both the seed and the spawn-tree-path,
+    down to a 128-bit pool by default. The probability that there is a collision in
+    that pool, pessimistically-estimated ([[1]](#id3)), will be about \(n^2*2^{-128}\)
+    where *n* is the number of streams spawned. If a program uses an aggressive million
+    streams, about \(2^{20}\), then the probability that at least one pair of them
+    are identical is about \(2^{-88}\), which is in solidly-ignorable territory ([[2]](#id4)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Sequence of Integer Seeds'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As discussed in the previous section, [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") can not only take an integer seed, it can also take
+    an arbitrary-length sequence of (non-negative) integers. If one exercises a little
+    care, one can use this feature to design *ad hoc* schemes for getting safe parallel
+    PRNG streams with similar safety guarantees as spawning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, one common use case is that a worker process is passed one root
+    seed integer for the whole calculation and also an integer worker ID (or something
+    more granular like a job ID, batch ID, or something similar). If these IDs are
+    created deterministically and uniquely, then one can derive reproducible parallel
+    PRNG streams by combining the ID and the root seed integer in a list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can be used to replace a number of unsafe strategies that have been used
+    in the past which try to combine the root seed and the ID back into a single integer
+    seed value. For example, it is common to see users add the worker ID to the root
+    seed, especially with the legacy [`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState") code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is true that for any one run of a parallel program constructed this way,
+    each worker will have distinct streams. However, it is quite likely that multiple
+    invocations of the program with different seeds will get overlapping sets of worker
+    seeds. It is not uncommon (in the author’s self-experience) to change the root
+    seed merely by an increment or two when doing these repeat runs. If the worker
+    seeds are also derived by small increments of the worker ID, then subsets of the
+    workers will return identical results, causing a bias in the overall ensemble
+    of results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Combining the worker ID and the root seed as a list of integers eliminates this
+    risk. Lazy seeding practices will still be fairly safe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This scheme does require that the extra IDs be unique and deterministically
+    created. This may require coordination between the worker processes. It is recommended
+    to place the varying IDs *before* the unvarying root seed. [`spawn`](bit_generators/generated/numpy.random.SeedSequence.spawn.html#numpy.random.SeedSequence.spawn
+    "numpy.random.SeedSequence.spawn") *appends* integers after the user-provided
+    seed, so if you might be mixing both this *ad hoc* mechanism and spawning, or
+    passing your objects down to library code that might be spawning, then it is a
+    little bit safer to prepend your worker IDs rather than append them to avoid a
+    collision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: With those caveats in mind, the safety guarantees against collision are about
+    the same as with spawning, discussed in the previous section. The algorithmic
+    mechanisms are the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Independent Streams'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Philox`](bit_generators/philox.html#numpy.random.Philox "numpy.random.Philox")
+    is a counter-based RNG based which generates values by encrypting an incrementing
+    counter using weak cryptographic primitives. The seed determines the key that
+    is used for the encryption. Unique keys create unique, independent streams. [`Philox`](bit_generators/philox.html#numpy.random.Philox
+    "numpy.random.Philox") lets you bypass the seeding algorithm to directly set the
+    128-bit key. Similar, but different, keys will still create independent streams.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: This scheme does require that you avoid reusing stream IDs. This may require
+    coordination between the parallel processes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Jumping the BitGenerator state'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`jumped` advances the state of the BitGenerator *as-if* a large number of random
+    numbers have been drawn, and returns a new instance with this state. The specific
+    number of draws varies by BitGenerator, and ranges from \(2^{64}\) to \(2^{128}\).
+    Additionally, the *as-if* draws also depend on the size of the default random
+    number produced by the specific BitGenerator. The BitGenerators that support `jumped`,
+    along with the period of the BitGenerator, the size of the jump and the bits in
+    the default unsigned random are listed below.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| BitGenerator | Period | Jump Size | Bits per Draw |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MT19937 | \(2^{19937}-1\) | \(2^{128}\) | 32 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PCG64 | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PCG64DXSM | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Philox | \(2^{256}\) | \(2^{128}\) | 64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '`jumped` can be used to produce long blocks which should be long enough to
+    not overlap.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: When using `jumped`, one does have to take care not to jump to a stream that
+    was already used. In the above example, one could not later use `blocked_rng[0].jumped()`
+    as it would overlap with `blocked_rng[1]`. Like with the independent streams,
+    if the main process here wants to split off 10 more streams by jumping, then it
+    needs to start with `range(10, 20)`, otherwise it would recreate the same streams.
+    On the other hand, if you carefully construct the streams, then you are guaranteed
+    to have streams that do not overlap.
+  prefs: []
+  type: TYPE_NORMAL

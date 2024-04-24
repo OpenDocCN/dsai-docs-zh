@@ -1,0 +1,960 @@
+- en: NumPy 1.7.0 Release Notes
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/release/1.7.0-notes.html](https://numpy.org/doc/1.26/release/1.7.0-notes.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This release includes several new features as well as numerous bug fixes and
+    refactorings. It supports Python 2.4 - 2.7 and 3.1 - 3.3 and is the last release
+    that supports Python 2.4 - 2.5.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Highlights
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`where=` parameter to ufuncs (allows the use of boolean arrays to choose where
+    a computation should be done)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`vectorize` improvements (added ‘excluded’ and ‘cache’ keyword, general cleanup
+    and bug fixes)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.random.choice` (random sample generating function)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Compatibility notes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In a future version of numpy, the functions np.diag, np.diagonal, and the diagonal
+    method of ndarrays will return a view onto the original array, instead of producing
+    a copy as they do now. This makes a difference if you write to the array returned
+    by any of these functions. To facilitate this transition, numpy 1.7 produces a
+    FutureWarning if it detects that you may be attempting to write to such an array.
+    See the documentation for np.diagonal for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar to np.diagonal above, in a future version of numpy, indexing a record
+    array by a list of field names will return a view onto the original array, instead
+    of producing a copy as they do now. As with np.diagonal, numpy 1.7 produces a
+    FutureWarning if it detects that you may be attempting to write to such an array.
+    See the documentation for array indexing for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a future version of numpy, the default casting rule for UFunc out= parameters
+    will be changed from ‘unsafe’ to ‘same_kind’. (This also applies to in-place operations
+    like a += b, which is equivalent to np.add(a, b, out=a).) Most usages which violate
+    the ‘same_kind’ rule are likely bugs, so this change may expose previously undetected
+    errors in projects that depend on NumPy. In this version of numpy, such usages
+    will continue to succeed, but will raise a DeprecationWarning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Full-array boolean indexing has been optimized to use a different, optimized
+    code path. This code path should produce the same results, but any feedback about
+    changes to your code would be appreciated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Attempting to write to a read-only array (one with `arr.flags.writeable` set
+    to `False`) used to raise either a RuntimeError, ValueError, or TypeError inconsistently,
+    depending on which code path was taken. It now consistently raises a ValueError.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The <ufunc>.reduce functions evaluate some reductions in a different order than
+    in previous versions of NumPy, generally providing higher performance. Because
+    of the nature of floating-point arithmetic, this may subtly change some results,
+    just as linking NumPy to a different BLAS implementations such as MKL can.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If upgrading from 1.5, then generally in 1.6 and 1.7 there have been substantial
+    code added and some code paths altered, particularly in the areas of type resolution
+    and buffered iteration over universal functions. This might have an impact on
+    your code particularly if you relied on accidental behavior in the past.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Reduction UFuncs Generalize axis= Parameter
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Any ufunc.reduce function call, as well as other reductions like sum, prod,
+    any, all, max and min support the ability to choose a subset of the axes to reduce
+    over. Previously, one could say axis=None to mean all the axes or axis=# to pick
+    a single axis. Now, one can also say axis=(#,#) to pick a list of axes for reduction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reduction UFuncs New keepdims= Parameter
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There is a new keepdims= parameter, which if set to True, doesn’t throw away
+    the reduction axes but instead sets them to have size one. When this option is
+    set, the reduction result will broadcast correctly to the original operand which
+    was reduced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Datetime support
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The datetime API is *experimental* in 1.7.0, and may undergo changes in future
+    versions of NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There have been a lot of fixes and enhancements to datetime64 compared to NumPy
+    1.6:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the parser is quite strict about only accepting ISO 8601 dates, with a few convenience
+    extensions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: converts between units correctly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: datetime arithmetic works correctly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: business day functionality (allows the datetime to be used in contexts where
+    only certain days of the week are valid)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The notes in [doc/source/reference/arrays.datetime.rst](https://github.com/numpy/numpy/blob/maintenance/1.7.x/doc/source/reference/arrays.datetime.rst)
+    (also available in the online docs at [arrays.datetime.html](https://docs.scipy.org/doc/numpy/reference/arrays.datetime.html))
+    should be consulted for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Custom formatter for printing arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: See the new `formatter` parameter of the `numpy.set_printoptions` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function numpy.random.choice
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A generic sampling function has been added which will generate samples from
+    a given array-like. The samples can be with or without replacement, and with uniform
+    or given non-uniform probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function isclose
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Returns a boolean array where two arrays are element-wise equal within a tolerance.
+    Both relative and absolute tolerance can be specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preliminary multi-dimensional support in the polynomial package
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Axis keywords have been added to the integration and differentiation functions
+    and a tensor keyword was added to the evaluation functions. These additions allow
+    multi-dimensional coefficient arrays to be used in those functions. New functions
+    for evaluating 2-D and 3-D coefficient arrays on grids or sets of points were
+    added together with 2-D and 3-D pseudo-Vandermonde matrices that can be used for
+    fitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ability to pad rank-n arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A pad module containing functions for padding n-dimensional arrays has been
+    added. The various private padding functions are exposed as options to a public
+    ‘pad’ function. Example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Current modes are `constant`, `edge`, `linear_ramp`, `maximum`, `mean`, `median`,
+    `minimum`, `reflect`, `symmetric`, `wrap`, and `<function>`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New argument to searchsorted
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function searchsorted now accepts a ‘sorter’ argument that is a permutation
+    array that sorts the array to search.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build system
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Added experimental support for the AArch64 architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New function `PyArray_FailUnlessWriteable` provides a consistent interface for
+    checking array writeability – any C code which works with arrays whose WRITEABLE
+    flag is not known to be True a priori, should make sure to call this function
+    before writing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy C Style Guide added (`doc/C_STYLE_GUIDE.rst`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function np.concatenate tries to match the layout of its input arrays. Previously,
+    the layout did not follow any particular reason, and depended in an undesirable
+    way on the particular axis chosen for concatenation. A bug was also fixed which
+    silently allowed out of bounds axis arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ufuncs logical_or, logical_and, and logical_not now follow Python’s behavior
+    with object arrays, instead of trying to call methods on the objects. For example
+    the expression (3 and ‘test’) produces the string ‘test’, and now np.logical_and(np.array(3,
+    ‘O’), np.array(‘test’, ‘O’)) produces ‘test’ as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `.base` attribute on ndarrays, which is used on views to ensure that the
+    underlying array owning the memory is not deallocated prematurely, now collapses
+    out references when you have a view-of-a-view. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: In numpy 1.6, `c.base` is `b`, and `c.base.base` is `a`. In numpy 1.7, `c.base`
+    is `a`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To increase backwards compatibility for software which relies on the old behaviour
+    of `.base`, we only ‘skip over’ objects which have exactly the same type as the
+    newly created view. This makes a difference if you use `ndarray` subclasses. For
+    example, if we have a mix of `ndarray` and `matrix` objects which are all views
+    on the same original `ndarray`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: then `d.base` will be `b`. This is because `d` is a `matrix` object, and so
+    the collapsing process only continues so long as it encounters other `matrix`
+    objects. It considers `c`, `b`, and `a` in that order, and `b` is the last entry
+    in that list which is a `matrix` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Casting Rules
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Casting rules have undergone some changes in corner cases, due to the NA-related
+    work. In particular for combinations of scalar+scalar:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the *longlong* type (*q*) now stays *longlong* for operations with any other
+    number (*? b h i l q p B H I*), previously it was cast as *int_* (*l*). The *ulonglong*
+    type (*Q*) now stays as *ulonglong* instead of *uint* (*L*).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: the *timedelta64* type (*m*) can now be mixed with any integer type (*b h i
+    l q p B H I L Q P*), previously it raised *TypeError*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For array + scalar, the above rules just broadcast except the case when the
+    array and scalars are unsigned/signed integers, then the result gets converted
+    to the array type (of possibly larger size) as illustrated by the following examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Whether the size gets increased depends on the size of the scalar, for example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also a `complex128` scalar + `float32` array is cast to `complex64`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In NumPy 1.7 the *datetime64* type (*M*) must be constructed by explicitly specifying
+    the type as the second argument (e.g. `np.datetime64(2000, 'Y')`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Specifying a custom string formatter with a *_format* array attribute is deprecated.
+    The new *formatter* keyword in `numpy.set_printoptions` or `numpy.array2string`
+    can be used instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The deprecated imports in the polynomial package have been removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`concatenate` now raises DepractionWarning for 1D arrays if `axis != 0`. Versions
+    of numpy < 1.7.0 ignored axis argument value for 1D arrays. We allow this for
+    now, but in due course we will raise an error.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Direct access to the fields of PyArrayObject* has been deprecated. Direct access
+    has been recommended against for many releases. Expect similar deprecations for
+    PyArray_Descr* and other core objects in the future as preparation for NumPy 2.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The macros in old_defines.h are deprecated and will be removed in the next major
+    release (>= 2.0). The sed script tools/replace_old_macros.sed can be used to replace
+    these macros with the newer versions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can test your code against the deprecated C API by adding a line composed
+    of `#define NPY_NO_DEPRECATED_API` and the target version number, such as `NPY_1_7_API_VERSION`,
+    before including any NumPy headers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `NPY_CHAR` member of the `NPY_TYPES` enum is deprecated and will be removed
+    in NumPy 1.8\. See the discussion at [gh-2801](https://github.com/numpy/numpy/issues/2801)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Highlights
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`where=` parameter to ufuncs (allows the use of boolean arrays to choose where
+    a computation should be done)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`vectorize` improvements (added ‘excluded’ and ‘cache’ keyword, general cleanup
+    and bug fixes)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`numpy.random.choice` (random sample generating function)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Compatibility notes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In a future version of numpy, the functions np.diag, np.diagonal, and the diagonal
+    method of ndarrays will return a view onto the original array, instead of producing
+    a copy as they do now. This makes a difference if you write to the array returned
+    by any of these functions. To facilitate this transition, numpy 1.7 produces a
+    FutureWarning if it detects that you may be attempting to write to such an array.
+    See the documentation for np.diagonal for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar to np.diagonal above, in a future version of numpy, indexing a record
+    array by a list of field names will return a view onto the original array, instead
+    of producing a copy as they do now. As with np.diagonal, numpy 1.7 produces a
+    FutureWarning if it detects that you may be attempting to write to such an array.
+    See the documentation for array indexing for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a future version of numpy, the default casting rule for UFunc out= parameters
+    will be changed from ‘unsafe’ to ‘same_kind’. (This also applies to in-place operations
+    like a += b, which is equivalent to np.add(a, b, out=a).) Most usages which violate
+    the ‘same_kind’ rule are likely bugs, so this change may expose previously undetected
+    errors in projects that depend on NumPy. In this version of numpy, such usages
+    will continue to succeed, but will raise a DeprecationWarning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Full-array boolean indexing has been optimized to use a different, optimized
+    code path. This code path should produce the same results, but any feedback about
+    changes to your code would be appreciated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Attempting to write to a read-only array (one with `arr.flags.writeable` set
+    to `False`) used to raise either a RuntimeError, ValueError, or TypeError inconsistently,
+    depending on which code path was taken. It now consistently raises a ValueError.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The <ufunc>.reduce functions evaluate some reductions in a different order than
+    in previous versions of NumPy, generally providing higher performance. Because
+    of the nature of floating-point arithmetic, this may subtly change some results,
+    just as linking NumPy to a different BLAS implementations such as MKL can.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If upgrading from 1.5, then generally in 1.6 and 1.7 there have been substantial
+    code added and some code paths altered, particularly in the areas of type resolution
+    and buffered iteration over universal functions. This might have an impact on
+    your code particularly if you relied on accidental behavior in the past.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Reduction UFuncs Generalize axis= Parameter
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Any ufunc.reduce function call, as well as other reductions like sum, prod,
+    any, all, max and min support the ability to choose a subset of the axes to reduce
+    over. Previously, one could say axis=None to mean all the axes or axis=# to pick
+    a single axis. Now, one can also say axis=(#,#) to pick a list of axes for reduction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reduction UFuncs New keepdims= Parameter
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There is a new keepdims= parameter, which if set to True, doesn’t throw away
+    the reduction axes but instead sets them to have size one. When this option is
+    set, the reduction result will broadcast correctly to the original operand which
+    was reduced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Datetime support
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The datetime API is *experimental* in 1.7.0, and may undergo changes in future
+    versions of NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There have been a lot of fixes and enhancements to datetime64 compared to NumPy
+    1.6:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the parser is quite strict about only accepting ISO 8601 dates, with a few convenience
+    extensions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: converts between units correctly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: datetime arithmetic works correctly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: business day functionality (allows the datetime to be used in contexts where
+    only certain days of the week are valid)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The notes in [doc/source/reference/arrays.datetime.rst](https://github.com/numpy/numpy/blob/maintenance/1.7.x/doc/source/reference/arrays.datetime.rst)
+    (also available in the online docs at [arrays.datetime.html](https://docs.scipy.org/doc/numpy/reference/arrays.datetime.html))
+    should be consulted for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Custom formatter for printing arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: See the new `formatter` parameter of the `numpy.set_printoptions` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function numpy.random.choice
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A generic sampling function has been added which will generate samples from
+    a given array-like. The samples can be with or without replacement, and with uniform
+    or given non-uniform probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function isclose
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Returns a boolean array where two arrays are element-wise equal within a tolerance.
+    Both relative and absolute tolerance can be specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preliminary multi-dimensional support in the polynomial package
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Axis keywords have been added to the integration and differentiation functions
+    and a tensor keyword was added to the evaluation functions. These additions allow
+    multi-dimensional coefficient arrays to be used in those functions. New functions
+    for evaluating 2-D and 3-D coefficient arrays on grids or sets of points were
+    added together with 2-D and 3-D pseudo-Vandermonde matrices that can be used for
+    fitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ability to pad rank-n arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A pad module containing functions for padding n-dimensional arrays has been
+    added. The various private padding functions are exposed as options to a public
+    ‘pad’ function. Example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Current modes are `constant`, `edge`, `linear_ramp`, `maximum`, `mean`, `median`,
+    `minimum`, `reflect`, `symmetric`, `wrap`, and `<function>`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New argument to searchsorted
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function searchsorted now accepts a ‘sorter’ argument that is a permutation
+    array that sorts the array to search.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build system
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Added experimental support for the AArch64 architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New function `PyArray_FailUnlessWriteable` provides a consistent interface for
+    checking array writeability – any C code which works with arrays whose WRITEABLE
+    flag is not known to be True a priori, should make sure to call this function
+    before writing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy C Style Guide added (`doc/C_STYLE_GUIDE.rst`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reduction UFuncs Generalize axis= Parameter
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Any ufunc.reduce function call, as well as other reductions like sum, prod,
+    any, all, max and min support the ability to choose a subset of the axes to reduce
+    over. Previously, one could say axis=None to mean all the axes or axis=# to pick
+    a single axis. Now, one can also say axis=(#,#) to pick a list of axes for reduction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reduction UFuncs New keepdims= Parameter
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There is a new keepdims= parameter, which if set to True, doesn’t throw away
+    the reduction axes but instead sets them to have size one. When this option is
+    set, the reduction result will broadcast correctly to the original operand which
+    was reduced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Datetime support
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The datetime API is *experimental* in 1.7.0, and may undergo changes in future
+    versions of NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There have been a lot of fixes and enhancements to datetime64 compared to NumPy
+    1.6:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the parser is quite strict about only accepting ISO 8601 dates, with a few convenience
+    extensions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: converts between units correctly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: datetime arithmetic works correctly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: business day functionality (allows the datetime to be used in contexts where
+    only certain days of the week are valid)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The notes in [doc/source/reference/arrays.datetime.rst](https://github.com/numpy/numpy/blob/maintenance/1.7.x/doc/source/reference/arrays.datetime.rst)
+    (also available in the online docs at [arrays.datetime.html](https://docs.scipy.org/doc/numpy/reference/arrays.datetime.html))
+    should be consulted for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Custom formatter for printing arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: See the new `formatter` parameter of the `numpy.set_printoptions` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function numpy.random.choice
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A generic sampling function has been added which will generate samples from
+    a given array-like. The samples can be with or without replacement, and with uniform
+    or given non-uniform probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New function isclose
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Returns a boolean array where two arrays are element-wise equal within a tolerance.
+    Both relative and absolute tolerance can be specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preliminary multi-dimensional support in the polynomial package
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Axis keywords have been added to the integration and differentiation functions
+    and a tensor keyword was added to the evaluation functions. These additions allow
+    multi-dimensional coefficient arrays to be used in those functions. New functions
+    for evaluating 2-D and 3-D coefficient arrays on grids or sets of points were
+    added together with 2-D and 3-D pseudo-Vandermonde matrices that can be used for
+    fitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ability to pad rank-n arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A pad module containing functions for padding n-dimensional arrays has been
+    added. The various private padding functions are exposed as options to a public
+    ‘pad’ function. Example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Current modes are `constant`, `edge`, `linear_ramp`, `maximum`, `mean`, `median`,
+    `minimum`, `reflect`, `symmetric`, `wrap`, and `<function>`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: New argument to searchsorted
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function searchsorted now accepts a ‘sorter’ argument that is a permutation
+    array that sorts the array to search.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build system
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Added experimental support for the AArch64 architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: C API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: New function `PyArray_FailUnlessWriteable` provides a consistent interface for
+    checking array writeability – any C code which works with arrays whose WRITEABLE
+    flag is not known to be True a priori, should make sure to call this function
+    before writing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy C Style Guide added (`doc/C_STYLE_GUIDE.rst`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Changes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function np.concatenate tries to match the layout of its input arrays. Previously,
+    the layout did not follow any particular reason, and depended in an undesirable
+    way on the particular axis chosen for concatenation. A bug was also fixed which
+    silently allowed out of bounds axis arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ufuncs logical_or, logical_and, and logical_not now follow Python’s behavior
+    with object arrays, instead of trying to call methods on the objects. For example
+    the expression (3 and ‘test’) produces the string ‘test’, and now np.logical_and(np.array(3,
+    ‘O’), np.array(‘test’, ‘O’)) produces ‘test’ as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `.base` attribute on ndarrays, which is used on views to ensure that the
+    underlying array owning the memory is not deallocated prematurely, now collapses
+    out references when you have a view-of-a-view. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: In numpy 1.6, `c.base` is `b`, and `c.base.base` is `a`. In numpy 1.7, `c.base`
+    is `a`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To increase backwards compatibility for software which relies on the old behaviour
+    of `.base`, we only ‘skip over’ objects which have exactly the same type as the
+    newly created view. This makes a difference if you use `ndarray` subclasses. For
+    example, if we have a mix of `ndarray` and `matrix` objects which are all views
+    on the same original `ndarray`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: then `d.base` will be `b`. This is because `d` is a `matrix` object, and so
+    the collapsing process only continues so long as it encounters other `matrix`
+    objects. It considers `c`, `b`, and `a` in that order, and `b` is the last entry
+    in that list which is a `matrix` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Casting Rules
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Casting rules have undergone some changes in corner cases, due to the NA-related
+    work. In particular for combinations of scalar+scalar:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the *longlong* type (*q*) now stays *longlong* for operations with any other
+    number (*? b h i l q p B H I*), previously it was cast as *int_* (*l*). The *ulonglong*
+    type (*Q*) now stays as *ulonglong* instead of *uint* (*L*).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: the *timedelta64* type (*m*) can now be mixed with any integer type (*b h i
+    l q p B H I L Q P*), previously it raised *TypeError*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For array + scalar, the above rules just broadcast except the case when the
+    array and scalars are unsigned/signed integers, then the result gets converted
+    to the array type (of possibly larger size) as illustrated by the following examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Whether the size gets increased depends on the size of the scalar, for example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also a `complex128` scalar + `float32` array is cast to `complex64`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In NumPy 1.7 the *datetime64* type (*M*) must be constructed by explicitly specifying
+    the type as the second argument (e.g. `np.datetime64(2000, 'Y')`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The function np.concatenate tries to match the layout of its input arrays. Previously,
+    the layout did not follow any particular reason, and depended in an undesirable
+    way on the particular axis chosen for concatenation. A bug was also fixed which
+    silently allowed out of bounds axis arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ufuncs logical_or, logical_and, and logical_not now follow Python’s behavior
+    with object arrays, instead of trying to call methods on the objects. For example
+    the expression (3 and ‘test’) produces the string ‘test’, and now np.logical_and(np.array(3,
+    ‘O’), np.array(‘test’, ‘O’)) produces ‘test’ as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `.base` attribute on ndarrays, which is used on views to ensure that the
+    underlying array owning the memory is not deallocated prematurely, now collapses
+    out references when you have a view-of-a-view. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: In numpy 1.6, `c.base` is `b`, and `c.base.base` is `a`. In numpy 1.7, `c.base`
+    is `a`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To increase backwards compatibility for software which relies on the old behaviour
+    of `.base`, we only ‘skip over’ objects which have exactly the same type as the
+    newly created view. This makes a difference if you use `ndarray` subclasses. For
+    example, if we have a mix of `ndarray` and `matrix` objects which are all views
+    on the same original `ndarray`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: then `d.base` will be `b`. This is because `d` is a `matrix` object, and so
+    the collapsing process only continues so long as it encounters other `matrix`
+    objects. It considers `c`, `b`, and `a` in that order, and `b` is the last entry
+    in that list which is a `matrix` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Casting Rules
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Casting rules have undergone some changes in corner cases, due to the NA-related
+    work. In particular for combinations of scalar+scalar:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the *longlong* type (*q*) now stays *longlong* for operations with any other
+    number (*? b h i l q p B H I*), previously it was cast as *int_* (*l*). The *ulonglong*
+    type (*Q*) now stays as *ulonglong* instead of *uint* (*L*).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: the *timedelta64* type (*m*) can now be mixed with any integer type (*b h i
+    l q p B H I L Q P*), previously it raised *TypeError*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For array + scalar, the above rules just broadcast except the case when the
+    array and scalars are unsigned/signed integers, then the result gets converted
+    to the array type (of possibly larger size) as illustrated by the following examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Whether the size gets increased depends on the size of the scalar, for example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Also a `complex128` scalar + `float32` array is cast to `complex64`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In NumPy 1.7 the *datetime64* type (*M*) must be constructed by explicitly specifying
+    the type as the second argument (e.g. `np.datetime64(2000, 'Y')`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Specifying a custom string formatter with a *_format* array attribute is deprecated.
+    The new *formatter* keyword in `numpy.set_printoptions` or `numpy.array2string`
+    can be used instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The deprecated imports in the polynomial package have been removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`concatenate` now raises DepractionWarning for 1D arrays if `axis != 0`. Versions
+    of numpy < 1.7.0 ignored axis argument value for 1D arrays. We allow this for
+    now, but in due course we will raise an error.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Direct access to the fields of PyArrayObject* has been deprecated. Direct access
+    has been recommended against for many releases. Expect similar deprecations for
+    PyArray_Descr* and other core objects in the future as preparation for NumPy 2.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The macros in old_defines.h are deprecated and will be removed in the next major
+    release (>= 2.0). The sed script tools/replace_old_macros.sed can be used to replace
+    these macros with the newer versions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can test your code against the deprecated C API by adding a line composed
+    of `#define NPY_NO_DEPRECATED_API` and the target version number, such as `NPY_1_7_API_VERSION`,
+    before including any NumPy headers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `NPY_CHAR` member of the `NPY_TYPES` enum is deprecated and will be removed
+    in NumPy 1.8\. See the discussion at [gh-2801](https://github.com/numpy/numpy/issues/2801)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: General
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Specifying a custom string formatter with a *_format* array attribute is deprecated.
+    The new *formatter* keyword in `numpy.set_printoptions` or `numpy.array2string`
+    can be used instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The deprecated imports in the polynomial package have been removed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`concatenate` now raises DepractionWarning for 1D arrays if `axis != 0`. Versions
+    of numpy < 1.7.0 ignored axis argument value for 1D arrays. We allow this for
+    now, but in due course we will raise an error.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: C-API
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Direct access to the fields of PyArrayObject* has been deprecated. Direct access
+    has been recommended against for many releases. Expect similar deprecations for
+    PyArray_Descr* and other core objects in the future as preparation for NumPy 2.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The macros in old_defines.h are deprecated and will be removed in the next major
+    release (>= 2.0). The sed script tools/replace_old_macros.sed can be used to replace
+    these macros with the newer versions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can test your code against the deprecated C API by adding a line composed
+    of `#define NPY_NO_DEPRECATED_API` and the target version number, such as `NPY_1_7_API_VERSION`,
+    before including any NumPy headers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `NPY_CHAR` member of the `NPY_TYPES` enum is deprecated and will be removed
+    in NumPy 1.8\. See the discussion at [gh-2801](https://github.com/numpy/numpy/issues/2801)
+    for more details.
+  prefs: []
+  type: TYPE_NORMAL

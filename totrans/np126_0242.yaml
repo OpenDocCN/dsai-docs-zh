@@ -1,0 +1,1502 @@
+- en: Standard array subclasses
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/arrays.classes.html](https://numpy.org/doc/1.26/reference/arrays.classes.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subclassing a `numpy.ndarray` is possible but if your goal is to create an array
+    with *modified* behavior, as do dask arrays for distributed computation and cupy
+    arrays for GPU-based computation, subclassing is discouraged. Instead, using numpy’s
+    [dispatch mechanism](../user/basics.dispatch.html#basics-dispatch) is recommended.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray")
+    can be inherited from (in Python or in C) if desired. Therefore, it can form a
+    foundation for many useful classes. Often whether to sub-class the array object
+    or to simply use the core array component as an internal part of a new class is
+    a difficult decision, and can be simply a matter of choice. NumPy has several
+    tools for simplifying how your new object interacts with other array objects,
+    and so the choice may not be significant in the end. One way to simplify the question
+    is by asking yourself if the object you are interested in can be replaced as a
+    single array or does it really require two or more arrays at its core.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that [`asarray`](generated/numpy.asarray.html#numpy.asarray "numpy.asarray")
+    always returns the base-class ndarray. If you are confident that your use of the
+    array object can handle any subclass of an ndarray, then [`asanyarray`](generated/numpy.asanyarray.html#numpy.asanyarray
+    "numpy.asanyarray") can be used to allow subclasses to propagate more cleanly
+    through your subroutine. In principal a subclass could redefine any aspect of
+    the array and therefore, under strict guidelines, [`asanyarray`](generated/numpy.asanyarray.html#numpy.asanyarray
+    "numpy.asanyarray") would rarely be useful. However, most subclasses of the array
+    object will not redefine certain aspects of the array object such as the buffer
+    interface, or the attributes of the array. One important example, however, of
+    why your subroutine may not be able to handle an arbitrary subclass of an array
+    is that matrices redefine the “*” operator to be matrix-multiplication, rather
+    than element-by-element multiplication.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Special attributes and methods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Subclassing ndarray](../user/basics.subclassing.html#basics-subclassing)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy provides several hooks that classes can customize:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: New in version 1.13.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any class, ndarray subclass or not, can define this method or set it to None
+    in order to override the behavior of NumPy’s ufuncs. This works quite similarly
+    to Python’s `__mul__` and other binary operation routines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*ufunc* is the ufunc object that was called.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*method* is a string indicating which Ufunc method was called (one of `"__call__"`,
+    `"reduce"`, `"reduceat"`, `"accumulate"`, `"outer"`, `"inner"`).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*inputs* is a tuple of the input arguments to the `ufunc`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*kwargs* is a dictionary containing the optional input arguments of the ufunc.
+    If given, any `out` arguments, both positional and keyword, are passed as a [`tuple`](https://docs.python.org/3/library/stdtypes.html#tuple
+    "(in Python v3.11)") in *kwargs*. See the discussion in [Universal functions (ufunc)](ufuncs.html#ufuncs)
+    for details.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The method should return either the result of the operation, or [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)") if the operation requested is not implemented.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If one of the input, output, or `where` arguments has a [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__") method, it is executed *instead* of the ufunc.
+    If more than one of the arguments implements [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__"), they are tried in the order: subclasses before
+    superclasses, inputs before outputs, outputs before `where`, otherwise left to
+    right. The first routine returning something other than [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)") determines the result. If all of the [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__") operations return [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)"), a [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)") is raised.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: We intend to re-implement numpy functions as (generalized) Ufunc, in which case
+    it will become possible for them to be overridden by the `__array_ufunc__` method.
+    A prime candidate is [`matmul`](generated/numpy.matmul.html#numpy.matmul "numpy.matmul"),
+    which currently is not a Ufunc, but could be relatively easily be rewritten as
+    a (set of) generalized Ufuncs. The same may happen with functions such as [`median`](generated/numpy.median.html#numpy.median
+    "numpy.median"), [`amin`](generated/numpy.amin.html#numpy.amin "numpy.amin"),
+    and [`argsort`](generated/numpy.argsort.html#numpy.argsort "numpy.argsort").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Like with some other special methods in python, such as `__hash__` and `__iter__`,
+    it is possible to indicate that your class does *not* support ufuncs by setting
+    `__array_ufunc__ = None`. Ufuncs always raise [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)") when called on an object that sets `__array_ufunc__ = None`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The presence of [`__array_ufunc__`](#numpy.class.__array_ufunc__ "numpy.class.__array_ufunc__")
+    also influences how [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray")
+    handles binary operations like `arr + obj` and `arr < obj` when `arr` is an [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray") and `obj` is an instance of a custom class. There are two possibilities.
+    If `obj.__array_ufunc__` is present and not None, then `ndarray.__add__` and friends
+    will delegate to the ufunc machinery, meaning that `arr + obj` becomes `np.add(arr,
+    obj)`, and then [`add`](generated/numpy.add.html#numpy.add "numpy.add") invokes
+    `obj.__array_ufunc__`. This is useful if you want to define an object that acts
+    like an array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Alternatively, if `obj.__array_ufunc__` is set to None, then as a special case,
+    special methods like `ndarray.__add__` will notice this and *unconditionally*
+    raise [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)"). This is useful if you want to create objects that interact
+    with arrays via binary operations, but are not themselves arrays. For example,
+    a units handling system might have an object `m` representing the “meters” unit,
+    and want to support the syntax `arr * m` to represent that the array has units
+    of “meters”, but not want to otherwise interact with arrays via ufuncs or otherwise.
+    This can be done by setting `__array_ufunc__ = None` and defining `__mul__` and
+    `__rmul__` methods. (Note that this means that writing an `__array_ufunc__` that
+    always returns [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)") is not quite the same as setting `__array_ufunc__ = None`:
+    in the former case, `arr + obj` will raise [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)"), while in the latter case it is possible to define a `__radd__`
+    method to prevent this.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The above does not hold for in-place operators, for which [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray") never returns [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)"). Hence, `arr += obj` would always lead to a [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)"). This is because for arrays in-place operations cannot generically
+    be replaced by a simple reverse operation. (For instance, by default, `arr +=
+    obj` would be translated to `arr = arr + obj`, i.e., `arr` would be replaced,
+    contrary to what is expected for in-place array operations.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you define `__array_ufunc__`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are not a subclass of [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray"), we recommend your class define special methods like `__add__`
+    and `__lt__` that delegate to ufuncs just like ndarray does. An easy way to do
+    this is to subclass from [`NDArrayOperatorsMixin`](generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
+    "numpy.lib.mixins.NDArrayOperatorsMixin").
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If you subclass [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray"),
+    we recommend that you put all your override logic in `__array_ufunc__` and not
+    also override special methods. This ensures the class hierarchy is determined
+    in only one place rather than separately by the ufunc machinery and by the binary
+    operation rules (which gives preference to special methods of subclasses; the
+    alternative way to enforce a one-place only hierarchy, of setting [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__") to None, would seem very unexpected and thus confusing,
+    as then the subclass would not work at all with ufuncs).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray") defines
+    its own [`__array_ufunc__`](#numpy.class.__array_ufunc__ "numpy.class.__array_ufunc__"),
+    which, evaluates the ufunc if no arguments have overrides, and returns [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)") otherwise. This may be useful for subclasses for which [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__") converts any instances of its own class to [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray"): it can then pass these on to its superclass using `super().__array_ufunc__(*inputs,
+    **kwargs)`, and finally return the results after possible back-conversion. The
+    advantage of this practice is that it ensures that it is possible to have a hierarchy
+    of subclasses that extend the behaviour. See [Subclassing ndarray](../user/basics.subclassing.html#basics-subclassing)
+    for details.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a class defines the [`__array_ufunc__`](#numpy.class.__array_ufunc__ "numpy.class.__array_ufunc__")
+    method, this disables the [`__array_wrap__`](#numpy.class.__array_wrap__ "numpy.class.__array_wrap__"),
+    [`__array_prepare__`](#numpy.class.__array_prepare__ "numpy.class.__array_prepare__"),
+    [`__array_priority__`](#numpy.class.__array_priority__ "numpy.class.__array_priority__")
+    mechanism described below for ufuncs (which may eventually be deprecated).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: New in version 1.16.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`func` is an arbitrary callable exposed by NumPy’s public API, which was called
+    in the form `func(*args, **kwargs)`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`types` is a collection [`collections.abc.Collection`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Collection
+    "(in Python v3.11)") of unique argument types from the original NumPy function
+    call that implement `__array_function__`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The tuple `args` and dict `kwargs` are directly passed on from the original
+    call.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: As a convenience for `__array_function__` implementors, `types` provides all
+    argument types with an `'__array_function__'` attribute. This allows implementors
+    to quickly identify cases where they should defer to `__array_function__` implementations
+    on other arguments. Implementations should not rely on the iteration order of
+    `types`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Most implementations of `__array_function__` will start with two checks:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Is the given function something that we know how to overload?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Are all arguments of a type that we know how to handle?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If these conditions hold, `__array_function__` should return the result from
+    calling its implementation for `func(*args, **kwargs)`. Otherwise, it should return
+    the sentinel value `NotImplemented`, indicating that the function is not implemented
+    by these types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are no general requirements on the return value from `__array_function__`,
+    although most sensible implementations should probably return array(s) with the
+    same type as one of the function’s arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It may also be convenient to define a custom decorators (`implements` below)
+    for registering `__array_function__` implementations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that it is not required for `__array_function__` implementations to include
+    *all* of the corresponding NumPy function’s optional arguments (e.g., `broadcast_to`
+    above omits the irrelevant `subok` argument). Optional arguments are only passed
+    in to `__array_function__` if they were explicitly used in the NumPy function
+    call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Just like the case for builtin special methods like `__add__`, properly written
+    `__array_function__` methods should always return `NotImplemented` when an unknown
+    type is encountered. Otherwise, it will be impossible to correctly override NumPy
+    functions from another object if the operation also includes one of your objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the most part, the rules for dispatch with `__array_function__` match those
+    for `__array_ufunc__`. In particular:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy will gather implementations of `__array_function__` from all specified
+    inputs and call them in order: subclasses before superclasses, and otherwise left
+    to right. Note that in some edge cases involving subclasses, this differs slightly
+    from the [current behavior](https://bugs.python.org/issue30140) of Python.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Implementations of `__array_function__` indicate that they can handle the operation
+    by returning any value other than `NotImplemented`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If all `__array_function__` methods return `NotImplemented`, NumPy will raise
+    `TypeError`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If no `__array_function__` methods exists, NumPy will default to calling its
+    own implementation, intended for use on NumPy arrays. This case arises, for example,
+    when all array-like arguments are Python numbers or lists. (NumPy arrays do have
+    a `__array_function__` method, given below, but it always returns `NotImplemented`
+    if any argument other than a NumPy array subclass implements `__array_function__`.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: One deviation from the current behavior of `__array_ufunc__` is that NumPy will
+    only call `__array_function__` on the *first* argument of each unique type. This
+    matches Python’s [rule for calling reflected methods](https://docs.python.org/3/reference/datamodel.html#object.__ror__),
+    and this ensures that checking overloads has acceptable performance even when
+    there are a large number of overloaded arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This method is called whenever the system internally allocates a new array from
+    *obj*, where *obj* is a subclass (subtype) of the [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray"). It can be used to change attributes of *self* after construction
+    (so as to ensure a 2-d matrix for example), or to update meta-information from
+    the “parent.” Subclasses inherit a default implementation of this method that
+    does nothing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: At the beginning of every [ufunc](../user/basics.ufuncs.html#ufuncs-output-type),
+    this method is called on the input object with the highest array priority, or
+    the output object if one was specified. The output array is passed in and whatever
+    is returned is passed to the ufunc. Subclasses inherit a default implementation
+    of this method which simply returns the output array unmodified. Subclasses may
+    opt to use this method to transform the output array into an instance of the subclass
+    and update metadata before returning the array to the ufunc for computation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: For ufuncs, it is hoped to eventually deprecate this method in favour of [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: At the end of every [ufunc](../user/basics.ufuncs.html#ufuncs-output-type),
+    this method is called on the input object with the highest array priority, or
+    the output object if one was specified. The ufunc-computed array is passed in
+    and whatever is returned is passed to the user. Subclasses inherit a default implementation
+    of this method, which transforms the array into a new instance of the object’s
+    class. Subclasses may opt to use this method to transform the output array into
+    an instance of the subclass and update metadata before returning the array to
+    the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: For ufuncs, it is hoped to eventually deprecate this method in favour of [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The value of this attribute is used to determine what type of object to return
+    in situations where there is more than one possibility for the Python type of
+    the returned object. Subclasses inherit a default value of 0.0 for this attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: For ufuncs, it is hoped to eventually deprecate this method in favour of [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If a class (ndarray subclass or not) having the [`__array__`](#numpy.class.__array__
+    "numpy.class.__array__") method is used as the output object of an [ufunc](../user/basics.ufuncs.html#ufuncs-output-type),
+    results will *not* be written to the object returned by [`__array__`](#numpy.class.__array__
+    "numpy.class.__array__"). This practice will return `TypeError`.  ## Matrix objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is strongly advised *not* to use the matrix subclass. As described below,
+    it makes writing functions that deal consistently with matrices and regular arrays
+    very difficult. Currently, they are mainly used for interacting with `scipy.sparse`.
+    We hope to provide an alternative for this use, however, and eventually remove
+    the `matrix` subclass.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`matrix`](generated/numpy.matrix.html#numpy.matrix "numpy.matrix") objects
+    inherit from the ndarray and therefore, they have the same attributes and methods
+    of ndarrays. There are six important differences of matrix objects, however, that
+    may lead to unexpected results when you use matrices but expect them to act like
+    arrays:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Matrix objects can be created using a string notation to allow Matlab-style
+    syntax where spaces separate columns and semicolons (‘;’) separate rows.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Matrix objects are always two-dimensional. This has far-reaching implications,
+    in that m.ravel() is still two-dimensional (with a 1 in the first dimension) and
+    item selection returns two-dimensional objects so that sequence behavior is fundamentally
+    different than arrays.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Matrix objects over-ride multiplication to be matrix-multiplication. **Make
+    sure you understand this for functions that you may want to receive matrices.
+    Especially in light of the fact that asanyarray(m) returns a matrix when m is
+    a matrix.**
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Matrix objects over-ride power to be matrix raised to a power. The same warning
+    about using power inside a function that uses asanyarray(…) to get an array object
+    holds for this fact.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The default __array_priority__ of matrix objects is 10.0, and therefore mixed
+    operations with ndarrays always produce matrices.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Matrices have special attributes which make calculations easier. These are
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '| [`matrix.T`](generated/numpy.matrix.T.html#numpy.matrix.T "numpy.matrix.T")
+    | Returns the transpose of the matrix. |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| [`matrix.H`](generated/numpy.matrix.H.html#numpy.matrix.H "numpy.matrix.H")
+    | Returns the (complex) conjugate transpose of *self*. |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| [`matrix.I`](generated/numpy.matrix.I.html#numpy.matrix.I "numpy.matrix.I")
+    | Returns the (multiplicative) inverse of invertible *self*. |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| [`matrix.A`](generated/numpy.matrix.A.html#numpy.matrix.A "numpy.matrix.A")
+    | Return *self* as an [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray")
+    object. |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Matrix objects over-ride multiplication, ‘*’, and power, ‘**’, to be matrix-multiplication
+    and matrix power, respectively. If your subroutine can accept sub-classes and
+    you do not convert to base- class arrays, then you must use the ufuncs multiply
+    and power to be sure that you are performing the correct operation for all inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The matrix class is a Python subclass of the ndarray and can be used as a reference
+    for how to construct your own subclass of the ndarray. Matrices can be created
+    from other matrices, strings, and anything else that can be converted to an `ndarray`
+    . The name “mat “is an alias for “matrix “in NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`matrix`](generated/numpy.matrix.html#numpy.matrix "numpy.matrix")(data[, dtype, copy])
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is no longer recommended to use this class, even for linear
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`asmatrix`](generated/numpy.asmatrix.html#numpy.asmatrix "numpy.asmatrix")(data[, dtype])
+    | Interpret the input as a matrix. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`bmat`](generated/numpy.bmat.html#numpy.bmat "numpy.bmat")(obj[, ldict, gdict])
+    | Build a matrix object from a string, nested sequence, or array. |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Example 1: Matrix creation from a string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Example 2: Matrix creation from nested sequence'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Example 3: Matrix creation from an array'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Memory-mapped file arrays
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Memory-mapped files are useful for reading and/or modifying small segments of
+    a large file with regular layout, without reading the entire file into memory.
+    A simple subclass of the ndarray uses a memory-mapped file for the data buffer
+    of the array. For small files, the over-head of reading the entire file into memory
+    is typically not significant, however for large files using memory mapping can
+    save considerable resources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Memory-mapped-file arrays have one additional method (besides those they inherit
+    from the ndarray): [`.flush()`](generated/numpy.memmap.flush.html#numpy.memmap.flush
+    "numpy.memmap.flush") which must be called manually by the user to ensure that
+    any changes to the array actually get written to disk.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`memmap`](generated/numpy.memmap.html#numpy.memmap "numpy.memmap")(filename[, dtype, mode, offset, ...])
+    | Create a memory-map to an array stored in a *binary* file on disk. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`memmap.flush`](generated/numpy.memmap.flush.html#numpy.memmap.flush "numpy.memmap.flush")()
+    | Write any changes in the array to the file on disk. |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Character arrays ([`numpy.char`](routines.char.html#module-numpy.char "numpy.char"))
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Creating character arrays (numpy.char)](routines.array-creation.html#routines-array-creation-char)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`chararray`](generated/numpy.char.chararray.html#numpy.char.chararray "numpy.chararray")
+    class exists for backwards compatibility with Numarray, it is not recommended
+    for new development. Starting from numpy 1.4, if one needs arrays of strings,
+    it is recommended to use arrays of [`dtype`](generated/numpy.dtype.html#numpy.dtype
+    "numpy.dtype") [`object_`](arrays.scalars.html#numpy.object_ "numpy.object_"),
+    [`bytes_`](arrays.scalars.html#numpy.bytes_ "numpy.bytes_") or [`str_`](arrays.scalars.html#numpy.str_
+    "numpy.str_"), and use the free functions in the [`numpy.char`](routines.char.html#module-numpy.char
+    "numpy.char") module for fast vectorized string operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These are enhanced arrays of either [`str_`](arrays.scalars.html#numpy.str_
+    "numpy.str_") type or [`bytes_`](arrays.scalars.html#numpy.bytes_ "numpy.bytes_")
+    type. These arrays inherit from the [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray"), but specially-define the operations `+`, `*`, and `%` on a (broadcasting)
+    element-by-element basis. These operations are not available on the standard [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray") of character type. In addition, the [`chararray`](generated/numpy.char.chararray.html#numpy.char.chararray
+    "numpy.chararray") has all of the standard [`str`](https://docs.python.org/3/library/stdtypes.html#str
+    "(in Python v3.11)") (and [`bytes`](https://docs.python.org/3/library/stdtypes.html#bytes
+    "(in Python v3.11)")) methods, executing them on an element-by-element basis.
+    Perhaps the easiest way to create a chararray is to use [`self.view(chararray)`](generated/numpy.ndarray.view.html#numpy.ndarray.view
+    "numpy.ndarray.view") where *self* is an ndarray of str or unicode data-type.
+    However, a chararray can also be created using the [`numpy.chararray`](generated/numpy.char.chararray.html#numpy.char.chararray
+    "numpy.chararray") constructor, or via the [`numpy.char.array`](generated/numpy.core.defchararray.array.html#numpy.core.defchararray.array
+    "numpy.core.defchararray.array") function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`chararray`](generated/numpy.char.chararray.html#numpy.char.chararray "numpy.chararray")(shape[, itemsize, unicode, ...])
+    | Provides a convenient view on arrays of string and unicode values. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`core.defchararray.array`](generated/numpy.core.defchararray.array.html#numpy.core.defchararray.array
+    "numpy.core.defchararray.array")(obj[, itemsize, ...]) | Create a [`chararray`](generated/numpy.char.chararray.html#numpy.char.chararray
+    "numpy.chararray"). |'
+  prefs: []
+  type: TYPE_TB
+- en: Another difference with the standard ndarray of str data-type is that the chararray
+    inherits the feature introduced by Numarray that white-space at the end of any
+    element in the array will be ignored on item retrieval and comparison operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Record arrays (`numpy.rec`)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Creating record arrays (numpy.rec)](routines.array-creation.html#routines-array-creation-rec),
+    [Data type routines](routines.dtype.html#routines-dtype), [Data type objects (dtype)](arrays.dtypes.html#arrays-dtypes).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy provides the [`recarray`](generated/numpy.recarray.html#numpy.recarray
+    "numpy.recarray") class which allows accessing the fields of a structured array
+    as attributes, and a corresponding scalar data type object [`record`](generated/numpy.record.html#numpy.record
+    "numpy.record").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`recarray`](generated/numpy.recarray.html#numpy.recarray "numpy.recarray")(shape[, dtype, buf, offset, ...])
+    | Construct an ndarray that allows field access using attributes. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`record`](generated/numpy.record.html#numpy.record "numpy.record") | A data-type
+    scalar that allows field access as attribute lookup. |'
+  prefs: []
+  type: TYPE_TB
+- en: Masked arrays ([`numpy.ma`](maskedarray.generic.html#module-numpy.ma "numpy.ma"))
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Masked arrays](maskedarray.html#maskedarray)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Standard container class
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For backward compatibility and as a standard “container “class, the UserArray
+    from Numeric has been brought over to NumPy and named [`numpy.lib.user_array.container`](generated/numpy.lib.user_array.container.html#numpy.lib.user_array.container
+    "numpy.lib.user_array.container") The container class is a Python class whose
+    self.array attribute is an ndarray. Multiple inheritance is probably easier with
+    numpy.lib.user_array.container than with the ndarray itself and so it is included
+    by default. It is not documented here beyond mentioning its existence because
+    you are encouraged to use the ndarray class directly if you can.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`numpy.lib.user_array.container`](generated/numpy.lib.user_array.container.html#numpy.lib.user_array.container
+    "numpy.lib.user_array.container")(data[, ...]) | Standard container-class for
+    easy multiple-inheritance. |'
+  prefs: []
+  type: TYPE_TB
+- en: '## Array Iterators'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Iterators are a powerful concept for array processing. Essentially, iterators
+    implement a generalized for-loop. If *myiter* is an iterator object, then the
+    Python code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'calls `val = next(myiter)` repeatedly until [`StopIteration`](https://docs.python.org/3/library/exceptions.html#StopIteration
+    "(in Python v3.11)") is raised by the iterator. There are several ways to iterate
+    over an array that may be useful: default iteration, flat iteration, and \(N\)-dimensional
+    enumeration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Default iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The default iterator of an ndarray object is the default Python iterator of
+    a sequence type. Thus, when the array object itself is used as an iterator. The
+    default behavior is equivalent to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: This default iterator selects a sub-array of dimension \(N-1\) from the array.
+    This can be a useful construct for defining recursive algorithms. To loop over
+    the entire array requires \(N\) for-loops.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Flat iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`ndarray.flat`](generated/numpy.ndarray.flat.html#numpy.ndarray.flat "numpy.ndarray.flat")
+    | A 1-D iterator over the array. |'
+  prefs: []
+  type: TYPE_TB
+- en: As mentioned previously, the flat attribute of ndarray objects returns an iterator
+    that will cycle over the entire array in C-style contiguous order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, I’ve used the built-in enumerate iterator to return the iterator index
+    as well as the value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: N-dimensional enumeration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`ndenumerate`](generated/numpy.ndenumerate.html#numpy.ndenumerate "numpy.ndenumerate")(arr)
+    | Multidimensional index iterator. |'
+  prefs: []
+  type: TYPE_TB
+- en: Sometimes it may be useful to get the N-dimensional index while iterating. The
+    ndenumerate iterator can achieve this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterator for broadcasting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`broadcast`](generated/numpy.broadcast.html#numpy.broadcast "numpy.broadcast")
+    | Produce an object that mimics broadcasting. |'
+  prefs: []
+  type: TYPE_TB
+- en: The general concept of broadcasting is also available from Python using the
+    [`broadcast`](generated/numpy.broadcast.html#numpy.broadcast "numpy.broadcast")
+    iterator. This object takes \(N\) objects as inputs and returns an iterator that
+    returns tuples providing each of the input sequence elements in the broadcasted
+    result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]  ## Special attributes and methods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Subclassing ndarray](../user/basics.subclassing.html#basics-subclassing)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy provides several hooks that classes can customize:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: New in version 1.13.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any class, ndarray subclass or not, can define this method or set it to None
+    in order to override the behavior of NumPy’s ufuncs. This works quite similarly
+    to Python’s `__mul__` and other binary operation routines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*ufunc* is the ufunc object that was called.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*method* is a string indicating which Ufunc method was called (one of `"__call__"`,
+    `"reduce"`, `"reduceat"`, `"accumulate"`, `"outer"`, `"inner"`).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*inputs* is a tuple of the input arguments to the `ufunc`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*kwargs* is a dictionary containing the optional input arguments of the ufunc.
+    If given, any `out` arguments, both positional and keyword, are passed as a [`tuple`](https://docs.python.org/3/library/stdtypes.html#tuple
+    "(in Python v3.11)") in *kwargs*. See the discussion in [Universal functions (ufunc)](ufuncs.html#ufuncs)
+    for details.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The method should return either the result of the operation, or [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)") if the operation requested is not implemented.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If one of the input, output, or `where` arguments has a [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__") method, it is executed *instead* of the ufunc.
+    If more than one of the arguments implements [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__"), they are tried in the order: subclasses before
+    superclasses, inputs before outputs, outputs before `where`, otherwise left to
+    right. The first routine returning something other than [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)") determines the result. If all of the [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__") operations return [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)"), a [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)") is raised.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: We intend to re-implement numpy functions as (generalized) Ufunc, in which case
+    it will become possible for them to be overridden by the `__array_ufunc__` method.
+    A prime candidate is [`matmul`](generated/numpy.matmul.html#numpy.matmul "numpy.matmul"),
+    which currently is not a Ufunc, but could be relatively easily be rewritten as
+    a (set of) generalized Ufuncs. The same may happen with functions such as [`median`](generated/numpy.median.html#numpy.median
+    "numpy.median"), [`amin`](generated/numpy.amin.html#numpy.amin "numpy.amin"),
+    and [`argsort`](generated/numpy.argsort.html#numpy.argsort "numpy.argsort").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Like with some other special methods in python, such as `__hash__` and `__iter__`,
+    it is possible to indicate that your class does *not* support ufuncs by setting
+    `__array_ufunc__ = None`. Ufuncs always raise [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)") when called on an object that sets `__array_ufunc__ = None`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The presence of [`__array_ufunc__`](#numpy.class.__array_ufunc__ "numpy.class.__array_ufunc__")
+    also influences how [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray")
+    handles binary operations like `arr + obj` and `arr < obj` when `arr` is an [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray") and `obj` is an instance of a custom class. There are two possibilities.
+    If `obj.__array_ufunc__` is present and not None, then `ndarray.__add__` and friends
+    will delegate to the ufunc machinery, meaning that `arr + obj` becomes `np.add(arr,
+    obj)`, and then [`add`](generated/numpy.add.html#numpy.add "numpy.add") invokes
+    `obj.__array_ufunc__`. This is useful if you want to define an object that acts
+    like an array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Alternatively, if `obj.__array_ufunc__` is set to None, then as a special case,
+    special methods like `ndarray.__add__` will notice this and *unconditionally*
+    raise [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)"). This is useful if you want to create objects that interact
+    with arrays via binary operations, but are not themselves arrays. For example,
+    a units handling system might have an object `m` representing the “meters” unit,
+    and want to support the syntax `arr * m` to represent that the array has units
+    of “meters”, but not want to otherwise interact with arrays via ufuncs or otherwise.
+    This can be done by setting `__array_ufunc__ = None` and defining `__mul__` and
+    `__rmul__` methods. (Note that this means that writing an `__array_ufunc__` that
+    always returns [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)") is not quite the same as setting `__array_ufunc__ = None`:
+    in the former case, `arr + obj` will raise [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)"), while in the latter case it is possible to define a `__radd__`
+    method to prevent this.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The above does not hold for in-place operators, for which [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray") never returns [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)"). Hence, `arr += obj` would always lead to a [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.11)"). This is because for arrays in-place operations cannot generically
+    be replaced by a simple reverse operation. (For instance, by default, `arr +=
+    obj` would be translated to `arr = arr + obj`, i.e., `arr` would be replaced,
+    contrary to what is expected for in-place array operations.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you define `__array_ufunc__`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are not a subclass of [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray"), we recommend your class define special methods like `__add__`
+    and `__lt__` that delegate to ufuncs just like ndarray does. An easy way to do
+    this is to subclass from [`NDArrayOperatorsMixin`](generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
+    "numpy.lib.mixins.NDArrayOperatorsMixin").
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If you subclass [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray"),
+    we recommend that you put all your override logic in `__array_ufunc__` and not
+    also override special methods. This ensures the class hierarchy is determined
+    in only one place rather than separately by the ufunc machinery and by the binary
+    operation rules (which gives preference to special methods of subclasses; the
+    alternative way to enforce a one-place only hierarchy, of setting [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__") to None, would seem very unexpected and thus confusing,
+    as then the subclass would not work at all with ufuncs).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray") defines
+    its own [`__array_ufunc__`](#numpy.class.__array_ufunc__ "numpy.class.__array_ufunc__"),
+    which, evaluates the ufunc if no arguments have overrides, and returns [`NotImplemented`](https://docs.python.org/3/library/constants.html#NotImplemented
+    "(in Python v3.11)") otherwise. This may be useful for subclasses for which [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__") converts any instances of its own class to [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray"): it can then pass these on to its superclass using `super().__array_ufunc__(*inputs,
+    **kwargs)`, and finally return the results after possible back-conversion. The
+    advantage of this practice is that it ensures that it is possible to have a hierarchy
+    of subclasses that extend the behaviour. See [Subclassing ndarray](../user/basics.subclassing.html#basics-subclassing)
+    for details.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a class defines the [`__array_ufunc__`](#numpy.class.__array_ufunc__ "numpy.class.__array_ufunc__")
+    method, this disables the [`__array_wrap__`](#numpy.class.__array_wrap__ "numpy.class.__array_wrap__"),
+    [`__array_prepare__`](#numpy.class.__array_prepare__ "numpy.class.__array_prepare__"),
+    [`__array_priority__`](#numpy.class.__array_priority__ "numpy.class.__array_priority__")
+    mechanism described below for ufuncs (which may eventually be deprecated).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: New in version 1.16.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`func` is an arbitrary callable exposed by NumPy’s public API, which was called
+    in the form `func(*args, **kwargs)`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`types` is a collection [`collections.abc.Collection`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Collection
+    "(in Python v3.11)") of unique argument types from the original NumPy function
+    call that implement `__array_function__`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The tuple `args` and dict `kwargs` are directly passed on from the original
+    call.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: As a convenience for `__array_function__` implementors, `types` provides all
+    argument types with an `'__array_function__'` attribute. This allows implementors
+    to quickly identify cases where they should defer to `__array_function__` implementations
+    on other arguments. Implementations should not rely on the iteration order of
+    `types`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Most implementations of `__array_function__` will start with two checks:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Is the given function something that we know how to overload?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Are all arguments of a type that we know how to handle?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If these conditions hold, `__array_function__` should return the result from
+    calling its implementation for `func(*args, **kwargs)`. Otherwise, it should return
+    the sentinel value `NotImplemented`, indicating that the function is not implemented
+    by these types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are no general requirements on the return value from `__array_function__`,
+    although most sensible implementations should probably return array(s) with the
+    same type as one of the function’s arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It may also be convenient to define a custom decorators (`implements` below)
+    for registering `__array_function__` implementations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that it is not required for `__array_function__` implementations to include
+    *all* of the corresponding NumPy function’s optional arguments (e.g., `broadcast_to`
+    above omits the irrelevant `subok` argument). Optional arguments are only passed
+    in to `__array_function__` if they were explicitly used in the NumPy function
+    call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Just like the case for builtin special methods like `__add__`, properly written
+    `__array_function__` methods should always return `NotImplemented` when an unknown
+    type is encountered. Otherwise, it will be impossible to correctly override NumPy
+    functions from another object if the operation also includes one of your objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the most part, the rules for dispatch with `__array_function__` match those
+    for `__array_ufunc__`. In particular:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NumPy will gather implementations of `__array_function__` from all specified
+    inputs and call them in order: subclasses before superclasses, and otherwise left
+    to right. Note that in some edge cases involving subclasses, this differs slightly
+    from the [current behavior](https://bugs.python.org/issue30140) of Python.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Implementations of `__array_function__` indicate that they can handle the operation
+    by returning any value other than `NotImplemented`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If all `__array_function__` methods return `NotImplemented`, NumPy will raise
+    `TypeError`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If no `__array_function__` methods exists, NumPy will default to calling its
+    own implementation, intended for use on NumPy arrays. This case arises, for example,
+    when all array-like arguments are Python numbers or lists. (NumPy arrays do have
+    a `__array_function__` method, given below, but it always returns `NotImplemented`
+    if any argument other than a NumPy array subclass implements `__array_function__`.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: One deviation from the current behavior of `__array_ufunc__` is that NumPy will
+    only call `__array_function__` on the *first* argument of each unique type. This
+    matches Python’s [rule for calling reflected methods](https://docs.python.org/3/reference/datamodel.html#object.__ror__),
+    and this ensures that checking overloads has acceptable performance even when
+    there are a large number of overloaded arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: This method is called whenever the system internally allocates a new array from
+    *obj*, where *obj* is a subclass (subtype) of the [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray"). It can be used to change attributes of *self* after construction
+    (so as to ensure a 2-d matrix for example), or to update meta-information from
+    the “parent.” Subclasses inherit a default implementation of this method that
+    does nothing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: At the beginning of every [ufunc](../user/basics.ufuncs.html#ufuncs-output-type),
+    this method is called on the input object with the highest array priority, or
+    the output object if one was specified. The output array is passed in and whatever
+    is returned is passed to the ufunc. Subclasses inherit a default implementation
+    of this method which simply returns the output array unmodified. Subclasses may
+    opt to use this method to transform the output array into an instance of the subclass
+    and update metadata before returning the array to the ufunc for computation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: For ufuncs, it is hoped to eventually deprecate this method in favour of [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: At the end of every [ufunc](../user/basics.ufuncs.html#ufuncs-output-type),
+    this method is called on the input object with the highest array priority, or
+    the output object if one was specified. The ufunc-computed array is passed in
+    and whatever is returned is passed to the user. Subclasses inherit a default implementation
+    of this method, which transforms the array into a new instance of the object’s
+    class. Subclasses may opt to use this method to transform the output array into
+    an instance of the subclass and update metadata before returning the array to
+    the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: For ufuncs, it is hoped to eventually deprecate this method in favour of [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: The value of this attribute is used to determine what type of object to return
+    in situations where there is more than one possibility for the Python type of
+    the returned object. Subclasses inherit a default value of 0.0 for this attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: For ufuncs, it is hoped to eventually deprecate this method in favour of [`__array_ufunc__`](#numpy.class.__array_ufunc__
+    "numpy.class.__array_ufunc__").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: If a class (ndarray subclass or not) having the [`__array__`](#numpy.class.__array__
+    "numpy.class.__array__") method is used as the output object of an [ufunc](../user/basics.ufuncs.html#ufuncs-output-type),
+    results will *not* be written to the object returned by [`__array__`](#numpy.class.__array__
+    "numpy.class.__array__"). This practice will return `TypeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Matrix objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is strongly advised *not* to use the matrix subclass. As described below,
+    it makes writing functions that deal consistently with matrices and regular arrays
+    very difficult. Currently, they are mainly used for interacting with `scipy.sparse`.
+    We hope to provide an alternative for this use, however, and eventually remove
+    the `matrix` subclass.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`matrix`](generated/numpy.matrix.html#numpy.matrix "numpy.matrix") objects
+    inherit from the ndarray and therefore, they have the same attributes and methods
+    of ndarrays. There are six important differences of matrix objects, however, that
+    may lead to unexpected results when you use matrices but expect them to act like
+    arrays:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Matrix objects can be created using a string notation to allow Matlab-style
+    syntax where spaces separate columns and semicolons (‘;’) separate rows.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Matrix objects are always two-dimensional. This has far-reaching implications,
+    in that m.ravel() is still two-dimensional (with a 1 in the first dimension) and
+    item selection returns two-dimensional objects so that sequence behavior is fundamentally
+    different than arrays.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Matrix objects over-ride multiplication to be matrix-multiplication. **Make
+    sure you understand this for functions that you may want to receive matrices.
+    Especially in light of the fact that asanyarray(m) returns a matrix when m is
+    a matrix.**
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Matrix objects over-ride power to be matrix raised to a power. The same warning
+    about using power inside a function that uses asanyarray(…) to get an array object
+    holds for this fact.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The default __array_priority__ of matrix objects is 10.0, and therefore mixed
+    operations with ndarrays always produce matrices.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Matrices have special attributes which make calculations easier. These are
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '| [`matrix.T`](generated/numpy.matrix.T.html#numpy.matrix.T "numpy.matrix.T")
+    | Returns the transpose of the matrix. |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| [`matrix.H`](generated/numpy.matrix.H.html#numpy.matrix.H "numpy.matrix.H")
+    | Returns the (complex) conjugate transpose of *self*. |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| [`matrix.I`](generated/numpy.matrix.I.html#numpy.matrix.I "numpy.matrix.I")
+    | Returns the (multiplicative) inverse of invertible *self*. |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| [`matrix.A`](generated/numpy.matrix.A.html#numpy.matrix.A "numpy.matrix.A")
+    | Return *self* as an [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray")
+    object. |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Matrix objects over-ride multiplication, ‘*’, and power, ‘**’, to be matrix-multiplication
+    and matrix power, respectively. If your subroutine can accept sub-classes and
+    you do not convert to base- class arrays, then you must use the ufuncs multiply
+    and power to be sure that you are performing the correct operation for all inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The matrix class is a Python subclass of the ndarray and can be used as a reference
+    for how to construct your own subclass of the ndarray. Matrices can be created
+    from other matrices, strings, and anything else that can be converted to an `ndarray`
+    . The name “mat “is an alias for “matrix “in NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`matrix`](generated/numpy.matrix.html#numpy.matrix "numpy.matrix")(data[, dtype, copy])
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is no longer recommended to use this class, even for linear
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`asmatrix`](generated/numpy.asmatrix.html#numpy.asmatrix "numpy.asmatrix")(data[, dtype])
+    | Interpret the input as a matrix. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`bmat`](generated/numpy.bmat.html#numpy.bmat "numpy.bmat")(obj[, ldict, gdict])
+    | Build a matrix object from a string, nested sequence, or array. |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Example 1: Matrix creation from a string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Example 2: Matrix creation from nested sequence'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Example 3: Matrix creation from an array'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Memory-mapped file arrays
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Memory-mapped files are useful for reading and/or modifying small segments of
+    a large file with regular layout, without reading the entire file into memory.
+    A simple subclass of the ndarray uses a memory-mapped file for the data buffer
+    of the array. For small files, the over-head of reading the entire file into memory
+    is typically not significant, however for large files using memory mapping can
+    save considerable resources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Memory-mapped-file arrays have one additional method (besides those they inherit
+    from the ndarray): [`.flush()`](generated/numpy.memmap.flush.html#numpy.memmap.flush
+    "numpy.memmap.flush") which must be called manually by the user to ensure that
+    any changes to the array actually get written to disk.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`memmap`](generated/numpy.memmap.html#numpy.memmap "numpy.memmap")(filename[, dtype, mode, offset, ...])
+    | Create a memory-map to an array stored in a *binary* file on disk. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`memmap.flush`](generated/numpy.memmap.flush.html#numpy.memmap.flush "numpy.memmap.flush")()
+    | Write any changes in the array to the file on disk. |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Character arrays ([`numpy.char`](routines.char.html#module-numpy.char "numpy.char"))
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Creating character arrays (numpy.char)](routines.array-creation.html#routines-array-creation-char)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`chararray`](generated/numpy.char.chararray.html#numpy.char.chararray "numpy.chararray")
+    class exists for backwards compatibility with Numarray, it is not recommended
+    for new development. Starting from numpy 1.4, if one needs arrays of strings,
+    it is recommended to use arrays of [`dtype`](generated/numpy.dtype.html#numpy.dtype
+    "numpy.dtype") [`object_`](arrays.scalars.html#numpy.object_ "numpy.object_"),
+    [`bytes_`](arrays.scalars.html#numpy.bytes_ "numpy.bytes_") or [`str_`](arrays.scalars.html#numpy.str_
+    "numpy.str_"), and use the free functions in the [`numpy.char`](routines.char.html#module-numpy.char
+    "numpy.char") module for fast vectorized string operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These are enhanced arrays of either [`str_`](arrays.scalars.html#numpy.str_
+    "numpy.str_") type or [`bytes_`](arrays.scalars.html#numpy.bytes_ "numpy.bytes_")
+    type. These arrays inherit from the [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray"), but specially-define the operations `+`, `*`, and `%` on a (broadcasting)
+    element-by-element basis. These operations are not available on the standard [`ndarray`](generated/numpy.ndarray.html#numpy.ndarray
+    "numpy.ndarray") of character type. In addition, the [`chararray`](generated/numpy.char.chararray.html#numpy.char.chararray
+    "numpy.chararray") has all of the standard [`str`](https://docs.python.org/3/library/stdtypes.html#str
+    "(in Python v3.11)") (and [`bytes`](https://docs.python.org/3/library/stdtypes.html#bytes
+    "(in Python v3.11)")) methods, executing them on an element-by-element basis.
+    Perhaps the easiest way to create a chararray is to use [`self.view(chararray)`](generated/numpy.ndarray.view.html#numpy.ndarray.view
+    "numpy.ndarray.view") where *self* is an ndarray of str or unicode data-type.
+    However, a chararray can also be created using the [`numpy.chararray`](generated/numpy.char.chararray.html#numpy.char.chararray
+    "numpy.chararray") constructor, or via the [`numpy.char.array`](generated/numpy.core.defchararray.array.html#numpy.core.defchararray.array
+    "numpy.core.defchararray.array") function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`chararray`](generated/numpy.char.chararray.html#numpy.char.chararray "numpy.chararray")(shape[, itemsize, unicode, ...])
+    | Provides a convenient view on arrays of string and unicode values. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`core.defchararray.array`](generated/numpy.core.defchararray.array.html#numpy.core.defchararray.array
+    "numpy.core.defchararray.array")(obj[, itemsize, ...]) | Create a [`chararray`](generated/numpy.char.chararray.html#numpy.char.chararray
+    "numpy.chararray"). |'
+  prefs: []
+  type: TYPE_TB
+- en: Another difference with the standard ndarray of str data-type is that the chararray
+    inherits the feature introduced by Numarray that white-space at the end of any
+    element in the array will be ignored on item retrieval and comparison operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Record arrays (`numpy.rec`)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Creating record arrays (numpy.rec)](routines.array-creation.html#routines-array-creation-rec),
+    [Data type routines](routines.dtype.html#routines-dtype), [Data type objects (dtype)](arrays.dtypes.html#arrays-dtypes).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: NumPy provides the [`recarray`](generated/numpy.recarray.html#numpy.recarray
+    "numpy.recarray") class which allows accessing the fields of a structured array
+    as attributes, and a corresponding scalar data type object [`record`](generated/numpy.record.html#numpy.record
+    "numpy.record").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`recarray`](generated/numpy.recarray.html#numpy.recarray "numpy.recarray")(shape[, dtype, buf, offset, ...])
+    | Construct an ndarray that allows field access using attributes. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`record`](generated/numpy.record.html#numpy.record "numpy.record") | A data-type
+    scalar that allows field access as attribute lookup. |'
+  prefs: []
+  type: TYPE_TB
+- en: Masked arrays ([`numpy.ma`](maskedarray.generic.html#module-numpy.ma "numpy.ma"))
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Masked arrays](maskedarray.html#maskedarray)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Standard container class
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For backward compatibility and as a standard “container “class, the UserArray
+    from Numeric has been brought over to NumPy and named [`numpy.lib.user_array.container`](generated/numpy.lib.user_array.container.html#numpy.lib.user_array.container
+    "numpy.lib.user_array.container") The container class is a Python class whose
+    self.array attribute is an ndarray. Multiple inheritance is probably easier with
+    numpy.lib.user_array.container than with the ndarray itself and so it is included
+    by default. It is not documented here beyond mentioning its existence because
+    you are encouraged to use the ndarray class directly if you can.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`numpy.lib.user_array.container`](generated/numpy.lib.user_array.container.html#numpy.lib.user_array.container
+    "numpy.lib.user_array.container")(data[, ...]) | Standard container-class for
+    easy multiple-inheritance. |'
+  prefs: []
+  type: TYPE_TB
+- en: '## Array Iterators'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Iterators are a powerful concept for array processing. Essentially, iterators
+    implement a generalized for-loop. If *myiter* is an iterator object, then the
+    Python code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'calls `val = next(myiter)` repeatedly until [`StopIteration`](https://docs.python.org/3/library/exceptions.html#StopIteration
+    "(in Python v3.11)") is raised by the iterator. There are several ways to iterate
+    over an array that may be useful: default iteration, flat iteration, and \(N\)-dimensional
+    enumeration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Default iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The default iterator of an ndarray object is the default Python iterator of
+    a sequence type. Thus, when the array object itself is used as an iterator. The
+    default behavior is equivalent to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: This default iterator selects a sub-array of dimension \(N-1\) from the array.
+    This can be a useful construct for defining recursive algorithms. To loop over
+    the entire array requires \(N\) for-loops.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Flat iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`ndarray.flat`](generated/numpy.ndarray.flat.html#numpy.ndarray.flat "numpy.ndarray.flat")
+    | A 1-D iterator over the array. |'
+  prefs: []
+  type: TYPE_TB
+- en: As mentioned previously, the flat attribute of ndarray objects returns an iterator
+    that will cycle over the entire array in C-style contiguous order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, I’ve used the built-in enumerate iterator to return the iterator index
+    as well as the value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: N-dimensional enumeration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`ndenumerate`](generated/numpy.ndenumerate.html#numpy.ndenumerate "numpy.ndenumerate")(arr)
+    | Multidimensional index iterator. |'
+  prefs: []
+  type: TYPE_TB
+- en: Sometimes it may be useful to get the N-dimensional index while iterating. The
+    ndenumerate iterator can achieve this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterator for broadcasting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`broadcast`](generated/numpy.broadcast.html#numpy.broadcast "numpy.broadcast")
+    | Produce an object that mimics broadcasting. |'
+  prefs: []
+  type: TYPE_TB
+- en: The general concept of broadcasting is also available from Python using the
+    [`broadcast`](generated/numpy.broadcast.html#numpy.broadcast "numpy.broadcast")
+    iterator. This object takes \(N\) objects as inputs and returns an iterator that
+    returns tuples providing each of the input sequence elements in the broadcasted
+    result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Default iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The default iterator of an ndarray object is the default Python iterator of
+    a sequence type. Thus, when the array object itself is used as an iterator. The
+    default behavior is equivalent to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: This default iterator selects a sub-array of dimension \(N-1\) from the array.
+    This can be a useful construct for defining recursive algorithms. To loop over
+    the entire array requires \(N\) for-loops.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Flat iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`ndarray.flat`](generated/numpy.ndarray.flat.html#numpy.ndarray.flat "numpy.ndarray.flat")
+    | A 1-D iterator over the array. |'
+  prefs: []
+  type: TYPE_TB
+- en: As mentioned previously, the flat attribute of ndarray objects returns an iterator
+    that will cycle over the entire array in C-style contiguous order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, I’ve used the built-in enumerate iterator to return the iterator index
+    as well as the value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: N-dimensional enumeration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`ndenumerate`](generated/numpy.ndenumerate.html#numpy.ndenumerate "numpy.ndenumerate")(arr)
+    | Multidimensional index iterator. |'
+  prefs: []
+  type: TYPE_TB
+- en: Sometimes it may be useful to get the N-dimensional index while iterating. The
+    ndenumerate iterator can achieve this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterator for broadcasting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| [`broadcast`](generated/numpy.broadcast.html#numpy.broadcast "numpy.broadcast")
+    | Produce an object that mimics broadcasting. |'
+  prefs: []
+  type: TYPE_TB
+- en: The general concept of broadcasting is also available from Python using the
+    [`broadcast`](generated/numpy.broadcast.html#numpy.broadcast "numpy.broadcast")
+    iterator. This object takes \(N\) objects as inputs and returns an iterator that
+    returns tuples providing each of the input sequence elements in the broadcasted
+    result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE

@@ -1,0 +1,1307 @@
+- en: Testing Guidelines
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/testing.html](https://numpy.org/doc/1.26/reference/testing.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## Introduction'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Until the 1.15 release, NumPy used the [nose](https://nose.readthedocs.io/en/latest/)
+    testing framework, it now uses the [pytest](https://pytest.readthedocs.io) framework.
+    The older framework is still maintained in order to support downstream projects
+    that use the old numpy framework, but all tests for NumPy should use pytest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our goal is that every module and package in NumPy should have a thorough set
+    of unit tests. These tests should exercise the full functionality of a given routine
+    as well as its robustness to erroneous or unexpected input arguments. Well-designed
+    tests with good coverage make an enormous difference to the ease of refactoring.
+    Whenever a new bug is found in a routine, you should write a new test for that
+    specific case and add it to the test suite to prevent that bug from creeping back
+    in unnoticed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: SciPy uses the testing framework from [`numpy.testing`](routines.testing.html#module-numpy.testing
+    "numpy.testing"), so all of the NumPy examples shown below are also applicable
+    to SciPy
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing NumPy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: NumPy can be tested in a number of ways, choose any way you feel comfortable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running tests from inside Python
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can test an installed NumPy by [`numpy.test`](#numpy.test "numpy.test"),
+    for example, To run NumPy’s full test suite, use the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The test method may take two or more arguments; the first `label` is a string
+    specifying what should be tested and the second `verbose` is an integer giving
+    the level of output verbosity. See the docstring [`numpy.test`](#numpy.test "numpy.test")
+    for details. The default value for `label` is ‘fast’ - which will run the standard
+    tests. The string ‘full’ will run the full battery of tests, including those identified
+    as being slow to run. If `verbose` is 1 or less, the tests will just show information
+    messages about the tests that are run; but if it is greater than 1, then the tests
+    will also provide warnings on missing tests. So if you want to run every test
+    and get messages about which modules don’t have tests:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, if you are only interested in testing a subset of NumPy, for example,
+    the `core` module, use the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Running tests from the command line
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you want to build NumPy in order to work on NumPy itself, use the `spin`
+    utility. To run NumPy’s full test suite:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Testing a subset of NumPy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: For detailed info on testing, see [Testing builds](../dev/development_environment.html#testing-builds)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other methods of running tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Run tests using your favourite IDE such as [vscode](https://code.visualstudio.com/docs/python/testing#_enable-a-test-framework)
+    or [pycharm](https://www.jetbrains.com/help/pycharm/testing-your-first-python-application.html)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing your own tests
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: If you are writing a package that you’d like to become part of NumPy, please
+    write the tests as you develop the package. Every Python module, extension module,
+    or subpackage in the NumPy package directory should have a corresponding `test_<name>.py`
+    file. Pytest examines these files for test methods (named `test*`) and test classes
+    (named `Test*`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose you have a NumPy module `numpy/xxx/yyy.py` containing a function `zzz()`.
+    To test this function you would create a test module called `test_yyy.py`. If
+    you only need to test one aspect of `zzz`, you can simply add a test function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'More often, we need to group a number of tests together, so we create a test
+    class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Within these test methods, `assert` and related functions are used to test whether
+    a certain assumption is valid. If the assertion fails, the test fails. `pytest`
+    internally rewrites the `assert` statement to give informative output when it
+    fails, so should be preferred over the legacy variant `numpy.testing.assert_`.
+    Whereas plain `assert` statements are ignored when running Python in optimized
+    mode with `-O`, this is not an issue when running tests with pytest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, the pytest functions [`pytest.raises`](https://docs.pytest.org/en/stable/reference/reference.html#pytest.raises
+    "(in pytest v0.1.dev156+g45f34df)") and [`pytest.warns`](https://docs.pytest.org/en/stable/reference/reference.html#pytest.warns
+    "(in pytest v0.1.dev156+g45f34df)") should be preferred over their legacy counterparts
+    [`numpy.testing.assert_raises`](generated/numpy.testing.assert_raises.html#numpy.testing.assert_raises
+    "numpy.testing.assert_raises") and [`numpy.testing.assert_warns`](generated/numpy.testing.assert_warns.html#numpy.testing.assert_warns
+    "numpy.testing.assert_warns"), since the pytest variants are more broadly used
+    and allow more explicit targeting of warnings and errors when used with the `match`
+    regex.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that `test_` functions or methods should not have a docstring, because
+    that makes it hard to identify the test from the output of running the test suite
+    with `verbose=2` (or similar verbosity setting). Use plain comments (`#`) if necessary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also since much of NumPy is legacy code that was originally written without
+    unit tests, there are still several modules that don’t have tests yet. Please
+    feel free to choose one of these modules and develop tests for it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using C code in tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: NumPy exposes a rich [C-API](c-api/index.html#c-api) . These are tested using
+    c-extension modules written “as-if” they know nothing about the internals of NumPy,
+    rather using the official C-API interfaces only. Examples of such modules are
+    tests for a user-defined `rational` dtype in `_rational_tests` or the ufunc machinery
+    tests in `_umath_tests` which are part of the binary distribution. Starting from
+    version 1.21, you can also write snippets of C code in tests that will be compiled
+    locally into c-extension modules and loaded into python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Build and imports a c-extension module *modname* from a list of function fragments
+    *functions*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**functions**list of fragments'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each fragment is a sequence of func_name, calling convention, snippet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**prologue**string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code to precede the rest, usually extra `#include` or `#define` macros.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**build_dir**pathlib.Path'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to build the module, usually a temporary directory
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**include_dirs**list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extra directories to find include files when compiling
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**more_init**string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code to appear in the module PyMODINIT_FUNC
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'out: module'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The module will have been loaded and is ready for use
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Labeling tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Unlabeled tests like the ones above are run in the default `numpy.test()` run.
+    If you want to label your test as slow - and therefore reserved for a full `numpy.test(label=''full'')`
+    run, you can label it with `pytest.mark.slow`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Similarly for methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Easier setup and teardown functions / methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Testing looks for module-level or class method-level setup and teardown functions
+    by name; thus:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setup and teardown functions to functions and methods are known as “fixtures”,
+    and they should be used sparingly. `pytest` supports more general fixture at various
+    scopes which may be used automatically via special arguments. For example, the
+    special argument name `tmpdir` is used in test to create a temporary directory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parametric tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One very nice feature of testing is allowing easy testing across a range of
+    parameters - a nasty problem for standard unit tests. Use the `pytest.mark.parametrize`
+    decorator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Doctests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Doctests are a convenient way of documenting the behavior of a function and
+    allowing that behavior to be tested at the same time. The output of an interactive
+    Python session can be included in the docstring of a function, and the test framework
+    can run the example and compare the actual output to the expected output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The doctests can be run by adding the `doctests` argument to the `test()` call;
+    for example, to run all tests (including doctests) for numpy.lib:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: The doctests are run as if they are in a fresh Python instance which has executed
+    `import numpy as np`. Tests that are part of a NumPy subpackage will have that
+    subpackage already imported. E.g. for a test in `numpy/linalg/tests/`, the namespace
+    will be created such that `from numpy import linalg` has already executed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`tests/`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Rather than keeping the code and the tests in the same directory, we put all
+    the tests for a given subpackage in a `tests/` subdirectory. For our example,
+    if it doesn’t already exist you will need to create a `tests/` directory in `numpy/xxx/`.
+    So the path for `test_yyy.py` is `numpy/xxx/tests/test_yyy.py`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once the `numpy/xxx/tests/test_yyy.py` is written, its possible to run the
+    tests by going to the `tests/` directory and typing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or if you add `numpy/xxx/tests/` to the Python path, you could run the tests
+    interactively in the interpreter like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`__init__.py` and `setup.py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Usually, however, adding the `tests/` directory to the python path isn’t desirable.
+    Instead it would better to invoke the test straight from the module `xxx`. To
+    this end, simply place the following lines at the end of your package’s `__init__.py`
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You will also need to add the tests directory in the configuration section
+    of your setup.py:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you can do the following to test your module:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Also, when invoking the entire NumPy test suite, your tests will be found and
+    run:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tips & Tricks
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Creating many similar tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you have a collection of tests that must be run multiple times with minor
+    variations, it can be helpful to create a base class containing all the common
+    tests, and then create a subclass for each variation. Several examples of this
+    technique exist in NumPy; below are excerpts from one in [numpy/linalg/tests/test_linalg.py](https://github.com/numpy/numpy/blob/main/numpy/linalg/tests/test_linalg.py):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, we wanted to test solving a linear algebra problem using matrices
+    of several data types, using `linalg.solve` and `linalg.inv`. The common test
+    cases (for single-precision, double-precision, etc. matrices) are collected in
+    `LinalgTestCase`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Known failures & skipping tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Sometimes you might want to skip a test or mark it as a known failure, such
+    as when the test suite is being written before the code it’s meant to test, or
+    if a test only fails on a particular architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To skip a test, simply use `skipif`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The test is marked as skipped if `SkipMyTest` evaluates to nonzero, and the
+    message in verbose test output is the second argument given to `skipif`. Similarly,
+    a test can be marked as a known failure by using `xfail`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Of course, a test can be unconditionally skipped or marked as a known failure
+    by using `skip` or `xfail` without argument, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of the number of skipped and known failing tests is displayed at the
+    end of the test run. Skipped tests are marked as `'S'` in the test results (or
+    `'SKIPPED'` for `verbose > 1`), and known failing tests are marked as `'x'` (or
+    `'XFAIL'` if `verbose > 1`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tests on random data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Tests on random data are good, but since test failures are meant to expose new
+    bugs or regressions, a test that passes most of the time but fails occasionally
+    with no code changes is not helpful. Make the random data deterministic by setting
+    the random number seed before generating it. Use either Python’s `random.seed(some_number)`
+    or NumPy’s `numpy.random.seed(some_number)`, depending on the source of random
+    numbers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, you can use [Hypothesis](https://hypothesis.readthedocs.io/en/latest/)
+    to generate arbitrary data. Hypothesis manages both Python’s and Numpy’s random
+    seeds for you, and provides a very concise and powerful way to describe data (including
+    `hypothesis.extra.numpy`, e.g. for a set of mutually-broadcastable shapes).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The advantages over random generation include tools to replay and share failures
+    without requiring a fixed seed, reporting *minimal* examples for each failure,
+    and better-than-naive-random techniques for triggering bugs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Documentation for `numpy.test`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pytest test runner.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A test function is typically added to a package’s __init__.py like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling this test function finds and runs all tests associated with the module
+    and all its sub-modules.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**module_name**module name'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The name of the module to test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unlike the previous `nose`-based implementation, this class is not publicly
+    exposed as it performs some `numpy`-specific warning suppression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Attributes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**module_name**str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Full path to the package to test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Until the 1.15 release, NumPy used the [nose](https://nose.readthedocs.io/en/latest/)
+    testing framework, it now uses the [pytest](https://pytest.readthedocs.io) framework.
+    The older framework is still maintained in order to support downstream projects
+    that use the old numpy framework, but all tests for NumPy should use pytest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our goal is that every module and package in NumPy should have a thorough set
+    of unit tests. These tests should exercise the full functionality of a given routine
+    as well as its robustness to erroneous or unexpected input arguments. Well-designed
+    tests with good coverage make an enormous difference to the ease of refactoring.
+    Whenever a new bug is found in a routine, you should write a new test for that
+    specific case and add it to the test suite to prevent that bug from creeping back
+    in unnoticed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: SciPy uses the testing framework from [`numpy.testing`](routines.testing.html#module-numpy.testing
+    "numpy.testing"), so all of the NumPy examples shown below are also applicable
+    to SciPy
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing NumPy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: NumPy can be tested in a number of ways, choose any way you feel comfortable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running tests from inside Python
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can test an installed NumPy by [`numpy.test`](#numpy.test "numpy.test"),
+    for example, To run NumPy’s full test suite, use the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The test method may take two or more arguments; the first `label` is a string
+    specifying what should be tested and the second `verbose` is an integer giving
+    the level of output verbosity. See the docstring [`numpy.test`](#numpy.test "numpy.test")
+    for details. The default value for `label` is ‘fast’ - which will run the standard
+    tests. The string ‘full’ will run the full battery of tests, including those identified
+    as being slow to run. If `verbose` is 1 or less, the tests will just show information
+    messages about the tests that are run; but if it is greater than 1, then the tests
+    will also provide warnings on missing tests. So if you want to run every test
+    and get messages about which modules don’t have tests:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, if you are only interested in testing a subset of NumPy, for example,
+    the `core` module, use the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Running tests from the command line
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you want to build NumPy in order to work on NumPy itself, use the `spin`
+    utility. To run NumPy’s full test suite:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Testing a subset of NumPy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: For detailed info on testing, see [Testing builds](../dev/development_environment.html#testing-builds)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other methods of running tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Run tests using your favourite IDE such as [vscode](https://code.visualstudio.com/docs/python/testing#_enable-a-test-framework)
+    or [pycharm](https://www.jetbrains.com/help/pycharm/testing-your-first-python-application.html)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running tests from inside Python
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can test an installed NumPy by [`numpy.test`](#numpy.test "numpy.test"),
+    for example, To run NumPy’s full test suite, use the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The test method may take two or more arguments; the first `label` is a string
+    specifying what should be tested and the second `verbose` is an integer giving
+    the level of output verbosity. See the docstring [`numpy.test`](#numpy.test "numpy.test")
+    for details. The default value for `label` is ‘fast’ - which will run the standard
+    tests. The string ‘full’ will run the full battery of tests, including those identified
+    as being slow to run. If `verbose` is 1 or less, the tests will just show information
+    messages about the tests that are run; but if it is greater than 1, then the tests
+    will also provide warnings on missing tests. So if you want to run every test
+    and get messages about which modules don’t have tests:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, if you are only interested in testing a subset of NumPy, for example,
+    the `core` module, use the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Running tests from the command line
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you want to build NumPy in order to work on NumPy itself, use the `spin`
+    utility. To run NumPy’s full test suite:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Testing a subset of NumPy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: For detailed info on testing, see [Testing builds](../dev/development_environment.html#testing-builds)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other methods of running tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Run tests using your favourite IDE such as [vscode](https://code.visualstudio.com/docs/python/testing#_enable-a-test-framework)
+    or [pycharm](https://www.jetbrains.com/help/pycharm/testing-your-first-python-application.html)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing your own tests
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: If you are writing a package that you’d like to become part of NumPy, please
+    write the tests as you develop the package. Every Python module, extension module,
+    or subpackage in the NumPy package directory should have a corresponding `test_<name>.py`
+    file. Pytest examines these files for test methods (named `test*`) and test classes
+    (named `Test*`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose you have a NumPy module `numpy/xxx/yyy.py` containing a function `zzz()`.
+    To test this function you would create a test module called `test_yyy.py`. If
+    you only need to test one aspect of `zzz`, you can simply add a test function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'More often, we need to group a number of tests together, so we create a test
+    class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Within these test methods, `assert` and related functions are used to test whether
+    a certain assumption is valid. If the assertion fails, the test fails. `pytest`
+    internally rewrites the `assert` statement to give informative output when it
+    fails, so should be preferred over the legacy variant `numpy.testing.assert_`.
+    Whereas plain `assert` statements are ignored when running Python in optimized
+    mode with `-O`, this is not an issue when running tests with pytest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, the pytest functions [`pytest.raises`](https://docs.pytest.org/en/stable/reference/reference.html#pytest.raises
+    "(in pytest v0.1.dev156+g45f34df)") and [`pytest.warns`](https://docs.pytest.org/en/stable/reference/reference.html#pytest.warns
+    "(in pytest v0.1.dev156+g45f34df)") should be preferred over their legacy counterparts
+    [`numpy.testing.assert_raises`](generated/numpy.testing.assert_raises.html#numpy.testing.assert_raises
+    "numpy.testing.assert_raises") and [`numpy.testing.assert_warns`](generated/numpy.testing.assert_warns.html#numpy.testing.assert_warns
+    "numpy.testing.assert_warns"), since the pytest variants are more broadly used
+    and allow more explicit targeting of warnings and errors when used with the `match`
+    regex.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that `test_` functions or methods should not have a docstring, because
+    that makes it hard to identify the test from the output of running the test suite
+    with `verbose=2` (or similar verbosity setting). Use plain comments (`#`) if necessary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also since much of NumPy is legacy code that was originally written without
+    unit tests, there are still several modules that don’t have tests yet. Please
+    feel free to choose one of these modules and develop tests for it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using C code in tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: NumPy exposes a rich [C-API](c-api/index.html#c-api) . These are tested using
+    c-extension modules written “as-if” they know nothing about the internals of NumPy,
+    rather using the official C-API interfaces only. Examples of such modules are
+    tests for a user-defined `rational` dtype in `_rational_tests` or the ufunc machinery
+    tests in `_umath_tests` which are part of the binary distribution. Starting from
+    version 1.21, you can also write snippets of C code in tests that will be compiled
+    locally into c-extension modules and loaded into python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Build and imports a c-extension module *modname* from a list of function fragments
+    *functions*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**functions**list of fragments'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each fragment is a sequence of func_name, calling convention, snippet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**prologue**string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code to precede the rest, usually extra `#include` or `#define` macros.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**build_dir**pathlib.Path'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to build the module, usually a temporary directory
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**include_dirs**list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extra directories to find include files when compiling
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**more_init**string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code to appear in the module PyMODINIT_FUNC
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'out: module'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The module will have been loaded and is ready for use
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Labeling tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Unlabeled tests like the ones above are run in the default `numpy.test()` run.
+    If you want to label your test as slow - and therefore reserved for a full `numpy.test(label=''full'')`
+    run, you can label it with `pytest.mark.slow`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Similarly for methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Easier setup and teardown functions / methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Testing looks for module-level or class method-level setup and teardown functions
+    by name; thus:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setup and teardown functions to functions and methods are known as “fixtures”,
+    and they should be used sparingly. `pytest` supports more general fixture at various
+    scopes which may be used automatically via special arguments. For example, the
+    special argument name `tmpdir` is used in test to create a temporary directory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parametric tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One very nice feature of testing is allowing easy testing across a range of
+    parameters - a nasty problem for standard unit tests. Use the `pytest.mark.parametrize`
+    decorator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Doctests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Doctests are a convenient way of documenting the behavior of a function and
+    allowing that behavior to be tested at the same time. The output of an interactive
+    Python session can be included in the docstring of a function, and the test framework
+    can run the example and compare the actual output to the expected output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The doctests can be run by adding the `doctests` argument to the `test()` call;
+    for example, to run all tests (including doctests) for numpy.lib:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: The doctests are run as if they are in a fresh Python instance which has executed
+    `import numpy as np`. Tests that are part of a NumPy subpackage will have that
+    subpackage already imported. E.g. for a test in `numpy/linalg/tests/`, the namespace
+    will be created such that `from numpy import linalg` has already executed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`tests/`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Rather than keeping the code and the tests in the same directory, we put all
+    the tests for a given subpackage in a `tests/` subdirectory. For our example,
+    if it doesn’t already exist you will need to create a `tests/` directory in `numpy/xxx/`.
+    So the path for `test_yyy.py` is `numpy/xxx/tests/test_yyy.py`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once the `numpy/xxx/tests/test_yyy.py` is written, its possible to run the
+    tests by going to the `tests/` directory and typing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or if you add `numpy/xxx/tests/` to the Python path, you could run the tests
+    interactively in the interpreter like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`__init__.py` and `setup.py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Usually, however, adding the `tests/` directory to the python path isn’t desirable.
+    Instead it would better to invoke the test straight from the module `xxx`. To
+    this end, simply place the following lines at the end of your package’s `__init__.py`
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You will also need to add the tests directory in the configuration section
+    of your setup.py:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you can do the following to test your module:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Also, when invoking the entire NumPy test suite, your tests will be found and
+    run:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using C code in tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: NumPy exposes a rich [C-API](c-api/index.html#c-api) . These are tested using
+    c-extension modules written “as-if” they know nothing about the internals of NumPy,
+    rather using the official C-API interfaces only. Examples of such modules are
+    tests for a user-defined `rational` dtype in `_rational_tests` or the ufunc machinery
+    tests in `_umath_tests` which are part of the binary distribution. Starting from
+    version 1.21, you can also write snippets of C code in tests that will be compiled
+    locally into c-extension modules and loaded into python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Build and imports a c-extension module *modname* from a list of function fragments
+    *functions*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**functions**list of fragments'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each fragment is a sequence of func_name, calling convention, snippet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**prologue**string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code to precede the rest, usually extra `#include` or `#define` macros.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**build_dir**pathlib.Path'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to build the module, usually a temporary directory
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**include_dirs**list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extra directories to find include files when compiling
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**more_init**string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code to appear in the module PyMODINIT_FUNC
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'out: module'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The module will have been loaded and is ready for use
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Labeling tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Unlabeled tests like the ones above are run in the default `numpy.test()` run.
+    If you want to label your test as slow - and therefore reserved for a full `numpy.test(label=''full'')`
+    run, you can label it with `pytest.mark.slow`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Similarly for methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: Easier setup and teardown functions / methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Testing looks for module-level or class method-level setup and teardown functions
+    by name; thus:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setup and teardown functions to functions and methods are known as “fixtures”,
+    and they should be used sparingly. `pytest` supports more general fixture at various
+    scopes which may be used automatically via special arguments. For example, the
+    special argument name `tmpdir` is used in test to create a temporary directory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parametric tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One very nice feature of testing is allowing easy testing across a range of
+    parameters - a nasty problem for standard unit tests. Use the `pytest.mark.parametrize`
+    decorator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Doctests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Doctests are a convenient way of documenting the behavior of a function and
+    allowing that behavior to be tested at the same time. The output of an interactive
+    Python session can be included in the docstring of a function, and the test framework
+    can run the example and compare the actual output to the expected output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The doctests can be run by adding the `doctests` argument to the `test()` call;
+    for example, to run all tests (including doctests) for numpy.lib:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: The doctests are run as if they are in a fresh Python instance which has executed
+    `import numpy as np`. Tests that are part of a NumPy subpackage will have that
+    subpackage already imported. E.g. for a test in `numpy/linalg/tests/`, the namespace
+    will be created such that `from numpy import linalg` has already executed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`tests/`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Rather than keeping the code and the tests in the same directory, we put all
+    the tests for a given subpackage in a `tests/` subdirectory. For our example,
+    if it doesn’t already exist you will need to create a `tests/` directory in `numpy/xxx/`.
+    So the path for `test_yyy.py` is `numpy/xxx/tests/test_yyy.py`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once the `numpy/xxx/tests/test_yyy.py` is written, its possible to run the
+    tests by going to the `tests/` directory and typing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or if you add `numpy/xxx/tests/` to the Python path, you could run the tests
+    interactively in the interpreter like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`__init__.py` and `setup.py`'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Usually, however, adding the `tests/` directory to the python path isn’t desirable.
+    Instead it would better to invoke the test straight from the module `xxx`. To
+    this end, simply place the following lines at the end of your package’s `__init__.py`
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You will also need to add the tests directory in the configuration section
+    of your setup.py:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you can do the following to test your module:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Also, when invoking the entire NumPy test suite, your tests will be found and
+    run:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tips & Tricks
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Creating many similar tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you have a collection of tests that must be run multiple times with minor
+    variations, it can be helpful to create a base class containing all the common
+    tests, and then create a subclass for each variation. Several examples of this
+    technique exist in NumPy; below are excerpts from one in [numpy/linalg/tests/test_linalg.py](https://github.com/numpy/numpy/blob/main/numpy/linalg/tests/test_linalg.py):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, we wanted to test solving a linear algebra problem using matrices
+    of several data types, using `linalg.solve` and `linalg.inv`. The common test
+    cases (for single-precision, double-precision, etc. matrices) are collected in
+    `LinalgTestCase`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Known failures & skipping tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Sometimes you might want to skip a test or mark it as a known failure, such
+    as when the test suite is being written before the code it’s meant to test, or
+    if a test only fails on a particular architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To skip a test, simply use `skipif`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The test is marked as skipped if `SkipMyTest` evaluates to nonzero, and the
+    message in verbose test output is the second argument given to `skipif`. Similarly,
+    a test can be marked as a known failure by using `xfail`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: Of course, a test can be unconditionally skipped or marked as a known failure
+    by using `skip` or `xfail` without argument, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of the number of skipped and known failing tests is displayed at the
+    end of the test run. Skipped tests are marked as `'S'` in the test results (or
+    `'SKIPPED'` for `verbose > 1`), and known failing tests are marked as `'x'` (or
+    `'XFAIL'` if `verbose > 1`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tests on random data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Tests on random data are good, but since test failures are meant to expose new
+    bugs or regressions, a test that passes most of the time but fails occasionally
+    with no code changes is not helpful. Make the random data deterministic by setting
+    the random number seed before generating it. Use either Python’s `random.seed(some_number)`
+    or NumPy’s `numpy.random.seed(some_number)`, depending on the source of random
+    numbers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, you can use [Hypothesis](https://hypothesis.readthedocs.io/en/latest/)
+    to generate arbitrary data. Hypothesis manages both Python’s and Numpy’s random
+    seeds for you, and provides a very concise and powerful way to describe data (including
+    `hypothesis.extra.numpy`, e.g. for a set of mutually-broadcastable shapes).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The advantages over random generation include tools to replay and share failures
+    without requiring a fixed seed, reporting *minimal* examples for each failure,
+    and better-than-naive-random techniques for triggering bugs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Documentation for `numpy.test`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pytest test runner.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A test function is typically added to a package’s __init__.py like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling this test function finds and runs all tests associated with the module
+    and all its sub-modules.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**module_name**module name'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The name of the module to test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unlike the previous `nose`-based implementation, this class is not publicly
+    exposed as it performs some `numpy`-specific warning suppression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Attributes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**module_name**str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Full path to the package to test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating many similar tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you have a collection of tests that must be run multiple times with minor
+    variations, it can be helpful to create a base class containing all the common
+    tests, and then create a subclass for each variation. Several examples of this
+    technique exist in NumPy; below are excerpts from one in [numpy/linalg/tests/test_linalg.py](https://github.com/numpy/numpy/blob/main/numpy/linalg/tests/test_linalg.py):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, we wanted to test solving a linear algebra problem using matrices
+    of several data types, using `linalg.solve` and `linalg.inv`. The common test
+    cases (for single-precision, double-precision, etc. matrices) are collected in
+    `LinalgTestCase`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Known failures & skipping tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Sometimes you might want to skip a test or mark it as a known failure, such
+    as when the test suite is being written before the code it’s meant to test, or
+    if a test only fails on a particular architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To skip a test, simply use `skipif`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The test is marked as skipped if `SkipMyTest` evaluates to nonzero, and the
+    message in verbose test output is the second argument given to `skipif`. Similarly,
+    a test can be marked as a known failure by using `xfail`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: Of course, a test can be unconditionally skipped or marked as a known failure
+    by using `skip` or `xfail` without argument, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of the number of skipped and known failing tests is displayed at the
+    end of the test run. Skipped tests are marked as `'S'` in the test results (or
+    `'SKIPPED'` for `verbose > 1`), and known failing tests are marked as `'x'` (or
+    `'XFAIL'` if `verbose > 1`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tests on random data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Tests on random data are good, but since test failures are meant to expose new
+    bugs or regressions, a test that passes most of the time but fails occasionally
+    with no code changes is not helpful. Make the random data deterministic by setting
+    the random number seed before generating it. Use either Python’s `random.seed(some_number)`
+    or NumPy’s `numpy.random.seed(some_number)`, depending on the source of random
+    numbers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, you can use [Hypothesis](https://hypothesis.readthedocs.io/en/latest/)
+    to generate arbitrary data. Hypothesis manages both Python’s and Numpy’s random
+    seeds for you, and provides a very concise and powerful way to describe data (including
+    `hypothesis.extra.numpy`, e.g. for a set of mutually-broadcastable shapes).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The advantages over random generation include tools to replay and share failures
+    without requiring a fixed seed, reporting *minimal* examples for each failure,
+    and better-than-naive-random techniques for triggering bugs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Documentation for `numpy.test`
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pytest test runner.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A test function is typically added to a package’s __init__.py like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calling this test function finds and runs all tests associated with the module
+    and all its sub-modules.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**module_name**module name'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The name of the module to test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unlike the previous `nose`-based implementation, this class is not publicly
+    exposed as it performs some `numpy`-specific warning suppression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Attributes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**module_name**str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Full path to the package to test.
+  prefs: []
+  type: TYPE_NORMAL

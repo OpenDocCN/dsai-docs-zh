@@ -1,0 +1,1606 @@
+- en: Iterating over arrays
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://numpy.org/doc/1.26/reference/arrays.nditer.html](https://numpy.org/doc/1.26/reference/arrays.nditer.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arrays support the iterator protocol and can be iterated over like Python lists.
+    See the [Indexing, Slicing and Iterating](../user/quickstart.html#quickstart-indexing-slicing-and-iterating)
+    section in the Quickstart guide for basic usage and examples. The remainder of
+    this document presents the [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object and covers more advanced usage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The iterator object [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer"),
+    introduced in NumPy 1.6, provides many flexible ways to visit all the elements
+    of one or more arrays in a systematic fashion. This page introduces some basic
+    ways to use the object for computations on arrays in Python, then concludes with
+    how one can accelerate the inner loop in Cython. Since the Python exposure of
+    [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") is a relatively
+    straightforward mapping of the C array iterator API, these ideas will also provide
+    help working with array iteration from C or C++.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Single array iteration
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The most basic task that can be done with the [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") is to visit every element of an array. Each element is provided
+    one by one using the standard Python iterator interface.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: An important thing to be aware of for this iteration is that the order is chosen
+    to match the memory layout of the array instead of using a standard C or Fortran
+    ordering. This is done for access efficiency, reflecting the idea that by default
+    one simply wants to visit each element without concern for a particular ordering.
+    We can see this by iterating over the transpose of our previous array, compared
+    to taking a copy of that transpose in C order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The elements of both *a* and *a.T* get traversed in the same order, namely the
+    order they are stored in memory, whereas the elements of *a.T.copy(order=’C’)*
+    get visited in a different order because they have been put into a different memory
+    layout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Controlling iteration order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are times when it is important to visit the elements of an array in a
+    specific order, irrespective of the layout of the elements in memory. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object provides an *order* parameter to control this aspect of
+    iteration. The default, having the behavior described above, is order=’K’ to keep
+    the existing order. This can be overridden with order=’C’ for C order and order=’F’
+    for Fortran order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Modifying array values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    treats the input operand as a read-only object. To be able to modify the array
+    elements, you must specify either read-write or write-only mode using the *‘readwrite’*
+    or *‘writeonly’* per-operand flags.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The nditer will then yield writeable buffer arrays which you may modify. However,
+    because the nditer must copy this buffer data back to the original array once
+    iteration is finished, you must signal when the iteration is ended, by one of
+    two methods. You may either:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: used the nditer as a context manager using the *with* statement, and the temporary
+    data will be written back when the context is exited.
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: call the iterator’s *close* method once finished iterating, which will trigger
+    the write-back.
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The nditer can no longer be iterated once either *close* is called or its context
+    is exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you are writing code that needs to support older versions of numpy, note
+    that prior to 1.15, [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    was not a context manager and did not have a *close* method. Instead it relied
+    on the destructor to initiate the writeback of the buffer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using an external loop
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In all the examples so far, the elements of *a* are provided by the iterator
+    one at a time, because all the looping logic is internal to the iterator. While
+    this is simple and convenient, it is not very efficient. A better approach is
+    to move the one-dimensional innermost loop into your code, external to the iterator.
+    This way, NumPy’s vectorized operations can be used on larger chunks of the elements
+    being visited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") will
+    try to provide chunks that are as large as possible to the inner loop. By forcing
+    ‘C’ and ‘F’ order, we get different external loop sizes. This mode is enabled
+    by specifying an iterator flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Observe that with the default of keeping native memory order, the iterator is
+    able to provide a single one-dimensional chunk, whereas when forcing Fortran order,
+    it has to provide three chunks of two elements each.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tracking an index or multi-index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: During iteration, you may want to use the index of the current element in a
+    computation. For example, you may want to visit the elements of an array in memory
+    order, but use a C-order, Fortran-order, or multidimensional index to look up
+    values in a different array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The index is tracked by the iterator object itself, and accessible through
+    the *index* or *multi_index* properties, depending on what was requested. The
+    examples below show printouts demonstrating the progression of the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tracking an index or multi-index is incompatible with using an external loop,
+    because it requires a different index value per element. If you try to combine
+    these flags, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    object will raise an exception.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternative looping and element access
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To make its properties more readily accessible during iteration, [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") has an alternative syntax for iterating, which works explicitly
+    with the iterator object itself. With this looping construct, the current value
+    is accessible by indexing into the iterator. Other properties, such as tracked
+    indices remain as before. The examples below produce identical results to the
+    ones in the previous section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Buffering the array elements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When forcing an iteration order, we observed that the external loop option may
+    provide the elements in smaller chunks because the elements can’t be visited in
+    the appropriate order with a constant stride. When writing C code, this is generally
+    fine, however in pure Python code this can cause a significant reduction in performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By enabling buffering mode, the chunks provided by the iterator to the inner
+    loop can be made larger, significantly reducing the overhead of the Python interpreter.
+    In the example forcing Fortran iteration order, the inner loop gets to see all
+    the elements in one go when buffering is enabled.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterating as a specific data type
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are times when it is necessary to treat an array as a different data type
+    than it is stored as. For instance, one may want to do all computations on 64-bit
+    floats, even if the arrays being manipulated are 32-bit floats. Except when writing
+    low-level C code, it’s generally better to let the iterator handle the copying
+    or buffering instead of casting the data type yourself in the inner loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are two mechanisms which allow this to be done, temporary copies and buffering
+    mode. With temporary copies, a copy of the entire array is made with the new data
+    type, then iteration is done in the copy. Write access is permitted through a
+    mode which updates the original array after all the iteration is complete. The
+    major drawback of temporary copies is that the temporary copy may consume a large
+    amount of memory, particularly if the iteration data type has a larger itemsize
+    than the original one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Buffering mode mitigates the memory usage issue and is more cache-friendly than
+    making temporary copies. Except for special cases, where the whole array is needed
+    at once outside the iterator, buffering is recommended over temporary copying.
+    Within NumPy, buffering is used by the ufuncs and other functions to support flexible
+    inputs with minimal memory overhead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In our examples, we will treat the input array with a complex data type, so
+    that we can take square roots of negative numbers. Without enabling copies or
+    buffering mode, the iterator will raise an exception if the data type doesn’t
+    match precisely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: In copying mode, ‘copy’ is specified as a per-operand flag. This is done to
+    provide control in a per-operand fashion. Buffering mode is specified as an iterator
+    flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: The iterator uses NumPy’s casting rules to determine whether a specific conversion
+    is permitted. By default, it enforces ‘safe’ casting. This means, for example,
+    that it will raise an exception if you try to treat a 64-bit float array as a
+    32-bit float array. In many cases, the rule ‘same_kind’ is the most reasonable
+    rule to use, since it will allow conversion from 64 to 32-bit float, but not from
+    float to int or from complex to float.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: One thing to watch out for is conversions back to the original data type when
+    using a read-write or write-only operand. A common case is to implement the inner
+    loop in terms of 64-bit floats, and use ‘same_kind’ casting to allow the other
+    floating-point types to be processed as well. While in read-only mode, an integer
+    array could be provided, read-write mode will raise an exception because conversion
+    back to the array would violate the casting rule.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Broadcasting array iteration
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: NumPy has a set of rules for dealing with arrays that have differing shapes
+    which are applied whenever functions take multiple operands which combine element-wise.
+    This is called [broadcasting](../user/basics.ufuncs.html#ufuncs-broadcasting).
+    The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
+    can apply these rules for you when you need to write such a function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an example, we print out the result of broadcasting a one and a two dimensional
+    array together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: When a broadcasting error occurs, the iterator raises an exception which includes
+    the input shapes to help diagnose the problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterator-allocated output arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A common case in NumPy functions is to have outputs allocated based on the broadcasting
+    of the input, and additionally have an optional parameter called ‘out’ where the
+    result will be placed when it is provided. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object provides a convenient idiom that makes it very easy to
+    support this mechanism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll show how this works by creating a function [`square`](generated/numpy.square.html#numpy.square
+    "numpy.square") which squares its input. Let’s start with a minimal function definition
+    excluding ‘out’ parameter support.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    uses the flags ‘allocate’ and ‘writeonly’ for operands that are passed in as None.
+    This means we were able to provide just the two operands to the iterator, and
+    it handled the rest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When adding the ‘out’ parameter, we have to explicitly provide those flags,
+    because if someone passes in an array as ‘out’, the iterator will default to ‘readonly’,
+    and our inner loop would fail. The reason ‘readonly’ is the default for input
+    arrays is to prevent confusion about unintentionally triggering a reduction operation.
+    If the default were ‘readwrite’, any broadcasting operation would also trigger
+    a reduction, a topic which is covered later in this document.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While we’re at it, let’s also introduce the ‘no_broadcast’ flag, which will
+    prevent the output from being broadcast. This is important, because we only want
+    one input value for each output. Aggregating more than one input value is a reduction
+    operation which requires special handling. It would already raise an error because
+    reductions must be explicitly enabled in an iterator flag, but the error message
+    that results from disabling broadcasting is much more understandable for end-users.
+    To see how to generalize the square function to a reduction, look at the sum of
+    squares function in the section about Cython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For completeness, we’ll also add the ‘external_loop’ and ‘buffered’ flags, as
+    these are what you will typically want for performance reasons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Outer Product Iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Any binary operation can be extended to an array operation in an outer product
+    fashion like in [`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer"),
+    and the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
+    provides a way to accomplish this by explicitly mapping the axes of the operands.
+    It is also possible to do this with [`newaxis`](constants.html#numpy.newaxis "numpy.newaxis")
+    indexing, but we will show you how to directly use the nditer *op_axes* parameter
+    to accomplish this with no intermediate views.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll do a simple outer product, placing the dimensions of the first operand
+    before the dimensions of the second operand. The *op_axes* parameter needs one
+    list of axes for each operand, and provides a mapping from the iterator’s axes
+    to the axes of the operand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Suppose the first operand is one dimensional and the second operand is two dimensional.
+    The iterator will have three dimensions, so *op_axes* will have two 3-element
+    lists. The first list picks out the one axis of the first operand, and is -1 for
+    the rest of the iterator axes, with a final result of [0, -1, -1]. The second
+    list picks out the two axes of the second operand, but shouldn’t overlap with
+    the axes picked out in the first operand. Its list is [-1, 0, 1]. The output operand
+    maps onto the iterator axes in the standard manner, so we can provide None instead
+    of constructing another list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The operation in the inner loop is a straightforward multiplication. Everything
+    to do with the outer product is handled by the iterator setup.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that once the iterator is closed we can not access [`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
+    "numpy.nditer.operands") and must use a reference created inside the context manager.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reduction Iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Whenever a writeable operand has fewer elements than the full iteration space,
+    that operand is undergoing a reduction. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object requires that any reduction operand be flagged as read-write,
+    and only allows reductions when ‘reduce_ok’ is provided as an iterator flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a simple example, consider taking the sum of all elements in an array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Things are a little bit more tricky when combining reduction and allocated operands.
+    Before iteration is started, any reduction operand must be initialized to its
+    starting values. Here’s how we can do this, taking sums along the last axis of
+    *a*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: To do buffered reduction requires yet another adjustment during the setup. Normally
+    the iterator construction involves copying the first buffer of data from the readable
+    arrays into the buffer. Any reduction operand is readable, so it may be read into
+    a buffer. Unfortunately, initialization of the operand after this buffering operation
+    is complete will not be reflected in the buffer that the iteration starts with,
+    and garbage results will be produced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The iterator flag “delay_bufalloc” is there to allow iterator-allocated reduction
+    operands to exist together with buffering. When this flag is set, the iterator
+    will leave its buffers uninitialized until it receives a reset, after which it
+    will be ready for regular iteration. Here’s how the previous example looks if
+    we also enable buffering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Putting the Inner Loop in Cython
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Those who want really good performance out of their low level operations should
+    strongly consider directly using the iteration API provided in C, but for those
+    who are not comfortable with C or C++, Cython is a good middle ground with reasonable
+    performance tradeoffs. For the [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object, this means letting the iterator take care of broadcasting,
+    dtype conversion, and buffering, while giving the inner loop to Cython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For our example, we’ll create a sum of squares function. To start, let’s implement
+    this function in straightforward Python. We want to support an ‘axis’ parameter
+    similar to the numpy [`sum`](generated/numpy.sum.html#numpy.sum "numpy.sum") function,
+    so we will need to construct a list for the *op_axes* parameter. Here’s how this
+    looks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: To Cython-ize this function, we replace the inner loop (y[…] += x*x) with Cython
+    code that’s specialized for the float64 dtype. With the ‘external_loop’ flag enabled,
+    the arrays provided to the inner loop will always be one-dimensional, so very
+    little checking needs to be done.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the listing of sum_squares.pyx:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On this machine, building the .pyx file into a module looked like the following,
+    but you may have to find some Cython tutorials to tell you the specifics for your
+    system configuration.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Running this from the Python interpreter produces the same answers as our native
+    Python/NumPy code did.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Doing a little timing in IPython shows that the reduced overhead and memory
+    allocation of the Cython inner loop is providing a very nice speedup over both
+    the straightforward Python code and an expression using NumPy’s built-in sum function.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Single array iteration
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The most basic task that can be done with the [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") is to visit every element of an array. Each element is provided
+    one by one using the standard Python iterator interface.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: An important thing to be aware of for this iteration is that the order is chosen
+    to match the memory layout of the array instead of using a standard C or Fortran
+    ordering. This is done for access efficiency, reflecting the idea that by default
+    one simply wants to visit each element without concern for a particular ordering.
+    We can see this by iterating over the transpose of our previous array, compared
+    to taking a copy of that transpose in C order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: The elements of both *a* and *a.T* get traversed in the same order, namely the
+    order they are stored in memory, whereas the elements of *a.T.copy(order=’C’)*
+    get visited in a different order because they have been put into a different memory
+    layout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Controlling iteration order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are times when it is important to visit the elements of an array in a
+    specific order, irrespective of the layout of the elements in memory. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object provides an *order* parameter to control this aspect of
+    iteration. The default, having the behavior described above, is order=’K’ to keep
+    the existing order. This can be overridden with order=’C’ for C order and order=’F’
+    for Fortran order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Modifying array values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    treats the input operand as a read-only object. To be able to modify the array
+    elements, you must specify either read-write or write-only mode using the *‘readwrite’*
+    or *‘writeonly’* per-operand flags.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The nditer will then yield writeable buffer arrays which you may modify. However,
+    because the nditer must copy this buffer data back to the original array once
+    iteration is finished, you must signal when the iteration is ended, by one of
+    two methods. You may either:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: used the nditer as a context manager using the *with* statement, and the temporary
+    data will be written back when the context is exited.
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: call the iterator’s *close* method once finished iterating, which will trigger
+    the write-back.
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The nditer can no longer be iterated once either *close* is called or its context
+    is exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you are writing code that needs to support older versions of numpy, note
+    that prior to 1.15, [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    was not a context manager and did not have a *close* method. Instead it relied
+    on the destructor to initiate the writeback of the buffer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using an external loop
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In all the examples so far, the elements of *a* are provided by the iterator
+    one at a time, because all the looping logic is internal to the iterator. While
+    this is simple and convenient, it is not very efficient. A better approach is
+    to move the one-dimensional innermost loop into your code, external to the iterator.
+    This way, NumPy’s vectorized operations can be used on larger chunks of the elements
+    being visited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") will
+    try to provide chunks that are as large as possible to the inner loop. By forcing
+    ‘C’ and ‘F’ order, we get different external loop sizes. This mode is enabled
+    by specifying an iterator flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Observe that with the default of keeping native memory order, the iterator is
+    able to provide a single one-dimensional chunk, whereas when forcing Fortran order,
+    it has to provide three chunks of two elements each.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tracking an index or multi-index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: During iteration, you may want to use the index of the current element in a
+    computation. For example, you may want to visit the elements of an array in memory
+    order, but use a C-order, Fortran-order, or multidimensional index to look up
+    values in a different array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The index is tracked by the iterator object itself, and accessible through
+    the *index* or *multi_index* properties, depending on what was requested. The
+    examples below show printouts demonstrating the progression of the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tracking an index or multi-index is incompatible with using an external loop,
+    because it requires a different index value per element. If you try to combine
+    these flags, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    object will raise an exception.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternative looping and element access
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To make its properties more readily accessible during iteration, [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") has an alternative syntax for iterating, which works explicitly
+    with the iterator object itself. With this looping construct, the current value
+    is accessible by indexing into the iterator. Other properties, such as tracked
+    indices remain as before. The examples below produce identical results to the
+    ones in the previous section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: Buffering the array elements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When forcing an iteration order, we observed that the external loop option may
+    provide the elements in smaller chunks because the elements can’t be visited in
+    the appropriate order with a constant stride. When writing C code, this is generally
+    fine, however in pure Python code this can cause a significant reduction in performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By enabling buffering mode, the chunks provided by the iterator to the inner
+    loop can be made larger, significantly reducing the overhead of the Python interpreter.
+    In the example forcing Fortran iteration order, the inner loop gets to see all
+    the elements in one go when buffering is enabled.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterating as a specific data type
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are times when it is necessary to treat an array as a different data type
+    than it is stored as. For instance, one may want to do all computations on 64-bit
+    floats, even if the arrays being manipulated are 32-bit floats. Except when writing
+    low-level C code, it’s generally better to let the iterator handle the copying
+    or buffering instead of casting the data type yourself in the inner loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are two mechanisms which allow this to be done, temporary copies and buffering
+    mode. With temporary copies, a copy of the entire array is made with the new data
+    type, then iteration is done in the copy. Write access is permitted through a
+    mode which updates the original array after all the iteration is complete. The
+    major drawback of temporary copies is that the temporary copy may consume a large
+    amount of memory, particularly if the iteration data type has a larger itemsize
+    than the original one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Buffering mode mitigates the memory usage issue and is more cache-friendly than
+    making temporary copies. Except for special cases, where the whole array is needed
+    at once outside the iterator, buffering is recommended over temporary copying.
+    Within NumPy, buffering is used by the ufuncs and other functions to support flexible
+    inputs with minimal memory overhead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In our examples, we will treat the input array with a complex data type, so
+    that we can take square roots of negative numbers. Without enabling copies or
+    buffering mode, the iterator will raise an exception if the data type doesn’t
+    match precisely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: In copying mode, ‘copy’ is specified as a per-operand flag. This is done to
+    provide control in a per-operand fashion. Buffering mode is specified as an iterator
+    flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: The iterator uses NumPy’s casting rules to determine whether a specific conversion
+    is permitted. By default, it enforces ‘safe’ casting. This means, for example,
+    that it will raise an exception if you try to treat a 64-bit float array as a
+    32-bit float array. In many cases, the rule ‘same_kind’ is the most reasonable
+    rule to use, since it will allow conversion from 64 to 32-bit float, but not from
+    float to int or from complex to float.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: One thing to watch out for is conversions back to the original data type when
+    using a read-write or write-only operand. A common case is to implement the inner
+    loop in terms of 64-bit floats, and use ‘same_kind’ casting to allow the other
+    floating-point types to be processed as well. While in read-only mode, an integer
+    array could be provided, read-write mode will raise an exception because conversion
+    back to the array would violate the casting rule.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: Controlling iteration order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are times when it is important to visit the elements of an array in a
+    specific order, irrespective of the layout of the elements in memory. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object provides an *order* parameter to control this aspect of
+    iteration. The default, having the behavior described above, is order=’K’ to keep
+    the existing order. This can be overridden with order=’C’ for C order and order=’F’
+    for Fortran order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### Modifying array values'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    treats the input operand as a read-only object. To be able to modify the array
+    elements, you must specify either read-write or write-only mode using the *‘readwrite’*
+    or *‘writeonly’* per-operand flags.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The nditer will then yield writeable buffer arrays which you may modify. However,
+    because the nditer must copy this buffer data back to the original array once
+    iteration is finished, you must signal when the iteration is ended, by one of
+    two methods. You may either:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: used the nditer as a context manager using the *with* statement, and the temporary
+    data will be written back when the context is exited.
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: call the iterator’s *close* method once finished iterating, which will trigger
+    the write-back.
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The nditer can no longer be iterated once either *close* is called or its context
+    is exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you are writing code that needs to support older versions of numpy, note
+    that prior to 1.15, [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    was not a context manager and did not have a *close* method. Instead it relied
+    on the destructor to initiate the writeback of the buffer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using an external loop
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In all the examples so far, the elements of *a* are provided by the iterator
+    one at a time, because all the looping logic is internal to the iterator. While
+    this is simple and convenient, it is not very efficient. A better approach is
+    to move the one-dimensional innermost loop into your code, external to the iterator.
+    This way, NumPy’s vectorized operations can be used on larger chunks of the elements
+    being visited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") will
+    try to provide chunks that are as large as possible to the inner loop. By forcing
+    ‘C’ and ‘F’ order, we get different external loop sizes. This mode is enabled
+    by specifying an iterator flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Observe that with the default of keeping native memory order, the iterator is
+    able to provide a single one-dimensional chunk, whereas when forcing Fortran order,
+    it has to provide three chunks of two elements each.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tracking an index or multi-index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: During iteration, you may want to use the index of the current element in a
+    computation. For example, you may want to visit the elements of an array in memory
+    order, but use a C-order, Fortran-order, or multidimensional index to look up
+    values in a different array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The index is tracked by the iterator object itself, and accessible through
+    the *index* or *multi_index* properties, depending on what was requested. The
+    examples below show printouts demonstrating the progression of the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tracking an index or multi-index is incompatible with using an external loop,
+    because it requires a different index value per element. If you try to combine
+    these flags, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    object will raise an exception.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternative looping and element access
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To make its properties more readily accessible during iteration, [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") has an alternative syntax for iterating, which works explicitly
+    with the iterator object itself. With this looping construct, the current value
+    is accessible by indexing into the iterator. Other properties, such as tracked
+    indices remain as before. The examples below produce identical results to the
+    ones in the previous section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: Buffering the array elements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When forcing an iteration order, we observed that the external loop option may
+    provide the elements in smaller chunks because the elements can’t be visited in
+    the appropriate order with a constant stride. When writing C code, this is generally
+    fine, however in pure Python code this can cause a significant reduction in performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By enabling buffering mode, the chunks provided by the iterator to the inner
+    loop can be made larger, significantly reducing the overhead of the Python interpreter.
+    In the example forcing Fortran iteration order, the inner loop gets to see all
+    the elements in one go when buffering is enabled.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterating as a specific data type
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are times when it is necessary to treat an array as a different data type
+    than it is stored as. For instance, one may want to do all computations on 64-bit
+    floats, even if the arrays being manipulated are 32-bit floats. Except when writing
+    low-level C code, it’s generally better to let the iterator handle the copying
+    or buffering instead of casting the data type yourself in the inner loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are two mechanisms which allow this to be done, temporary copies and buffering
+    mode. With temporary copies, a copy of the entire array is made with the new data
+    type, then iteration is done in the copy. Write access is permitted through a
+    mode which updates the original array after all the iteration is complete. The
+    major drawback of temporary copies is that the temporary copy may consume a large
+    amount of memory, particularly if the iteration data type has a larger itemsize
+    than the original one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Buffering mode mitigates the memory usage issue and is more cache-friendly than
+    making temporary copies. Except for special cases, where the whole array is needed
+    at once outside the iterator, buffering is recommended over temporary copying.
+    Within NumPy, buffering is used by the ufuncs and other functions to support flexible
+    inputs with minimal memory overhead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In our examples, we will treat the input array with a complex data type, so
+    that we can take square roots of negative numbers. Without enabling copies or
+    buffering mode, the iterator will raise an exception if the data type doesn’t
+    match precisely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: In copying mode, ‘copy’ is specified as a per-operand flag. This is done to
+    provide control in a per-operand fashion. Buffering mode is specified as an iterator
+    flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: The iterator uses NumPy’s casting rules to determine whether a specific conversion
+    is permitted. By default, it enforces ‘safe’ casting. This means, for example,
+    that it will raise an exception if you try to treat a 64-bit float array as a
+    32-bit float array. In many cases, the rule ‘same_kind’ is the most reasonable
+    rule to use, since it will allow conversion from 64 to 32-bit float, but not from
+    float to int or from complex to float.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: One thing to watch out for is conversions back to the original data type when
+    using a read-write or write-only operand. A common case is to implement the inner
+    loop in terms of 64-bit floats, and use ‘same_kind’ casting to allow the other
+    floating-point types to be processed as well. While in read-only mode, an integer
+    array could be provided, read-write mode will raise an exception because conversion
+    back to the array would violate the casting rule.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: Broadcasting array iteration
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: NumPy has a set of rules for dealing with arrays that have differing shapes
+    which are applied whenever functions take multiple operands which combine element-wise.
+    This is called [broadcasting](../user/basics.ufuncs.html#ufuncs-broadcasting).
+    The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
+    can apply these rules for you when you need to write such a function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an example, we print out the result of broadcasting a one and a two dimensional
+    array together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: When a broadcasting error occurs, the iterator raises an exception which includes
+    the input shapes to help diagnose the problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterator-allocated output arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A common case in NumPy functions is to have outputs allocated based on the broadcasting
+    of the input, and additionally have an optional parameter called ‘out’ where the
+    result will be placed when it is provided. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object provides a convenient idiom that makes it very easy to
+    support this mechanism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll show how this works by creating a function [`square`](generated/numpy.square.html#numpy.square
+    "numpy.square") which squares its input. Let’s start with a minimal function definition
+    excluding ‘out’ parameter support.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    uses the flags ‘allocate’ and ‘writeonly’ for operands that are passed in as None.
+    This means we were able to provide just the two operands to the iterator, and
+    it handled the rest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When adding the ‘out’ parameter, we have to explicitly provide those flags,
+    because if someone passes in an array as ‘out’, the iterator will default to ‘readonly’,
+    and our inner loop would fail. The reason ‘readonly’ is the default for input
+    arrays is to prevent confusion about unintentionally triggering a reduction operation.
+    If the default were ‘readwrite’, any broadcasting operation would also trigger
+    a reduction, a topic which is covered later in this document.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While we’re at it, let’s also introduce the ‘no_broadcast’ flag, which will
+    prevent the output from being broadcast. This is important, because we only want
+    one input value for each output. Aggregating more than one input value is a reduction
+    operation which requires special handling. It would already raise an error because
+    reductions must be explicitly enabled in an iterator flag, but the error message
+    that results from disabling broadcasting is much more understandable for end-users.
+    To see how to generalize the square function to a reduction, look at the sum of
+    squares function in the section about Cython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For completeness, we’ll also add the ‘external_loop’ and ‘buffered’ flags, as
+    these are what you will typically want for performance reasons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: Outer Product Iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Any binary operation can be extended to an array operation in an outer product
+    fashion like in [`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer"),
+    and the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
+    provides a way to accomplish this by explicitly mapping the axes of the operands.
+    It is also possible to do this with [`newaxis`](constants.html#numpy.newaxis "numpy.newaxis")
+    indexing, but we will show you how to directly use the nditer *op_axes* parameter
+    to accomplish this with no intermediate views.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll do a simple outer product, placing the dimensions of the first operand
+    before the dimensions of the second operand. The *op_axes* parameter needs one
+    list of axes for each operand, and provides a mapping from the iterator’s axes
+    to the axes of the operand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Suppose the first operand is one dimensional and the second operand is two dimensional.
+    The iterator will have three dimensions, so *op_axes* will have two 3-element
+    lists. The first list picks out the one axis of the first operand, and is -1 for
+    the rest of the iterator axes, with a final result of [0, -1, -1]. The second
+    list picks out the two axes of the second operand, but shouldn’t overlap with
+    the axes picked out in the first operand. Its list is [-1, 0, 1]. The output operand
+    maps onto the iterator axes in the standard manner, so we can provide None instead
+    of constructing another list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The operation in the inner loop is a straightforward multiplication. Everything
+    to do with the outer product is handled by the iterator setup.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that once the iterator is closed we can not access [`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
+    "numpy.nditer.operands") and must use a reference created inside the context manager.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reduction Iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Whenever a writeable operand has fewer elements than the full iteration space,
+    that operand is undergoing a reduction. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object requires that any reduction operand be flagged as read-write,
+    and only allows reductions when ‘reduce_ok’ is provided as an iterator flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a simple example, consider taking the sum of all elements in an array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: Things are a little bit more tricky when combining reduction and allocated operands.
+    Before iteration is started, any reduction operand must be initialized to its
+    starting values. Here’s how we can do this, taking sums along the last axis of
+    *a*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: To do buffered reduction requires yet another adjustment during the setup. Normally
+    the iterator construction involves copying the first buffer of data from the readable
+    arrays into the buffer. Any reduction operand is readable, so it may be read into
+    a buffer. Unfortunately, initialization of the operand after this buffering operation
+    is complete will not be reflected in the buffer that the iteration starts with,
+    and garbage results will be produced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The iterator flag “delay_bufalloc” is there to allow iterator-allocated reduction
+    operands to exist together with buffering. When this flag is set, the iterator
+    will leave its buffers uninitialized until it receives a reset, after which it
+    will be ready for regular iteration. Here’s how the previous example looks if
+    we also enable buffering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: Iterator-allocated output arrays
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A common case in NumPy functions is to have outputs allocated based on the broadcasting
+    of the input, and additionally have an optional parameter called ‘out’ where the
+    result will be placed when it is provided. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object provides a convenient idiom that makes it very easy to
+    support this mechanism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll show how this works by creating a function [`square`](generated/numpy.square.html#numpy.square
+    "numpy.square") which squares its input. Let’s start with a minimal function definition
+    excluding ‘out’ parameter support.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    uses the flags ‘allocate’ and ‘writeonly’ for operands that are passed in as None.
+    This means we were able to provide just the two operands to the iterator, and
+    it handled the rest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When adding the ‘out’ parameter, we have to explicitly provide those flags,
+    because if someone passes in an array as ‘out’, the iterator will default to ‘readonly’,
+    and our inner loop would fail. The reason ‘readonly’ is the default for input
+    arrays is to prevent confusion about unintentionally triggering a reduction operation.
+    If the default were ‘readwrite’, any broadcasting operation would also trigger
+    a reduction, a topic which is covered later in this document.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While we’re at it, let’s also introduce the ‘no_broadcast’ flag, which will
+    prevent the output from being broadcast. This is important, because we only want
+    one input value for each output. Aggregating more than one input value is a reduction
+    operation which requires special handling. It would already raise an error because
+    reductions must be explicitly enabled in an iterator flag, but the error message
+    that results from disabling broadcasting is much more understandable for end-users.
+    To see how to generalize the square function to a reduction, look at the sum of
+    squares function in the section about Cython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For completeness, we’ll also add the ‘external_loop’ and ‘buffered’ flags, as
+    these are what you will typically want for performance reasons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: Outer Product Iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Any binary operation can be extended to an array operation in an outer product
+    fashion like in [`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer"),
+    and the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
+    provides a way to accomplish this by explicitly mapping the axes of the operands.
+    It is also possible to do this with [`newaxis`](constants.html#numpy.newaxis "numpy.newaxis")
+    indexing, but we will show you how to directly use the nditer *op_axes* parameter
+    to accomplish this with no intermediate views.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll do a simple outer product, placing the dimensions of the first operand
+    before the dimensions of the second operand. The *op_axes* parameter needs one
+    list of axes for each operand, and provides a mapping from the iterator’s axes
+    to the axes of the operand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Suppose the first operand is one dimensional and the second operand is two dimensional.
+    The iterator will have three dimensions, so *op_axes* will have two 3-element
+    lists. The first list picks out the one axis of the first operand, and is -1 for
+    the rest of the iterator axes, with a final result of [0, -1, -1]. The second
+    list picks out the two axes of the second operand, but shouldn’t overlap with
+    the axes picked out in the first operand. Its list is [-1, 0, 1]. The output operand
+    maps onto the iterator axes in the standard manner, so we can provide None instead
+    of constructing another list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The operation in the inner loop is a straightforward multiplication. Everything
+    to do with the outer product is handled by the iterator setup.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that once the iterator is closed we can not access [`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
+    "numpy.nditer.operands") and must use a reference created inside the context manager.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reduction Iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Whenever a writeable operand has fewer elements than the full iteration space,
+    that operand is undergoing a reduction. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object requires that any reduction operand be flagged as read-write,
+    and only allows reductions when ‘reduce_ok’ is provided as an iterator flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a simple example, consider taking the sum of all elements in an array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: Things are a little bit more tricky when combining reduction and allocated operands.
+    Before iteration is started, any reduction operand must be initialized to its
+    starting values. Here’s how we can do this, taking sums along the last axis of
+    *a*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: To do buffered reduction requires yet another adjustment during the setup. Normally
+    the iterator construction involves copying the first buffer of data from the readable
+    arrays into the buffer. Any reduction operand is readable, so it may be read into
+    a buffer. Unfortunately, initialization of the operand after this buffering operation
+    is complete will not be reflected in the buffer that the iteration starts with,
+    and garbage results will be produced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The iterator flag “delay_bufalloc” is there to allow iterator-allocated reduction
+    operands to exist together with buffering. When this flag is set, the iterator
+    will leave its buffers uninitialized until it receives a reset, after which it
+    will be ready for regular iteration. Here’s how the previous example looks if
+    we also enable buffering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: Putting the Inner Loop in Cython
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Those who want really good performance out of their low level operations should
+    strongly consider directly using the iteration API provided in C, but for those
+    who are not comfortable with C or C++, Cython is a good middle ground with reasonable
+    performance tradeoffs. For the [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") object, this means letting the iterator take care of broadcasting,
+    dtype conversion, and buffering, while giving the inner loop to Cython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For our example, we’ll create a sum of squares function. To start, let’s implement
+    this function in straightforward Python. We want to support an ‘axis’ parameter
+    similar to the numpy [`sum`](generated/numpy.sum.html#numpy.sum "numpy.sum") function,
+    so we will need to construct a list for the *op_axes* parameter. Here’s how this
+    looks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: To Cython-ize this function, we replace the inner loop (y[…] += x*x) with Cython
+    code that’s specialized for the float64 dtype. With the ‘external_loop’ flag enabled,
+    the arrays provided to the inner loop will always be one-dimensional, so very
+    little checking needs to be done.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the listing of sum_squares.pyx:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On this machine, building the .pyx file into a module looked like the following,
+    but you may have to find some Cython tutorials to tell you the specifics for your
+    system configuration.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: Running this from the Python interpreter produces the same answers as our native
+    Python/NumPy code did.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Doing a little timing in IPython shows that the reduced overhead and memory
+    allocation of the Cython inner loop is providing a very nice speedup over both
+    the straightforward Python code and an expression using NumPy’s built-in sum function.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
