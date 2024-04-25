@@ -3,6 +3,7 @@
 +   [Gensim 中文文档](docs/gensim/README.md)
 +   [LightGBM 中文文档](docs/lgbm/README.md)
 +   [Matplotlib 2.0 用户指南](docs/mpl20/README.md)
++   [NumPy 1.26 中文文档](docs/np126/README.md)
 +   [Pandas 2.2 中文文档](docs/pd22/README.md)
 +   [scikit-learn 0.21 中文文档](docs/skl021/README.md)
 +   [seaborn 0.9 中文文档](docs/sns09/README.md)
