@@ -1,282 +1,425 @@
 - en: Extending
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 扩展
 - en: 原文：[https://numpy.org/doc/1.26/reference/random/extending.html](https://numpy.org/doc/1.26/reference/random/extending.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 译文：[https://numpy.org/doc/1.26/reference/random/extending.html](https://numpy.org/doc/1.26/reference/random/extending.html)
 - en: The BitGenerators have been designed to be extendable using standard tools for
     high-performance Python – numba and Cython. The [`Generator`](generator.html#numpy.random.Generator
     "numpy.random.Generator") object can also be used with user-provided BitGenerators
     as long as these export a small set of required functions.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些 BitGenerators 已经被设计为可使用标准工具扩展高性能 Python——numba 和 Cython。[`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator")对象也可以与用户提供的 BitGenerators 一起使用，只要这些 BitGenerators 导出一小组所需的函数即可。
 - en: Numba
+  id: totrans-3
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Numba
 - en: Numba can be used with either CTypes or CFFI. The current iteration of the BitGenerators
     all export a small set of functions through both interfaces.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba 可以与 CTypes 或 CFFI 一起使用。当前的 BitGenerators 迭代都通过这两个接口导出一小组函数。
 - en: This example shows how numba can be used to produce gaussian samples using a
     pure Python implementation which is then compiled. The random numbers are provided
     by `ctypes.next_double`.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个示例展示了 numba 如何通过纯 Python 实现来生成高斯样本，然后对其进行编译。随机数由`ctypes.next_double`提供。
 - en: '[PRE0]'
+  id: totrans-6
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Both CTypes and CFFI allow the more complicated distributions to be used directly
     in Numba after compiling the file distributions.c into a `DLL` or `so`. An example
     showing the use of a more complicated distribution is in the [Examples](#examples)
     section below.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: CTypes 和 CFFI 都允许在将文件 distributions.c 编译成`DLL`或`so`文件之后直接在 Numba 中使用更复杂的分布。下面的[示例](#examples)部分展示了使用更复杂分布的示例。
 - en: '## Cython'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: '## Cython'
 - en: Cython can be used to unpack the `PyCapsule` provided by a BitGenerator. This
     example uses [`PCG64`](bit_generators/pcg64.html#numpy.random.PCG64 "numpy.random.PCG64")
     and the example from above. The usual caveats for writing high-performance code
     using Cython – removing bounds checks and wrap around, providing array alignment
     information – still apply.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: Cython 可用于解包由 BitGenerator 提供的`PyCapsule`。此示例使用[`PCG64`](bit_generators/pcg64.html#numpy.random.PCG64
+    "numpy.random.PCG64")以及上面的示例。使用 Cython 编写高性能代码的一般准则仍然适用于去除边界检查和环绕，提供数组对齐信息。
 - en: '[PRE1]'
+  id: totrans-10
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: The BitGenerator can also be directly accessed using the members of the `bitgen_t`
     struct.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: BitGenerator 也可以直接使用`bitgen_t`结构体的成员进行访问。
 - en: '[PRE2]'
+  id: totrans-12
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Cython can be used to directly access the functions in `numpy/random/c_distributions.pxd`.
     This requires linking with the `npyrandom` library located in `numpy/random/lib`.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: Cython 可用于直接访问`numpy/random/c_distributions.pxd`中的函数。这需要与位于`numpy/random/lib`的`npyrandom`库进行链接。
 - en: '[PRE3]'
+  id: totrans-14
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: See [Extending numpy.random via Cython](examples/cython/index.html#extending-cython-example)
     for the complete listings of these examples and a minimal `setup.py` to build
     the c-extension modules.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看[通过 Cython 扩展 numpy.random](examples/cython/index.html#extending-cython-example)
+    来获取这些示例的完整清单和一个最小的`setup.py`以构建 c 扩展模块。
 - en: CFFI
+  id: totrans-16
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: CFFI
 - en: 'CFFI can be used to directly access the functions in `include/numpy/random/distributions.h`.
     Some “massaging” of the header file is required:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: CFFI 可用于直接访问`include/numpy/random/distributions.h`中的函数。需要对头文件进行一些“调整”：
 - en: '[PRE4]'
+  id: totrans-18
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Once the header is parsed by `ffi.cdef`, the functions can be accessed directly
     from the `_generator` shared object, using the [`BitGenerator.cffi`](bit_generators/generated/numpy.random.BitGenerator.cffi.html#numpy.random.BitGenerator.cffi
     "numpy.random.BitGenerator.cffi") interface.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦头部被`ffi.cdef`解析，函数可以直接从`_generator`共享对象中访问，使用[`BitGenerator.cffi`](bit_generators/generated/numpy.random.BitGenerator.cffi.html#numpy.random.BitGenerator.cffi
+    "numpy.random.BitGenerator.cffi")界面。
 - en: '[PRE5]'
+  id: totrans-20
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: New Bit Generators
+  id: totrans-21
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 新的 Bit Generators
 - en: '[`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
     can be used with user-provided [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator")s. The simplest way to write a new BitGenerator is
     to examine the pyx file of one of the existing BitGenerators. The key structure
     that must be provided is the `capsule` which contains a `PyCapsule` to a struct
     pointer of type `bitgen_t`,'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")可以与用户提供的[`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator")一起使用。编写新的 BitGenerator 的最简单方法是检查现有 BitGenerators 中的
+    pyx 文件。必须提供的关键结构是包含指向类型为`bitgen_t`的结构指针的`capsule`。'
 - en: '[PRE6]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: which provides 5 pointers. The first is an opaque pointer to the data structure
     used by the BitGenerators. The next three are function pointers which return the
     next 64- and 32-bit unsigned integers, the next random double and the next raw
     value. This final function is used for testing and so can be set to the next 64-bit
     unsigned integer function if not needed. Functions inside `Generator` use this
     structure as in
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 提供了 5 个指针。第一个是一个不透明指针，用于 BitGenerators 使用的数据结构。接下来的三个是函数指针，它们分别返回下一个 64位和 32位无符号整数、下一个随机双精度浮点数以及下一个原始值。最后一个函数用于测试，如果不需要，可以设置为下一个
+    64 位无符号整数函数。`Generator` 内部的函数使用此结构，如下所示
 - en: '[PRE7]'
+  id: totrans-25
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Examples
+  id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[Numba](examples/numba.html)'
+  id: totrans-27
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[Numba](examples/numba.html)'
 - en: '[CFFI + Numba](examples/numba_cffi.html)'
+  id: totrans-28
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[CFFI + Numba](examples/numba_cffi.html)'
 - en: '[Cython](examples/cython/index.html)'
+  id: totrans-29
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[Cython](examples/cython/index.html)'
 - en: '[meson.build](examples/cython/meson.build.html)'
+  id: totrans-30
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[meson.build](examples/cython/meson.build.html)'
 - en: '[extending.pyx](examples/cython/extending.pyx.html)'
+  id: totrans-31
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[extending.pyx](examples/cython/extending.pyx.html)'
 - en: '[extending_distributions.pyx](examples/cython/extending_distributions.pyx.html)'
+  id: totrans-32
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[extending_distributions.pyx](examples/cython/extending_distributions.pyx.html)'
 - en: '[CFFI](examples/cffi.html)'
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[CFFI](examples/cffi.html)'
 - en: Numba
+  id: totrans-34
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Numba
 - en: Numba can be used with either CTypes or CFFI. The current iteration of the BitGenerators
     all export a small set of functions through both interfaces.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: Numba 可以与 CTypes 或 CFFI 一起使用。当前迭代的 BitGenerators 都通过这两种接口导出了一小组函数。
 - en: This example shows how numba can be used to produce gaussian samples using a
     pure Python implementation which is then compiled. The random numbers are provided
     by `ctypes.next_double`.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 此示例显示了如何使用 numba 生成高斯样本，其中纯 Python 实现然后进行编译。随机数由 `ctypes.next_double` 提供。
 - en: '[PRE8]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Both CTypes and CFFI allow the more complicated distributions to be used directly
     in Numba after compiling the file distributions.c into a `DLL` or `so`. An example
     showing the use of a more complicated distribution is in the [Examples](#examples)
     section below.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 CTypes 和 CFFI 都允许在将文件 `distributions.c` 编译成 `DLL` 或 `so` 后，直接在 numba 中使用更复杂的分布。一个示例，展示了更复杂分布的使用，位于下面的
+    [示例](#examples) 部分。
 - en: '## Cython'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: '## Cython'
 - en: Cython can be used to unpack the `PyCapsule` provided by a BitGenerator. This
     example uses [`PCG64`](bit_generators/pcg64.html#numpy.random.PCG64 "numpy.random.PCG64")
     and the example from above. The usual caveats for writing high-performance code
     using Cython – removing bounds checks and wrap around, providing array alignment
     information – still apply.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: Cython 可用于解开位生成器提供的 `PyCapsule`。此示例使用 [`PCG64`](bit_generators/pcg64.html#numpy.random.PCG64
+    "numpy.random.PCG64") 和上面的示例。使用 Cython 编写高性能代码的通常注意事项—去除边界检查和环绕，并提供数组对齐信息—仍然适用。
 - en: '[PRE9]'
+  id: totrans-41
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: The BitGenerator can also be directly accessed using the members of the `bitgen_t`
     struct.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 位生成器也可以直接通过 `bitgen_t` 结构的成员进行访问。
 - en: '[PRE10]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Cython can be used to directly access the functions in `numpy/random/c_distributions.pxd`.
     This requires linking with the `npyrandom` library located in `numpy/random/lib`.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: Cython 可用于直接访问 `numpy/random/c_distributions.pxd` 中的函数。这需要与位于 `numpy/random/lib`
+    中的 `npyrandom` 库进行链接。
 - en: '[PRE11]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: See [Extending numpy.random via Cython](examples/cython/index.html#extending-cython-example)
     for the complete listings of these examples and a minimal `setup.py` to build
     the c-extension modules.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 参见 [通过 Cython 扩展 numpy.random](examples/cython/index.html#extending-cython-example)
+    获取这些示例的完整列表和一个用于构建C扩展模块的 minimal `setup.py`。
 - en: CFFI
+  id: totrans-47
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: CFFI
 - en: 'CFFI can be used to directly access the functions in `include/numpy/random/distributions.h`.
     Some “massaging” of the header file is required:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: CFFI 可用于直接访问 `include/numpy/random/distributions.h` 中的函数。需要对头文件进行一些“修饰”：
 - en: '[PRE12]'
+  id: totrans-49
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Once the header is parsed by `ffi.cdef`, the functions can be accessed directly
     from the `_generator` shared object, using the [`BitGenerator.cffi`](bit_generators/generated/numpy.random.BitGenerator.cffi.html#numpy.random.BitGenerator.cffi
     "numpy.random.BitGenerator.cffi") interface.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦头文件被 `ffi.cdef` 解析，可以直接从 `_generator` 共享对象中使用 [`BitGenerator.cffi`](bit_generators/generated/numpy.random.BitGenerator.cffi.html#numpy.random.BitGenerator.cffi
+    "numpy.random.BitGenerator.cffi") 接口访问其中的函数。
 - en: '[PRE13]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: New Bit Generators
+  id: totrans-52
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 新位生成器
 - en: '[`Generator`](generator.html#numpy.random.Generator "numpy.random.Generator")
     can be used with user-provided [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator")s. The simplest way to write a new BitGenerator is
     to examine the pyx file of one of the existing BitGenerators. The key structure
     that must be provided is the `capsule` which contains a `PyCapsule` to a struct
     pointer of type `bitgen_t`,'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`生成器`](generator.html#numpy.random.Generator "numpy.random.Generator")可以与用户提供的[`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator")一起使用。编写新的BitGenerator的最简单方法是检查现有BitGenerators之一的pyx文件。必须提供的关键结构是包含类型为`bitgen_t`的结构指针的`capsule`，'
 - en: '[PRE14]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: which provides 5 pointers. The first is an opaque pointer to the data structure
     used by the BitGenerators. The next three are function pointers which return the
     next 64- and 32-bit unsigned integers, the next random double and the next raw
     value. This final function is used for testing and so can be set to the next 64-bit
     unsigned integer function if not needed. Functions inside `Generator` use this
     structure as in
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 这提供了5个指针。第一个是对BitGenerators使用的数据结构的不透明指针。接下来三个是返回下一个64位和32位无符号整数，下一个随机双精度和下一个原始值的函数指针。如果不需要，这个最后一个函数用于测试，因此可以设置为下一个64位无符号整数函数。`Generator`内部的函数使用这个结构如
 - en: '[PRE15]'
+  id: totrans-56
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Examples
+  id: totrans-57
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[Numba](examples/numba.html)'
+  id: totrans-58
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[Numba](examples/numba.html)'
 - en: '[CFFI + Numba](examples/numba_cffi.html)'
+  id: totrans-59
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[CFFI + Numba](examples/numba_cffi.html)'
 - en: '[Cython](examples/cython/index.html)'
+  id: totrans-60
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[Cython](examples/cython/index.html)'
 - en: '[meson.build](examples/cython/meson.build.html)'
+  id: totrans-61
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[meson.build](examples/cython/meson.build.html)'
 - en: '[extending.pyx](examples/cython/extending.pyx.html)'
+  id: totrans-62
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[extending.pyx](examples/cython/extending.pyx.html)'
 - en: '[extending_distributions.pyx](examples/cython/extending_distributions.pyx.html)'
+  id: totrans-63
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[extending_distributions.pyx](examples/cython/extending_distributions.pyx.html)'
 - en: '[CFFI](examples/cffi.html)'
+  id: totrans-64
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[CFFI](examples/cffi.html)'

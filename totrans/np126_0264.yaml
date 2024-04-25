@@ -1,14 +1,20 @@
 - en: The array interface protocol
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 数组接口协议
 - en: 原文：[https://numpy.org/doc/1.26/reference/arrays.interface.html](https://numpy.org/doc/1.26/reference/arrays.interface.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/reference/arrays.interface.html](https://numpy.org/doc/1.26/reference/arrays.interface.html)
 - en: Note
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: This page describes the NumPy-specific API for accessing the contents of a NumPy
     array from other C extensions. [**PEP 3118**](https://peps.python.org/pep-3118/)
     – [`The Revised Buffer Protocol`](https://docs.python.org/3/c-api/buffer.html#c.PyObject_GetBuffer
@@ -19,14 +25,23 @@
     provides a way to write code that supports the buffer protocol with Python versions
     older than 2.6 because it has a backward-compatible implementation utilizing the
     array interface described here.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 本页描述了从其他C扩展访问NumPy数组内容的NumPy特定API。[**PEP 3118**](https://peps.python.org/pep-3118/)
+    – [`修订的缓冲区协议`](https://docs.python.org/3/c-api/buffer.html#c.PyObject_GetBuffer
+    "(在Python v3.11中)")引入了类似的标准化API，供Python 2.6和3.0的任何扩展模块使用。[Cython](http://cython.org/)的缓冲区数组支持使用了[**PEP
+    3118**](https://peps.python.org/pep-3118/) API；请参阅[Cython NumPy教程](https://github.com/cython/cython/wiki/tutorials-numpy)。Cython提供了一种编写支持缓冲区协议的代码的方式，可以在早于2.6的Python版本中使用，因为它具有一个向后兼容的实现，利用了此处描述的数组接口。
 - en: 'version:'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 版本：
 - en: '3'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: '3'
 - en: The array interface (sometimes called array protocol) was created in 2005 as
     a means for array-like Python objects to re-use each other’s data buffers intelligently
     whenever possible. The homogeneous N-dimensional array interface is a default
@@ -36,38 +51,56 @@
     at least one of these attributes. Objects wishing to support an N-dimensional
     array in application code should look for at least one of these attributes and
     use the information provided appropriately.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 数组接口（有时称为数组协议）于2005年创建，作为Python对象类似于数组的智能重用数据缓冲区的手段。同质N维数组接口是对象共享N维数组内存和信息的默认机制。该接口由Python端和C端使用两个属性组成。希望在应用代码中被视为N维数组的对象应至少支持这两个属性中的一个。希望在应用代码中支持N维数组的对象应至少查找其中一个属性并适当使用提供的信息。
 - en: This interface describes homogeneous arrays in the sense that each item of the
     array has the same “type”. This type can be very simple or it can be a quite arbitrary
     and complicated C-like structure.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 此接口描述了同质数组，即数组的每个项目具有相同的“类型”。这种类型可以非常简单，也可以是类似于C的任意复杂结构。
 - en: 'There are two ways to use the interface: A Python side and a C-side. Both are
     separate attributes.'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种使用接口的方式：Python端和C端。两者是独立的属性。
 - en: Python side
+  id: totrans-9
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Python端
 - en: This approach to the interface consists of the object having an [`__array_interface__`](#object.__array_interface__
     "object.__array_interface__") attribute.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 此接口的方法包括对象具有一个[`__array_interface__`](#object.__array_interface__ "object.__array_interface__")属性。
 - en: '[PRE0]'
+  id: totrans-11
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: A dictionary of items (3 required and 5 optional). The optional keys in the
     dictionary have implied defaults if they are not provided.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个项目字典（3个必需和5个可选）。如果未提供可选键，则字典中的可选键具有隐含的默认值。
 - en: 'The keys are:'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 键包括：
 - en: '**shape** (required)'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: '**shape**（必需）'
 - en: Tuple whose elements are the array size in each dimension. Each entry is an
     integer (a Python [`int`](https://docs.python.org/3/library/functions.html#int
     "(in Python v3.11)")). Note that these integers could be larger than the platform
@@ -75,64 +108,102 @@
     "(in Python v3.11)") is a C `long`). It is up to the code using this attribute
     to handle this appropriately; either by raising an error when overflow is possible,
     or by using `long long` as the C type for the shapes.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 元组，其中的元素是每个维度中的数组大小。每个条目都是一个整数（Python [`int`](https://docs.python.org/3/library/functions.html#int
+    "(在Python v3.11)")）。请注意，这些整数可能大于平台`int`或`long`可以容纳的（Python [`int`](https://docs.python.org/3/library/functions.html#int
+    "(在Python v3.11)")是C `long`）。使用此属性的代码应适当处理这一点；要么在可能溢出时引发错误，要么使用`long long`作为形状的C类型。
 - en: '**typestr** (required)'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: '**typestr**（必需）'
 - en: 'A string providing the basic type of the homogeneous array The basic string
     format consists of 3 parts: a character describing the byteorder of the data (`<`:
     little-endian, `>`: big-endian, `|`: not-relevant), a character code giving the
     basic type of the array, and an integer providing the number of bytes the type
     uses.'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 提供同质数组的基本类型的字符串。基本字符串格式由3部分组成：描述数据的字节顺序的字符（`<`：小端，`>`：大端，`|`：不相关），给出数组的基本类型的字符代码，以及提供类型使用的字节数的整数。
 - en: 'The basic type character codes are:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 基本类型字符代码为：
 - en: '| `t` | Bit field (following integer gives the number of bits in the bit field).
     |'
+  id: totrans-19
   prefs: []
   type: TYPE_TB
+  zh: '| `t` | 位字段（后面的整数给出位字段中的位数）。 |'
 - en: '| `b` | Boolean (integer type where all values are only `True` or `False`)
     |'
+  id: totrans-20
   prefs: []
   type: TYPE_TB
+  zh: '| `b` | 布尔值（整数类型，所有值仅为`True`或`False`） |'
 - en: '| `i` | Integer |'
+  id: totrans-21
   prefs: []
   type: TYPE_TB
+  zh: '| `i` | 整数 |'
 - en: '| `u` | Unsigned integer |'
+  id: totrans-22
   prefs: []
   type: TYPE_TB
+  zh: '| `u` | 无符号整数 |'
 - en: '| `f` | Floating point |'
+  id: totrans-23
   prefs: []
   type: TYPE_TB
+  zh: '| `f` | 浮点数 |'
 - en: '| `c` | Complex floating point |'
+  id: totrans-24
   prefs: []
   type: TYPE_TB
+  zh: '| `c` | 复数浮点数 |'
 - en: '| `m` | Timedelta |'
+  id: totrans-25
   prefs: []
   type: TYPE_TB
+  zh: '| `m` | 时间间隔 |'
 - en: '| `M` | Datetime |'
+  id: totrans-26
   prefs: []
   type: TYPE_TB
+  zh: '| `M` | 日期时间 |'
 - en: '| `O` | Object (i.e. the memory contains a pointer to [`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
     "(in Python v3.11)")) |'
+  id: totrans-27
   prefs: []
   type: TYPE_TB
+  zh: '| `O` | 对象（即内存包含指向[`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(在Python v3.11中)")的指针） |'
 - en: '| `S` | String (fixed-length sequence of char) |'
+  id: totrans-28
   prefs: []
   type: TYPE_TB
+  zh: '| `S` | 字符串（char的固定长度序列） |'
 - en: '| `U` | Unicode (fixed-length sequence of [`Py_UCS4`](https://docs.python.org/3/c-api/unicode.html#c.Py_UCS4
     "(in Python v3.11)")) |'
+  id: totrans-29
   prefs: []
   type: TYPE_TB
+  zh: '| `U` | Unicode（[`Py_UCS4`](https://docs.python.org/3/c-api/unicode.html#c.Py_UCS4
+    "(在Python v3.11中)")的固定长度序列） |'
 - en: '| `V` | Other (void * – each item is a fixed-size chunk of memory) |'
+  id: totrans-30
   prefs: []
   type: TYPE_TB
+  zh: '| `V` | 其他（void * - 每个项目是固定大小的内存块） |'
 - en: '**descr** (optional)'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: '**描述**（可选）'
 - en: A list of tuples providing a more detailed description of the memory layout
     for each item in the homogeneous array. Each tuple in the list has two or three
     elements. Normally, this attribute would be used when *typestr* is `V[0-9]+`,
@@ -140,63 +211,91 @@
     represented in the *typestr* key is the same as the total number of bytes represented
     here. The idea is to support descriptions of C-like structs that make up array
     elements. The elements of each tuple in the list are
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 提供同质数组中每个项目的内存布局的更详细描述的元组列表。列表中的每个元组有两个或三个元素。通常，当*typestr*为`V[0-9]+`时，会使用此属性，但这不是必需的。唯一的要求是*typestr*键中表示的字节总数与此处表示的字节总数相同。这个想法是支持描述组成数组元素的类似C的结构。列表中每个元组的元素为
 - en: A string providing a name associated with this portion of the datatype. This
     could also be a tuple of `('full name', 'basic_name')` where basic name would
     be a valid Python variable name representing the full name of the field.
+  id: totrans-33
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提供与此数据类型部分关联的名称的字符串。这也可以是一个元组`('full name', 'basic_name')`，其中basic name将是代表字段全名的有效Python变量名。
 - en: Either a basic-type description string as in *typestr* or another list (for
     nested structured types)
+  id: totrans-34
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 要么是像*typestr*中的基本类型描述字符串，要么是另一个列表（用于嵌套结构类型）
 - en: An optional shape tuple providing how many times this part of the structure
     should be repeated. No repeats are assumed if this is not given. Very complicated
     structures can be described using this generic interface. Notice, however, that
     each element of the array is still of the same data-type. Some examples of using
     this interface are given below.
+  id: totrans-35
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提供此结构部分应重复多少次的可选形状元组。如果未提供此元组，则不假设重复。可以使用此通用接口描述非常复杂的结构。但请注意，数组的每个元素仍然是相同的数据类型。下面给出了使用此接口的一些示例。
 - en: '**Default**: `[('''', typestr)]`'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`[('''', typestr)]`'
 - en: '**data** (optional)'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: '**数据**（可选）'
 - en: A 2-tuple whose first argument is a [Python integer](https://docs.python.org/3/c-api/long.html
     "(in Python v3.11)") that points to the data-area storing the array contents.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个参数为指向存储数组内容的数据区域的[Python整数](https://docs.python.org/3/c-api/long.html "(在Python
+    v3.11中)")的2元组。
 - en: Note
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: When converting from C/C++ via `PyLong_From*` or high-level bindings such as
     Cython or pybind11, make sure to use an integer of sufficiently large bitness.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 从C/C++通过`PyLong_From*`或高级绑定（如Cython或pybind11）转换时，请确保使用足够大位数的整数。
 - en: This pointer must point to the first element of data (in other words any offset
     is always ignored in this case). The second entry in the tuple is a read-only
     flag (true means the data area is read-only).
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 此指针必须指向数据的第一个元素（换句话说，在这种情况下，任何偏移量都将被忽略）。元组中的第二个条目是只读标志（true表示数据区域是只读的）。
 - en: This attribute can also be an object exposing the [buffer interface](https://docs.python.org/3/c-api/buffer.html#bufferobjects
     "(in Python v3.11)") which will be used to share the data. If this key is not
     present (or returns None), then memory sharing will be done through the buffer
     interface of the object itself. In this case, the offset key can be used to indicate
     the start of the buffer. A reference to the object exposing the array interface
     must be stored by the new object if the memory area is to be secured.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 此属性还可以是一个暴露[缓冲区接口](https://docs.python.org/3/c-api/buffer.html#bufferobjects
+    "(在Python v3.11中)")的对象，该对象将用于共享数据。如果此键不存在（或返回None），则内存共享将通过对象本身的缓冲区接口完成。在这种情况下，可以使用偏移键来指示缓冲区的起始位置。如果要确保内存区域安全，新对象必须存储暴露数组接口的对象的引用。
 - en: '**Default**: `None`'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`None`'
 - en: '**strides** (optional)'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: '**strides**（可选）'
 - en: Either `None` to indicate a C-style contiguous array or a tuple of strides which
     provides the number of bytes needed to jump to the next array element in the corresponding
     dimension. Each entry must be an integer (a Python [`int`](https://docs.python.org/3/library/functions.html#int
@@ -207,52 +306,81 @@
     of the array varies the fastest. For example, the default strides tuple for an
     object whose array entries are 8 bytes long and whose shape is `(10, 20, 30)`
     would be `(4800, 240, 8)`.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 要么是`None`表示C风格的连续数组，要么是一个元组，其中提供了跳转到相应维度下一个数组元素所需的字节数。每个条目必须是整数（Python [`int`](https://docs.python.org/3/library/functions.html#int
+    "(在Python v3.11中)")）。与形状一样，这些值可能比C `int`或`long`能表示的值大；调用代码应适当处理这一点，要么通过引发错误，要么在C中使用`long
+    long`。默认值为`None`，这意味着C风格的连续内存缓冲区。在这种模型中，数组的最后一个维度变化最快。例如，如果一个对象的数组条目长度为8字节，形状为`(10,
+    20, 30)`，则默认的步幅元组将是`(4800, 240, 8)`。
 - en: '**Default**: `None` (C-style contiguous)'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`None`（C风格连续）'
 - en: '**mask** (optional)'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: '**mask**（可选）'
 - en: '`None` or an object exposing the array interface. All elements of the mask
     array should be interpreted only as true or not true indicating which elements
     of this array are valid. The shape of this object should be *“broadcastable”*
     to the shape of the original array.'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: '`None`或一个暴露数组接口的对象。掩码数组的所有元素应该只被解释为真或不真，指示该数组的哪些元素有效。此对象的形状应该是*“可广播的”*到原始数组的形状。'
 - en: '**Default**: `None` (All array values are valid)'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`None`（所有数组值都有效）'
 - en: '**offset** (optional)'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: '**offset**（可选）'
 - en: An integer offset into the array data region. This can only be used when data
     is `None` or returns a `buffer` object.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个整数偏移量，指向数组数据区域。只有当数据为`None`或返回一个`buffer`对象时才能使用此选项。
 - en: '**Default**: `0`.'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`0`。'
 - en: '**version** (required)'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '**version**（必需）'
 - en: An integer showing the version of the interface (i.e. 3 for this version). Be
     careful not to use this to invalidate objects exposing future versions of the
     interface.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个整数，显示接口的版本（即此版本为3）。请注意，不要使用此版本来使暴露未来版本接口的对象无效。
 - en: C-struct access
+  id: totrans-55
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: C结构访问
 - en: This approach to the array interface allows for faster access to an array using
     only one attribute lookup and a well-defined C-structure.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种数组接口的方法允许通过仅进行一次属性查找和一个明确定义的C结构更快地访问数组。
 - en: '[PRE1]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: A [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule "(in
     Python v3.11)") whose `pointer` member contains a pointer to a filled [`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
     "PyArrayInterface") structure. Memory for the structure is dynamically created
@@ -264,15 +392,27 @@
     this attribute must be held to ensure the data is not freed. Objects exposing
     the [`__array_struct__`](#object.__array_struct__ "object.__array_struct__") interface
     must also not reallocate their memory if other objects are referencing them.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个 [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule "(在
+    Python v3.11)")，其 `pointer` 成员包含指向填充的 [`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
+    "PyArrayInterface") 结构的指针。该结构的内存是动态创建的，并且 [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(在 Python v3.11)") 也是使用适当的析构函数创建的，因此当完成时，检索此属性的对象只需对此属性返回的对象应用 [`Py_DECREF`](https://docs.python.org/3/c-api/refcounting.html#c.Py_DECREF
+    "(在 Python v3.11)")。此外，需要将数据复制出来，或者必须持有暴露此属性的对象的引用以确保数据不被释放。暴露 [`__array_struct__`](#object.__array_struct__
+    "object.__array_struct__") 接口的对象也不得在其他对象引用它们时重新分配它们的内存。
 - en: 'The [`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
     "PyArrayInterface") structure is defined in `numpy/ndarrayobject.h` as:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface "PyArrayInterface")
+    结构在 `numpy/ndarrayobject.h` 中定义为：'
 - en: '[PRE2]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: The flags member may consist of 5 bits showing how the data should be interpreted
     and one bit showing how the Interface should be interpreted. The data-bits are
     [`NPY_ARRAY_C_CONTIGUOUS`](c-api/array.html#c.NPY_ARRAY_C_CONTIGUOUS "NPY_ARRAY_C_CONTIGUOUS")
@@ -283,15 +423,27 @@
     (0x400). A final flag [`NPY_ARR_HAS_DESCR`](#c.NPY_ARR_HAS_DESCR "NPY_ARR_HAS_DESCR")
     (0x800) indicates whether or not this structure has the arrdescr field. The field
     should not be accessed unless this flag is present.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: flags 成员可能由 5 位组成，显示数据应如何解释以及接口应如何解释。数据位是 [`NPY_ARRAY_C_CONTIGUOUS`](c-api/array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS") (0x1)，[`NPY_ARRAY_F_CONTIGUOUS`](c-api/array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS") (0x2)，[`NPY_ARRAY_ALIGNED`](c-api/array.html#c.NPY_ARRAY_ALIGNED
+    "NPY_ARRAY_ALIGNED") (0x100)，[`NPY_ARRAY_NOTSWAPPED`](c-api/array.html#c.NPY_ARRAY_NOTSWAPPED
+    "NPY_ARRAY_NOTSWAPPED") (0x200)，以及 [`NPY_ARRAY_WRITEABLE`](c-api/array.html#c.NPY_ARRAY_WRITEABLE
+    "NPY_ARRAY_WRITEABLE") (0x400)。最后一个标志 [`NPY_ARR_HAS_DESCR`](#c.NPY_ARR_HAS_DESCR
+    "NPY_ARR_HAS_DESCR") (0x800) 指示该结构是否具有 arrdescr 字段。除非存在此标志，否则不应访问该字段。
 - en: '[PRE3]'
+  id: totrans-62
   prefs:
   - PREF_BQ
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'New since June 16, 2006:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 自 2006 年 6 月 16 日起新增：
 - en: In the past most implementations used the `desc` member of the `PyCObject` (now
     [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule "(in Python
     v3.11)")) itself (do not confuse this with the “descr” member of the [`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
@@ -300,145 +452,216 @@
     the interface. Be sure to take a reference to the object and call [`PyCapsule_SetContext`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule_SetContext
     "(in Python v3.11)") before returning the [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
     "(in Python v3.11)"), and configure a destructor to decref this reference.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 在过去，大多数实现使用 `PyCObject` 的 `desc` 成员（现在是 [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(在 Python v3.11)")）本身（不要将其与上面的 [`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
+    "PyArrayInterface") 结构的 “descr” 成员混淆 — 它们是两个不同的东西）来保存指向暴露接口的对象的指针。这现在是接口的一个明确部分。确保引用该对象并在返回
+    [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule "(在 Python
+    v3.11)") 之前调用 [`PyCapsule_SetContext`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule_SetContext
+    "(在 Python v3.11)")，并配置一个析构函数来减少此引用。
 - en: Note
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: '`__array_struct__` is considered legacy and should not be used for new code.
     Use the [buffer protocol](https://docs.python.org/3/c-api/buffer.html "(in Python
     v3.11)") or the DLPack protocol [`numpy.from_dlpack`](generated/numpy.from_dlpack.html#numpy.from_dlpack
     "numpy.from_dlpack") instead.'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_struct__`被视为遗留代码，不应用于新代码。请使用[缓冲区协议](https://docs.python.org/3/c-api/buffer.html
+    "(在Python v3.11)")或DLPack协议[`numpy.from_dlpack`](generated/numpy.from_dlpack.html#numpy.from_dlpack
+    "numpy.from_dlpack")。'
 - en: Type description examples
+  id: totrans-67
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 类型描述示例
 - en: 'For clarity it is useful to provide some examples of the type description and
     corresponding [`__array_interface__`](#object.__array_interface__ "object.__array_interface__")
     ‘descr’ entries. Thanks to Scott Gilbert for these examples:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了清晰起见，提供一些类型描述和相应[`__array_interface__`](#object.__array_interface__ "object.__array_interface__")
+    'descr'条目的示例是有用的。感谢Scott Gilbert提供这些示例：
 - en: 'In every case, the ‘descr’ key is optional, but of course provides more information
     which may be important for various applications:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 在每种情况下，'descr'键都是可选的，但当然提供更多信息可能对各种应用程序很重要：
 - en: '[PRE4]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: It should be clear that any structured type could be described using this interface.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 应清楚地指出，任何结构化类型都可以使用此接口进行描述。
 - en: Differences with Array interface (Version 2)
+  id: totrans-72
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 与数组接口（版本2）的差异
 - en: 'The version 2 interface was very similar. The differences were largely aesthetic.
     In particular:'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 版本2接口非常相似。差异主要是美学上的。特别是：
 - en: The PyArrayInterface structure had no descr member at the end (and therefore
     no flag ARR_HAS_DESCR)
+  id: totrans-74
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: PyArrayInterface结构在末尾没有descr成员（因此没有标志ARR_HAS_DESCR）
 - en: The `context` member of the [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
     "(in Python v3.11)") (formally the `desc` member of the `PyCObject`) returned
     from `__array_struct__` was not specified. Usually, it was the object exposing
     the array (so that a reference to it could be kept and destroyed when the C-object
     was destroyed). It is now an explicit requirement that this field be used in some
     way to hold a reference to the owning object.
+  id: totrans-75
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从`__array_struct__`返回的[`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(在Python v3.11)")（正式上是`PyCObject`的`desc`成员）的`context`成员未指定。通常，它是暴露数组的对象（以便在销毁C对象时可以保留对其的引用并销毁）。现在明确要求以某种方式使用此字段来保存对拥有对象的引用。
 - en: Note
+  id: totrans-76
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Until August 2020, this said:'
+  id: totrans-77
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 直到2020年8月，这样说：
 - en: 'Now it must be a tuple whose first element is a string with “PyArrayInterface
     Version #” and whose second element is the object exposing the array.'
+  id: totrans-78
   prefs:
   - PREF_IND
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '现在它必须是一个元组，其第一个元素是带有“PyArrayInterface Version #”的字符串，第二个元素是暴露数组的对象。'
 - en: This design was retracted almost immediately after it was proposed, in <[https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html](https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html)>.
     Despite 14 years of documentation to the contrary, at no point was it valid to
     assume that `__array_interface__` capsules held this tuple content.
+  id: totrans-79
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 这个设计在提出后几乎立即被撤回，详情请见<[https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html](https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html)>。尽管有14年的文件说明与之相反，但从未有理由认为`__array_interface__`胶囊包含此元组内容。
 - en: The tuple returned from `__array_interface__['data']` used to be a hex-string
     (now it is an integer or a long integer).
+  id: totrans-80
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从`__array_interface__['data']`返回的元组曾经是一个十六进制字符串（现在是一个整数或长整数）。
 - en: 'There was no `__array_interface__` attribute instead all of the keys (except
     for version) in the `__array_interface__` dictionary were their own attribute:
     Thus to obtain the Python-side information you had to access separately the attributes:'
+  id: totrans-81
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 没有`__array_interface__`属性，而是`__array_interface__`字典中的所有键（除了版本）都是它们自己的属性：因此，要获取Python端信息，您必须分别访问属性：
 - en: '`__array_data__`'
+  id: totrans-82
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_data__`'
 - en: '`__array_shape__`'
+  id: totrans-83
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_shape__`'
 - en: '`__array_strides__`'
+  id: totrans-84
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_strides__`'
 - en: '`__array_typestr__`'
+  id: totrans-85
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_typestr__`'
 - en: '`__array_descr__`'
+  id: totrans-86
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_descr__`'
 - en: '`__array_offset__`'
+  id: totrans-87
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_offset__`'
 - en: '`__array_mask__`'
+  id: totrans-88
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_mask__`'
 - en: Python side
+  id: totrans-89
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Python端
 - en: This approach to the interface consists of the object having an [`__array_interface__`](#object.__array_interface__
     "object.__array_interface__") attribute.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种接口的方法包括对象具有一个[`__array_interface__`](#object.__array_interface__ "object.__array_interface__")属性。
 - en: '[PRE5]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: A dictionary of items (3 required and 5 optional). The optional keys in the
     dictionary have implied defaults if they are not provided.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个包含项目的字典（3个必需和5个可选）。如果未提供可选键，则字典中的可选键具有隐含的默认值。
 - en: 'The keys are:'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 键包括：
 - en: '**shape** (required)'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: '**shape**（必需）'
 - en: Tuple whose elements are the array size in each dimension. Each entry is an
     integer (a Python [`int`](https://docs.python.org/3/library/functions.html#int
     "(in Python v3.11)")). Note that these integers could be larger than the platform
@@ -446,64 +669,102 @@
     "(in Python v3.11)") is a C `long`). It is up to the code using this attribute
     to handle this appropriately; either by raising an error when overflow is possible,
     or by using `long long` as the C type for the shapes.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个维度中数组大小的元组。每个条目都是一个整数（Python [`int`](https://docs.python.org/3/library/functions.html#int
+    "(在Python v3.11中)")）。请注意，这些整数可能大于平台`int`或`long`可以容纳的大小（Python [`int`](https://docs.python.org/3/library/functions.html#int
+    "(在Python v3.11中)")是C `long`）。代码使用此属性时应适当处理这一点；要么在可能发生溢出时引发错误，要么使用`long long`作为形状的C类型。
 - en: '**typestr** (required)'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '**typestr**（必需）'
 - en: 'A string providing the basic type of the homogeneous array The basic string
     format consists of 3 parts: a character describing the byteorder of the data (`<`:
     little-endian, `>`: big-endian, `|`: not-relevant), a character code giving the
     basic type of the array, and an integer providing the number of bytes the type
     uses.'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 提供同类数组基本类型的字符串。基本字符串格式由3部分组成：描述数据的字节顺序的字符（`<`：小端，`>`：大端，`|`：不相关），给出数组基本类型的字符代码，以及提供类型使用的字节数的整数。
 - en: 'The basic type character codes are:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 基本类型字符代码为：
 - en: '| `t` | Bit field (following integer gives the number of bits in the bit field).
     |'
+  id: totrans-99
   prefs: []
   type: TYPE_TB
+  zh: '| `t` | 位域（后面的整数给出位域中的位数）。|'
 - en: '| `b` | Boolean (integer type where all values are only `True` or `False`)
     |'
+  id: totrans-100
   prefs: []
   type: TYPE_TB
+  zh: '| `b` | 布尔值（整数类型，所有值仅为`True`或`False`）|'
 - en: '| `i` | Integer |'
+  id: totrans-101
   prefs: []
   type: TYPE_TB
+  zh: '| `i` | 整数 |'
 - en: '| `u` | Unsigned integer |'
+  id: totrans-102
   prefs: []
   type: TYPE_TB
+  zh: '| `u` | 无符号整数 |'
 - en: '| `f` | Floating point |'
+  id: totrans-103
   prefs: []
   type: TYPE_TB
+  zh: '| `f` | 浮点数 |'
 - en: '| `c` | Complex floating point |'
+  id: totrans-104
   prefs: []
   type: TYPE_TB
+  zh: '| `c` | 复数浮点数 |'
 - en: '| `m` | Timedelta |'
+  id: totrans-105
   prefs: []
   type: TYPE_TB
+  zh: '| `m` | 时间增量 |'
 - en: '| `M` | Datetime |'
+  id: totrans-106
   prefs: []
   type: TYPE_TB
+  zh: '| `M` | 日期时间 |'
 - en: '| `O` | Object (i.e. the memory contains a pointer to [`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
     "(in Python v3.11)")) |'
+  id: totrans-107
   prefs: []
   type: TYPE_TB
+  zh: '| `O` | 对象（即内存包含指向[`PyObject`](https://docs.python.org/3/c-api/structures.html#c.PyObject
+    "(在Python v3.11中)")的指针）|'
 - en: '| `S` | String (fixed-length sequence of char) |'
+  id: totrans-108
   prefs: []
   type: TYPE_TB
+  zh: '| `S` | 字符串（char的固定长度序列）|'
 - en: '| `U` | Unicode (fixed-length sequence of [`Py_UCS4`](https://docs.python.org/3/c-api/unicode.html#c.Py_UCS4
     "(in Python v3.11)")) |'
+  id: totrans-109
   prefs: []
   type: TYPE_TB
+  zh: '| `U` | Unicode（[`Py_UCS4`](https://docs.python.org/3/c-api/unicode.html#c.Py_UCS4
+    "(在Python v3.11中)")的固定长度序列）|'
 - en: '| `V` | Other (void * – each item is a fixed-size chunk of memory) |'
+  id: totrans-110
   prefs: []
   type: TYPE_TB
+  zh: '| `V` | 其他（空指针 - 每个项目都是固定大小的内存块）|'
 - en: '**descr** (optional)'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: '**descr**（可选）'
 - en: A list of tuples providing a more detailed description of the memory layout
     for each item in the homogeneous array. Each tuple in the list has two or three
     elements. Normally, this attribute would be used when *typestr* is `V[0-9]+`,
@@ -511,63 +772,91 @@
     represented in the *typestr* key is the same as the total number of bytes represented
     here. The idea is to support descriptions of C-like structs that make up array
     elements. The elements of each tuple in the list are
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 提供同类数组中每个项目的内存布局的更详细描述的元组列表。列表中的每个元组有两个或三个元素。通常，当*typestr*为`V[0-9]+`时，会使用此属性，但这不是必需的。唯一的要求是*typestr*键中表示的字节数与此处表示的总字节数相同。其目的是支持组成数组元素的类似C结构的描述。列表中每个元组的元素为
 - en: A string providing a name associated with this portion of the datatype. This
     could also be a tuple of `('full name', 'basic_name')` where basic name would
     be a valid Python variable name representing the full name of the field.
+  id: totrans-113
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提供与此数据类型部分关联的名称的字符串。这也可以是一个元组`('full name', 'basic_name')`，其中基本名称将是代表字段全名的有效Python变量名。
 - en: Either a basic-type description string as in *typestr* or another list (for
     nested structured types)
+  id: totrans-114
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 要么是像*typestr*中的基本类型描述字符串，要么是另一个列表（用于嵌套结构类型）
 - en: An optional shape tuple providing how many times this part of the structure
     should be repeated. No repeats are assumed if this is not given. Very complicated
     structures can be described using this generic interface. Notice, however, that
     each element of the array is still of the same data-type. Some examples of using
     this interface are given below.
+  id: totrans-115
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提供可选形状元组，指定结构的这一部分应重复多少次。如果未给出，则假定没有重复。可以使用此通用接口描述非常复杂的结构。但请注意，数组的每个元素仍然是相同的数据类型。下面给出了使用此接口的一些示例。
 - en: '**Default**: `[('''', typestr)]`'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认**：`[('''', typestr)]`'
 - en: '**data** (optional)'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: '**数据**（可选）'
 - en: A 2-tuple whose first argument is a [Python integer](https://docs.python.org/3/c-api/long.html
     "(in Python v3.11)") that points to the data-area storing the array contents.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个 2 元组，其第一个参数是指向存储数组内容的数据区域的[Python 整数](https://docs.python.org/zh-cn/3/c-api/long.html
+    "(在 Python v3.11 中)")。
 - en: Note
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: When converting from C/C++ via `PyLong_From*` or high-level bindings such as
     Cython or pybind11, make sure to use an integer of sufficiently large bitness.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 在通过`PyLong_From*`或高级绑定（如 Cython 或 pybind11）从 C/C++ 转换时，请确保使用足够大位数的整数。
 - en: This pointer must point to the first element of data (in other words any offset
     is always ignored in this case). The second entry in the tuple is a read-only
     flag (true means the data area is read-only).
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 此指针必须指向数据的第一个元素（换句话说，此时任何偏移量都会被忽略）。元组中的第二个条目是只读标志（true 表示数据区域是只读的）。
 - en: This attribute can also be an object exposing the [buffer interface](https://docs.python.org/3/c-api/buffer.html#bufferobjects
     "(in Python v3.11)") which will be used to share the data. If this key is not
     present (or returns None), then memory sharing will be done through the buffer
     interface of the object itself. In this case, the offset key can be used to indicate
     the start of the buffer. A reference to the object exposing the array interface
     must be stored by the new object if the memory area is to be secured.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 此属性也可以是一个暴露[缓冲区接口](https://docs.python.org/zh-cn/3/c-api/buffer.html#bufferobjects
+    "(在 Python v3.11 中)")的对象，用于共享数据。如果此键不存在（或返回`None`），则内存共享将通过对象本身的缓冲区接口进行。在这种情况下，偏移键可用于指示缓冲区的起始位置。如果要确保内存区域安全，新对象必须存储暴露数组接口的对象的引用。
 - en: '**Default**: `None`'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`None`'
 - en: '**strides** (optional)'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: '**步幅**（可选）'
 - en: Either `None` to indicate a C-style contiguous array or a tuple of strides which
     provides the number of bytes needed to jump to the next array element in the corresponding
     dimension. Each entry must be an integer (a Python [`int`](https://docs.python.org/3/library/functions.html#int
@@ -578,52 +867,81 @@
     of the array varies the fastest. For example, the default strides tuple for an
     object whose array entries are 8 bytes long and whose shape is `(10, 20, 30)`
     would be `(4800, 240, 8)`.
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以是`None`，表示 C 风格的连续数组，或者是一个元组，其中提供了跳转到相应维度下一个数组元素所需的字节数。每个条目必须是整数（Python [`int`](https://docs.python.org/zh-cn/3/library/functions.html#int
+    "(在 Python v3.11 中)")）。与形状一样，这些值可能比 C `int` 或 `long` 能表示的值更大；调用代码应适当处理这一点，要么通过引发错误，要么在
+    C 中使用 `long long`。默认值为`None`，这意味着 C 风格的连续内存缓冲区。在这种模型中，数组的最后一个维度变化最快。例如，对于一个对象，其数组条目为
+    8 字节长，形状为`(10, 20, 30)`的默认步幅元组将是`(4800, 240, 8)`。
 - en: '**Default**: `None` (C-style contiguous)'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`None`（C 风格连续）'
 - en: '**mask** (optional)'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: '**掩码**（可选）'
 - en: '`None` or an object exposing the array interface. All elements of the mask
     array should be interpreted only as true or not true indicating which elements
     of this array are valid. The shape of this object should be *“broadcastable”*
     to the shape of the original array.'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: '`None`或一个暴露数组接口的对象。掩码数组的所有元素应仅解释为真或不真，指示此数组的哪些元素是有效的。此对象的形状应*“可广播”*到原始数组的形状。'
 - en: '**Default**: `None` (All array values are valid)'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`None`（所有数组值都有效）'
 - en: '**offset** (optional)'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: '**偏移量**（可选）'
 - en: An integer offset into the array data region. This can only be used when data
     is `None` or returns a `buffer` object.
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个整数偏移量，指向数组数据区域。只能在数据为`None`或返回`buffer`对象时使用。
 - en: '**Default**: `0`.'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: '**默认值**：`0`。'
 - en: '**version** (required)'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: '**版本**（必需）'
 - en: An integer showing the version of the interface (i.e. 3 for this version). Be
     careful not to use this to invalidate objects exposing future versions of the
     interface.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个显示接口版本的整数（即此版本为 3）。请注意，不要使用此版本来使暴露未来版本接口的对象无效。
 - en: C-struct access
+  id: totrans-135
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: C 结构访问
 - en: This approach to the array interface allows for faster access to an array using
     only one attribute lookup and a well-defined C-structure.
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 此数组接口的方法允许通过仅进行一次属性查找和一个明确定义的 C 结构更快地访问数组。
 - en: '[PRE6]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: A [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule "(in
     Python v3.11)") whose `pointer` member contains a pointer to a filled [`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
     "PyArrayInterface") structure. Memory for the structure is dynamically created
@@ -635,15 +953,26 @@
     this attribute must be held to ensure the data is not freed. Objects exposing
     the [`__array_struct__`](#object.__array_struct__ "object.__array_struct__") interface
     must also not reallocate their memory if other objects are referencing them.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个包含指向填充的[`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
+    "PyArrayInterface")结构的指针的[`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(在Python v3.11中)")。结构的内存是动态创建的，并且[`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(在Python v3.11中)")也是用适当的析构函数创建的，因此检索此属性的对象在完成时只需对此属性返回的对象应用[`Py_DECREF`](https://docs.python.org/3/c-api/refcounting.html#c.Py_DECREF
+    "(在Python v3.11中)")。此外，数据需要被复制出来，或者必须保持对暴露此属性的对象的引用，以确保数据不被释放。暴露[`__array_struct__`](#object.__array_struct__
+    "object.__array_struct__")接口的对象也不能重新分配它们的内存，如果其他对象正在引用它们。
 - en: 'The [`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
     "PyArrayInterface") structure is defined in `numpy/ndarrayobject.h` as:'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface "PyArrayInterface")结构在`numpy/ndarrayobject.h`中定义为：'
 - en: '[PRE7]'
+  id: totrans-140
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: The flags member may consist of 5 bits showing how the data should be interpreted
     and one bit showing how the Interface should be interpreted. The data-bits are
     [`NPY_ARRAY_C_CONTIGUOUS`](c-api/array.html#c.NPY_ARRAY_C_CONTIGUOUS "NPY_ARRAY_C_CONTIGUOUS")
@@ -654,15 +983,27 @@
     (0x400). A final flag [`NPY_ARR_HAS_DESCR`](#c.NPY_ARR_HAS_DESCR "NPY_ARR_HAS_DESCR")
     (0x800) indicates whether or not this structure has the arrdescr field. The field
     should not be accessed unless this flag is present.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: flags成员可能由5位组成，显示数据应如何解释，以及一位显示接口应如何解释。数据位是[`NPY_ARRAY_C_CONTIGUOUS`](c-api/array.html#c.NPY_ARRAY_C_CONTIGUOUS
+    "NPY_ARRAY_C_CONTIGUOUS")（0x1）、[`NPY_ARRAY_F_CONTIGUOUS`](c-api/array.html#c.NPY_ARRAY_F_CONTIGUOUS
+    "NPY_ARRAY_F_CONTIGUOUS")（0x2）、[`NPY_ARRAY_ALIGNED`](c-api/array.html#c.NPY_ARRAY_ALIGNED
+    "NPY_ARRAY_ALIGNED")（0x100）、[`NPY_ARRAY_NOTSWAPPED`](c-api/array.html#c.NPY_ARRAY_NOTSWAPPED
+    "NPY_ARRAY_NOTSWAPPED")（0x200）和[`NPY_ARRAY_WRITEABLE`](c-api/array.html#c.NPY_ARRAY_WRITEABLE
+    "NPY_ARRAY_WRITEABLE")（0x400）。最后一个标志[`NPY_ARR_HAS_DESCR`](#c.NPY_ARR_HAS_DESCR
+    "NPY_ARR_HAS_DESCR")（0x800）指示此结构是否具有arrdescr字段。除非存在此标志，否则不应访问该字段。
 - en: '[PRE8]'
+  id: totrans-142
   prefs:
   - PREF_BQ
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'New since June 16, 2006:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 自2006年6月16日以来新增：
 - en: In the past most implementations used the `desc` member of the `PyCObject` (now
     [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule "(in Python
     v3.11)")) itself (do not confuse this with the “descr” member of the [`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
@@ -671,121 +1012,182 @@
     the interface. Be sure to take a reference to the object and call [`PyCapsule_SetContext`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule_SetContext
     "(in Python v3.11)") before returning the [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
     "(in Python v3.11)"), and configure a destructor to decref this reference.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 在过去，大多数实现使用`PyCObject`（现在是[`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(在Python v3.11中)")）的`desc`成员本身（不要将其与上面的[`PyArrayInterface`](c-api/types-and-structures.html#c.PyArrayInterface
+    "PyArrayInterface")结构中的“descr”成员混淆——它们是两个不同的东西）来保存暴露接口的对象指针。这现在是接口的一个显式部分。在返回[`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(在Python v3.11中)")之前，请确保引用该对象并调用[`PyCapsule_SetContext`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule_SetContext
+    "(在Python v3.11中)")，并配置一个析构函数来减少此引用。
 - en: Note
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: '`__array_struct__` is considered legacy and should not be used for new code.
     Use the [buffer protocol](https://docs.python.org/3/c-api/buffer.html "(in Python
     v3.11)") or the DLPack protocol [`numpy.from_dlpack`](generated/numpy.from_dlpack.html#numpy.from_dlpack
     "numpy.from_dlpack") instead.'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: '`__array_struct__` 被视为遗留代码，不应该用于新代码。而应该使用[缓冲区协议](https://docs.python.org/3/c-api/buffer.html
+    "(在 Python v3.11)")或 DLPack 协议 [`numpy.from_dlpack`](generated/numpy.from_dlpack.html#numpy.from_dlpack
+    "numpy.from_dlpack")。'
 - en: Type description examples
+  id: totrans-147
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 类型描述示例
 - en: 'For clarity it is useful to provide some examples of the type description and
     corresponding [`__array_interface__`](#object.__array_interface__ "object.__array_interface__")
     ‘descr’ entries. Thanks to Scott Gilbert for these examples:'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了清晰起见，提供一些类型描述和相应的 [`__array_interface__`](#object.__array_interface__ "object.__array_interface__")
+    ‘descr’ 条目的示例是有用的。感谢 Scott Gilbert 提供这些示例：
 - en: 'In every case, the ‘descr’ key is optional, but of course provides more information
     which may be important for various applications:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 在每种情况下，‘descr’ 键都是可选的，但当然提供更多信息可能对各种应用程序很重要：
 - en: '[PRE9]'
+  id: totrans-150
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: It should be clear that any structured type could be described using this interface.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 应该清楚任何结构化类型都可以使用这个接口来描述。
 - en: Differences with Array interface (Version 2)
+  id: totrans-152
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 与数组接口（第 2 版）的差异
 - en: 'The version 2 interface was very similar. The differences were largely aesthetic.
     In particular:'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 第二版接口非常相似。主要区别在于美学方面。特别是：
 - en: The PyArrayInterface structure had no descr member at the end (and therefore
     no flag ARR_HAS_DESCR)
+  id: totrans-154
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: PyArrayInterface 结构在末尾没有 descr 成员（因此没有标志 ARR_HAS_DESCR）
 - en: The `context` member of the [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
     "(in Python v3.11)") (formally the `desc` member of the `PyCObject`) returned
     from `__array_struct__` was not specified. Usually, it was the object exposing
     the array (so that a reference to it could be kept and destroyed when the C-object
     was destroyed). It is now an explicit requirement that this field be used in some
     way to hold a reference to the owning object.
+  id: totrans-155
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从 `__array_struct__` 返回的 [`PyCapsule`](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule
+    "(在 Python v3.11)")（正式上是 `PyCObject` 的 `desc` 成员）的 `context` 成员没有指定。通常，它是暴露数组的对象（以便在销毁
+    C 对象时保留对它的引用并销毁它）。现在明确要求以某种方式使用此字段来保存对拥有对象的引用。
 - en: Note
+  id: totrans-156
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'Until August 2020, this said:'
+  id: totrans-157
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 直到 2020 年 8 月，这样说：
 - en: 'Now it must be a tuple whose first element is a string with “PyArrayInterface
     Version #” and whose second element is the object exposing the array.'
+  id: totrans-158
   prefs:
   - PREF_IND
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '现在它必须是一个元组，其第一个元素是一个带有“PyArrayInterface 版本 #”的字符串，第二个元素是暴露数组的对象。'
 - en: This design was retracted almost immediately after it was proposed, in <[https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html](https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html)>.
     Despite 14 years of documentation to the contrary, at no point was it valid to
     assume that `__array_interface__` capsules held this tuple content.
+  id: totrans-159
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 这个设计在提出后几乎立即被撤回，在 <[https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html](https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html)>。尽管有
+    14 年的文档说明相反，但从来没有理由认为 `__array_interface__` 胶囊包含这个元组内容。
 - en: The tuple returned from `__array_interface__['data']` used to be a hex-string
     (now it is an integer or a long integer).
+  id: totrans-160
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从 `__array_interface__['data']` 返回的元组以前是一个十六进制字符串（现在是一个整数或长整数）。
 - en: 'There was no `__array_interface__` attribute instead all of the keys (except
     for version) in the `__array_interface__` dictionary were their own attribute:
     Thus to obtain the Python-side information you had to access separately the attributes:'
+  id: totrans-161
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 没有 `__array_interface__` 属性，而是 `__array_interface__` 字典中除了版本之外的所有键都是它们自己的属性：因此，要获取
+    Python 端的信息，必须分别访问属性：
 - en: '`__array_data__`'
+  id: totrans-162
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_data__`'
 - en: '`__array_shape__`'
+  id: totrans-163
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_shape__`'
 - en: '`__array_strides__`'
+  id: totrans-164
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_strides__`'
 - en: '`__array_typestr__`'
+  id: totrans-165
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_typestr__`'
 - en: '`__array_descr__`'
+  id: totrans-166
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_descr__`'
 - en: '`__array_offset__`'
+  id: totrans-167
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_offset__`'
 - en: '`__array_mask__`'
+  id: totrans-168
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`__array_mask__`'

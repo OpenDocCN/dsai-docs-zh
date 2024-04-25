@@ -1,21 +1,30 @@
 - en: Iterating over arrays
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 遍历数组
 - en: 原文：[https://numpy.org/doc/1.26/reference/arrays.nditer.html](https://numpy.org/doc/1.26/reference/arrays.nditer.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/reference/arrays.nditer.html](https://numpy.org/doc/1.26/reference/arrays.nditer.html)
 - en: Note
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Arrays support the iterator protocol and can be iterated over like Python lists.
     See the [Indexing, Slicing and Iterating](../user/quickstart.html#quickstart-indexing-slicing-and-iterating)
     section in the Quickstart guide for basic usage and examples. The remainder of
     this document presents the [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object and covers more advanced usage.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 数组支持迭代器协议，可以像Python列表一样进行迭代。查看[快速入门指南](../user/quickstart.html#quickstart-indexing-slicing-and-iterating)中的“索引、切片和迭代”部分，了解基本用法和示例。本文档的其余部分介绍了[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象，并涵盖了更高级的用法。
 - en: The iterator object [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer"),
     introduced in NumPy 1.6, provides many flexible ways to visit all the elements
     of one or more arrays in a systematic fashion. This page introduces some basic
@@ -24,248 +33,363 @@
     [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") is a relatively
     straightforward mapping of the C array iterator API, these ideas will also provide
     help working with array iteration from C or C++.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")迭代器对象在NumPy
+    1.6中引入，提供了许多灵活的方式以系统化的方式访问一个或多个数组的所有元素。本页面介绍了如何在Python中对数组进行计算的一些基本方法，然后总结了如何可以在Cython中加速内部循环。由于Python对[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")的暴露相对直接地映射了C数组迭代器API，这些想法也将对使用C或C++进行数组迭代工作提供帮助。'
 - en: Single array iteration
+  id: totrans-5
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 单数组迭代
 - en: The most basic task that can be done with the [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") is to visit every element of an array. Each element is provided
     one by one using the standard Python iterator interface.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")最基本的任务是访问数组的每个元素。使用标准的Python迭代器接口逐个提供每个元素。'
 - en: Example
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE0]'
+  id: totrans-8
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: An important thing to be aware of for this iteration is that the order is chosen
     to match the memory layout of the array instead of using a standard C or Fortran
     ordering. This is done for access efficiency, reflecting the idea that by default
     one simply wants to visit each element without concern for a particular ordering.
     We can see this by iterating over the transpose of our previous array, compared
     to taking a copy of that transpose in C order.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于这种迭代需要注意的重要事项是，顺序是选择与数组的内存布局匹配而不是使用标准的C或Fortran顺序。这样做是为了访问效率，体现了默认情况下只需访问每个元素而不考虑特定顺序的思想。通过迭代前一数组的转置，与以C顺序复制该转置进行比较，我们可以看到这一点。
 - en: Example
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE1]'
+  id: totrans-11
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: '[PRE2]'
+  id: totrans-12
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: The elements of both *a* and *a.T* get traversed in the same order, namely the
     order they are stored in memory, whereas the elements of *a.T.copy(order=’C’)*
     get visited in a different order because they have been put into a different memory
     layout.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: '*a*和*a.T*的元素以相同顺序遍历，即它们在内存中存储的顺序，而*a.T.copy(order=’C’)*的元素以不同顺序访问，因为它们已经放置到不同的内存布局中。'
 - en: Controlling iteration order
+  id: totrans-14
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 控制迭代顺序
 - en: There are times when it is important to visit the elements of an array in a
     specific order, irrespective of the layout of the elements in memory. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object provides an *order* parameter to control this aspect of
     iteration. The default, having the behavior described above, is order=’K’ to keep
     the existing order. This can be overridden with order=’C’ for C order and order=’F’
     for Fortran order.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时重要的是按照特定顺序访问数组的元素，而不考虑内存中元素的布局。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象提供了一个*order*参数来控制迭代的这个方面。默认情况下，具有上述行为的行为是order=’K’以保持现有顺序。这可以通过order=’C’覆盖为C顺序和order=’F’为Fortran顺序。
 - en: Example
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE3]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: '### Modifying array values'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 修改数组值'
 - en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     treats the input operand as a read-only object. To be able to modify the array
     elements, you must specify either read-write or write-only mode using the *‘readwrite’*
     or *‘writeonly’* per-operand flags.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")将输入操作数视为只读对象。要能够修改数组元素，必须使用*‘readwrite’*或*‘writeonly’*每个操作数标记来指定读写或仅写模式。
 - en: 'The nditer will then yield writeable buffer arrays which you may modify. However,
     because the nditer must copy this buffer data back to the original array once
     iteration is finished, you must signal when the iteration is ended, by one of
     two methods. You may either:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: nditer然后将生成可修改的缓冲区数组。然而，因为nditer必须在迭代结束时将此缓冲区数据复制回原始数组，所以必须通过两种方法之一来标志迭代何时结束。您可以选择：
 - en: used the nditer as a context manager using the *with* statement, and the temporary
     data will be written back when the context is exited.
+  id: totrans-21
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 以*with*语句使用nditer作为上下文管理器，并在上下文退出时将临时数据写回。
 - en: ''
+  id: totrans-22
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-23
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: call the iterator’s *close* method once finished iterating, which will trigger
     the write-back.
+  id: totrans-24
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在迭代结束时调用迭代器的*close*方法，这将触发写回操作。
 - en: The nditer can no longer be iterated once either *close* is called or its context
     is exited.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 迭代器不能在*close*被调用或者它的上下文退出后继续迭代。
 - en: Example
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE4]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: If you are writing code that needs to support older versions of numpy, note
     that prior to 1.15, [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     was not a context manager and did not have a *close* method. Instead it relied
     on the destructor to initiate the writeback of the buffer.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你正在编写需要支持较旧版本的numpy的代码，请注意，在1.15之前，[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")不是一个上下文管理器，并且没有*close*方法。相反，它依靠析构函数来初始化缓冲区的写回。
 - en: Using an external loop
+  id: totrans-29
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用外部循环
 - en: In all the examples so far, the elements of *a* are provided by the iterator
     one at a time, because all the looping logic is internal to the iterator. While
     this is simple and convenient, it is not very efficient. A better approach is
     to move the one-dimensional innermost loop into your code, external to the iterator.
     This way, NumPy’s vectorized operations can be used on larger chunks of the elements
     being visited.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，所有的示例中，*a*的元素都是由迭代器逐个提供的，因为所有的循环逻辑都是迭代器内部的。虽然这很简单和方便，但效率不高。更好的方法是将一维内层循环移到你的代码中，迭代器之外。这样，NumPy的矢量化操作可以在更大的元素块上使用。
 - en: The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") will
     try to provide chunks that are as large as possible to the inner loop. By forcing
     ‘C’ and ‘F’ order, we get different external loop sizes. This mode is enabled
     by specifying an iterator flag.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")将尝试提供尽可能大的块给内部循环。通过强制使用''C''和''F''顺序，我们可以得到不同的外部循环大小。通过指定迭代器标志来启用此模式。'
 - en: Observe that with the default of keeping native memory order, the iterator is
     able to provide a single one-dimensional chunk, whereas when forcing Fortran order,
     it has to provide three chunks of two elements each.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，默认情况下保持本机内存顺序，迭代器能够提供一个单一的一维块，而当强制使用Fortran顺序时，它必须提供三个块，每个块有两个元素。
 - en: Example
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE5]'
+  id: totrans-34
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: '[PRE6]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Tracking an index or multi-index
+  id: totrans-36
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 跟踪一个索引或多索引
 - en: During iteration, you may want to use the index of the current element in a
     computation. For example, you may want to visit the elements of an array in memory
     order, but use a C-order, Fortran-order, or multidimensional index to look up
     values in a different array.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 在迭代过程中，您可能希望在计算中使用当前元素的索引。例如，您可能希望以内存顺序访问数组的元素，但使用C顺序、Fortran顺序或多维索引在不同的数组中查找值。
 - en: 'The index is tracked by the iterator object itself, and accessible through
     the *index* or *multi_index* properties, depending on what was requested. The
     examples below show printouts demonstrating the progression of the index:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 索引由迭代器对象本身跟踪，并通过*index*或*multi_index*属性访问，具体取决于请求了哪个。下面的示例展示了打印输出，展示了索引的进展：
 - en: Example
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE7]'
+  id: totrans-40
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: '[PRE8]'
+  id: totrans-41
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '[PRE9]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Tracking an index or multi-index is incompatible with using an external loop,
     because it requires a different index value per element. If you try to combine
     these flags, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     object will raise an exception.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 跟踪一个索引或多索引与使用外部循环不兼容，因为它需要每个元素一个不同的索引值。如果尝试组合这些标志，[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象将引发异常。
 - en: Example
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE10]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Alternative looping and element access
+  id: totrans-46
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 替代循环和元素访问
 - en: To make its properties more readily accessible during iteration, [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") has an alternative syntax for iterating, which works explicitly
     with the iterator object itself. With this looping construct, the current value
     is accessible by indexing into the iterator. Other properties, such as tracked
     indices remain as before. The examples below produce identical results to the
     ones in the previous section.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了在迭代时更方便地访问其属性，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")具有与迭代器对象本身明确工作的用于迭代的替代语法。通过这种循环结构，可以通过对迭代器进行索引来访问当前值。其它属性，例如跟踪的索引，保持与之前相同。下面的示例产生了与前一节中相同的结果。
 - en: Example
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE11]'
+  id: totrans-49
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: '[PRE12]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '[PRE13]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Buffering the array elements
+  id: totrans-52
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 对数组元素进行缓冲
 - en: When forcing an iteration order, we observed that the external loop option may
     provide the elements in smaller chunks because the elements can’t be visited in
     the appropriate order with a constant stride. When writing C code, this is generally
     fine, however in pure Python code this can cause a significant reduction in performance.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 在强制迭代顺序时，我们观察到外部循环选项可能以较小的块提供元素，因为元素不能以恒定步长按适当顺序访问。在编写C代码时，这通常没问题，但在纯Python代码中，这可能会导致性能显着降低。
 - en: By enabling buffering mode, the chunks provided by the iterator to the inner
     loop can be made larger, significantly reducing the overhead of the Python interpreter.
     In the example forcing Fortran iteration order, the inner loop gets to see all
     the elements in one go when buffering is enabled.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过启用缓冲模式，迭代器提供给内部循环的块可以变得更大，从而显着减少了Python解释器的开销。在强制Fortran迭代顺序的示例中，启用缓冲时，内部循环可以一次看到所有元素。
 - en: Example
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE14]'
+  id: totrans-56
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: '[PRE15]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Iterating as a specific data type
+  id: totrans-58
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 迭代特定数据类型
 - en: There are times when it is necessary to treat an array as a different data type
     than it is stored as. For instance, one may want to do all computations on 64-bit
     floats, even if the arrays being manipulated are 32-bit floats. Except when writing
     low-level C code, it’s generally better to let the iterator handle the copying
     or buffering instead of casting the data type yourself in the inner loop.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时有必要将数组视为与其存储方式不同的数据类型。例如，即使被操作的数组是32位浮点数，也可能希望在64位浮点数上进行所有计算。除了编写低级C代码时，通常最好让迭代器处理复制或缓冲，而不是在内部循环中自己进行数据类型转换。
 - en: There are two mechanisms which allow this to be done, temporary copies and buffering
     mode. With temporary copies, a copy of the entire array is made with the new data
     type, then iteration is done in the copy. Write access is permitted through a
@@ -273,142 +397,208 @@
     major drawback of temporary copies is that the temporary copy may consume a large
     amount of memory, particularly if the iteration data type has a larger itemsize
     than the original one.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种机制可以实现这一点，临时复制和缓冲模式。通过临时复制，使用新数据类型制作整个数组的副本，然后对副本进行迭代。在所有迭代完成之后，可以通过更新原始数组的方式进行写访问。临时复制的主要缺点是，如果迭代数据类型的itemsize比原始数据类型更大，临时副本可能会占用大量内存。
 - en: Buffering mode mitigates the memory usage issue and is more cache-friendly than
     making temporary copies. Except for special cases, where the whole array is needed
     at once outside the iterator, buffering is recommended over temporary copying.
     Within NumPy, buffering is used by the ufuncs and other functions to support flexible
     inputs with minimal memory overhead.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 缓冲模式减轻了内存使用问题，并且比制作临时副本更加缓存友好。除了特殊情况，在迭代器外需要一次性整个数组的情况下，推荐使用缓冲而不是临时复制。在NumPy中，ufuncs和其他函数使用缓冲来支持以最小内存开销支持灵活输入。
 - en: In our examples, we will treat the input array with a complex data type, so
     that we can take square roots of negative numbers. Without enabling copies or
     buffering mode, the iterator will raise an exception if the data type doesn’t
     match precisely.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们的示例中，我们将以复杂数据类型处理输入数组，以便我们可以对负数取平方根。在不启用复制或缓冲模式的情况下，如果数据类型与迭代器不精确匹配，迭代器将引发异常。
 - en: Example
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE16]'
+  id: totrans-64
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: In copying mode, ‘copy’ is specified as a per-operand flag. This is done to
     provide control in a per-operand fashion. Buffering mode is specified as an iterator
     flag.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 在复制模式中，“copy”被指定为每个操作数的标志。这是为了以每个操作数的方式提供控制。缓冲模式被指定为迭代器标志。
 - en: Example
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE17]'
+  id: totrans-67
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: '[PRE18]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: The iterator uses NumPy’s casting rules to determine whether a specific conversion
     is permitted. By default, it enforces ‘safe’ casting. This means, for example,
     that it will raise an exception if you try to treat a 64-bit float array as a
     32-bit float array. In many cases, the rule ‘same_kind’ is the most reasonable
     rule to use, since it will allow conversion from 64 to 32-bit float, but not from
     float to int or from complex to float.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 迭代器使用NumPy的转换规则来确定是否允许特定的转换。默认情况下，它强制执行‘safe’转换。这意味着，例如，如果您尝试将64位浮点数数组视为32位浮点数数组，它会引发异常。在许多情况下，‘same_kind’规则是最合理的规则，因为它允许从64位转换为32位浮点数，但不允许从浮点数转换为整数或从复数转换为浮点数。
 - en: Example
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 实例
 - en: '[PRE19]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: '[PRE20]'
+  id: totrans-72
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: '[PRE21]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: One thing to watch out for is conversions back to the original data type when
     using a read-write or write-only operand. A common case is to implement the inner
     loop in terms of 64-bit floats, and use ‘same_kind’ casting to allow the other
     floating-point types to be processed as well. While in read-only mode, an integer
     array could be provided, read-write mode will raise an exception because conversion
     back to the array would violate the casting rule.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 当使用读写或仅写操作数时，要注意的一点是在转换回原始数据类型时可能会遇到问题。一个常见情况是用64位浮点数实现内部循环，使用‘same_kind’转换来允许处理其他浮点类型。在只读模式下，可以提供一个整数数组，但在读写模式下会抛出异常，因为转换回数组会违反转换规则。
 - en: Example
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 实例
 - en: '[PRE22]'
+  id: totrans-76
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Broadcasting array iteration
+  id: totrans-77
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 广播数组迭代
 - en: NumPy has a set of rules for dealing with arrays that have differing shapes
     which are applied whenever functions take multiple operands which combine element-wise.
     This is called [broadcasting](../user/basics.ufuncs.html#ufuncs-broadcasting).
     The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
     can apply these rules for you when you need to write such a function.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy有一组规则用于处理形状不同的数组，惯例上在函数接受多个操作数时会对这些规则进行应用，这些操作数合并在一起进行元素级操作。这称为[广播](../user/basics.ufuncs.html#ufuncs-broadcasting)。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象可以在需要编写这样一个函数时为您应用这些规则。
 - en: As an example, we print out the result of broadcasting a one and a two dimensional
     array together.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 举个例子，我们打印出一个一维数组和一个二维数组进行广播的结果。
 - en: Example
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 实例
 - en: '[PRE23]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: When a broadcasting error occurs, the iterator raises an exception which includes
     the input shapes to help diagnose the problem.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 当广播错误发生时，迭代器会引发一个异常，其中包括输入形状，以帮助诊断问题。
 - en: Example
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 实例
 - en: '[PRE24]'
+  id: totrans-84
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Iterator-allocated output arrays
+  id: totrans-85
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 迭代器分配输出数组
 - en: A common case in NumPy functions is to have outputs allocated based on the broadcasting
     of the input, and additionally have an optional parameter called ‘out’ where the
     result will be placed when it is provided. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object provides a convenient idiom that makes it very easy to
     support this mechanism.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy函数中的一个常见情况是根据输入的广播分配输出，并且还有一个名为‘out’的可选参数，用于提供结果位置。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象提供了一个方便的习语，使得支持这种机制变得非常容易。
 - en: We’ll show how this works by creating a function [`square`](generated/numpy.square.html#numpy.square
     "numpy.square") which squares its input. Let’s start with a minimal function definition
     excluding ‘out’ parameter support.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将通过创建一个[`square`](generated/numpy.square.html#numpy.square "numpy.square")函数来展示它是如何工作的，该函数将输入的平方。让我们从一个最小的函数定义开始，不包括‘out’参数支持。
 - en: Example
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 实例
 - en: '[PRE25]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     uses the flags ‘allocate’ and ‘writeonly’ for operands that are passed in as None.
     This means we were able to provide just the two operands to the iterator, and
     it handled the rest.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")对传入的为None的操作数使用标志‘allocate’和‘writeonly’。这意味着我们只需提供迭代器的两个操作数，它就会处理其余部分。
 - en: When adding the ‘out’ parameter, we have to explicitly provide those flags,
     because if someone passes in an array as ‘out’, the iterator will default to ‘readonly’,
     and our inner loop would fail. The reason ‘readonly’ is the default for input
     arrays is to prevent confusion about unintentionally triggering a reduction operation.
     If the default were ‘readwrite’, any broadcasting operation would also trigger
     a reduction, a topic which is covered later in this document.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 在添加‘out’参数时，我们必须显式提供这些标志，因为如果有人将数组作为‘out’传入，迭代器将默认为‘readonly’，而我们的内部循环会失败。‘readonly’是输入数组的默认选项是为了防止意外触发减少操作的混淆。如果默认选项是‘readwrite’，任何广播操作都会触发减少操作，这个主题稍后在本文档中会讨论。
 - en: While we’re at it, let’s also introduce the ‘no_broadcast’ flag, which will
     prevent the output from being broadcast. This is important, because we only want
     one input value for each output. Aggregating more than one input value is a reduction
@@ -417,31 +607,48 @@
     that results from disabling broadcasting is much more understandable for end-users.
     To see how to generalize the square function to a reduction, look at the sum of
     squares function in the section about Cython.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 顺便提一句，我们还要介绍‘no_broadcast’标志，它将阻止输出被广播。这很重要，因为我们只希望每个输出具有一个输入值。聚合多个输入值是一个需要特殊处理的约简操作。虽然会因为迭代器标志未明确启用约简而引发错误，但其结果仅限于禁用广播的错误消息对最终用户更加易懂。要查看如何将平方函数推广为约简函数，请查看有关
+    Cython 部分中的平方和函数。
 - en: For completeness, we’ll also add the ‘external_loop’ and ‘buffered’ flags, as
     these are what you will typically want for performance reasons.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了完整起见，我们还将添加‘external_loop’和‘buffered’标志，因为出于性能原因，这些通常是您想要的。
 - en: Example
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE26]'
+  id: totrans-95
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: '[PRE27]'
+  id: totrans-96
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: '[PRE28]'
+  id: totrans-97
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: '[PRE29]'
+  id: totrans-98
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: Outer Product Iteration
+  id: totrans-99
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外积迭代
 - en: Any binary operation can be extended to an array operation in an outer product
     fashion like in [`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer"),
     and the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
@@ -449,14 +656,20 @@
     It is also possible to do this with [`newaxis`](constants.html#numpy.newaxis "numpy.newaxis")
     indexing, but we will show you how to directly use the nditer *op_axes* parameter
     to accomplish this with no intermediate views.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 任何二进制操作都可以像[`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer")中一样以外积方式扩展为数组操作，[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象通过显式映射操作数的轴提供了一种实现这一点的方法。也可以使用[`newaxis`](constants.html#numpy.newaxis
+    "numpy.newaxis")索引来完成这个操作，但我们将向您展示如何直接使用nditer的*op_axes*参数来在没有中间视图的情况下完成此操作。
 - en: We’ll do a simple outer product, placing the dimensions of the first operand
     before the dimensions of the second operand. The *op_axes* parameter needs one
     list of axes for each operand, and provides a mapping from the iterator’s axes
     to the axes of the operand.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将进行一个简单的外积计算，将第一个操作数的维度放在第二个操作数的维度之前。*op_axes*参数需要为每个操作数提供一个包含轴的列表，并提供了一个从迭代器的轴到操作数的轴的映射。
 - en: Suppose the first operand is one dimensional and the second operand is two dimensional.
     The iterator will have three dimensions, so *op_axes* will have two 3-element
     lists. The first list picks out the one axis of the first operand, and is -1 for
@@ -465,377 +678,557 @@
     the axes picked out in the first operand. Its list is [-1, 0, 1]. The output operand
     maps onto the iterator axes in the standard manner, so we can provide None instead
     of constructing another list.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设第一个操作数是一维的，第二个操作数是二维的。迭代器将具有三个维度，因此*op_axes*将有两个包含三个元素的列表。第一个列表选择第一个操作数的一个轴，其余迭代器轴为-1，最终结果为[0,
+    -1, -1]。第二个列表选择第二个操作数的两个轴，但不应与第一个操作数中选择的轴重叠。它的列表是[-1, 0, 1]。输出操作数按照标准方式映射到迭代器轴上，因此我们可以提供None而不是构造另一个列表。
 - en: The operation in the inner loop is a straightforward multiplication. Everything
     to do with the outer product is handled by the iterator setup.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 在内部循环中的操作是直接乘法。所有外积相关的事情都由迭代器设置处理。
 - en: Example
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE30]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: Note that once the iterator is closed we can not access [`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
     "numpy.nditer.operands") and must use a reference created inside the context manager.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，一旦迭代器关闭，我们就无法访问[`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
+    "numpy.nditer.operands")，而必须使用在上下文管理器中创建的引用。
 - en: Reduction Iteration
+  id: totrans-107
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 约简迭代
 - en: Whenever a writeable operand has fewer elements than the full iteration space,
     that operand is undergoing a reduction. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object requires that any reduction operand be flagged as read-write,
     and only allows reductions when ‘reduce_ok’ is provided as an iterator flag.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 每当可写操作数的元素少于完整迭代空间时，该操作数正在进行约简。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象要求任何约简操作数都被标记为读写，并且仅在提供‘reduce_ok’作为迭代器标志时允许约简。
 - en: For a simple example, consider taking the sum of all elements in an array.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 以简单的例子为例，考虑计算数组中所有元素的和。
 - en: Example
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE31]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Things are a little bit more tricky when combining reduction and allocated operands.
     Before iteration is started, any reduction operand must be initialized to its
     starting values. Here’s how we can do this, taking sums along the last axis of
     *a*.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 当组合约简和分配操作数时，情况变得有点棘手。在开始迭代之前，任何约简操作数必须初始化为其起始值。以下是我们如何做到这一点，对*a*的最后一个轴进行求和。
 - en: Example
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE32]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: To do buffered reduction requires yet another adjustment during the setup. Normally
     the iterator construction involves copying the first buffer of data from the readable
     arrays into the buffer. Any reduction operand is readable, so it may be read into
     a buffer. Unfortunately, initialization of the operand after this buffering operation
     is complete will not be reflected in the buffer that the iteration starts with,
     and garbage results will be produced.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 进行缓冲进行约简需要在设置期间进行另一个调整。通常，迭代器构造涉及将可读数组的第一个缓冲区复制到缓冲区中。任何约简操作数都是可读的，所以它可能被读入缓冲区。不幸的是，在这个缓冲操作完成后初始化操作数的值将不会反映在迭代开始时的缓冲区中，将产生垃圾结果。
 - en: The iterator flag “delay_bufalloc” is there to allow iterator-allocated reduction
     operands to exist together with buffering. When this flag is set, the iterator
     will leave its buffers uninitialized until it receives a reset, after which it
     will be ready for regular iteration. Here’s how the previous example looks if
     we also enable buffering.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 迭代器标志“delay_bufalloc”用于允许迭代器分配的约简操作数与缓冲共存。设置此标志时，迭代器将保留其缓冲区，直到接收到重置信号，之后将准备好进行常规迭代。如果我们同时启用缓冲，那么前面的例子看起来是这样的。
 - en: Example
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE33]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: Putting the Inner Loop in Cython
+  id: totrans-119
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 将内部循环放入Cython中
 - en: Those who want really good performance out of their low level operations should
     strongly consider directly using the iteration API provided in C, but for those
     who are not comfortable with C or C++, Cython is a good middle ground with reasonable
     performance tradeoffs. For the [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object, this means letting the iterator take care of broadcasting,
     dtype conversion, and buffering, while giving the inner loop to Cython.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 那些希望从他们的低级操作中获得真正好的性能的人应该强烈考虑直接使用C提供的迭代API，但对于那些不熟悉C或C++的人来说，Cython是一个性能合理的中间选择。对于[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象，这意味着让迭代器负责广播、数据类型转换和缓冲，同时将内部循环交给Cython处理。
 - en: For our example, we’ll create a sum of squares function. To start, let’s implement
     this function in straightforward Python. We want to support an ‘axis’ parameter
     similar to the numpy [`sum`](generated/numpy.sum.html#numpy.sum "numpy.sum") function,
     so we will need to construct a list for the *op_axes* parameter. Here’s how this
     looks.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 举个例子，我们将创建一个平方和函数。首先，让我们在简单的Python中实现这个函数。我们想要支持一个类似于numpy [`sum`](generated/numpy.sum.html#numpy.sum
+    "numpy.sum") 函数的‘axis’参数，因此我们需要为*op_axes*参数构建一个列表。这是看起来的样子。
 - en: Example
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE34]'
+  id: totrans-123
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: To Cython-ize this function, we replace the inner loop (y[…] += x*x) with Cython
     code that’s specialized for the float64 dtype. With the ‘external_loop’ flag enabled,
     the arrays provided to the inner loop will always be one-dimensional, so very
     little checking needs to be done.
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 要将这个函数Cython化，我们将内部循环（y[…] += x*x）替换为针对float64数据类型专门化的Cython代码。启用‘external_loop’标志后，提供给内部循环的数组将始终是一维的，因此几乎不需要进行太多的检查。
 - en: 'Here’s the listing of sum_squares.pyx:'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是 sum_squares.pyx 的代码清单：
 - en: '[PRE35]'
+  id: totrans-126
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'On this machine, building the .pyx file into a module looked like the following,
     but you may have to find some Cython tutorials to tell you the specifics for your
     system configuration.:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这台机器上，将 .pyx 文件构建为一个模块如下，但你可能需要找一些Cython教程来告诉你系统配置的具体情况。：
 - en: '[PRE36]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: Running this from the Python interpreter produces the same answers as our native
     Python/NumPy code did.
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 从Python解释器运行这个函数会产生与我们原生的Python/NumPy代码相同的答案。
 - en: Example
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE37]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'Doing a little timing in IPython shows that the reduced overhead and memory
     allocation of the Cython inner loop is providing a very nice speedup over both
     the straightforward Python code and an expression using NumPy’s built-in sum function.:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 在IPython中进行一点时间测试显示，Cython内部循环减少的开销和内存分配为我们提供了一个非常好的加速效果，比起直接的Python代码和使用NumPy内置的求和函数表达式要好得多。
 - en: '[PRE38]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: Single array iteration
+  id: totrans-134
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 单个数组迭代
 - en: The most basic task that can be done with the [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") is to visit every element of an array. Each element is provided
     one by one using the standard Python iterator interface.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")可以完成的最基本任务是访问数组的每个元素。使用标准的Python迭代器接口，每个元素会逐个提供。
 - en: Example
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE39]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: An important thing to be aware of for this iteration is that the order is chosen
     to match the memory layout of the array instead of using a standard C or Fortran
     ordering. This is done for access efficiency, reflecting the idea that by default
     one simply wants to visit each element without concern for a particular ordering.
     We can see this by iterating over the transpose of our previous array, compared
     to taking a copy of that transpose in C order.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于这种迭代，需要注意的一点是迭代顺序是选择与数组的内存布局匹配，而不是使用标准的C或Fortran顺序。这样做是为了提高访问效率，反映了默认情况下，简单地希望访问每个元素而不关注特定的顺序的想法。我们可以通过迭代我们上一个数组的转置来看到这一点，与以C顺序复制该转置的方式进行比较。
 - en: Example
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE40]'
+  id: totrans-140
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: '[PRE41]'
+  id: totrans-141
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: The elements of both *a* and *a.T* get traversed in the same order, namely the
     order they are stored in memory, whereas the elements of *a.T.copy(order=’C’)*
     get visited in a different order because they have been put into a different memory
     layout.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: '*a*和*a.T*的元素以相同的顺序遍历，即它们在内存中存储的顺序，而*a.T.copy(order=''C'')*的元素以不同的顺序访问，因为它们已经被放置在不同的内存布局中。'
 - en: Controlling iteration order
+  id: totrans-143
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 控制迭代顺序
 - en: There are times when it is important to visit the elements of an array in a
     specific order, irrespective of the layout of the elements in memory. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object provides an *order* parameter to control this aspect of
     iteration. The default, having the behavior described above, is order=’K’ to keep
     the existing order. This can be overridden with order=’C’ for C order and order=’F’
     for Fortran order.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时候，重要的是按照特定的顺序访问数组的元素，而不论内存中元素的布局如何。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象提供了一个*order*参数来控制迭代的这个方面。默认情况下，该参数的行为如上所述，为order='K'，保持现有顺序。可以使用order='C'来强制使用C顺序，order='F'来强制使用Fortran顺序。
 - en: Example
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE42]'
+  id: totrans-146
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: '### Modifying array values'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 修改数组值'
 - en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     treats the input operand as a read-only object. To be able to modify the array
     elements, you must specify either read-write or write-only mode using the *‘readwrite’*
     or *‘writeonly’* per-operand flags.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")将输入操作数视为只读对象。要能够修改数组元素，必须使用*‘readwrite’*或*‘writeonly’*的每个操作数标志指定读写或只写模式。
 - en: 'The nditer will then yield writeable buffer arrays which you may modify. However,
     because the nditer must copy this buffer data back to the original array once
     iteration is finished, you must signal when the iteration is ended, by one of
     two methods. You may either:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: nditer将产生可写入的缓冲数组，您可以修改这些数组。然而，由于nditer必须在迭代结束时将该缓冲区数据复制回原始数组，因此您必须在迭代结束时发出信号，可以采用以下两种方法之一。可以选择：
 - en: used the nditer as a context manager using the *with* statement, and the temporary
     data will be written back when the context is exited.
+  id: totrans-150
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当使用*with*语句将`nditer`作为上下文管理器时，临时数据将在退出上下文时写回。
 - en: ''
+  id: totrans-151
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-152
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: call the iterator’s *close* method once finished iterating, which will trigger
     the write-back.
+  id: totrans-153
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 迭代结束后，调用迭代器的*close*方法，将触发写回。
 - en: The nditer can no longer be iterated once either *close* is called or its context
     is exited.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦调用*close*或退出上下文，`nditer`将无法再迭代。
 - en: Example
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE43]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: If you are writing code that needs to support older versions of numpy, note
     that prior to 1.15, [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     was not a context manager and did not have a *close* method. Instead it relied
     on the destructor to initiate the writeback of the buffer.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你正在编写需要支持旧版本numpy的代码，请注意在1.15之前，[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")不是上下文管理器，也没有*close*方法。相反，它依赖于析构函数来启动缓冲区的写回。
 - en: Using an external loop
+  id: totrans-158
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用外部循环
 - en: In all the examples so far, the elements of *a* are provided by the iterator
     one at a time, because all the looping logic is internal to the iterator. While
     this is simple and convenient, it is not very efficient. A better approach is
     to move the one-dimensional innermost loop into your code, external to the iterator.
     This way, NumPy’s vectorized operations can be used on larger chunks of the elements
     being visited.
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止的所有示例中，迭代器一次只提供一个元素，因为所有循环逻辑都是迭代器内部的。虽然这很简单和方便，但效率不高。更好的方法是将一维最内层循环移到你的代码中，外部超过迭代器。这样，NumPy的向量化操作可以用于正在访问的元素的更大块。
 - en: The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") will
     try to provide chunks that are as large as possible to the inner loop. By forcing
     ‘C’ and ‘F’ order, we get different external loop sizes. This mode is enabled
     by specifying an iterator flag.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")将尝试为内部循环提供尽可能大的块。强制使用‘C’和‘F’顺序时，我们得到不同的外部循环大小。可以通过指定迭代器标志来启用此模式。'
 - en: Observe that with the default of keeping native memory order, the iterator is
     able to provide a single one-dimensional chunk, whereas when forcing Fortran order,
     it has to provide three chunks of two elements each.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，默认保留本机内存顺序，迭代器能够提供单个一维块，而强制Fortran顺序时，它必须提供三个每个两个元素的块。
 - en: Example
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE44]'
+  id: totrans-163
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: '[PRE45]'
+  id: totrans-164
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: Tracking an index or multi-index
+  id: totrans-165
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 跟踪索引或多索引
 - en: During iteration, you may want to use the index of the current element in a
     computation. For example, you may want to visit the elements of an array in memory
     order, but use a C-order, Fortran-order, or multidimensional index to look up
     values in a different array.
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 在迭代过程中，您可能希望在计算中使用当前元素的索引。例如，您可能希望以内存顺序访问数组的元素，但使用C顺序、Fortran顺序或多维索引来查找不同数组中的值。
 - en: 'The index is tracked by the iterator object itself, and accessible through
     the *index* or *multi_index* properties, depending on what was requested. The
     examples below show printouts demonstrating the progression of the index:'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 索引由迭代器对象本身跟踪，并通过*index*或*multi_index*属性访问，具体取决于所请求的内容。下面的示例显示了打印输出，用于演示索引的变化：
 - en: Example
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE46]'
+  id: totrans-169
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: '[PRE47]'
+  id: totrans-170
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: '[PRE48]'
+  id: totrans-171
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: Tracking an index or multi-index is incompatible with using an external loop,
     because it requires a different index value per element. If you try to combine
     these flags, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     object will raise an exception.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 跟踪索引或多索引与使用外部循环不兼容，因为每个元素需要不同的索引值。如果尝试结合这些标志，[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象将引发异常。
 - en: Example
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE49]'
+  id: totrans-174
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: Alternative looping and element access
+  id: totrans-175
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 替代循环和元素访问
 - en: To make its properties more readily accessible during iteration, [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") has an alternative syntax for iterating, which works explicitly
     with the iterator object itself. With this looping construct, the current value
     is accessible by indexing into the iterator. Other properties, such as tracked
     indices remain as before. The examples below produce identical results to the
     ones in the previous section.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了在迭代过程中更容易地使用其属性，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")具有一种替代语法，可以显式地使用迭代器对象本身进行迭代。使用这种循环结构，可以通过对迭代器进行索引来访问当前值。其他属性，如跟踪的索引与之前一样。下面的示例产生与前一节中相同的结果。
 - en: Example
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE50]'
+  id: totrans-178
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: '[PRE51]'
+  id: totrans-179
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: '[PRE52]'
+  id: totrans-180
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: Buffering the array elements
+  id: totrans-181
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 缓冲数组元素
 - en: When forcing an iteration order, we observed that the external loop option may
     provide the elements in smaller chunks because the elements can’t be visited in
     the appropriate order with a constant stride. When writing C code, this is generally
     fine, however in pure Python code this can cause a significant reduction in performance.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 在强制迭代顺序时，我们观察到外部循环选项可能会以较小的块提供元素，因为元素不能以恒定的步长以恰当的顺序访问。在编写C代码时，这通常没问题，然而在纯Python代码中，这可能会导致性能显著下降。
 - en: By enabling buffering mode, the chunks provided by the iterator to the inner
     loop can be made larger, significantly reducing the overhead of the Python interpreter.
     In the example forcing Fortran iteration order, the inner loop gets to see all
     the elements in one go when buffering is enabled.
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过启用缓冲模式，迭代器传递给内部循环的块可以更大，大大减少了Python解释器的开销。在例子中强制Fortran迭代顺序时，启用缓冲时，内部循环可以一次性看到所有元素。
 - en: Example
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE53]'
+  id: totrans-185
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: '[PRE54]'
+  id: totrans-186
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: Iterating as a specific data type
+  id: totrans-187
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 作为特定数据类型迭代
 - en: There are times when it is necessary to treat an array as a different data type
     than it is stored as. For instance, one may want to do all computations on 64-bit
     floats, even if the arrays being manipulated are 32-bit floats. Except when writing
     low-level C code, it’s generally better to let the iterator handle the copying
     or buffering instead of casting the data type yourself in the inner loop.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时候需要将数组视为与其存储的不同数据类型。例如，即使被操作的数组是32位浮点数，可以要求在所有计算中都使用64位浮点数进行。除非编写低级C代码，通常最好让迭代器处理拷贝或缓冲，而不是在内部循环中自己进行数据类型转换。
 - en: There are two mechanisms which allow this to be done, temporary copies and buffering
     mode. With temporary copies, a copy of the entire array is made with the new data
     type, then iteration is done in the copy. Write access is permitted through a
@@ -843,277 +1236,405 @@
     major drawback of temporary copies is that the temporary copy may consume a large
     amount of memory, particularly if the iteration data type has a larger itemsize
     than the original one.
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种机制可以实现这个目标，即临时拷贝和缓冲模式。使用临时拷贝，会使用新的数据类型创建整个数组的副本，然后对副本进行迭代。在所有迭代完成后，可以通过一种模式对原始数组进行写入访问。临时拷贝的主要缺点是，如果迭代数据类型的itemsize大于原始数据类型的itemsize，临时拷贝可能会消耗大量内存。
 - en: Buffering mode mitigates the memory usage issue and is more cache-friendly than
     making temporary copies. Except for special cases, where the whole array is needed
     at once outside the iterator, buffering is recommended over temporary copying.
     Within NumPy, buffering is used by the ufuncs and other functions to support flexible
     inputs with minimal memory overhead.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 缓冲模式可以减少内存使用，并且比临时拷贝更加高效。除了一些特殊情况，例如在迭代器外部需要使用整个数组时，建议使用缓冲模式代替临时拷贝。在NumPy中，缓冲模式被ufuncs和其他函数用于支持灵活输入，并且内存开销很小。
 - en: In our examples, we will treat the input array with a complex data type, so
     that we can take square roots of negative numbers. Without enabling copies or
     buffering mode, the iterator will raise an exception if the data type doesn’t
     match precisely.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们的示例中，我们将使用复杂数据类型处理输入数组，以便我们可以对负数进行平方根运算。如果不启用拷贝或缓冲模式，迭代器将在数据类型不精确匹配时引发异常。
 - en: Example
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE55]'
+  id: totrans-193
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: In copying mode, ‘copy’ is specified as a per-operand flag. This is done to
     provide control in a per-operand fashion. Buffering mode is specified as an iterator
     flag.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 在拷贝模式下，可以通过每个操作数的标志“copy”来指定。这样可以提供按操作数的方式进行控制。缓冲模式可以通过一个迭代器标志来指定。
 - en: Example
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE56]'
+  id: totrans-196
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: '[PRE57]'
+  id: totrans-197
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: The iterator uses NumPy’s casting rules to determine whether a specific conversion
     is permitted. By default, it enforces ‘safe’ casting. This means, for example,
     that it will raise an exception if you try to treat a 64-bit float array as a
     32-bit float array. In many cases, the rule ‘same_kind’ is the most reasonable
     rule to use, since it will allow conversion from 64 to 32-bit float, but not from
     float to int or from complex to float.
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: 迭代器使用NumPy的类型转换规则来确定是否允许特定的转换。默认情况下，它实施“safe”类型转换。这意味着，例如，如果尝试将64位浮点数组视为32位浮点数组，它将引发异常。在许多情况下，“same_kind”规则是最合理的规则，因为它允许从64位转换为32位浮点数，但不允许从浮点数转换为整数或从复数转换为浮点数。
 - en: Example
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE58]'
+  id: totrans-200
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: '[PRE59]'
+  id: totrans-201
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: '[PRE60]'
+  id: totrans-202
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: One thing to watch out for is conversions back to the original data type when
     using a read-write or write-only operand. A common case is to implement the inner
     loop in terms of 64-bit floats, and use ‘same_kind’ casting to allow the other
     floating-point types to be processed as well. While in read-only mode, an integer
     array could be provided, read-write mode will raise an exception because conversion
     back to the array would violate the casting rule.
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用读写或只写操作数进行转换回原始数据类型时需注意。常见的情况是使用64位浮点数实现内部循环，并使用“same_kind”类型转换以便处理其他浮点数类型。虽然在只读模式下可以提供整数数组，但在读写模式下将引发异常，因为转换回数组将违反类型转换规则。
 - en: Example
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE61]'
+  id: totrans-205
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: Controlling iteration order
+  id: totrans-206
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 控制迭代顺序
 - en: There are times when it is important to visit the elements of an array in a
     specific order, irrespective of the layout of the elements in memory. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object provides an *order* parameter to control this aspect of
     iteration. The default, having the behavior described above, is order=’K’ to keep
     the existing order. This can be overridden with order=’C’ for C order and order=’F’
     for Fortran order.
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时重要的是以特定顺序访问数组的元素，不管元素在内存中的布局如何。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") 对象提供了一个*order*参数来控制迭代的这个方面。默认情况下，保持上述行为的是order=’K’以保持现有顺序。可以用order=’C’覆盖为C顺序和order=’F’为Fortran顺序。
 - en: Example
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE62]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: '### Modifying array values'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 修改数组值'
 - en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     treats the input operand as a read-only object. To be able to modify the array
     elements, you must specify either read-write or write-only mode using the *‘readwrite’*
     or *‘writeonly’* per-operand flags.
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") 将输入操作数视为只读对象。要能够修改数组元素，必须使用*‘readwrite’*或*‘writeonly’*逐操作数标志指定读写或仅写模式。
 - en: 'The nditer will then yield writeable buffer arrays which you may modify. However,
     because the nditer must copy this buffer data back to the original array once
     iteration is finished, you must signal when the iteration is ended, by one of
     two methods. You may either:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后nditer将生成可写入的缓冲区数组，您可以修改。然而，由于nditer在迭代结束后必须将此缓冲区数据复制回原始数组，因此必须通过两种方法之一来信号迭代结束。您可以：
 - en: used the nditer as a context manager using the *with* statement, and the temporary
     data will be written back when the context is exited.
+  id: totrans-213
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用*with*语句将nditer作为上下文管理器使用，并且在退出上下文时将临时数据写回。
 - en: ''
+  id: totrans-214
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-215
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: call the iterator’s *close* method once finished iterating, which will trigger
     the write-back.
+  id: totrans-216
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在迭代完成后调用迭代器的*close*方法，这将触发写回。
 - en: The nditer can no longer be iterated once either *close* is called or its context
     is exited.
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦调用*close*或退出其上下文，nditer将不再可迭代。
 - en: Example
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE63]'
+  id: totrans-219
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: If you are writing code that needs to support older versions of numpy, note
     that prior to 1.15, [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     was not a context manager and did not have a *close* method. Instead it relied
     on the destructor to initiate the writeback of the buffer.
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您正在编写需要支持较旧版本的numpy的代码，请注意，在1.15之前，[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") 不是上下文管理器，也没有*close*方法。相反，它依赖析构函数来启动缓冲区的写回。
 - en: Using an external loop
+  id: totrans-221
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用外部循环
 - en: In all the examples so far, the elements of *a* are provided by the iterator
     one at a time, because all the looping logic is internal to the iterator. While
     this is simple and convenient, it is not very efficient. A better approach is
     to move the one-dimensional innermost loop into your code, external to the iterator.
     This way, NumPy’s vectorized operations can be used on larger chunks of the elements
     being visited.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，所有示例中，*a* 中的元素都是由迭代器逐个提供的，因为所有循环逻辑都是迭代器内部的。虽然这种方法简单方便，但并不是很高效。更好的方法是将一维的内部循环移动到您的代码中，即在迭代器外部。这样，NumPy的向量化操作可以用于正在访问的元素的更大块。
 - en: The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") will
     try to provide chunks that are as large as possible to the inner loop. By forcing
     ‘C’ and ‘F’ order, we get different external loop sizes. This mode is enabled
     by specifying an iterator flag.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") 将尝试提供尽可能大的块给内部循环。通过强制‘C’和‘F’顺序，我们得到不同的外部循环大小。通过指定迭代器标志来启用此模式。'
 - en: Observe that with the default of keeping native memory order, the iterator is
     able to provide a single one-dimensional chunk, whereas when forcing Fortran order,
     it has to provide three chunks of two elements each.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，保持本机内存顺序的默认设置下，迭代器可以提供一个单一的一维块，而当强制Fortran顺序时，它必须提供三个每个两个元素的块。
 - en: Example
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE64]'
+  id: totrans-226
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: '[PRE65]'
+  id: totrans-227
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: Tracking an index or multi-index
+  id: totrans-228
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 跟踪一个索引或多维索引
 - en: During iteration, you may want to use the index of the current element in a
     computation. For example, you may want to visit the elements of an array in memory
     order, but use a C-order, Fortran-order, or multidimensional index to look up
     values in a different array.
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 在迭代过程中，您可能希望在计算中使用当前元素的索引。例如，您可能希望按内存顺序访问数组的元素，但使用C顺序、Fortran顺序或多维索引来查找不同数组中的值。
 - en: 'The index is tracked by the iterator object itself, and accessible through
     the *index* or *multi_index* properties, depending on what was requested. The
     examples below show printouts demonstrating the progression of the index:'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 索引由迭代器对象本身跟踪，并可以通过 *index* 或 *multi_index* 属性访问，具体取决于所请求的内容。下面的示例展示了打印输出，以演示索引的进展情况：
 - en: Example
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE66]'
+  id: totrans-232
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: '[PRE67]'
+  id: totrans-233
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: '[PRE68]'
+  id: totrans-234
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: Tracking an index or multi-index is incompatible with using an external loop,
     because it requires a different index value per element. If you try to combine
     these flags, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     object will raise an exception.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 跟踪索引或多索引不兼容于使用外部循环，因为它需要每个元素一个不同的索引值。如果尝试结合这些标志，则[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象将引发异常。
 - en: Example
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE69]'
+  id: totrans-237
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: Alternative looping and element access
+  id: totrans-238
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 替代循环和元素访问
 - en: To make its properties more readily accessible during iteration, [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") has an alternative syntax for iterating, which works explicitly
     with the iterator object itself. With this looping construct, the current value
     is accessible by indexing into the iterator. Other properties, such as tracked
     indices remain as before. The examples below produce identical results to the
     ones in the previous section.
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了在迭代过程中更容易访问其属性，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")提供了另一种迭代的语法，它直接与迭代器对象本身一起工作。使用这种循环结构，可以通过对迭代器进行索引来访问当前值。其他属性，如跟踪的索引，保持不变。下面的示例生成了与前一节中相同的结果。
 - en: Example
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE70]'
+  id: totrans-241
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: '[PRE71]'
+  id: totrans-242
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: '[PRE72]'
+  id: totrans-243
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: Buffering the array elements
+  id: totrans-244
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 缓冲数组元素
 - en: When forcing an iteration order, we observed that the external loop option may
     provide the elements in smaller chunks because the elements can’t be visited in
     the appropriate order with a constant stride. When writing C code, this is generally
     fine, however in pure Python code this can cause a significant reduction in performance.
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 在强制迭代顺序时，我们观察到外循环选项可能会以较小的块提供元素，因为元素不能以恒定的步幅按适当的顺序访问。在编写 C 代码时，这通常没问题，但在纯 Python
+    代码中，这可能会导致性能显著下降。
 - en: By enabling buffering mode, the chunks provided by the iterator to the inner
     loop can be made larger, significantly reducing the overhead of the Python interpreter.
     In the example forcing Fortran iteration order, the inner loop gets to see all
     the elements in one go when buffering is enabled.
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过启用缓冲模式，可以使迭代器提供给内循环的块变得更大，从而显著降低 Python 解释器的开销。例如，强制使用 Fortran 迭代顺序时，当启用缓冲时，内循环可以一次性看到所有元素。
 - en: Example
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE73]'
+  id: totrans-248
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: '[PRE74]'
+  id: totrans-249
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: Iterating as a specific data type
+  id: totrans-250
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 作为特定数据类型进行迭代
 - en: There are times when it is necessary to treat an array as a different data type
     than it is stored as. For instance, one may want to do all computations on 64-bit
     floats, even if the arrays being manipulated are 32-bit floats. Except when writing
     low-level C code, it’s generally better to let the iterator handle the copying
     or buffering instead of casting the data type yourself in the inner loop.
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时需要将数组视为存储时的不同数据类型。例如，即使被操作的数组是 32 位浮点数，也可能希望在 64 位浮点数上进行所有计算。除了编写低级 C 代码时，通常最好让迭代器处理复制或缓冲，而不是在内部循环中自己转换数据类型。
 - en: There are two mechanisms which allow this to be done, temporary copies and buffering
     mode. With temporary copies, a copy of the entire array is made with the new data
     type, then iteration is done in the copy. Write access is permitted through a
@@ -1121,142 +1642,213 @@
     major drawback of temporary copies is that the temporary copy may consume a large
     amount of memory, particularly if the iteration data type has a larger itemsize
     than the original one.
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种机制可以实现这个目标，即临时副本和缓冲模式。使用临时副本时，会对整个数组进行新数据类型的复制，然后在副本上进行迭代。在迭代完成后，可以通过一种更新原数组的模式进行写入。临时副本的主要缺点在于，如果迭代数据类型的
+    itemsize 大于原始数据类型，临时副本可能会消耗大量内存。
 - en: Buffering mode mitigates the memory usage issue and is more cache-friendly than
     making temporary copies. Except for special cases, where the whole array is needed
     at once outside the iterator, buffering is recommended over temporary copying.
     Within NumPy, buffering is used by the ufuncs and other functions to support flexible
     inputs with minimal memory overhead.
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 缓冲模式缓解了内存使用问题，并且比制作临时副本更符合缓存的工作方式。除了一些特殊情况，需要在迭代器之外一次性使用整个数组时，建议使用缓冲而不是临时复制。在
+    NumPy 中，ufuncs 和其他函数使用缓冲支持具有最小内存开销的灵活输入。
 - en: In our examples, we will treat the input array with a complex data type, so
     that we can take square roots of negative numbers. Without enabling copies or
     buffering mode, the iterator will raise an exception if the data type doesn’t
     match precisely.
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们的例子中，我们将处理具有复杂数据类型的输入数组，以便我们可以对负数取平方根。如果数据类型不精确匹配，迭代器将在不启用复制或缓冲模式时引发异常。
 - en: Example
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE75]'
+  id: totrans-256
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: In copying mode, ‘copy’ is specified as a per-operand flag. This is done to
     provide control in a per-operand fashion. Buffering mode is specified as an iterator
     flag.
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 在复制模式中，‘copy’被指定为每个操作数的标志。这样做是为了以每个操作数的方式来提供控制。缓冲模式被指定为迭代器标志。
 - en: Example
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE76]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: '[PRE77]'
+  id: totrans-260
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: The iterator uses NumPy’s casting rules to determine whether a specific conversion
     is permitted. By default, it enforces ‘safe’ casting. This means, for example,
     that it will raise an exception if you try to treat a 64-bit float array as a
     32-bit float array. In many cases, the rule ‘same_kind’ is the most reasonable
     rule to use, since it will allow conversion from 64 to 32-bit float, but not from
     float to int or from complex to float.
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 迭代器使用 NumPy 的转换规则来确定特定转换是否被允许。默认情况下，它执行‘safe’转换。这意味着，例如，如果尝试将 64 位浮点数组视为 32
+    位浮点数组，它会引发异常。在许多情况下，‘same_kind’规则是最合理的规则，因为它允许从 64 位转换为 32 位浮点，但不允许从浮点转换为整数或从复数转换为浮点。
 - en: Example
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE78]'
+  id: totrans-263
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE78]'
 - en: '[PRE79]'
+  id: totrans-264
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE79]'
 - en: '[PRE80]'
+  id: totrans-265
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE80]'
 - en: One thing to watch out for is conversions back to the original data type when
     using a read-write or write-only operand. A common case is to implement the inner
     loop in terms of 64-bit floats, and use ‘same_kind’ casting to allow the other
     floating-point types to be processed as well. While in read-only mode, an integer
     array could be provided, read-write mode will raise an exception because conversion
     back to the array would violate the casting rule.
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 要注意的一点是当使用可读写或仅写入操作数时，将数据类型转换回原始数据类型。一个常见情况是根据 64 位浮点实现内部循环，并使用‘same_kind’转换来允许处理其他浮点类型。在只读模式下，可以提供一个整数数组，而在读写模式下，将引发异常，因为转换回数组将违反转换规则。
 - en: Example
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE81]'
+  id: totrans-268
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE81]'
 - en: Broadcasting array iteration
+  id: totrans-269
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 广播数组迭代
 - en: NumPy has a set of rules for dealing with arrays that have differing shapes
     which are applied whenever functions take multiple operands which combine element-wise.
     This is called [broadcasting](../user/basics.ufuncs.html#ufuncs-broadcasting).
     The [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
     can apply these rules for you when you need to write such a function.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 有一组规则来处理具有不同形状的数组，这些规则适用于函数接受多个操作数并进行逐元素结合时。这被称为[广播](../user/basics.ufuncs.html#ufuncs-broadcasting)。当需要编写这样一个函数时，[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") 对象可以为您应用这些规则。
 - en: As an example, we print out the result of broadcasting a one and a two dimensional
     array together.
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 举个例子，我们打印出将一维和二维数组进行广播的结果。
 - en: Example
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE82]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE82]'
 - en: When a broadcasting error occurs, the iterator raises an exception which includes
     the input shapes to help diagnose the problem.
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 当发生广播错误时，迭代器会引发异常，其中包含输入形状以帮助诊断问题。
 - en: Example
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE83]'
+  id: totrans-276
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE83]'
 - en: Iterator-allocated output arrays
+  id: totrans-277
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 迭代器分配的输出数组
 - en: A common case in NumPy functions is to have outputs allocated based on the broadcasting
     of the input, and additionally have an optional parameter called ‘out’ where the
     result will be placed when it is provided. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object provides a convenient idiom that makes it very easy to
     support this mechanism.
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 NumPy 函数中的一个常见情况是根据输入的广播分配输出，并且还有一个可选参数称为 ‘out’，为提供结果时提供位置。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象提供了一个方便的习语，使得支持这一机制变得非常容易。
 - en: We’ll show how this works by creating a function [`square`](generated/numpy.square.html#numpy.square
     "numpy.square") which squares its input. Let’s start with a minimal function definition
     excluding ‘out’ parameter support.
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过创建一个名为[`square`](generated/numpy.square.html#numpy.square "numpy.square")的函数来展示它是如何工作的，该函数的作用是对输入进行平方。让我们从一个最简的函数定义开始，不包括‘out’参数支持。
 - en: Example
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE84]'
+  id: totrans-281
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE84]'
 - en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     uses the flags ‘allocate’ and ‘writeonly’ for operands that are passed in as None.
     This means we were able to provide just the two operands to the iterator, and
     it handled the rest.
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") 对传入的
+    None 作为操作数使用‘allocate’和‘writeonly’标志。这意味着我们只需为迭代器提供这两个操作数，它会处理其余的。
 - en: When adding the ‘out’ parameter, we have to explicitly provide those flags,
     because if someone passes in an array as ‘out’, the iterator will default to ‘readonly’,
     and our inner loop would fail. The reason ‘readonly’ is the default for input
     arrays is to prevent confusion about unintentionally triggering a reduction operation.
     If the default were ‘readwrite’, any broadcasting operation would also trigger
     a reduction, a topic which is covered later in this document.
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: 当添加“out”参数时，我们必须明确提供这些标志，因为如果有人将数组作为“out”传入，则迭代器将默认为“readonly”，我们的内部循环将失败。 “readonly”
+    是输入数组的默认值的原因是为了防止意外触发缩减操作而引起混淆。 如果默认值为“readwrite”，任何广播操作也将触发缩减操作，这是本文档后面将涉及的一个主题。
 - en: While we’re at it, let’s also introduce the ‘no_broadcast’ flag, which will
     prevent the output from being broadcast. This is important, because we only want
     one input value for each output. Aggregating more than one input value is a reduction
@@ -1265,31 +1857,49 @@
     that results from disabling broadcasting is much more understandable for end-users.
     To see how to generalize the square function to a reduction, look at the sum of
     squares function in the section about Cython.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 在此之际，让我们也引入“no_broadcast”标志，这将阻止输出进行广播。 这很重要，因为我们只想要每个输出一个输入值。 聚合多个输入值是一个需要特殊处理的缩减操作。
+    它已经会引发错误，因为缩减必须在迭代器标志中明确启用，但是由于禁用广播而产生的错误消息对终端用户来说更容易理解。 要了解如何将平方函数推广到缩减，请查看有关
+    Cython 部分中的平方和函数。
 - en: For completeness, we’ll also add the ‘external_loop’ and ‘buffered’ flags, as
     these are what you will typically want for performance reasons.
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了完整起见，我们还将添加“external_loop”和“buffered”标志，因为出于性能原因，这通常是您所需要的。
 - en: Example
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE85]'
+  id: totrans-287
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE85]'
 - en: '[PRE86]'
+  id: totrans-288
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE86]'
 - en: '[PRE87]'
+  id: totrans-289
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE87]'
 - en: '[PRE88]'
+  id: totrans-290
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE88]'
 - en: Outer Product Iteration
+  id: totrans-291
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外积迭代
 - en: Any binary operation can be extended to an array operation in an outer product
     fashion like in [`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer"),
     and the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
@@ -1297,14 +1907,21 @@
     It is also possible to do this with [`newaxis`](constants.html#numpy.newaxis "numpy.newaxis")
     indexing, but we will show you how to directly use the nditer *op_axes* parameter
     to accomplish this with no intermediate views.
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 任何二元操作都可以以类似于 [`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer")
+    中的外积方式扩展为数组操作，并且 [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
+    对象通过显式映射操作数的轴提供了一种实现此目的的方法。 也可以使用 [`newaxis`](constants.html#numpy.newaxis "numpy.newaxis")
+    索引来完成此操作，但我们将向您展示如何直接使用 nditer 的 *op_axes* 参数来完成此操作，而无需中间视图。
 - en: We’ll do a simple outer product, placing the dimensions of the first operand
     before the dimensions of the second operand. The *op_axes* parameter needs one
     list of axes for each operand, and provides a mapping from the iterator’s axes
     to the axes of the operand.
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将执行一个简单的外积，将第一个操作数的维度放在第二个操作数的维度之前。 *op_axes* 参数需要每个操作数的一个轴列表，并提供迭代器轴到操作数轴的映射。
 - en: Suppose the first operand is one dimensional and the second operand is two dimensional.
     The iterator will have three dimensions, so *op_axes* will have two 3-element
     lists. The first list picks out the one axis of the first operand, and is -1 for
@@ -1313,110 +1930,163 @@
     the axes picked out in the first operand. Its list is [-1, 0, 1]. The output operand
     maps onto the iterator axes in the standard manner, so we can provide None instead
     of constructing another list.
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设第一个操作数是一维的，第二个操作数是二维的。 迭代器将有三个维度，因此 *op_axes* 将有两个 3 元素列表。 第一个列表选择第一个操作数的一个轴，并且对于迭代器的其余轴，它为
+    -1，最终结果为 [0, -1, -1]。 第二个列表选择第二个操作数的两个轴，但不应与第一个操作数中选择的轴重叠。 其列表为 [-1, 0, 1]。 输出操作数以标准方式映射到迭代器轴，因此我们可以提供
+    None 而不是构造另一个列表。
 - en: The operation in the inner loop is a straightforward multiplication. Everything
     to do with the outer product is handled by the iterator setup.
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 内循环中的操作是直接的乘法。 关于外积的所有内容都由迭代器设置处理。
 - en: Example
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE89]'
+  id: totrans-297
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE89]'
 - en: Note that once the iterator is closed we can not access [`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
     "numpy.nditer.operands") and must use a reference created inside the context manager.
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，一旦迭代器被关闭，我们就无法访问[`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
+    "numpy.nditer.operands")，必须使用在上下文管理器中创建的引用。
 - en: Reduction Iteration
+  id: totrans-299
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 减少迭代
 - en: Whenever a writeable operand has fewer elements than the full iteration space,
     that operand is undergoing a reduction. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object requires that any reduction operand be flagged as read-write,
     and only allows reductions when ‘reduce_ok’ is provided as an iterator flag.
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 每当可写操作数的元素少于完整迭代空间时，该操作数都将经历一个减少。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象要求任何减少操作数标记为读写，并且只允许在提供‘reduce_ok’作为迭代器标志时进行减少。
 - en: For a simple example, consider taking the sum of all elements in an array.
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 举个简单的例子，考虑对数组中所有元素进行求和。
 - en: Example
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如
 - en: '[PRE90]'
+  id: totrans-303
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE90]'
 - en: Things are a little bit more tricky when combining reduction and allocated operands.
     Before iteration is started, any reduction operand must be initialized to its
     starting values. Here’s how we can do this, taking sums along the last axis of
     *a*.
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 将缩减和分配的操作数组合时会有一些复杂。在开始迭代之前，任何减少操作数都必须被初始化为其开始值。以下是我们如何做到这一点，对*a*的最后一个轴求和。
 - en: Example
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如
 - en: '[PRE91]'
+  id: totrans-306
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE91]'
 - en: To do buffered reduction requires yet another adjustment during the setup. Normally
     the iterator construction involves copying the first buffer of data from the readable
     arrays into the buffer. Any reduction operand is readable, so it may be read into
     a buffer. Unfortunately, initialization of the operand after this buffering operation
     is complete will not be reflected in the buffer that the iteration starts with,
     and garbage results will be produced.
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: 要做缓冲减少需要在设置期间进行另一个调整。通常，迭代器构造涉及从可读数组中复制数据的第一个缓冲区。任何减少操作数都是可读取的，因此它可以被读取到缓冲区中。不幸的是，在这个缓冲操作完成之后初始化操作数不会反映在迭代开始时的缓冲区中，并且将产生垃圾结果。
 - en: The iterator flag “delay_bufalloc” is there to allow iterator-allocated reduction
     operands to exist together with buffering. When this flag is set, the iterator
     will leave its buffers uninitialized until it receives a reset, after which it
     will be ready for regular iteration. Here’s how the previous example looks if
     we also enable buffering.
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: 迭代器标志“delay_bufalloc”是为了允许迭代器分配的缩减操作数与缓冲存在在一起。当设置了这个标志时，迭代器将保持其缓冲区未初始化，直到收到重置信号，之后它将准备好进行常规迭代。如果我们还启用缓冲，前面的示例将如下所示。
 - en: Example
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如
 - en: '[PRE92]'
+  id: totrans-310
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE92]'
 - en: Iterator-allocated output arrays
+  id: totrans-311
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 迭代器分配的输出数组
 - en: A common case in NumPy functions is to have outputs allocated based on the broadcasting
     of the input, and additionally have an optional parameter called ‘out’ where the
     result will be placed when it is provided. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object provides a convenient idiom that makes it very easy to
     support this mechanism.
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: 在NumPy函数中的一个常见情况是，根据输入的广播来分配输出，并且还有一个名为‘out’的可选参数，在提供结果时将其放置在那里。[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象提供了一个方便的习语，使得支持这种机制非常容易。
 - en: We’ll show how this works by creating a function [`square`](generated/numpy.square.html#numpy.square
     "numpy.square") which squares its input. Let’s start with a minimal function definition
     excluding ‘out’ parameter support.
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将通过创建一个函数[`square`](generated/numpy.square.html#numpy.square "numpy.square")来展示这是如何工作的，它会对其输入进行平方操作。让我们从一个排除‘out’参数支持的最小函数定义开始。
 - en: Example
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如
 - en: '[PRE93]'
+  id: totrans-315
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE93]'
 - en: By default, the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")
     uses the flags ‘allocate’ and ‘writeonly’ for operands that are passed in as None.
     This means we were able to provide just the two operands to the iterator, and
     it handled the rest.
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，[`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer")对于以None传入的操作数使用了‘allocate’和‘writeonly’标志。这意味着我们只需向迭代器提供两个操作数，剩下的交给它处理。
 - en: When adding the ‘out’ parameter, we have to explicitly provide those flags,
     because if someone passes in an array as ‘out’, the iterator will default to ‘readonly’,
     and our inner loop would fail. The reason ‘readonly’ is the default for input
     arrays is to prevent confusion about unintentionally triggering a reduction operation.
     If the default were ‘readwrite’, any broadcasting operation would also trigger
     a reduction, a topic which is covered later in this document.
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: 当添加‘out’参数时，必须明确提供这些标志，因为如果有人将数组传递给‘out’，迭代器将默认为‘readonly’，而我们的内部循环将失败。输入数组的默认值为‘readonly’是为了防止意外触发减少操作产生混淆。如果默认值是‘readwrite’，任何广播操作也会触发减少操作，这个主题稍后在本文档中讨论。
 - en: While we’re at it, let’s also introduce the ‘no_broadcast’ flag, which will
     prevent the output from being broadcast. This is important, because we only want
     one input value for each output. Aggregating more than one input value is a reduction
@@ -1425,31 +2095,47 @@
     that results from disabling broadcasting is much more understandable for end-users.
     To see how to generalize the square function to a reduction, look at the sum of
     squares function in the section about Cython.
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个过程中，让我们也介绍‘no_broadcast’标志，它将阻止输出被广播。这很重要，因为我们只想要每个输出一个输入值。聚合多于一个输入值是一个需要特殊处理的减少操作。尽管因为减少操作必须在迭代器标志中显式启用，这会引发错误，但禁用广播导致的错误消息对最终用户来说更容易理解。要了解如何将平方函数推广为减少函数，请参阅有关Cython的平方和函数的部分。
 - en: For completeness, we’ll also add the ‘external_loop’ and ‘buffered’ flags, as
     these are what you will typically want for performance reasons.
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了完整起见，我们还将添加‘external_loop’和‘buffered’标志，因为这通常是出于性能原因。
 - en: Example
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE94]'
+  id: totrans-321
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE94]'
 - en: '[PRE95]'
+  id: totrans-322
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE95]'
 - en: '[PRE96]'
+  id: totrans-323
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE96]'
 - en: '[PRE97]'
+  id: totrans-324
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE97]'
 - en: Outer Product Iteration
+  id: totrans-325
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外部积迭代
 - en: Any binary operation can be extended to an array operation in an outer product
     fashion like in [`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer"),
     and the [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") object
@@ -1457,14 +2143,20 @@
     It is also possible to do this with [`newaxis`](constants.html#numpy.newaxis "numpy.newaxis")
     indexing, but we will show you how to directly use the nditer *op_axes* parameter
     to accomplish this with no intermediate views.
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
+  zh: 任何二进制操作都可以像[`outer`](generated/numpy.outer.html#numpy.outer "numpy.outer")中那样以外部积方式扩展为数组操作，而[`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer")对象通过显式映射操作数的轴提供了一种方法。还可以通过[`newaxis`](constants.html#numpy.newaxis
+    "numpy.newaxis")索引来做到这一点，但我们将向您展示如何直接使用nditer的 *op_axes* 参数来实现这一点，而不需要中间视图。
 - en: We’ll do a simple outer product, placing the dimensions of the first operand
     before the dimensions of the second operand. The *op_axes* parameter needs one
     list of axes for each operand, and provides a mapping from the iterator’s axes
     to the axes of the operand.
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将进行一个简单的外部积，将第一个操作数的维度放在第二个操作数的维度之前。*op_axes* 参数需要为每个操作数提供一个轴列表，并且提供了一个从迭代器的轴到操作数的轴的映射。
 - en: Suppose the first operand is one dimensional and the second operand is two dimensional.
     The iterator will have three dimensions, so *op_axes* will have two 3-element
     lists. The first list picks out the one axis of the first operand, and is -1 for
@@ -1473,134 +2165,204 @@
     the axes picked out in the first operand. Its list is [-1, 0, 1]. The output operand
     maps onto the iterator axes in the standard manner, so we can provide None instead
     of constructing another list.
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设第一个操作数是一维的，而第二个操作数是二维的。迭代器将有三个维度，因此 *op_axes* 将有两个包含三个元素的列表。第一个列表选择第一个操作数的一个轴，并且对于迭代器的其他轴，为-1，最终结果是[0，-1，-1]。第二个列表选择第二个操作数的两个轴，但不应与第一个操作数选择的轴重叠。它的列表是[-1，0，1]。输出操作数以标准方式映射到迭代器轴，因此我们可以使用None代替构造另一个列表。
 - en: The operation in the inner loop is a straightforward multiplication. Everything
     to do with the outer product is handled by the iterator setup.
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
+  zh: 内循环中的操作是直接的乘法。与外部积有关的所有事情都由迭代器设置处理。
 - en: Example
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE98]'
+  id: totrans-331
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE98]'
 - en: Note that once the iterator is closed we can not access [`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
     "numpy.nditer.operands") and must use a reference created inside the context manager.
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，一旦迭代器关闭，我们就无法访问 [`operands`](generated/numpy.nditer.operands.html#numpy.nditer.operands
+    "numpy.nditer.operands") ，必须使用在上下文管理器内创建的引用。
 - en: Reduction Iteration
+  id: totrans-333
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 归约迭代
 - en: Whenever a writeable operand has fewer elements than the full iteration space,
     that operand is undergoing a reduction. The [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object requires that any reduction operand be flagged as read-write,
     and only allows reductions when ‘reduce_ok’ is provided as an iterator flag.
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: 每当可写操作数的元素少于完整迭代空间时，该操作数正在进行归约。 [`nditer`](generated/numpy.nditer.html#numpy.nditer
+    "numpy.nditer") 对象要求任何归约操作数都必须标记为读写，只有在提供“reduce_ok”作为迭代器标志时才允许进行归约。
 - en: For a simple example, consider taking the sum of all elements in an array.
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
+  zh: 举个简单的例子，考虑对数组中所有元素求和。
 - en: Example
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE99]'
+  id: totrans-337
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE99]'
 - en: Things are a little bit more tricky when combining reduction and allocated operands.
     Before iteration is started, any reduction operand must be initialized to its
     starting values. Here’s how we can do this, taking sums along the last axis of
     *a*.
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
+  zh: 在合并归约和分配操作数时，事情变得有些棘手。在启动迭代之前，任何归约操作数都必须初始化为其起始值。这是我们如何做到这一点的，沿着 *a* 的最后一个轴求和。
 - en: Example
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE100]'
+  id: totrans-340
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE100]'
 - en: To do buffered reduction requires yet another adjustment during the setup. Normally
     the iterator construction involves copying the first buffer of data from the readable
     arrays into the buffer. Any reduction operand is readable, so it may be read into
     a buffer. Unfortunately, initialization of the operand after this buffering operation
     is complete will not be reflected in the buffer that the iteration starts with,
     and garbage results will be produced.
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: 要进行缓冲归约需要在设置过程中进行另一个调整。通常，迭代器构建涉及将可读数组的第一个缓冲区数据复制到缓冲区中。任何归约操作数都是可读的，因此可能会被读入缓冲区。不幸的是，在此缓冲操作完成后初始化操作数不会反映在迭代开始时的缓冲区中，将产生垃圾结果。
 - en: The iterator flag “delay_bufalloc” is there to allow iterator-allocated reduction
     operands to exist together with buffering. When this flag is set, the iterator
     will leave its buffers uninitialized until it receives a reset, after which it
     will be ready for regular iteration. Here’s how the previous example looks if
     we also enable buffering.
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
+  zh: 迭代器标志“delay_bufalloc”允许迭代器分配的归约操作数与缓冲存在在一起。设置此标志后，迭代器将保持其缓冲区未初始化，直到收到重置之后，才会准备好进行常规迭代。如果我们还启用缓冲，前面的例子将如何呈现。
 - en: Example
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE101]'
+  id: totrans-344
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE101]'
 - en: Putting the Inner Loop in Cython
+  id: totrans-345
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 将内部循环放入 Cython 中
 - en: Those who want really good performance out of their low level operations should
     strongly consider directly using the iteration API provided in C, but for those
     who are not comfortable with C or C++, Cython is a good middle ground with reasonable
     performance tradeoffs. For the [`nditer`](generated/numpy.nditer.html#numpy.nditer
     "numpy.nditer") object, this means letting the iterator take care of broadcasting,
     dtype conversion, and buffering, while giving the inner loop to Cython.
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
+  zh: 那些希望在低级操作中获得非常好性能的人应该认真考虑直接使用 C 中提供的迭代 API，但对于那些不熟悉 C 或 C++ 的人来说，Cython 是一个性能合理的好中间地带。对于
+    [`nditer`](generated/numpy.nditer.html#numpy.nditer "numpy.nditer") 对象来说，这意味着让迭代器处理广播、数据类型转换和缓冲，同时将内部循环交给
+    Cython。
 - en: For our example, we’ll create a sum of squares function. To start, let’s implement
     this function in straightforward Python. We want to support an ‘axis’ parameter
     similar to the numpy [`sum`](generated/numpy.sum.html#numpy.sum "numpy.sum") function,
     so we will need to construct a list for the *op_axes* parameter. Here’s how this
     looks.
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于我们的示例，我们将创建一个求平方和的函数。首先，让我们在直接的 Python 中实现这个函数。我们想支持类似于 numpy [`sum`](generated/numpy.sum.html#numpy.sum
+    "numpy.sum") 函数的 'axis' 参数，因此我们需要为 *op_axes* 参数构造一个列表。这是实现的方式。
 - en: Example
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE102]'
+  id: totrans-349
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE102]'
 - en: To Cython-ize this function, we replace the inner loop (y[…] += x*x) with Cython
     code that’s specialized for the float64 dtype. With the ‘external_loop’ flag enabled,
     the arrays provided to the inner loop will always be one-dimensional, so very
     little checking needs to be done.
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
+  zh: 要将此函数进行 Cython-化，我们用针对 float64 数据类型专门设计的 Cython 代码替换内部循环（y […] += x*x）。启用 'external_loop'
+    标志后，提供给内部循环的数组始终是一维的，因此很少需要进行检查。
 - en: 'Here’s the listing of sum_squares.pyx:'
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是 sum_squares.pyx 的代码清单：
 - en: '[PRE103]'
+  id: totrans-352
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE103]'
 - en: 'On this machine, building the .pyx file into a module looked like the following,
     but you may have to find some Cython tutorials to tell you the specifics for your
     system configuration.:'
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这台机器上，将 .pyx 文件构建为一个模块看起来像下面这样，但是你可能需要找一些 Cython 教程来告诉你系统配置的具体信息。：
 - en: '[PRE104]'
+  id: totrans-354
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE104]'
 - en: Running this from the Python interpreter produces the same answers as our native
     Python/NumPy code did.
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 Python 解释器中运行这段代码会产生与我们本地 Python/NumPy 代码相同的答案。
 - en: Example
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE105]'
+  id: totrans-357
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE105]'
 - en: 'Doing a little timing in IPython shows that the reduced overhead and memory
     allocation of the Cython inner loop is providing a very nice speedup over both
     the straightforward Python code and an expression using NumPy’s built-in sum function.:'
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
+  zh: '在 IPython 中进行一点计时显示，Cython 内循环的减少开销和内存分配提供了对直接 Python 代码和使用 NumPy 内置 sum 函数的表达式都有很好的加速。:'
 - en: '[PRE106]'
+  id: totrans-359
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE106]'

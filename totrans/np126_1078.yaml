@@ -1,11 +1,15 @@
 - en: Memory management in NumPy
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: NumPy 中的内存管理
 - en: 原文：[https://numpy.org/doc/1.26/reference/c-api/data_memory.html](https://numpy.org/doc/1.26/reference/c-api/data_memory.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/reference/c-api/data_memory.html](https://numpy.org/doc/1.26/reference/c-api/data_memory.html)
 - en: The [`numpy.ndarray`](../generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray")
     is a python class. It requires additional memory allocations to hold [`numpy.ndarray.strides`](../generated/numpy.ndarray.strides.html#numpy.ndarray.strides
     "numpy.ndarray.strides"), [`numpy.ndarray.shape`](../generated/numpy.ndarray.shape.html#numpy.ndarray.shape
@@ -13,26 +17,42 @@
     "numpy.ndarray.data") attributes. These attributes are specially allocated after
     creating the python object in *__new__*. The `strides` and `shape` are stored
     in a piece of memory allocated internally.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`numpy.ndarray`](../generated/numpy.ndarray.html#numpy.ndarray "numpy.ndarray")
+    是一个 Python 类。它需要额外的内存分配来保存 [`numpy.ndarray.strides`](../generated/numpy.ndarray.strides.html#numpy.ndarray.strides
+    "numpy.ndarray.strides")、[`numpy.ndarray.shape`](../generated/numpy.ndarray.shape.html#numpy.ndarray.shape
+    "numpy.ndarray.shape") 和 [`numpy.ndarray.data`](../generated/numpy.ndarray.data.html#numpy.ndarray.data
+    "numpy.ndarray.data") 属性。这些属性在创建 Python 对象后在 *__new__* 中特别分配。`strides` 和 `shape`
+    存储在内部分配的内存块中。'
 - en: The `data` allocation used to store the actual array values (which could be
     pointers in the case of `object` arrays) can be very large, so NumPy has provided
     interfaces to manage its allocation and release. This document details how those
     interfaces work.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于存储实际数组值的 `data` 分配（在`object`数组的情况下可能是指针）可能非常大，因此 NumPy 提供了管理其分配和释放的接口。本文详细介绍了这些接口的工作原理。
 - en: Historical overview
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 历史概述
 - en: Since version 1.7.0, NumPy has exposed a set of `PyDataMem_*` functions ([`PyDataMem_NEW`](array.html#c.PyDataMem_NEW
     "PyDataMem_NEW"), [`PyDataMem_FREE`](array.html#c.PyDataMem_FREE "PyDataMem_FREE"),
     [`PyDataMem_RENEW`](array.html#c.PyDataMem_RENEW "PyDataMem_RENEW")) which are
     backed by *alloc*, *free*, *realloc* respectively. In that version NumPy also
     exposed the *PyDataMem_EventHook* function (now deprecated) described below, which
     wrap the OS-level calls.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 自版本1.7.0起，NumPy 暴露了一组 `PyDataMem_*` 函数（[`PyDataMem_NEW`](array.html#c.PyDataMem_NEW
+    "PyDataMem_NEW")、[`PyDataMem_FREE`](array.html#c.PyDataMem_FREE "PyDataMem_FREE")、[`PyDataMem_RENEW`](array.html#c.PyDataMem_RENEW
+    "PyDataMem_RENEW")），分别由 *alloc*、*free*、*realloc* 支持。在该版本中，NumPy 也公开了下面描述的 *PyDataMem_EventHook*
+    函数（现已废弃），它封装了 OS 级别的调用。
 - en: Since those early days, Python also improved its memory management capabilities,
     and began providing various [management policies](https://docs.python.org/3/c-api/memory.html#memoryoverview
     "(in Python v3.11)") beginning in version 3.4\. These routines are divided into
@@ -41,19 +61,30 @@
     added a [`tracemalloc`](https://docs.python.org/3/library/tracemalloc.html#module-tracemalloc
     "(in Python v3.11)") module to trace calls to the various routines. These tracking
     hooks were added to the NumPy `PyDataMem_*` routines.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 自那些早期以来，Python 也改进了其内存管理能力，并在 3.4 版本中开始提供各种[管理策略](https://docs.python.org/3/c-api/memory.html#memoryoverview
+    "(in Python v3.11)")。这些例程分为一组域，每个域都有一个用于内存管理的 [`PyMemAllocatorEx`](https://docs.python.org/3/c-api/memory.html#c.PyMemAllocatorEx
+    "(in Python v3.11") 结构。Python 还添加了一个用于跟踪对各种例程的调用的 [`tracemalloc`](https://docs.python.org/3/library/tracemalloc.html#module-tracemalloc
+    "(in Python v3.11)") 模块。这些跟踪钩子已添加到 NumPy 的 `PyDataMem_*` 例程中。
 - en: NumPy added a small cache of allocated memory in its internal `npy_alloc_cache`,
     `npy_alloc_cache_zero`, and `npy_free_cache` functions. These wrap `alloc`, `alloc-and-memset(0)`
     and `free` respectively, but when `npy_free_cache` is called, it adds the pointer
     to a short list of available blocks marked by size. These blocks can be re-used
     by subsequent calls to `npy_alloc*`, avoiding memory thrashing.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 在其内部的 `npy_alloc_cache`、`npy_alloc_cache_zero` 和 `npy_free_cache` 函数中添加了一小块已分配内存的缓存。这些函数分别封装了
+    `alloc`、`alloc-and-memset(0)` 和 `free`，但当调用 `npy_free_cache` 时，它会将指针添加到一个以大小标记的可用块的短列表中。这些块可以被后续对
+    `npy_alloc*` 的调用重新使用，避免内存抖动。
 - en: Configurable memory routines in NumPy (NEP 49)
+  id: totrans-8
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: NumPy 中的可配置内存例程（NEP 49）
 - en: Users may wish to override the internal data memory routines with ones of their
     own. Since NumPy does not use the Python domain strategy to manage data memory,
     it provides an alternative set of C-APIs to change memory routines. There are
@@ -69,78 +100,128 @@
     lifetime of the process, each `ndarray` carries with it the functions used at
     the time of its instantiation, and these will be used to reallocate or free the
     data memory of the instance.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 用户可能希望使用自己的内部数据内存例程来覆盖内部的数据内存例程。由于 NumPy 不使用 Python 领域策略来管理数据内存，它提供了一组替代的 C-API
+    来更改内存例程。对于大块对象数据，没有Python领域范围的策略，因此这些不太适合NumPy的需求。希望更改NumPy数据内存管理例程的用户可以使用 [`PyDataMem_SetHandler`](#c.PyDataMem_SetHandler
+    "PyDataMem_SetHandler")，它使用一个 [`PyDataMem_Handler`](#c.PyDataMem_Handler "PyDataMem_Handler")
+    结构体来保存用于管理数据内存的函数指针。调用仍然由内部例程包装以调用 [`PyTraceMalloc_Track`](https://docs.python.org/3/c-api/memory.html#c.PyTraceMalloc_Track
+    "(in Python v3.11)")，[`PyTraceMalloc_Untrack`](https://docs.python.org/3/c-api/memory.html#c.PyTraceMalloc_Untrack
+    "(in Python v3.11)")，并将使用已弃用的 [`PyDataMem_EventHookFunc`](#c.PyDataMem_EventHookFunc
+    "PyDataMem_EventHookFunc") 机制。由于函数可能在进程的生命周期内发生变化，每个 `ndarray` 都携带着在其实例化时使用的函数，并且这些函数将用于重新分配或释放该实例的数据内存。
 - en: '[PRE0]'
+  id: totrans-10
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: A struct to hold function pointers used to manipulate memory
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个用于保存用于操作内存的函数指针的结构体
 - en: '[PRE1]'
+  id: totrans-12
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: where the allocator structure is
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 分配器结构体所在位置
 - en: '[PRE2]'
+  id: totrans-14
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: '[PRE3]'
+  id: totrans-15
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Set a new allocation policy. If the input value is `NULL`, will reset the policy
     to the default. Return the previous policy, or return `NULL` if an error has occurred.
     We wrap the user-provided functions so they will still call the python and numpy
     memory management callback hooks.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置新的分配策略。如果输入值为`NULL`，则将策略重置为默认值。返回先前的策略，如果发生错误则返回`NULL`。我们包装用户提供的函数，以便它们依然调用
+    Python 和 numpy 内存管理回调钩子。
 - en: '[PRE4]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Return the current policy that will be used to allocate data for the next `PyArrayObject`.
     On failure, return `NULL`.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回将用于为下一个 `PyArrayObject` 分配数据的当前策略。失败时返回`NULL`。
 - en: For an example of setting up and using the PyDataMem_Handler, see the test in
     `numpy/core/tests/test_mem_policy.py`
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于设置和使用 PyDataMem_Handler 的示例，请参见 `numpy/core/tests/test_mem_policy.py` 中的测试
 - en: '[PRE5]'
+  id: totrans-20
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: This function will be called during data memory manipulation
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 在数据内存操作期间将调用此函数
 - en: '[PRE6]'
+  id: totrans-22
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Sets the allocation event hook for numpy array data.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 为 numpy 数组数据设置分配事件钩子。
 - en: Returns a pointer to the previous hook or `NULL`. If old_data is non-`NULL`,
     the previous user_data pointer will be copied to it.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回指向先前钩子的指针或`NULL`。如果 old_data 非`NULL`，则将将先前的 user_data 指针复制到其中。
 - en: 'If not `NULL`, hook will be called at the end of each `PyDataMem_NEW/FREE/RENEW`:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果非`NULL`，钩子将在每个 `PyDataMem_NEW/FREE/RENEW` 结束时被调用
 - en: '[PRE7]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: When the hook is called, the GIL will be held by the calling thread. The hook
     should be written to be reentrant, if it performs operations that might cause
     new allocation events (such as the creation/destruction numpy objects, or creating/destroying
     Python objects which might cause a gc).
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 当调用钩子时，全局解释器锁将由调用线程持有。如果执行可能导致新分配事件的操作（例如创建/销毁 numpy 对象，或创建/销毁可能导致垃圾回收的 Python
+    对象），则钩子应该被编写为可重入。
 - en: Deprecated in v1.23
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 v1.23 中弃用
 - en: What happens when deallocating if there is no policy set
+  id: totrans-29
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如果没有设置策略，释放时会发生什么
 - en: A rare but useful technique is to allocate a buffer outside NumPy, use [`PyArray_NewFromDescr`](array.html#c.PyArray_NewFromDescr
     "PyArray_NewFromDescr") to wrap the buffer in a `ndarray`, then switch the `OWNDATA`
     flag to true. When the `ndarray` is released, the appropriate function from the
@@ -149,42 +230,67 @@
     call `free()` to release the buffer. If `NUMPY_WARN_IF_NO_MEM_POLICY` is set to
     `1`, a warning will be emitted. The current default is not to emit a warning,
     this may change in a future version of NumPy.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种罕见但有用的技术是在 NumPy 之外分配一个缓冲区，使用[`PyArray_NewFromDescr`](array.html#c.PyArray_NewFromDescr
+    "PyArray_NewFromDescr")将缓冲区包装在一个`ndarray`中，然后将`OWNDATA`标志切换为 true。当释放`ndarray`时，应调用`ndarray`的`PyDataMem_Handler`中的适当函数来释放缓冲区。但是`PyDataMem_Handler`字段从未设置过，它将是`NULL`。出于向后兼容性的原因，NumPy
+    将调用`free()`来释放缓冲区。如果将`NUMPY_WARN_IF_NO_MEM_POLICY`设置为`1`，将发出警告。当前的默认设置是不发出警告，但在将来的
+    NumPy 版本可能会更改。
 - en: 'A better technique would be to use a `PyCapsule` as a base object:'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个更好的技术是将 `PyCapsule` 用作基本对象：
 - en: '[PRE8]'
+  id: totrans-32
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Example of memory tracing with `np.lib.tracemalloc_domain`
+  id: totrans-33
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用 `np.lib.tracemalloc_domain` 进行内存跟踪的示例
 - en: 'Note that since Python 3.6 (or newer), the builtin `tracemalloc` module can
     be used to track allocations inside NumPy. NumPy places its CPU memory allocations
     into the `np.lib.tracemalloc_domain` domain. For additional information, check:
     *https://docs.python.org/3/library/tracemalloc.html*.'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意自 Python 3.6（或更新版本）以来，内置的 `tracemalloc` 模块可以用于跟踪 NumPy 内部的分配。NumPy 将其 CPU
+    内存分配放入 `np.lib.tracemalloc_domain` 域中。有关更多信息，请参阅：*https://docs.python.org/3/library/tracemalloc.html*。
 - en: 'Here is an example on how to use `np.lib.tracemalloc_domain`:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是一个使用 `np.lib.tracemalloc_domain` 的示例：
 - en: '[PRE9]'
+  id: totrans-36
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Historical overview
+  id: totrans-37
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 历史概览
 - en: Since version 1.7.0, NumPy has exposed a set of `PyDataMem_*` functions ([`PyDataMem_NEW`](array.html#c.PyDataMem_NEW
     "PyDataMem_NEW"), [`PyDataMem_FREE`](array.html#c.PyDataMem_FREE "PyDataMem_FREE"),
     [`PyDataMem_RENEW`](array.html#c.PyDataMem_RENEW "PyDataMem_RENEW")) which are
     backed by *alloc*, *free*, *realloc* respectively. In that version NumPy also
     exposed the *PyDataMem_EventHook* function (now deprecated) described below, which
     wrap the OS-level calls.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 从版本 1.7.0 开始，NumPy 公开了一组 `PyDataMem_*` 函数（[`PyDataMem_NEW`](array.html#c.PyDataMem_NEW
+    "PyDataMem_NEW")、[`PyDataMem_FREE`](array.html#c.PyDataMem_FREE "PyDataMem_FREE")、[`PyDataMem_RENEW`](array.html#c.PyDataMem_RENEW
+    "PyDataMem_RENEW")），它们分别由 *alloc*、*free*、*realloc* 支持。在这个版本中，NumPy 还公开了 *PyDataMem_EventHook*
+    功能（现在已弃用），描述如下，它封装了 OS 级别的调用。
 - en: Since those early days, Python also improved its memory management capabilities,
     and began providing various [management policies](https://docs.python.org/3/c-api/memory.html#memoryoverview
     "(in Python v3.11)") beginning in version 3.4\. These routines are divided into
@@ -193,19 +299,29 @@
     added a [`tracemalloc`](https://docs.python.org/3/library/tracemalloc.html#module-tracemalloc
     "(in Python v3.11)") module to trace calls to the various routines. These tracking
     hooks were added to the NumPy `PyDataMem_*` routines.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 自那时起，Python也提高了其内存管理能力，并从 3.4 版本开始提供了各种[管理策略](https://docs.python.org/3/c-api/memory.html#memoryoverview
+    "(在Python v3.11)")。这些例程被分为一组域，每个域都有一组用于内存管理的 [`PyMemAllocatorEx`](https://docs.python.org/3/c-api/memory.html#c.PyMemAllocatorEx
+    "(在Python v3.11)") 结构的例程。Python 还添加了一个 [`tracemalloc`](https://docs.python.org/3/library/tracemalloc.html#module-tracemalloc
+    "(在Python v3.11)") 模块来跟踪各种例程的调用。这些跟踪钩子被添加到 NumPy `PyDataMem_*` 例程中。
 - en: NumPy added a small cache of allocated memory in its internal `npy_alloc_cache`,
     `npy_alloc_cache_zero`, and `npy_free_cache` functions. These wrap `alloc`, `alloc-and-memset(0)`
     and `free` respectively, but when `npy_free_cache` is called, it adds the pointer
     to a short list of available blocks marked by size. These blocks can be re-used
     by subsequent calls to `npy_alloc*`, avoiding memory thrashing.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 在其内部的 `npy_alloc_cache`、`npy_alloc_cache_zero` 和 `npy_free_cache` 函数中增加了一小块分配的内存缓存。这些函数分别封装了`alloc`、`alloc-and-memset(0)`和`free`，但是当调用`npy_free_cache`时，它会将指针添加到一个短的可用块列表中并标记大小。这些块可以被后续对
+    `npy_alloc*` 的调用重新使用，避免内存抖动。
 - en: Configurable memory routines in NumPy (NEP 49)
+  id: totrans-41
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: NumPy 中的可配置内存例程 (NEP 49)
 - en: Users may wish to override the internal data memory routines with ones of their
     own. Since NumPy does not use the Python domain strategy to manage data memory,
     it provides an alternative set of C-APIs to change memory routines. There are
@@ -221,78 +337,124 @@
     lifetime of the process, each `ndarray` carries with it the functions used at
     the time of its instantiation, and these will be used to reallocate or free the
     data memory of the instance.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 用户可能希望用自己的内部数据内存例程覆盖内部数据内存例程。由于NumPy不使用Python域策略来管理数据内存，它提供了一组替代的C-API来更改内存例程。对于大块对象数据，Python领域没有全局策略，因此这些策略不太适合NumPy的需要。希望更改NumPy数据内存管理例程的用户可以使用[`PyDataMem_SetHandler`](#c.PyDataMem_SetHandler
+    "PyDataMem_SetHandler")，它使用一个[`PyDataMem_Handler`](#c.PyDataMem_Handler "PyDataMem_Handler")结构来保存用于管理数据内存的函数指针。调用仍然由内部例程包装以调用[`PyTraceMalloc_Track`](https://docs.python.org/3/c-api/memory.html#c.PyTraceMalloc_Track
+    "(在Python v3.11中)")，[`PyTraceMalloc_Untrack`](https://docs.python.org/3/c-api/memory.html#c.PyTraceMalloc_Untrack
+    "(在Python v3.11中)")，并将使用已弃用的[`PyDataMem_EventHookFunc`](#c.PyDataMem_EventHookFunc
+    "PyDataMem_EventHookFunc")机制。由于函数可能在进程的生命周期中发生变化，因此每个`ndarray`都携带了其实例化时使用的函数，并且这些函数将用于重新分配或释放实例的数据内存。
 - en: '[PRE10]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: A struct to hold function pointers used to manipulate memory
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于保存用于操作内存的函数指针的结构
 - en: '[PRE11]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: where the allocator structure is
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 分配器结构所在位置
 - en: '[PRE12]'
+  id: totrans-47
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '[PRE13]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Set a new allocation policy. If the input value is `NULL`, will reset the policy
     to the default. Return the previous policy, or return `NULL` if an error has occurred.
     We wrap the user-provided functions so they will still call the python and numpy
     memory management callback hooks.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置新的分配策略。如果输入值为`NULL`，将重置策略为默认值。返回上一个策略，如果发生错误则返回`NULL`。我们包装了用户提供的函数，以便它们仍然调用Python和numpy内存管理回调挂钩。
 - en: '[PRE14]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Return the current policy that will be used to allocate data for the next `PyArrayObject`.
     On failure, return `NULL`.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回将用于为下一个`PyArrayObject`分配数据的当前策略。失败时，返回`NULL`。
 - en: For an example of setting up and using the PyDataMem_Handler, see the test in
     `numpy/core/tests/test_mem_policy.py`
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关设置和使用PyDataMem_Handler的示例，请参见`numpy/core/tests/test_mem_policy.py`中的测试
 - en: '[PRE15]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: This function will be called during data memory manipulation
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数将在数据内存操作期间调用
 - en: '[PRE16]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Sets the allocation event hook for numpy array data.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置numpy数组数据的分配事件挂钩。
 - en: Returns a pointer to the previous hook or `NULL`. If old_data is non-`NULL`,
     the previous user_data pointer will be copied to it.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回指向上一个挂钩的指针，或`NULL`。如果`old_data`非`NULL`，则将将前一个`user_data`指针复制到其中。
 - en: 'If not `NULL`, hook will be called at the end of each `PyDataMem_NEW/FREE/RENEW`:'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果非`NULL`，将在每个`PyDataMem_NEW/FREE/RENEW`结束时调用挂钩：
 - en: '[PRE17]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: When the hook is called, the GIL will be held by the calling thread. The hook
     should be written to be reentrant, if it performs operations that might cause
     new allocation events (such as the creation/destruction numpy objects, or creating/destroying
     Python objects which might cause a gc).
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 调用挂钩时，由调用线程持有GIL。如果挂钩执行可能导致新的分配事件（如创建/销毁numpy对象，或创建/销毁可能导致gc的Python对象）的操作，应将挂钩编写为可重入。
 - en: Deprecated in v1.23
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 已弃用于v1.23
 - en: What happens when deallocating if there is no policy set
+  id: totrans-62
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如果没有设置策略，则在释放内存时会发生什么
 - en: A rare but useful technique is to allocate a buffer outside NumPy, use [`PyArray_NewFromDescr`](array.html#c.PyArray_NewFromDescr
     "PyArray_NewFromDescr") to wrap the buffer in a `ndarray`, then switch the `OWNDATA`
     flag to true. When the `ndarray` is released, the appropriate function from the
@@ -301,27 +463,42 @@
     call `free()` to release the buffer. If `NUMPY_WARN_IF_NO_MEM_POLICY` is set to
     `1`, a warning will be emitted. The current default is not to emit a warning,
     this may change in a future version of NumPy.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种罕见但有用的技术是在NumPy之外分配一个缓冲区，使用[`PyArray_NewFromDescr`](array.html#c.PyArray_NewFromDescr
+    "PyArray_NewFromDescr")将缓冲区包装在`ndarray`中，然后将`OWNDATA`标志切换为true。当释放`ndarray`时，应调用`ndarray`的`PyDataMem_Handler`中的适当函数来释放缓冲区。但`PyDataMem_Handler`字段从未被设置过，它将为`NULL`。为了向后兼容，NumPy将调用`free()`来释放缓冲区。如果将`NUMPY_WARN_IF_NO_MEM_POLICY`设置为`1`，则会发出警告。目前的默认设置是不发出警告，这在将来的NumPy版本中可能会改变。
 - en: 'A better technique would be to use a `PyCapsule` as a base object:'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 更好的技术是使用`PyCapsule`作为基本对象。
 - en: '[PRE18]'
+  id: totrans-65
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Example of memory tracing with `np.lib.tracemalloc_domain`
+  id: totrans-66
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用`np.lib.tracemalloc_domain`进行内存跟踪的示例。
 - en: 'Note that since Python 3.6 (or newer), the builtin `tracemalloc` module can
     be used to track allocations inside NumPy. NumPy places its CPU memory allocations
     into the `np.lib.tracemalloc_domain` domain. For additional information, check:
     *https://docs.python.org/3/library/tracemalloc.html*.'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，自Python 3.6（或更新版本）以来，内置的`tracemalloc`模块可以用于跟踪NumPy内的分配。NumPy将其CPU内存分配放入`np.lib.tracemalloc_domain`域中。有关附加信息，请查看：*https://docs.python.org/3/library/tracemalloc.html*。
 - en: 'Here is an example on how to use `np.lib.tracemalloc_domain`:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是使用`np.lib.tracemalloc_domain`的示例。
 - en: '[PRE19]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'

@@ -1,34 +1,52 @@
 - en: Parallel Random Number Generation
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 并行随机数生成
 - en: 原文：[https://numpy.org/doc/1.26/reference/random/parallel.html](https://numpy.org/doc/1.26/reference/random/parallel.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/reference/random/parallel.html](https://numpy.org/doc/1.26/reference/random/parallel.html)
 - en: There are four main strategies implemented that can be used to produce repeatable
     pseudo-random numbers across multiple processes (local or distributed).
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 有四种主要策略可以用来在多个进程（本地或分布式）中产生可重复的伪随机数。
 - en: '## [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") spawning'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: '## [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") 的生成'
 - en: NumPy allows you to spawn new (with very high probability) independent [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator") and [`Generator`](generator.html#numpy.random.Generator
     "numpy.random.Generator") instances via their `spawn()` method. This spawning
     is implemented by the [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") used for initializing the bit generators random stream.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 允许您通过它们的 `spawn()` 方法生成新的（非常高的概率）独立的[`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator")和[`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator")实例。这种生成是通过用于初始化比特生成器随机流的[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")实现的。
 - en: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") [implements an algorithm](http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html)
     to process a user-provided seed, typically as an integer of some size, and to
     convert it into an initial state for a [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator"). It uses hashing techniques to ensure that low-quality
     seeds are turned into high quality initial states (at least, with very high probability).'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") [实现了一个算法](http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html)，用于处理用户提供的种子，通常作为某种大小的整数，并将其转换为[`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator")的初始状态。它使用哈希技术确保低质量的种子被转换为高质量的初始状态（至少，有很高的概率）。'
 - en: For example, [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937 "numpy.random.MT19937")
     has a state consisting of 624 *uint32* integers. A naive way to take a 32-bit
     integer seed would be to just set the last element of the state to the 32-bit
@@ -37,8 +55,13 @@
     if there are too many 0s](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html).
     Similarly, two adjacent 32-bit integer seeds (i.e. `12345` and `12346`) would
     produce very similar streams.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，[`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937 "numpy.random.MT19937")
+    的状态由 624 个 *uint32* 整数组成。一个简单的方法是将一个 32 位整数种子设置为状态的最后一个元素，其余为 0。这对于[`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937
+    "numpy.random.MT19937")来说是一个有效的状态，但不是一个好的状态。梅森旋转算法[如果有太多的 0](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html)会出现问题。同样，相邻的两个
+    32 位整数种子（例如 `12345` 和 `12346`）会产生非常相似的流。
 - en: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") avoids these problems by using successions of integer
     hashes with good [avalanche properties](https://en.wikipedia.org/wiki/Avalanche_effect)
@@ -50,45 +73,71 @@
     "numpy.random.SeedSequence") will take all of the bits that you provide and mix
     them together to produce however many bits the consuming [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator") needs to initialize itself.'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") 通过使用具有良好的 [雪崩效应特性](https://en.wikipedia.org/wiki/Avalanche_effect)
+    的整数哈希的连续数列，确保翻转输入中的任意位有大约50％的机会翻转输出中的任意位，从而避免了这些问题。两个非常接近的输入种子将产生（在非常高的概率下）非常相距较远的初始状态。它还是这样构造的，您可以提供任意大小的整数或整数列表。
+    [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") 将接受您提供的所有位并将它们混合在一起，以生成 [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") 初始化所需的位数。'
 - en: These properties together mean that we can safely mix together the usual user-provided
     seed with simple incrementing counters to get [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator") states that are (to very high probability) independent
     of each other. We can wrap this together into an API that is easy to use and difficult
     to misuse.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些属性共同意味着我们可以安全地将通常由用户提供的种子与简单的递增计数器混合在一起，以获取 [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator") 状态，这些状态（在非常高的概率下）彼此独立。我们可以将这些包装成一个易于使用但难以误用的API。
 - en: '[PRE0]'
+  id: totrans-9
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'For convenience the direct use of [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") is not necessary. The above `streams` can be spawned
     directly from a parent generator via [`spawn`](generated/numpy.random.Generator.spawn.html#numpy.random.Generator.spawn
     "numpy.random.Generator.spawn"):'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了方便起见，直接使用 [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence") 是不必要的。上述的 `streams` 可以直接通过父生成器通过 [`spawn`](generated/numpy.random.Generator.spawn.html#numpy.random.Generator.spawn
+    "numpy.random.Generator.spawn") 派生：
 - en: '[PRE1]'
+  id: totrans-11
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Child objects can also spawn to make grandchildren, and so on. Each child has
     a [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") with its position in the tree of spawned child objects
     mixed in with the user-provided seed to generate independent (with very high probability)
     streams.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 子对象也可以生成子孙对象，依此类推。每个子对象都有一个 [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")，其在生成的子对象树中的位置与用户提供的种子混合在一起，以生成（在非常高的概率下）独立的流。
 - en: '[PRE2]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: This feature lets you make local decisions about when and how to split up streams
     without coordination between processes. You do not have to preallocate space to
     avoid overlapping or request streams from a common global service. This general
     “tree-hashing” scheme is [not unique to numpy](https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf)
     but not yet widespread. Python has increasingly-flexible mechanisms for parallelization
     available, and this scheme fits in very well with that kind of use.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 此功能使您能够在进程之间无需协调的情况下对流进行本地决策，以及何时以及如何分割流。您无需预先分配空间以避免重叠，也无需从共享的全局服务请求流。这种通用的“树哈希”方案
+    [不是 numpy 的独有特性](https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf)，但尚未广泛传播。Python提供了越来越灵活的并行化机制，而这种方案非常适合与此类用法配合使用。
 - en: 'Using this scheme, an upper bound on the probability of a collision can be
     estimated if one knows the number of streams that you derive. [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") hashes its inputs, both the seed and the spawn-tree-path,
@@ -98,35 +147,48 @@
     streams, about \(2^{20}\), then the probability that at least one pair of them
     are identical is about \(2^{-88}\), which is in solidly-ignorable territory ([[2]](#id4)).  ##
     Sequence of Integer Seeds'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: '使用这种方案，如果知道派生的流的数量，就可以估计碰撞的概率上限。[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence)默认情况下将其输入（种子和生成树路径）哈希到一个128位池中。在那个池中，悲观地估计碰撞的概率（[[1]](#id3)）约为\(n^2*2^{-128}\)，其中*n*是生成的流的数量。如果一个程序使用了激进的百万流，约为\(2^{20}\)，那么至少有一对它们相同的概率约为\(2^{-88}\)，这已经是可以忽略不计的领域（[[2]](#id4)）。  ##
+    整数种子序列'
 - en: As discussed in the previous section, [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") can not only take an integer seed, it can also take
     an arbitrary-length sequence of (non-negative) integers. If one exercises a little
     care, one can use this feature to design *ad hoc* schemes for getting safe parallel
     PRNG streams with similar safety guarantees as spawning.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前一节所讨论的，[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence)不仅可以接受整数种子，还可以接受任意长度的（非负）整数序列。如果稍加小心，可以利用这个特性设计*特设*方案，以获得类似生成的安全并行PRNG流的安全保证。
 - en: For example, one common use case is that a worker process is passed one root
     seed integer for the whole calculation and also an integer worker ID (or something
     more granular like a job ID, batch ID, or something similar). If these IDs are
     created deterministically and uniquely, then one can derive reproducible parallel
     PRNG streams by combining the ID and the root seed integer in a list.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，一个常见的用例是，一个工作进程为整个计算传递一个根种子整数，还有一个整数工作人员ID（或者更精细的像作业ID、批次ID或类似的东西）。如果这些ID是确定性且唯一地创建的，那么可以通过将ID和根种子整数组合成一个列表来派生可重现的并行PRNG流。
 - en: '[PRE3]'
+  id: totrans-18
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: This can be used to replace a number of unsafe strategies that have been used
     in the past which try to combine the root seed and the ID back into a single integer
     seed value. For example, it is common to see users add the worker ID to the root
     seed, especially with the legacy [`RandomState`](legacy.html#numpy.random.RandomState
     "numpy.random.RandomState") code.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 这可以用来替换过去使用的一些不安全策略，这些策略试图将根种子和ID组合成单个整数种子值。例如，通常会看到用户将工作人员ID添加到根种子中，特别是在传统的[`RandomState`](legacy.html#numpy.random.RandomState)代码中。
 - en: '[PRE4]'
+  id: totrans-20
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: It is true that for any one run of a parallel program constructed this way,
     each worker will have distinct streams. However, it is quite likely that multiple
     invocations of the program with different seeds will get overlapping sets of worker
@@ -135,12 +197,16 @@
     seeds are also derived by small increments of the worker ID, then subsets of the
     workers will return identical results, causing a bias in the overall ensemble
     of results.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于以这种方式构建的并行程序的任何一次运行，每个工作人员将具有不同的流。然而，很可能在不同种子的多次调用程序中获得重叠的工作人员种子集。在进行这些重复运行时，仅仅通过增加一两个根种子是很常见的（作者的亲身经历）。如果工作人员种子也是通过工作人员ID的小增量派生的，那么工作者的子集将返回相同的结果，导致整体结果集中的偏差。
 - en: Combining the worker ID and the root seed as a list of integers eliminates this
     risk. Lazy seeding practices will still be fairly safe.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 将工作人员ID和根种子作为整数列表组合可以消除这种风险。懒惰的播种实践仍然是相当安全的。
 - en: This scheme does require that the extra IDs be unique and deterministically
     created. This may require coordination between the worker processes. It is recommended
     to place the varying IDs *before* the unvarying root seed. [`spawn`](bit_generators/generated/numpy.random.SeedSequence.spawn.html#numpy.random.SeedSequence.spawn
@@ -149,31 +215,47 @@
     passing your objects down to library code that might be spawning, then it is a
     little bit safer to prepend your worker IDs rather than append them to avoid a
     collision.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 此方案要求额外的 ID 必须是唯一的并且是确定性创建的。这可能需要在工作进程之间进行协调。建议将变化的 ID *放在* 不变的根种子之前。[`spawn`](bit_generators/generated/numpy.random.SeedSequence.spawn.html#numpy.random.SeedSequence.spawn
+    "numpy.random.SeedSequence.spawn") 在用户提供的种子后 *追加* 整数，因此如果您可能同时使用这种 *临时* 机制和生成，或者将您的对象传递给可能正在生成的库代码，那么最好在前面而不是在后面添加您的工作
+    ID，以避免碰撞。
 - en: '[PRE5]'
+  id: totrans-24
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'With those caveats in mind, the safety guarantees against collision are about
     the same as with spawning, discussed in the previous section. The algorithmic
     mechanisms are the same.  ## Independent Streams'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: '在考虑这些注意事项的情况下，针对碰撞的安全保证与前一节讨论的生成相同。算法机制也是相同的。  ## 独立流'
 - en: '[`Philox`](bit_generators/philox.html#numpy.random.Philox "numpy.random.Philox")
     is a counter-based RNG based which generates values by encrypting an incrementing
     counter using weak cryptographic primitives. The seed determines the key that
     is used for the encryption. Unique keys create unique, independent streams. [`Philox`](bit_generators/philox.html#numpy.random.Philox
     "numpy.random.Philox") lets you bypass the seeding algorithm to directly set the
     128-bit key. Similar, but different, keys will still create independent streams.'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`Philox`](bit_generators/philox.html#numpy.random.Philox "numpy.random.Philox")
+    是基于计数器的 RNG，通过使用弱加密原语对递增计数器进行加密来生成值。种子确定了用于加密的密钥。唯一的密钥创建了唯一的、独立的流。[`Philox`](bit_generators/philox.html#numpy.random.Philox
+    "numpy.random.Philox") 允许您绕过种子算法，直接设置 128 位密钥。类似但不同的密钥仍将创建独立的流。'
 - en: '[PRE6]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'This scheme does require that you avoid reusing stream IDs. This may require
     coordination between the parallel processes.  ## Jumping the BitGenerator state'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: '此方案要求避免重复使用流 ID。这可能需要并行进程之间的协调。  ## 推进位生成器状态'
 - en: '`jumped` advances the state of the BitGenerator *as-if* a large number of random
     numbers have been drawn, and returns a new instance with this state. The specific
     number of draws varies by BitGenerator, and ranges from \(2^{64}\) to \(2^{128}\).
@@ -181,33 +263,52 @@
     number produced by the specific BitGenerator. The BitGenerators that support `jumped`,
     along with the period of the BitGenerator, the size of the jump and the bits in
     the default unsigned random are listed below.'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: '`jumped` 推进位生成器的状态，*好像*已经抽取了大量的随机数，并返回具有此状态的新实例。具体的抽取次数因位生成器而异，范围从 \(2^{64}\)
+    到 \(2^{128}\)。此外，*好像*抽取还取决于特定位生成器产生的默认无符号随机数的大小。支持 `jumped` 的位生成器，以及位生成器的周期、跳跃大小和默认无符号随机数的位数如下所示。'
 - en: '| BitGenerator | Period | Jump Size | Bits per Draw |'
+  id: totrans-30
   prefs: []
   type: TYPE_TB
+  zh: '| 位生成器 | 周期 | 跳跃大小 | 每次抽取的位数 |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-31
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| MT19937 | \(2^{19937}-1\) | \(2^{128}\) | 32 |'
+  id: totrans-32
   prefs: []
   type: TYPE_TB
+  zh: '| MT19937 | \(2^{19937}-1\) | \(2^{128}\) | 32 |'
 - en: '| PCG64 | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
+  id: totrans-33
   prefs: []
   type: TYPE_TB
+  zh: '| PCG64 | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
 - en: '| PCG64DXSM | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
+  id: totrans-34
   prefs: []
   type: TYPE_TB
+  zh: '| PCG64DXSM | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
 - en: '| Philox | \(2^{256}\) | \(2^{128}\) | 64 |'
+  id: totrans-35
   prefs: []
   type: TYPE_TB
+  zh: '| Philox | \(2^{256}\) | \(2^{128}\) | 64 |'
 - en: '`jumped` can be used to produce long blocks which should be long enough to
     not overlap.'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: '`jumped` 可用于生成长块，应足够长以避免重叠。'
 - en: '[PRE7]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'When using `jumped`, one does have to take care not to jump to a stream that
     was already used. In the above example, one could not later use `blocked_rng[0].jumped()`
     as it would overlap with `blocked_rng[1]`. Like with the independent streams,
@@ -216,23 +317,36 @@
     On the other hand, if you carefully construct the streams, then you are guaranteed
     to have streams that do not overlap.  ## [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") spawning'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`jumped`时，必须注意不要跳转到已经使用过的流。在上面的示例中，后续不能使用`blocked_rng[0].jumped()`，因为它会与`blocked_rng[1]`重叠。与独立流一样，如果主进程要通过跳跃来分割出10个以上的流，则需要从`range(10,
+    20)`开始，否则将重新创建相同的流。另一方面，如果您仔细构建这些流，则可以确保流不会重叠。##[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")生成
 - en: NumPy allows you to spawn new (with very high probability) independent [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator") and [`Generator`](generator.html#numpy.random.Generator
     "numpy.random.Generator") instances via their `spawn()` method. This spawning
     is implemented by the [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") used for initializing the bit generators random stream.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 允许您通过其`spawn()`方法生成新的（高概率下的）相互独立的[`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator")和[`Generator`](generator.html#numpy.random.Generator
+    "numpy.random.Generator")实例。这种生成由用于初始化比特生成器随机流的[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")实现。
 - en: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") [implements an algorithm](http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html)
     to process a user-provided seed, typically as an integer of some size, and to
     convert it into an initial state for a [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator"). It uses hashing techniques to ensure that low-quality
     seeds are turned into high quality initial states (at least, with very high probability).'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")[实现了一种算法](http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html)，用于处理用户提供的种子，通常是某种大小的整数，并将其转换为[`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator")的初始状态。它使用散列技术确保低质量的种子以非常高的概率被转换为高质量的初始状态。'
 - en: For example, [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937 "numpy.random.MT19937")
     has a state consisting of 624 *uint32* integers. A naive way to take a 32-bit
     integer seed would be to just set the last element of the state to the 32-bit
@@ -241,8 +355,14 @@
     if there are too many 0s](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html).
     Similarly, two adjacent 32-bit integer seeds (i.e. `12345` and `12346`) would
     produce very similar streams.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，[`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937 "numpy.random.MT19937")
+    的状态由 624 个 *uint32* 整数组成。一种朴素的方法是将一个 32 位整数种子设置为状态的最后一个元素，并将其余元素设置为 0。这是 [`MT19937`](bit_generators/mt19937.html#numpy.random.MT19937
+    "numpy.random.MT19937") 的一个有效状态，但不是一个好的状态。梅森旋转算法[suffers if there are too many
+    0s](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html)。同理，相邻的两个
+    32 位整数种子（即 `12345` 和 `12346`）会产生非常相似的序列。
 - en: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") avoids these problems by using successions of integer
     hashes with good [avalanche properties](https://en.wikipedia.org/wiki/Avalanche_effect)
@@ -254,45 +374,68 @@
     "numpy.random.SeedSequence") will take all of the bits that you provide and mix
     them together to produce however many bits the consuming [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator") needs to initialize itself.'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")通过使用具有良好[雪崩效应](https://en.wikipedia.org/wiki/Avalanche_effect)的整数哈希的连续性来避免这些问题，以确保在输入中翻转任何位的约50%的机会会翻转输出中的任何位。两个非常接近的输入种子将产生非常远的初始状态（在非常高的概率下）。它还以一种构造方式构建，以便您可以提供任意大小的整数或整数列表。[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")将获取您提供的所有位并将它们混合在一起，以生成[`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator")初始化所需的位数。'
 - en: These properties together mean that we can safely mix together the usual user-provided
     seed with simple incrementing counters to get [`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
     "numpy.random.BitGenerator") states that are (to very high probability) independent
     of each other. We can wrap this together into an API that is easy to use and difficult
     to misuse.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些属性共同意味着我们可以安全地将通常由用户提供的种子与简单的递增计数器混合在一起，以获得[`BitGenerator`](bit_generators/generated/numpy.random.BitGenerator.html#numpy.random.BitGenerator
+    "numpy.random.BitGenerator")状态，这些状态（在非常高的概率下）彼此独立。我们可以将这些封装成一个易于使用且难以误用的 API。
 - en: '[PRE8]'
+  id: totrans-44
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'For convenience the direct use of [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") is not necessary. The above `streams` can be spawned
     directly from a parent generator via [`spawn`](generated/numpy.random.Generator.spawn.html#numpy.random.Generator.spawn
     "numpy.random.Generator.spawn"):'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了方便起见，不需要直接使用[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")。上述的`streams`可以直接通过[`spawn`](generated/numpy.random.Generator.spawn.html#numpy.random.Generator.spawn
+    "numpy.random.Generator.spawn")从父生成器生成：
 - en: '[PRE9]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Child objects can also spawn to make grandchildren, and so on. Each child has
     a [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") with its position in the tree of spawned child objects
     mixed in with the user-provided seed to generate independent (with very high probability)
     streams.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 子对象也可以生成子孙，依此类推。每个子对象都有一个带有其在生成的子对象树中位置的[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")，将其与用户提供的种子混合在一起以生成独立的（在非常高的概率下）流。
 - en: '[PRE10]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: This feature lets you make local decisions about when and how to split up streams
     without coordination between processes. You do not have to preallocate space to
     avoid overlapping or request streams from a common global service. This general
     “tree-hashing” scheme is [not unique to numpy](https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf)
     but not yet widespread. Python has increasingly-flexible mechanisms for parallelization
     available, and this scheme fits in very well with that kind of use.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个特性让你可以在进程之间无需协调的情况下做出关于何时以及如何拆分流的本地决策。你不必预先分配空间以避免重叠或从一个共同的全局服务请求流。这种通用的“树哈希”方案[并非仅限于numpy](https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf)，但尚未广泛传播。Python提供了越来越灵活的并行化机制，并且这种方案非常适合这种用途。
 - en: Using this scheme, an upper bound on the probability of a collision can be estimated
     if one knows the number of streams that you derive. [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") hashes its inputs, both the seed and the spawn-tree-path,
@@ -301,38 +444,55 @@
     where *n* is the number of streams spawned. If a program uses an aggressive million
     streams, about \(2^{20}\), then the probability that at least one pair of them
     are identical is about \(2^{-88}\), which is in solidly-ignorable territory ([[2]](#id4)).
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这种方案，如果知道您派生的流的数量，可以估计碰撞的概率上限。[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")默认情况下将其输入（种子和生成树路径）哈希到一个128位池中。在那个池中，悲观地估计碰撞的概率（[[1]](#id3)）将约为\(n^2*2^{-128}\)，其中*n*是生成的流的数量。如果一个程序使用了激进的百万流，约为\(2^{20}\)，那么至少有一对它们相同的概率约为\(2^{-88}\)，这在可忽略的范围内（[[2]](#id4)）。
 - en: '## Sequence of Integer Seeds'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 整数种子序列'
 - en: As discussed in the previous section, [`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
     "numpy.random.SeedSequence") can not only take an integer seed, it can also take
     an arbitrary-length sequence of (non-negative) integers. If one exercises a little
     care, one can use this feature to design *ad hoc* schemes for getting safe parallel
     PRNG streams with similar safety guarantees as spawning.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前一节所讨论的，[`SeedSequence`](bit_generators/generated/numpy.random.SeedSequence.html#numpy.random.SeedSequence
+    "numpy.random.SeedSequence")不仅可以接受整数种子，还可以接受任意长度的（非负）整数序列。如果稍加注意，可以利用这个特性设计类似生成的安全并行PRNG流的*临时*方案，具有类似生成的安全保证。
 - en: For example, one common use case is that a worker process is passed one root
     seed integer for the whole calculation and also an integer worker ID (or something
     more granular like a job ID, batch ID, or something similar). If these IDs are
     created deterministically and uniquely, then one can derive reproducible parallel
     PRNG streams by combining the ID and the root seed integer in a list.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，一个常见的用例是，一个工作进程被传递一个整数根种子用于整个计算，还有一个整数工作人员ID（或者更精细的像作业ID、批次ID或类似的东西）。如果这些ID是确定性地且唯一地创建的，那么可以通过将ID和根种子整数组合成列表来派生可重现的并行PRNG流。
 - en: '[PRE11]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: This can be used to replace a number of unsafe strategies that have been used
     in the past which try to combine the root seed and the ID back into a single integer
     seed value. For example, it is common to see users add the worker ID to the root
     seed, especially with the legacy [`RandomState`](legacy.html#numpy.random.RandomState
     "numpy.random.RandomState") code.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 这可以用来替代过去使用的一些不安全策略，这些策略试图将根种子和ID合并为单个整数种子值。例如，通常会看到用户将工作人员ID添加到根种子中，特别是在传统的[`RandomState`](legacy.html#numpy.random.RandomState
+    "numpy.random.RandomState")代码中。
 - en: '[PRE12]'
+  id: totrans-56
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: It is true that for any one run of a parallel program constructed this way,
     each worker will have distinct streams. However, it is quite likely that multiple
     invocations of the program with different seeds will get overlapping sets of worker
@@ -341,12 +501,16 @@
     seeds are also derived by small increments of the worker ID, then subsets of the
     workers will return identical results, causing a bias in the overall ensemble
     of results.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于以这种方式构建的并行程序的任何一次运行，每个工作人员将具有不同的流。然而，很可能在使用不同种子多次调用程序时，会得到重叠的工作人员种子集。改变根种子仅仅增加一两个时并不罕见（作者的自身经验）。如果工作人员种子也是通过工作人员ID的小增量派生的，那么工作人员的子集将返回相同的结果，导致整体结果集中的偏差。
 - en: Combining the worker ID and the root seed as a list of integers eliminates this
     risk. Lazy seeding practices will still be fairly safe.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 将工作人员ID和根种子组合为整数列表可以消除这种风险。懒惰的播种实践仍然是相当安全的。
 - en: This scheme does require that the extra IDs be unique and deterministically
     created. This may require coordination between the worker processes. It is recommended
     to place the varying IDs *before* the unvarying root seed. [`spawn`](bit_generators/generated/numpy.random.SeedSequence.spawn.html#numpy.random.SeedSequence.spawn
@@ -355,37 +519,55 @@
     passing your objects down to library code that might be spawning, then it is a
     little bit safer to prepend your worker IDs rather than append them to avoid a
     collision.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 此方案要求额外的ID必须是唯一的，并且是确定性创建的。这可能需要协调工作进程之间的关系。建议将变化的ID*放在*不变的根种子*之前*。[`生成`](bit_generators/generated/numpy.random.SeedSequence.spawn.html#numpy.random.SeedSequence.spawn
+    "numpy.random.SeedSequence.spawn") *追加*用户提供的种子之后的整数，所以如果可能同时使用这*临时*机制和生成，或者将对象传递给可能在生成中生成的库代码，那么更安全的做法是在你的工作进程ID之前添加而不是追加，以避免冲突。
 - en: '[PRE13]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: With those caveats in mind, the safety guarantees against collision are about
     the same as with spawning, discussed in the previous section. The algorithmic
     mechanisms are the same.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 在考虑这些注意事项的情况下，确保避免冲突的安全保证与前面讨论的生成相同。算法机制也是相同的。
 - en: '## Independent Streams'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 独立流'
 - en: '[`Philox`](bit_generators/philox.html#numpy.random.Philox "numpy.random.Philox")
     is a counter-based RNG based which generates values by encrypting an incrementing
     counter using weak cryptographic primitives. The seed determines the key that
     is used for the encryption. Unique keys create unique, independent streams. [`Philox`](bit_generators/philox.html#numpy.random.Philox
     "numpy.random.Philox") lets you bypass the seeding algorithm to directly set the
     128-bit key. Similar, but different, keys will still create independent streams.'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`Philox`](bit_generators/philox.html#numpy.random.Philox "numpy.random.Philox")是基于计数器的随机数生成器，通过使用弱密码原语对递增计数器进行加密来生成值。种子确定了用于加密的密钥。唯一的密钥创建唯一的独立流。[`Philox`](bit_generators/philox.html#numpy.random.Philox
+    "numpy.random.Philox")允许您绕过种子算法直接设置128位密钥。相似但不同的密钥仍将创建独立的流。'
 - en: '[PRE14]'
+  id: totrans-64
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: This scheme does require that you avoid reusing stream IDs. This may require
     coordination between the parallel processes.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 此方案确实要求避免重用流ID。这可能需要在并行进程之间协调。
 - en: '## Jumping the BitGenerator state'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 跳转BitGenerator状态'
 - en: '`jumped` advances the state of the BitGenerator *as-if* a large number of random
     numbers have been drawn, and returns a new instance with this state. The specific
     number of draws varies by BitGenerator, and ranges from \(2^{64}\) to \(2^{128}\).
@@ -393,33 +575,51 @@
     number produced by the specific BitGenerator. The BitGenerators that support `jumped`,
     along with the period of the BitGenerator, the size of the jump and the bits in
     the default unsigned random are listed below.'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: '`jumped`会推进BitGenerator的状态，*好像*已经抽取了大量的随机数，并返回一个具有此状态的新实例。具体的抽取次数因BitGenerator而异，范围从\(2^{64}\)到\(2^{128}\)不等。此外，*好像*抽取还取决于特定BitGenerator产生的默认无符号随机数的大小。支持`jumped`的BitGenerators以及BitGenerator的周期、跳跃的大小和默认无符号随机数的比特数如下所示。'
 - en: '| BitGenerator | Period | Jump Size | Bits per Draw |'
+  id: totrans-68
   prefs: []
   type: TYPE_TB
+  zh: '| BitGenerator | 周期 | 跳跃大小 | 每次抽取的比特数 |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-69
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| MT19937 | \(2^{19937}-1\) | \(2^{128}\) | 32 |'
+  id: totrans-70
   prefs: []
   type: TYPE_TB
+  zh: '| MT19937 | \(2^{19937}-1\) | \(2^{128}\) | 32 |'
 - en: '| PCG64 | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
+  id: totrans-71
   prefs: []
   type: TYPE_TB
+  zh: '| PCG64 | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
 - en: '| PCG64DXSM | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
+  id: totrans-72
   prefs: []
   type: TYPE_TB
+  zh: '| PCG64DXSM | \(2^{128}\) | \(~2^{127}\) ([[3]](#id8)) | 64 |'
 - en: '| Philox | \(2^{256}\) | \(2^{128}\) | 64 |'
+  id: totrans-73
   prefs: []
   type: TYPE_TB
+  zh: '| Philox | \(2^{256}\) | \(2^{128}\) | 64 |'
 - en: '`jumped` can be used to produce long blocks which should be long enough to
     not overlap.'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用`jumped`生成不会重叠的长代码块。
 - en: '[PRE15]'
+  id: totrans-75
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: When using `jumped`, one does have to take care not to jump to a stream that
     was already used. In the above example, one could not later use `blocked_rng[0].jumped()`
     as it would overlap with `blocked_rng[1]`. Like with the independent streams,
@@ -427,5 +627,8 @@
     needs to start with `range(10, 20)`, otherwise it would recreate the same streams.
     On the other hand, if you carefully construct the streams, then you are guaranteed
     to have streams that do not overlap.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`jumped`时，确实需要注意不要跳转到已经使用过的流。在上面的例子中，之后不能使用`blocked_rng[0].jumped()`，因为它会与`blocked_rng[1]`重叠。与独立流类似，如果此处的主进程想通过跳转拆分出10个以上的流，则需要从`range(10,
+    20)`开始，否则会重新创建相同的流。另一方面，如果仔细构造流，那么就确保了不会重叠的流。
