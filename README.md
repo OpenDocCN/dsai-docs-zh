@@ -4,7 +4,8 @@
 > 
 > 欢迎任何人参与和完善：一个人可以走的很快，但是一群人却可以走的更远。
 
-* [在线阅读](https://dsaidoc.flygon.net)
+* [在线阅读](https://dsai-docs.flygon.net)
+
 ## 下载
 
 ### Docker
