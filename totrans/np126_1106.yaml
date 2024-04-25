@@ -1,419 +1,635 @@
 - en: NumPy 1.24 Release Notes
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: NumPy 1.24 发布说明
 - en: 原文：[https://numpy.org/doc/1.26/release/1.24.0-notes.html](https://numpy.org/doc/1.26/release/1.24.0-notes.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/release/1.24.0-notes.html](https://numpy.org/doc/1.26/release/1.24.0-notes.html)
 - en: The NumPy 1.24.0 release continues the ongoing work to improve the handling
     and promotion of dtypes, increase the execution speed, and clarify the documentation.
     There are also a large number of new and expired deprecations due to changes in
     promotion and cleanups. This might be called a deprecation release. Highlights
     are
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 1.24.0 发布继续致力于改进 dtype 的处理和提升，增加执行速度，并澄清文档。由于提升和清理的变化，还有大量新的和已过时的弃用功能。这可以称为弃用版本。亮点包括
 - en: Many new deprecations, check them out.
+  id: totrans-3
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 许多新的弃用功能，请查看。
 - en: Many expired deprecations,
+  id: totrans-4
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 许多已过时的弃用功能，
 - en: New F2PY features and fixes.
+  id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 新的 F2PY 功能和修复。
 - en: New “dtype” and “casting” keywords for stacking functions.
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 新的“dtype”和“casting”关键字用于堆叠函数。
 - en: See below for the details,
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 详细信息请参见下文，
 - en: This release supports Python versions 3.8-3.11.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 本次发布支持 Python 版本 3.8-3.11。
 - en: Deprecations
+  id: totrans-9
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 弃用功能
 - en: Deprecate fastCopyAndTranspose and PyArray_CopyAndTranspose
+  id: totrans-10
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 弃用 fastCopyAndTranspose 和 PyArray_CopyAndTranspose
 - en: 'The `numpy.fastCopyAndTranspose` function has been deprecated. Use the corresponding
     copy and transpose methods directly:'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.fastCopyAndTranspose`函数已被弃用。直接使用相应的复制和转置方法：'
 - en: '[PRE0]'
+  id: totrans-12
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: The underlying C function `PyArray_CopyAndTranspose` has also been deprecated
     from the NumPy C-API.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 底层 C 函数`PyArray_CopyAndTranspose`也已从 NumPy C-API 中弃用。
 - en: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
 - en: Conversion of out-of-bound Python integers
+  id: totrans-15
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 超出范围的Python整数转换
 - en: 'Attempting a conversion from a Python integer to a NumPy value will now always
     check whether the result can be represented by NumPy. This means the following
     examples will fail in the future and give a `DeprecationWarning` now:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试将Python整数转换为NumPy值现在将始终检查结果是否可以由NumPy表示。这意味着以下示例将来会失败，并现在会给出`DeprecationWarning`：
 - en: '[PRE1]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Many of these did succeed before. Such code was mainly useful for unsigned integers
     with negative values such as `np.uint8(-1)` giving `np.iinfo(np.uint8).max`.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多这些以前是成功的。这样的代码主要对带有负值的无符号整数有用，例如`np.uint8(-1)`给出`np.iinfo(np.uint8).max`。
 - en: 'Note that conversion between NumPy integers is unaffected, so that `np.array(-1).astype(np.uint8)`
     continues to work and use C integer overflow logic. For negative values, it will
     also work to view the array: `np.array(-1, dtype=np.int8).view(np.uint8)`. In
     some cases, using `np.iinfo(np.uint8).max` or `val % 2**8` may also work well.'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，NumPy整数之间的转换不受影响，因此`np.array(-1).astype(np.uint8)`仍然有效，并使用C整数溢出逻辑。对于负值，也可以查看数组：`np.array(-1,
+    dtype=np.int8).view(np.uint8)`。在某些情况下，使用`np.iinfo(np.uint8).max`或`val % 2**8`也可能效果很好。
 - en: In rare cases input data may mix both negative values and very large unsigned
     values (i.e. `-1` and `2**63`). There it is unfortunately necessary to use `%`
     on the Python value or use signed or unsigned conversion depending on whether
     negative values are expected.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 在罕见情况下，输入数据可能混合负值和非常大的无符号值（即`-1`和`2**63`）。在这种情况下，不幸地需要在Python值上使用`%`，或者根据是否预期负值使用有符号或无符号转换。
 - en: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
 - en: Deprecate `msort`
+  id: totrans-22
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 弃用`msort`
 - en: The `numpy.msort` function is deprecated. Use `np.sort(a, axis=0)` instead.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.msort`函数已被弃用。请改用`np.sort(a, axis=0)`。'
 - en: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
 - en: '`np.str0` and similar are now deprecated'
+  id: totrans-25
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.str0`等类似功能现已弃用'
 - en: 'The scalar type aliases ending in a 0 bit size: `np.object0`, `np.str0`, `np.bytes0`,
     `np.void0`, `np.int0`, `np.uint0` as well as `np.bool8` are now deprecated and
     will eventually be removed.'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 以 0 位大小结尾的标量类型别名：`np.object0`、`np.str0`、`np.bytes0`、`np.void0`、`np.int0`、`np.uint0`以及`np.bool8`现已弃用，并最终将被移除。
 - en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
 - en: Expired deprecations
+  id: totrans-28
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 已过时的弃用功能
 - en: The `normed` keyword argument has been removed from *np.histogram*, *np.histogram2d*,
     and *np.histogramdd*. Use `density` instead. If `normed` was passed by position,
     `density` is now used.
+  id: totrans-29
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*np.histogram*、*np.histogram2d*和*np.histogramdd*中的`normed`关键字参数已被移除。请改用`density`。如果`normed`是按位置传递的，则现在使用`density`。'
 - en: ([gh-21645](https://github.com/numpy/numpy/pull/21645))
+  id: totrans-30
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-21645](https://github.com/numpy/numpy/pull/21645))
 - en: Ragged array creation will now always raise a `ValueError` unless `dtype=object`
     is passed. This includes very deeply nested sequences.
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 创建不规则数组现在将始终引发`ValueError`，除非传递了`dtype=object`。这包括非常深度嵌套的序列。
 - en: ([gh-22004](https://github.com/numpy/numpy/pull/22004))
+  id: totrans-32
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22004](https://github.com/numpy/numpy/pull/22004))
 - en: Support for Visual Studio 2015 and earlier has been removed.
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不再支持Visual Studio 2015及更早版本。
 - en: Support for the Windows Interix POSIX interop layer has been removed.
+  id: totrans-34
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不再支持Windows Interix POSIX互操作层。
 - en: ([gh-22139](https://github.com/numpy/numpy/pull/22139))
+  id: totrans-35
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22139](https://github.com/numpy/numpy/pull/22139))
 - en: Support for Cygwin < 3.3 has been removed.
+  id: totrans-36
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不再支持Cygwin < 3.3。
 - en: ([gh-22159](https://github.com/numpy/numpy/pull/22159))
+  id: totrans-37
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22159](https://github.com/numpy/numpy/pull/22159))
 - en: The mini() method of `np.ma.MaskedArray` has been removed. Use either `np.ma.MaskedArray.min()`
     or `np.ma.minimum.reduce()`.
+  id: totrans-38
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`np.ma.MaskedArray`的mini()方法已被移除。请使用`np.ma.MaskedArray.min()`或`np.ma.minimum.reduce()`。'
 - en: The single-argument form of `np.ma.minimum` and `np.ma.maximum` has been removed.
     Use `np.ma.minimum.reduce()` or `np.ma.maximum.reduce()` instead.
+  id: totrans-39
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`np.ma.minimum`和`np.ma.maximum`的单参数形式已被移除。请改用`np.ma.minimum.reduce()`或`np.ma.maximum.reduce()`。'
 - en: ([gh-22228](https://github.com/numpy/numpy/pull/22228))
+  id: totrans-40
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22228](https://github.com/numpy/numpy/pull/22228))
 - en: Passing dtype instances other than the canonical (mainly native byte-order)
     ones to `dtype=` or `signature=` in ufuncs will now raise a `TypeError`. We recommend
     passing the strings `"int8"` or scalar types `np.int8` since the byte-order, datetime/timedelta
     unit, etc. are never enforced. (Initially deprecated in NumPy 1.21.)
+  id: totrans-41
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在ufuncs中将除了主要本机字节顺序之外的dtype实例传递给`dtype=`或`signature=`现在会引发`TypeError`。我们建议传递字符串`"int8"`或标量类型`np.int8`，因为字节顺序、日期时间/时间增量单位等从不被强制执行。（在NumPy
+    1.21中最初被弃用。）
 - en: ([gh-22540](https://github.com/numpy/numpy/pull/22540))
+  id: totrans-42
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22540](https://github.com/numpy/numpy/pull/22540))
 - en: The `dtype=` argument to comparison ufuncs is now applied correctly. That means
     that only `bool` and `object` are valid values and `dtype=object` is enforced.
+  id: totrans-43
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对比ufuncs的`dtype=`参数现在被正确应用。这意味着只有`bool`和`object`是有效值，且`dtype=object`被强制执行。
 - en: ([gh-22541](https://github.com/numpy/numpy/pull/22541))
+  id: totrans-44
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22541](https://github.com/numpy/numpy/pull/22541))
 - en: The deprecation for the aliases `np.object`, `np.bool`, `np.float`, `np.complex`,
     `np.str`, and `np.int` is expired (introduces NumPy 1.20). Some of these will
     now give a FutureWarning in addition to raising an error since they will be mapped
     to the NumPy scalars in the future.
+  id: totrans-45
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 别名`np.object`、`np.bool`、`np.float`、`np.complex`、`np.str`和`np.int`的弃用已过期（引入NumPy
+    1.20）。其中一些现在除了引发错误外还会产生FutureWarning，因为它们将来会映射到NumPy标量。
 - en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  id: totrans-46
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
 - en: Compatibility notes
+  id: totrans-47
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 兼容性说明
 - en: '`array.fill(scalar)` may behave slightly different'
+  id: totrans-48
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`array.fill(scalar)`的行为可能会有轻微不同'
 - en: '`numpy.ndarray.fill` may in some cases behave slightly different now due to
     the fact that the logic is aligned with item assignment:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.ndarray.fill` 在某些情况下可能会有轻微不同的行为，因为逻辑与项目赋值对齐：'
 - en: '[PRE2]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Previously casting may have produced slightly different answers when using values
     that could not be represented in the target `dtype` or when the target had `object`
     dtype.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 以前的转换可能在使用无法表示为目标`dtype`的值或目标具有`object` dtype时产生略有不同的答案。
 - en: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
 - en: Subarray to object cast now copies
+  id: totrans-53
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 子数组到对象的转换现在会复制
 - en: 'Casting a dtype that includes a subarray to an object will now ensure a copy
     of the subarray. Previously an unsafe view was returned:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 将包含子数组的dtype转换为对象将确保子数组的副本。以前会返回一个不安全的视图：
 - en: '[PRE3]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Is now always false. While previously it was true for the specific cast.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在始终为false。而以前对于特定转换是true。
 - en: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
 - en: Returned arrays respect uniqueness of dtype kwarg objects
+  id: totrans-58
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 返回的数组尊重dtype关键字参数对象的唯一性
 - en: When the `dtype` keyword argument is used with `np.array` or [`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
     "numpy.asarray"), the dtype of the returned array now always exactly matches the
     dtype provided by the caller.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 当`np.array`或[`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
+    "numpy.asarray")与`dtype`关键字参数一起使用时，返回数组的dtype现在总是与调用者提供的dtype完全匹配。
 - en: 'In some cases this change means that a *view* rather than the input array is
     returned. The following is an example for this on 64bit Linux where `long` and
     `longlong` are the same precision but different `dtypes`:'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，这种变化意味着返回的是*视图*而不是输入数组。以下是64位Linux上的一个示例，其中`long`和`longlong`具有相同的精度但不同的`dtypes`：
 - en: '[PRE4]'
+  id: totrans-61
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Before the change, the `dtype` did not match because `new is arr` was `True`.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 在更改之前，`dtype`不匹配是因为`new is arr`为`True`。
 - en: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
 - en: DLPack export raises `BufferError`
+  id: totrans-64
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DLPack 导出引发 `BufferError`
 - en: When an array buffer cannot be exported via DLPack a `BufferError` is now always
     raised where previously `TypeError` or `RuntimeError` was raised. This allows
     falling back to the buffer protocol or `__array_interface__` when DLPack was tried
     first.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 当无法通过 DLPack 导出数组缓冲区时，现在始终引发 `BufferError`，之前可能引发 `TypeError` 或 `RuntimeError`。这允许在首先尝试
+    DLPack 时回退到缓冲区协议或 `__array_interface__`。
 - en: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
 - en: NumPy builds are no longer tested on GCC-6
+  id: totrans-67
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: NumPy 构建不再在 GCC-6 上进行测试
 - en: Ubuntu 18.04 is deprecated for GitHub actions and GCC-6 is not available on
     Ubuntu 20.04, so builds using that compiler are no longer tested. We still test
     builds using GCC-7 and GCC-8.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: Ubuntu 18.04 已在 GitHub actions 中弃用，Ubuntu 20.04 上不提供 GCC-6，因此不再测试使用该编译器的构建。我们仍然测试使用
+    GCC-7 和 GCC-8 进行构建。
 - en: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
 - en: New Features
+  id: totrans-70
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 新特性
 - en: New attribute `symbol` added to polynomial classes
+  id: totrans-71
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多项式类添加了新属性 `symbol`
 - en: 'The polynomial classes in the `numpy.polynomial` package have a new `symbol`
     attribute which is used to represent the indeterminate of the polynomial. This
     can be used to change the value of the variable when printing:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.polynomial` 包中的多项式类具有新的 `symbol` 属性，用于表示多项式的未知数。这可以用于在打印时更改变量的值：'
 - en: '[PRE5]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Note that the polynomial classes only support 1D polynomials, so operations
     that involve polynomials with different symbols are disallowed when the result
     would be multivariate:'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意多项式类仅支持 1D 多项式，因此在涉及具有不同符号的多项式的操作时，如果结果是多变量的，则不允许：
 - en: '[PRE6]'
+  id: totrans-75
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: The symbol can be any valid Python identifier. The default is `symbol=x`, consistent
     with existing behavior.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 符��可以是任何有效的 Python 标识符。默认为 `symbol=x`，与现有行为一致。
 - en: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
 - en: F2PY support for Fortran `character` strings
+  id: totrans-78
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY 支持 Fortran `character` 字符串
 - en: 'F2PY now supports wrapping Fortran functions with:'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: F2PY 现在支持包装 Fortran 函数：
 - en: character (e.g. `character x`)
+  id: totrans-80
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符（例如 `character x`）
 - en: 'character array (e.g. `character, dimension(n) :: x`)'
+  id: totrans-81
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '字符串数组（例如 `character, dimension(n) :: x`）'
 - en: character string (e.g. `character(len=10) x`)
+  id: totrans-82
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符串（例如 `character(len=10) x`）
 - en: 'and character string array (e.g. `character(len=10), dimension(n, m) :: x`)'
+  id: totrans-83
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '以及字符字符串数组（例如 `character(len=10), dimension(n, m) :: x`）'
 - en: arguments, including passing Python unicode strings as Fortran character string
     arguments.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数，包括将 Python unicode 字符串作为 Fortran 字符串参数传递。
 - en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
 - en: New function `np.show_runtime`
+  id: totrans-86
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 新函数 `np.show_runtime`
 - en: A new function `numpy.show_runtime` has been added to display the runtime information
     of the machine in addition to `numpy.show_config` which displays the build-related
     information.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 添加了一个新函数 `numpy.show_runtime`，用于显示机器的运行时信息，除了显示构建相关信息的 `numpy.show_config`。
 - en: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
 - en: '`strict` option for `testing.assert_array_equal`'
+  id: totrans-89
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`testing.assert_array_equal` 的 `strict` 选项'
 - en: The `strict` option is now available for `testing.assert_array_equal`. Setting
     `strict=True` will disable the broadcasting behaviour for scalars and ensure that
     input arrays have the same data type.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: '`testing.assert_array_equal` 现在可用 `strict` 选项。设置 `strict=True` 将禁用标量的广播行为，并确保输入数组具有相同的数据类型。'
 - en: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
 - en: New parameter `equal_nan` added to `np.unique`
+  id: totrans-92
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.unique` 添加了新参数 `equal_nan`'
 - en: '`np.unique` was changed in 1.21 to treat all `NaN` values as equal and return
     a single `NaN`. Setting `equal_nan=False` will restore pre-1.21 behavior to treat
     `NaNs` as unique. Defaults to `True`.'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: '`np.unique` 在 1.21 版本中更改，将所有 `NaN` 值视为相等并返回单个 `NaN`。设置 `equal_nan=False` 将恢复到
+    1.21 版本之前的行为，将 `NaNs` 视为唯一。默认为 `True`。'
 - en: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
 - en: '`casting` and `dtype` keyword arguments for `numpy.stack`'
+  id: totrans-95
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.stack` 的 `casting` 和 `dtype` 关键字参数'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.stack`.
     To use them, write `np.stack(..., dtype=None, casting='same_kind')`.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.stack` 现在可用 `casting` 和 `dtype` 关键字参数。要使用它们，请写成 `np.stack(..., dtype=None,
+    casting=''same_kind'')`。'
 - en: '`casting` and `dtype` keyword arguments for `numpy.vstack`'
+  id: totrans-97
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.vstack` 的 `casting` 和 `dtype` 关键字参数'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.vstack`.
     To use them, write `np.vstack(..., dtype=None, casting='same_kind')`.
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.vstack` 现在可用 `casting` 和 `dtype` 关键字参数。要使用它们，请写成 `np.vstack(..., dtype=None,
+    casting=''same_kind'')`。'
 - en: '`casting` and `dtype` keyword arguments for `numpy.hstack`'
+  id: totrans-99
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.hstack`的`casting`和`dtype`关键字参数。'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.hstack`.
     To use them, write `np.hstack(..., dtype=None, casting='same_kind')`.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.hstack`现在可用`casting`和`dtype`关键字参数。要使用它们，请写成`np.hstack(..., dtype=None,
+    casting=''same_kind'')`。'
 - en: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
 - en: The bit generator underlying the singleton RandomState can be changed
+  id: totrans-102
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 底层单例`RandomState`的位生成器可以更改。
 - en: The singleton `RandomState` instance exposed in the `numpy.random` module is
     initialized at startup with the `MT19937` bit generator. The new function `set_bit_generator`
     allows the default bit generator to be replaced with a user-provided bit generator.
@@ -423,816 +639,1244 @@
     function `get_bit_generator` returns the current bit generator being used by the
     singleton `RandomState`. This is provided to simplify restoring the original source
     of randomness if required.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 在启动时，`numpy.random`模块中公开的单例`RandomState`实例使用`MT19937`位生成器进行初始化。新函数`set_bit_generator`允许用用户提供的位生成器替换默认位生成器。引入此函数是为了提供一种方法，使新代码中可以无缝集成高质量、现代位生成器，同时又可以使用由单例提供的随机变量生成函数的现有代码。配套函数`get_bit_generator`返回单例`RandomState`正在使用的当前位生成器。这是为了在需要时简化恢复原始随机性源。
 - en: 'The preferred method to generate reproducible random numbers is to use a modern
     bit generator in an instance of `Generator`. The function `default_rng` simplifies
     instantiation:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成可重现随机数的首选方法是在`Generator`实例中使用现代位生成器。函数`default_rng`简化了实例化：
 - en: '[PRE7]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'The same bit generator can then be shared with the singleton instance so that
     calling functions in the `random` module will use the same bit generator:'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后可以与单例实例共享相同的位生成器，以便调用`random`模块中的函数将使用相同的位生成器：
 - en: '[PRE8]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'The swap is permanent (until reversed) and so any call to functions in the
     `random` module will use the new bit generator. The original can be restored if
     required for code to run correctly:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 交换是永久的（直到被撤销），因此对`random`模块中的函数的任何调用都将使用新的位生成器。如果需要，原始位生成器可以恢复以使代码正确运行：
 - en: '[PRE9]'
+  id: totrans-109
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
 - en: '`np.void` now has a `dtype` argument'
+  id: totrans-111
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.void`现在有一个`dtype`参数。'
 - en: NumPy now allows constructing structured void scalars directly by passing the
     `dtype` argument to `np.void`.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在 NumPy 允许通过将`dtype`参数传递给`np.void`直接构造结构化空标量。
 - en: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
 - en: Improvements
+  id: totrans-114
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 改进
 - en: F2PY Improvements
+  id: totrans-115
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY 改进
 - en: The generated extension modules don’t use the deprecated NumPy-C API anymore
+  id: totrans-116
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 生成的扩展模块不再使用已弃用的 NumPy-C API。
 - en: Improved `f2py` generated exception messages
+  id: totrans-117
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 改进了`f2py`生成的异常消息。
 - en: Numerous bug and `flake8` warning fixes
+  id: totrans-118
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 大量错误和`flake8`警告修复。
 - en: various CPP macros that one can use within C-expressions of signature files
     are prefixed with `f2py_`. For example, one should use `f2py_len(x)` instead of
     `len(x)`
+  id: totrans-119
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在 C 表达式中，可以使用的各种 CPP 宏都以`f2py_`为前缀。例如，应该使用`f2py_len(x)`而不是`len(x)`。
 - en: A new construct `character(f2py_len=...)` is introduced to support returning
     assumed length character strings (e.g. `character(len=*)`) from wrapper functions
+  id: totrans-120
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 引入了一个新的构造`character(f2py_len=...)`，以支持从包装函数返回假定长度的字符字符串（例如`character(len=*)`）。
 - en: A hook to support rewriting `f2py` internal data structures after reading all
     its input files is introduced. This is required, for instance, for BC of SciPy
     support where character arguments are treated as character strings arguments in
     `C` expressions.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 引入了一个钩子，用于在读取所有输入文件后支持重写`f2py`内部数据结构。例如，这对于 SciPy 支持的 BC 是必需的，其中字符参数在`C`表达式中被视为字符字符串参数。
 - en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
 - en: IBM zSystems Vector Extension Facility (SIMD)
+  id: totrans-123
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: IBM zSystems 矢量扩展设施（SIMD）。
 - en: 'Added support for SIMD extensions of zSystem (z13, z14, z15), through the universal
     intrinsics interface. This support leads to performance improvements for all SIMD
     kernels implemented using the universal intrinsics, including the following operations:
     rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal, tanh, sin, cos,
     equal, not_equal, greater, greater_equal, less, less_equal, maximum, minimum,
     fmax, fmin, argmax, argmin, add, subtract, multiply, divide.'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 增加了对 zSystem（z13、z14、z15）的 SIMD 扩展的支持，通过通用内在函数接口。这种支持可以提高使用通用内在函数实现的所有 SIMD
+    内核的性能，包括以下操作：rint、floor、trunc、ceil、sqrt、absolute、square、reciprocal、tanh、sin、cos、equal、not_equal、greater、greater_equal、less、less_equal、maximum、minimum、fmax、fmin、argmax、argmin、add、subtract、multiply、divide。
 - en: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
 - en: NumPy now gives floating point errors in casts
+  id: totrans-126
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: NumPy 现在在转换中给出浮点错误
 - en: 'In most cases, NumPy previously did not give floating point warnings or errors
     when these happened during casts. For examples, casts like:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 在大多数情况下，NumPy 以前在转换期间发生浮点警告或错误时不会给出警告。例如，转换如下：
 - en: '[PRE10]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Should now generally give floating point warnings. These warnings should warn
     that floating point overflow occurred. For errors when converting floating point
     values to integers users should expect invalid value warnings.
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在通常会给出浮点警告。这些警告应该警告浮点溢出发生。在将浮点值转换为整数时出现错误时，用户应该期望无效值警告。
 - en: Users can modify the behavior of these warnings using `np.errstate`.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 用户可以使用 `np.errstate` 修改这些警告的行为。
 - en: 'Note that for float to int casts, the exact warnings that are given may be
     platform dependent. For example:'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 浮点数到整数的转换警告可能与平台相关。例如：
 - en: '[PRE11]'
+  id: totrans-132
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'May give a result equivalent to (the intermediate cast means no warning is
     given):'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 可能会给出等效于的结果（中间转换意味着不会给出警告）：
 - en: '[PRE12]'
+  id: totrans-134
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'May return an undefined result, with a warning set:'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 可能返回未定义的结果，并设置警告：
 - en: '[PRE13]'
+  id: totrans-136
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: The precise behavior is subject to the C99 standard and its implementation in
     both software and hardware.
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 具体行为取决于 C99 标准及其在软件和硬件中的实现。
 - en: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
 - en: F2PY supports the value attribute
+  id: totrans-139
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY 支持 value 属性
 - en: 'The Fortran standard requires that variables declared with the `value` attribute
     must be passed by value instead of reference. F2PY now supports this use pattern
     correctly. So `integer, intent(in), value :: x` in Fortran codes will have correct
     wrappers generated.'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 'Fortran 标准要求使用 `value` 属性声明的变量必须按值传递而不是按引用传递。F2PY 现在正确支持这种用法模式。因此，Fortran 代码中的
+    `integer, intent(in), value :: x` 将生成正确的包装器。'
 - en: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
 - en: Added pickle support for third-party BitGenerators
+  id: totrans-142
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 增加了对第三方 BitGenerators 的 pickle 支持
 - en: The pickle format for bit generators was extended to allow each bit generator
     to supply its own constructor when during pickling. Previous versions of NumPy
     only supported unpickling `Generator` instances created with one of the core set
     of bit generators supplied with NumPy. Attempting to unpickle a `Generator` that
     used a third-party bit generators would fail since the constructor used during
     the unpickling was only aware of the bit generators included in NumPy.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 位生成器的 pickle 格式已扩展，允许每个位生成器在 pickling 期间提供自己的构造函数。NumPy 的早期版本仅支持使用 NumPy 提供的核心一组位生成器创建的
+    `Generator` 实例的 unpickling。尝试 unpickle 使用第三方位生成器的 `Generator` 将失败，因为在 unpickling
+    期间使用的构造函数仅知道 NumPy 中包含的位生成器。
 - en: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
 - en: arange() now explicitly fails with dtype=str
+  id: totrans-145
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: arange() 现在在 dtype=str 的情况下明确失败
 - en: 'Previously, the `np.arange(n, dtype=str)` function worked for `n=1` and `n=2`,
     but would raise a non-specific exception message for other values of `n`. Now,
     it raises a *TypeError* informing that `arange` does not support string dtypes:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 以前，`np.arange(n, dtype=str)` 函数对 `n=1` 和 `n=2` 有效，但对其他值的 `n` 会引发一个非特定的异常消息。现在，它会引发一个
+    *TypeError*，提示 `arange` 不支持字符串 dtype：
 - en: '[PRE14]'
+  id: totrans-147
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
 - en: '`numpy.typing` protocols are now runtime checkable'
+  id: totrans-149
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.typing` 协议现在可以在运行时进行检查'
 - en: The protocols used in `numpy.typing.ArrayLike` and `numpy.typing.DTypeLike`
     are now properly marked as runtime checkable, making them easier to use for runtime
     type checkers.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.typing.ArrayLike` 和 `numpy.typing.DTypeLike` 中使用的协议现在被正确标记为运行时可检查，使它们更容易用于运行时类型检查器。'
 - en: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
 - en: Performance improvements and changes
+  id: totrans-152
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 性能改进和变化
 - en: Faster version of `np.isin` and `np.in1d` for integer arrays
+  id: totrans-153
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更快的`np.isin`和`np.in1d`版本用于整数数组
 - en: '`np.in1d` (used by `np.isin`) can now switch to a faster algorithm (up to >10x
     faster) when it is passed two integer arrays. This is often automatically used,
     but you can use `kind="sort"` or `kind="table"` to force the old or new method,
     respectively.'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: '`np.in1d`（被`np.isin`使用）现在可以在传递两个整数数组时切换到更快的算法（速度提高了超过10倍）。这通常会自动使用，但您可以使用`kind="sort"`或`kind="table"`来分别强制使用旧方法或新方法。'
 - en: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
 - en: Faster comparison operators
+  id: totrans-156
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更快的比较运算符
 - en: The comparison functions (`numpy.equal`, `numpy.not_equal`, `numpy.less`, `numpy.less_equal`,
     `numpy.greater` and `numpy.greater_equal`) are now much faster as they are now
     vectorized with universal intrinsics. For a CPU with SIMD extension AVX512BW,
     the performance gain is up to 2.57x, 1.65x and 19.15x for integer, float and boolean
     data types, respectively (with N=50000).
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 比较函数（`numpy.equal`，`numpy.not_equal`，`numpy.less`，`numpy.less_equal`，`numpy.greater`和`numpy.greater_equal`）现在更快，因为它们现在使用通用内在函数进行矢量化。对于具有SIMD扩展AVX512BW的CPU，整数、浮点和布尔数据类型���性能提升分别为2.57倍、1.65倍和19.15倍（N=50000）。
 - en: ([gh-21483](https://github.com/numpy/numpy/pull/21483))
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21483](https://github.com/numpy/numpy/pull/21483))
 - en: Changes
+  id: totrans-159
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 变更
 - en: Better reporting of integer division overflow
+  id: totrans-160
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更好地报告整数除法溢出
 - en: 'Integer division overflow of scalars and arrays used to provide a `RuntimeWarning`
     and the return value was undefined leading to crashes at rare occasions:'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 标量和数组的整数除法溢出以前会提供`RuntimeWarning`，返回值未定义，导致在罕见情况下崩溃：
 - en: '[PRE15]'
+  id: totrans-162
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'Integer division overflow now returns the input dtype’s minimum value and raise
     the following `RuntimeWarning`:'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 整数除法溢出现在返回输入dtype的最小值并引发以下`RuntimeWarning`：
 - en: '[PRE16]'
+  id: totrans-164
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: ([gh-21506](https://github.com/numpy/numpy/pull/21506))
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21506](https://github.com/numpy/numpy/pull/21506))
 - en: '`masked_invalid` now modifies the mask in-place'
+  id: totrans-166
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`masked_invalid`现在会就地修改掩码'
 - en: When used with `copy=False`, `numpy.ma.masked_invalid` now modifies the input
     masked array in-place. This makes it behave identically to `masked_where` and
     better matches the documentation.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 当与`copy=False`一起使用时，`numpy.ma.masked_invalid`现在会就地修改输入的掩码数组。这使其行为与`masked_where`完全相同，并更好地匹配文档。
 - en: ([gh-22046](https://github.com/numpy/numpy/pull/22046))
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22046](https://github.com/numpy/numpy/pull/22046))
 - en: '`nditer`/`NpyIter` allows all allocating all operands'
+  id: totrans-169
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`nditer`/`NpyIter`允许分配所有操作数'
 - en: The NumPy iterator available through `np.nditer` in Python and as `NpyIter`
     in C now supports allocating all arrays. The iterator shape defaults to `()` in
     this case. The operands dtype must be provided, since a “common dtype” cannot
     be inferred from the other inputs.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过Python中的`np.nditer`和C中的`NpyIter`可用的NumPy迭代器现在支持分配所有数组。在这种情况下，迭代器形状默认为`()`。必须提供操作数的dtype，因为无法从其他输入中推断出“公共dtype”。
 - en: ([gh-22457](https://github.com/numpy/numpy/pull/22457))
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22457](https://github.com/numpy/numpy/pull/22457))
 - en: Deprecations
+  id: totrans-172
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 弃用
 - en: Deprecate fastCopyAndTranspose and PyArray_CopyAndTranspose
+  id: totrans-173
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 弃用`fastCopyAndTranspose`和`PyArray_CopyAndTranspose`
 - en: 'The `numpy.fastCopyAndTranspose` function has been deprecated. Use the corresponding
     copy and transpose methods directly:'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.fastCopyAndTranspose`函数已被弃用。直接使用相应的复制和转置方法：'
 - en: '[PRE17]'
+  id: totrans-175
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: The underlying C function `PyArray_CopyAndTranspose` has also been deprecated
     from the NumPy C-API.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 底层的C函数`PyArray_CopyAndTranspose`也已从NumPy C-API中弃用。
 - en: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
 - en: Conversion of out-of-bound Python integers
+  id: totrans-178
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Python整数超出范围的转换
 - en: 'Attempting a conversion from a Python integer to a NumPy value will now always
     check whether the result can be represented by NumPy. This means the following
     examples will fail in the future and give a `DeprecationWarning` now:'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试将Python整数转换为NumPy值现在将始终检查结果是否可以由NumPy表示。这意味着以下示例将来将失败，并现在会给出`DeprecationWarning`：
 - en: '[PRE18]'
+  id: totrans-180
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Many of these did succeed before. Such code was mainly useful for unsigned integers
     with negative values such as `np.uint8(-1)` giving `np.iinfo(np.uint8).max`.
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多这样的操作以前是成功的。这些代码主要用于具有负值的无符号整数，例如`np.uint8(-1)`给出`np.iinfo(np.uint8).max`。
 - en: 'Note that conversion between NumPy integers is unaffected, so that `np.array(-1).astype(np.uint8)`
     continues to work and use C integer overflow logic. For negative values, it will
     also work to view the array: `np.array(-1, dtype=np.int8).view(np.uint8)`. In
     some cases, using `np.iinfo(np.uint8).max` or `val % 2**8` may also work well.'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，NumPy整数之间的转换不受影响，因此`np.array(-1).astype(np.uint8)`仍然有效，并使用C整数溢出逻辑。对于负值，也可以通过查看数组来实现：`np.array(-1,
+    dtype=np.int8).view(np.uint8)`。在某些情况下，使用`np.iinfo(np.uint8).max`或`val % 2**8`也可能效果很好。
 - en: In rare cases input data may mix both negative values and very large unsigned
     values (i.e. `-1` and `2**63`). There it is unfortunately necessary to use `%`
     on the Python value or use signed or unsigned conversion depending on whether
     negative values are expected.
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 在罕见情况下，输入数据可能混合负值和非常大的无符号值（即 `-1` 和 `2**63`）。在这种情况下，不幸的是必须对 Python 值使用 `%`，或者根据是否预期负值使用有符号或无符号转换。
 - en: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
 - en: Deprecate `msort`
+  id: totrans-185
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 弃用 `msort`
 - en: The `numpy.msort` function is deprecated. Use `np.sort(a, axis=0)` instead.
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.msort` 函数已被弃用。改用 `np.sort(a, axis=0)`。'
 - en: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
 - en: '`np.str0` and similar are now deprecated'
+  id: totrans-188
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.str0` 和类似的现已被弃用'
 - en: 'The scalar type aliases ending in a 0 bit size: `np.object0`, `np.str0`, `np.bytes0`,
     `np.void0`, `np.int0`, `np.uint0` as well as `np.bool8` are now deprecated and
     will eventually be removed.'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 以 0 位大小结尾的标量类型别名：`np.object0`、`np.str0`、`np.bytes0`、`np.void0`、`np.int0`、`np.uint0`
+    以及 `np.bool8` 现已被弃用，并最终将被移除。
 - en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
 - en: Deprecate fastCopyAndTranspose and PyArray_CopyAndTranspose
+  id: totrans-191
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 弃用 fastCopyAndTranspose 和 PyArray_CopyAndTranspose
 - en: 'The `numpy.fastCopyAndTranspose` function has been deprecated. Use the corresponding
     copy and transpose methods directly:'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.fastCopyAndTranspose` 函数已被弃用。直接使用相应的复制和转置方法：'
 - en: '[PRE19]'
+  id: totrans-193
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: The underlying C function `PyArray_CopyAndTranspose` has also been deprecated
     from the NumPy C-API.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 底层 C 函数 `PyArray_CopyAndTranspose` 也已从 NumPy C-API 中弃用。
 - en: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22313](https://github.com/numpy/numpy/pull/22313))
 - en: Conversion of out-of-bound Python integers
+  id: totrans-196
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 超出范围的 Python 整数转换
 - en: 'Attempting a conversion from a Python integer to a NumPy value will now always
     check whether the result can be represented by NumPy. This means the following
     examples will fail in the future and give a `DeprecationWarning` now:'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试将 Python 整数转换为 NumPy 值现在将始终检查结果是否可以由 NumPy 表示。这意味着以下示例将在未来失败，并现在会给出 `DeprecationWarning`：
 - en: '[PRE20]'
+  id: totrans-198
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: Many of these did succeed before. Such code was mainly useful for unsigned integers
     with negative values such as `np.uint8(-1)` giving `np.iinfo(np.uint8).max`.
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中许多在以前确实成功。这样的代码主要对带有负值的无符号整数有用，例如 `np.uint8(-1)` 给出 `np.iinfo(np.uint8).max`。
 - en: 'Note that conversion between NumPy integers is unaffected, so that `np.array(-1).astype(np.uint8)`
     continues to work and use C integer overflow logic. For negative values, it will
     also work to view the array: `np.array(-1, dtype=np.int8).view(np.uint8)`. In
     some cases, using `np.iinfo(np.uint8).max` or `val % 2**8` may also work well.'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，NumPy 整数之间的转换不受影响，因此 `np.array(-1).astype(np.uint8)` 仍然有效，并使用 C 整数溢出逻辑。对于负值，也可以查看数组：`np.array(-1,
+    dtype=np.int8).view(np.uint8)`。在某些情况下，使用 `np.iinfo(np.uint8).max` 或 `val % 2**8`
+    也可能很好地工作。
 - en: In rare cases input data may mix both negative values and very large unsigned
     values (i.e. `-1` and `2**63`). There it is unfortunately necessary to use `%`
     on the Python value or use signed or unsigned conversion depending on whether
     negative values are expected.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 在罕见情况下，输入数据可能混合负值和非常大的无符号值（即 `-1` 和 `2**63`）。在这种情况下，不幸的是必须对 Python 值使用 `%`，或者根据是否预期负值使用有符号或无符号转换。
 - en: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22385](https://github.com/numpy/numpy/pull/22385))
 - en: Deprecate `msort`
+  id: totrans-203
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: ��用 `msort`
 - en: The `numpy.msort` function is deprecated. Use `np.sort(a, axis=0)` instead.
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.msort` 函数已被弃用。改用 `np.sort(a, axis=0)`。'
 - en: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22456](https://github.com/numpy/numpy/pull/22456))
 - en: '`np.str0` and similar are now deprecated'
+  id: totrans-206
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.str0` 和类似的现已被弃用'
 - en: 'The scalar type aliases ending in a 0 bit size: `np.object0`, `np.str0`, `np.bytes0`,
     `np.void0`, `np.int0`, `np.uint0` as well as `np.bool8` are now deprecated and
     will eventually be removed.'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 以 0 位大小结尾的标量类型别名：`np.object0`、`np.str0`、`np.bytes0`、`np.void0`、`np.int0`、`np.uint0`
+    以及 `np.bool8` 现已被弃用，并最终将被移除。
 - en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
 - en: Expired deprecations
+  id: totrans-209
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 过期的弃用功能
 - en: The `normed` keyword argument has been removed from *np.histogram*, *np.histogram2d*,
     and *np.histogramdd*. Use `density` instead. If `normed` was passed by position,
     `density` is now used.
+  id: totrans-210
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 从 *np.histogram*、*np.histogram2d* 和 *np.histogramdd* 中移除了 `normed` 关键字参数。改用
+    `density`。如果 `normed` 是按位置传递的，则现在使用 `density`。
 - en: ([gh-21645](https://github.com/numpy/numpy/pull/21645))
+  id: totrans-211
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-21645](https://github.com/numpy/numpy/pull/21645))
 - en: Ragged array creation will now always raise a `ValueError` unless `dtype=object`
     is passed. This includes very deeply nested sequences.
+  id: totrans-212
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不规则数组创建现在除非传递 `dtype=object`，否则将始终引发 `ValueError`。这包括非常深度嵌套的序列。
 - en: ([gh-22004](https://github.com/numpy/numpy/pull/22004))
+  id: totrans-213
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22004](https://github.com/numpy/numpy/pull/22004))
 - en: Support for Visual Studio 2015 and earlier has been removed.
+  id: totrans-214
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不再支持 Visual Studio 2015 及更早版本。
 - en: Support for the Windows Interix POSIX interop layer has been removed.
+  id: totrans-215
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不再支持 Windows Interix POSIX 互操作层。
 - en: ([gh-22139](https://github.com/numpy/numpy/pull/22139))
+  id: totrans-216
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22139](https://github.com/numpy/numpy/pull/22139))
 - en: Support for Cygwin < 3.3 has been removed.
+  id: totrans-217
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 支持 Cygwin < 3.3 已被移除。
 - en: ([gh-22159](https://github.com/numpy/numpy/pull/22159))
+  id: totrans-218
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22159](https://github.com/numpy/numpy/pull/22159))
 - en: The mini() method of `np.ma.MaskedArray` has been removed. Use either `np.ma.MaskedArray.min()`
     or `np.ma.minimum.reduce()`.
+  id: totrans-219
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`np.ma.MaskedArray` 的 `mini()` 方法已被移除。改用 `np.ma.MaskedArray.min()` 或 `np.ma.minimum.reduce()`。'
 - en: The single-argument form of `np.ma.minimum` and `np.ma.maximum` has been removed.
     Use `np.ma.minimum.reduce()` or `np.ma.maximum.reduce()` instead.
+  id: totrans-220
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`np.ma.minimum` 和 `np.ma.maximum` 的单参数形式已被移除。改用 `np.ma.minimum.reduce()` 或
+    `np.ma.maximum.reduce()`。'
 - en: ([gh-22228](https://github.com/numpy/numpy/pull/22228))
+  id: totrans-221
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22228](https://github.com/numpy/numpy/pull/22228))
 - en: Passing dtype instances other than the canonical (mainly native byte-order)
     ones to `dtype=` or `signature=` in ufuncs will now raise a `TypeError`. We recommend
     passing the strings `"int8"` or scalar types `np.int8` since the byte-order, datetime/timedelta
     unit, etc. are never enforced. (Initially deprecated in NumPy 1.21.)
+  id: totrans-222
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在 ufuncs 中将除了主要的（主要是本机字节顺序）规范 dtype 实例传递给 `dtype=` 或 `signature=` 现在会引发 `TypeError`。我们建议传递字符串
+    `"int8"` 或标量类型 `np.int8`，因为字节顺序、日期时间/时间增量单位等从不被强制执行。（在 NumPy 1.21 中最初被弃用。）
 - en: ([gh-22540](https://github.com/numpy/numpy/pull/22540))
+  id: totrans-223
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22540](https://github.com/numpy/numpy/pull/22540))
 - en: The `dtype=` argument to comparison ufuncs is now applied correctly. That means
     that only `bool` and `object` are valid values and `dtype=object` is enforced.
+  id: totrans-224
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对比较 ufuncs 的 `dtype=` 参数现在被正确应用。这意味着只有 `bool` 和 `object` 是有效值，且 `dtype=object`
+    被强制执行。
 - en: ([gh-22541](https://github.com/numpy/numpy/pull/22541))
+  id: totrans-225
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22541](https://github.com/numpy/numpy/pull/22541))
 - en: The deprecation for the aliases `np.object`, `np.bool`, `np.float`, `np.complex`,
     `np.str`, and `np.int` is expired (introduces NumPy 1.20). Some of these will
     now give a FutureWarning in addition to raising an error since they will be mapped
     to the NumPy scalars in the future.
+  id: totrans-226
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对于别名 `np.object`、`np.bool`、`np.float`、`np.complex`、`np.str` 和 `np.int` 的弃用已过期（引入于
+    NumPy 1.20）。其中一些现在除了引发错误外还会产生 FutureWarning，因为它们将来会映射到 NumPy 标量。
 - en: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
+  id: totrans-227
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ([gh-22607](https://github.com/numpy/numpy/pull/22607))
 - en: Compatibility notes
+  id: totrans-228
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 兼容性说明
 - en: '`array.fill(scalar)` may behave slightly different'
+  id: totrans-229
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`array.fill(scalar)` 的行为可能略有不同'
 - en: '`numpy.ndarray.fill` may in some cases behave slightly different now due to
     the fact that the logic is aligned with item assignment:'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.ndarray.fill` 现在在某些情况下可能会有略微不同的行为，因为逻辑与项赋值对齐：'
 - en: '[PRE21]'
+  id: totrans-231
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: Previously casting may have produced slightly different answers when using values
     that could not be represented in the target `dtype` or when the target had `object`
     dtype.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 以前的强制转换可能在使用无法表示为目标 `dtype` 的值或目标具有 `object` dtype 时产生略有不同的答案。
 - en: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
 - en: Subarray to object cast now copies
+  id: totrans-234
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 子数组转为对象现在会复制
 - en: 'Casting a dtype that includes a subarray to an object will now ensure a copy
     of the subarray. Previously an unsafe view was returned:'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 将包含子数组的 dtype 强制转换为对象将确保子数组的副本。之前返回的是不安全的视图：
 - en: '[PRE22]'
+  id: totrans-236
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Is now always false. While previously it was true for the specific cast.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在始终为 false。而之前对于特定转换是 true。
 - en: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
 - en: Returned arrays respect uniqueness of dtype kwarg objects
+  id: totrans-239
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 返回的数组尊重 dtype kwarg 对象的唯一性
 - en: When the `dtype` keyword argument is used with `np.array` or [`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
     "numpy.asarray"), the dtype of the returned array now always exactly matches the
     dtype provided by the caller.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 当 `dtype` 关键字参数与 `np.array` 或 [`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
+    "numpy.asarray") 一起使用时，返回数组的 dtype 现在始终与调用者提供的 dtype 完全匹配。
 - en: 'In some cases this change means that a *view* rather than the input array is
     returned. The following is an example for this on 64bit Linux where `long` and
     `longlong` are the same precision but different `dtypes`:'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，这个变化意味着返回的是*视图*而不是输入数组。以下是在 64 位 Linux 上的一个示例，其中 `long` 和 `longlong`
+    具有相同的精度但不同的 `dtypes`：
 - en: '[PRE23]'
+  id: totrans-242
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Before the change, the `dtype` did not match because `new is arr` was `True`.
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 在更改之前，`dtype`不匹配是因为`new is arr`为`True`。
 - en: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
 - en: DLPack export raises `BufferError`
+  id: totrans-245
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DLPack导出引发`BufferError`
 - en: When an array buffer cannot be exported via DLPack a `BufferError` is now always
     raised where previously `TypeError` or `RuntimeError` was raised. This allows
     falling back to the buffer protocol or `__array_interface__` when DLPack was tried
     first.
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 当数组缓冲区无法通过DLPack导出时，现在总是引发`BufferError`，而以前会引发`TypeError`或`RuntimeError`。这允许在首次尝试DLPack时回退到缓冲区协议或`__array_interface__`。
 - en: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
 - en: NumPy builds are no longer tested on GCC-6
+  id: totrans-248
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 不再在GCC-6上测试NumPy构建
 - en: Ubuntu 18.04 is deprecated for GitHub actions and GCC-6 is not available on
     Ubuntu 20.04, so builds using that compiler are no longer tested. We still test
     builds using GCC-7 and GCC-8.
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: Ubuntu 18.04已在GitHub操作中弃用，Ubuntu 20.04上不可用GCC-6，因此不再测试使用该编译器的构建。我们仍然测试使用GCC-7和GCC-8进行构建。
 - en: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
 - en: '`array.fill(scalar)` may behave slightly different'
+  id: totrans-251
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`array.fill(scalar)`的行为可能略有不同'
 - en: '`numpy.ndarray.fill` may in some cases behave slightly different now due to
     the fact that the logic is aligned with item assignment:'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.ndarray.fill`在某些情况下可能会因为逻辑与项目赋值对齐而略有不同：'
 - en: '[PRE24]'
+  id: totrans-253
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Previously casting may have produced slightly different answers when using values
     that could not be represented in the target `dtype` or when the target had `object`
     dtype.
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 以前进行转换时，当使用无法表示为目标`dtype`的值或目标具有`object` dtype时，可能会产生略有不同的答案。
 - en: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-20924](https://github.com/numpy/numpy/pull/20924))
 - en: Subarray to object cast now copies
+  id: totrans-256
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 子数组转为对象现在会复制
 - en: 'Casting a dtype that includes a subarray to an object will now ensure a copy
     of the subarray. Previously an unsafe view was returned:'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 将包含子数组的dtype转换为对象现在将确保子数组的副本。以前会返回一个不安全的视图：
 - en: '[PRE25]'
+  id: totrans-258
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Is now always false. While previously it was true for the specific cast.
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在总是为false。而以前对于特定转换是true。
 - en: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21925](https://github.com/numpy/numpy/pull/21925))
 - en: Returned arrays respect uniqueness of dtype kwarg objects
+  id: totrans-261
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 返回的数组尊重dtype kwarg对象的唯一性
 - en: When the `dtype` keyword argument is used with `np.array` or [`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
     "numpy.asarray"), the dtype of the returned array now always exactly matches the
     dtype provided by the caller.
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 当使用`np.array`或[`asarray`](../reference/generated/numpy.asarray.html#numpy.asarray
+    "numpy.asarray")时，如果使用了`dtype`关键字参数，则返回数组的dtype现在总是与调用者提供的dtype完全匹配。
 - en: 'In some cases this change means that a *view* rather than the input array is
     returned. The following is an example for this on 64bit Linux where `long` and
     `longlong` are the same precision but different `dtypes`:'
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，这种更改意味着返回的是*视图*而不是输入数组。以下是64位Linux上的一个示例，其中`long`和`longlong`具有相同的精度但不同的`dtypes`：
 - en: '[PRE26]'
+  id: totrans-264
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Before the change, the `dtype` did not match because `new is arr` was `True`.
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 在更改之前，`dtype`不匹配是因为`new is arr`为`True`。
 - en: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21995](https://github.com/numpy/numpy/pull/21995))
 - en: DLPack export raises `BufferError`
+  id: totrans-267
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DLPack导出引发`BufferError`
 - en: When an array buffer cannot be exported via DLPack a `BufferError` is now always
     raised where previously `TypeError` or `RuntimeError` was raised. This allows
     falling back to the buffer protocol or `__array_interface__` when DLPack was tried
     first.
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 当数组缓冲区无法通过DLPack导出时，现在总是引发`BufferError`，而以前会引发`TypeError`或`RuntimeError`。这允许在首次尝试DLPack时回退到缓冲区协议或`__array_interface__`。
 - en: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22542](https://github.com/numpy/numpy/pull/22542))
 - en: NumPy builds are no longer tested on GCC-6
+  id: totrans-270
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 不再在GCC-6上测试NumPy构建
 - en: Ubuntu 18.04 is deprecated for GitHub actions and GCC-6 is not available on
     Ubuntu 20.04, so builds using that compiler are no longer tested. We still test
     builds using GCC-7 and GCC-8.
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: Ubuntu 18.04已在GitHub操作中弃用，Ubuntu 20.04上不可用GCC-6，因此不再测试使用该编译器的构建。我们仍然测试使用GCC-7和GCC-8进行构建。
 - en: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22598](https://github.com/numpy/numpy/pull/22598))
 - en: New Features
+  id: totrans-273
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 新特性
 - en: New attribute `symbol` added to polynomial classes
+  id: totrans-274
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多项式类添加了新属性`symbol`
 - en: 'The polynomial classes in the `numpy.polynomial` package have a new `symbol`
     attribute which is used to represent the indeterminate of the polynomial. This
     can be used to change the value of the variable when printing:'
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.polynomial` 包中的多项式类具有一个新的 `symbol` 属性，用于表示多项式的未知数。这可用于在打印时更改变量的值：'
 - en: '[PRE27]'
+  id: totrans-276
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'Note that the polynomial classes only support 1D polynomials, so operations
     that involve polynomials with different symbols are disallowed when the result
     would be multivariate:'
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，多项式类仅支持 1D 多项式，因此涉及具有不同符号的多项式的操作在结果为多变量时是不允许的：
 - en: '[PRE28]'
+  id: totrans-278
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: The symbol can be any valid Python identifier. The default is `symbol=x`, consistent
     with existing behavior.
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 符号可以是任何有效的 Python 标识符。默认为 `symbol=x`，与现有行为一致。
 - en: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
 - en: F2PY support for Fortran `character` strings
+  id: totrans-281
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY 支持 Fortran `character` 字符串
 - en: 'F2PY now supports wrapping Fortran functions with:'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: F2PY 现在支持包装 Fortran 函数：
 - en: character (e.g. `character x`)
+  id: totrans-283
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符（例如 `character x`）
 - en: 'character array (e.g. `character, dimension(n) :: x`)'
+  id: totrans-284
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '字符数组（例如 `character, dimension(n) :: x`）'
 - en: character string (e.g. `character(len=10) x`)
+  id: totrans-285
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符串（例如 `character(len=10) x`）
 - en: 'and character string array (e.g. `character(len=10), dimension(n, m) :: x`)'
+  id: totrans-286
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '和字符字符串数组（例如 `character(len=10), dimension(n, m) :: x`）'
 - en: arguments, including passing Python unicode strings as Fortran character string
     arguments.
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数，包括将 Python Unicode 字符串作为 Fortran 字符串参数传递。
 - en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
 - en: New function `np.show_runtime`
+  id: totrans-289
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 新函数 `np.show_runtime`
 - en: A new function `numpy.show_runtime` has been added to display the runtime information
     of the machine in addition to `numpy.show_config` which displays the build-related
     information.
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 已添加一个新函数 `numpy.show_runtime`，用于显示机器的运行时信息，除了 `numpy.show_config` 显示构建相关信息。
 - en: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
 - en: '`strict` option for `testing.assert_array_equal`'
+  id: totrans-292
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`testing.assert_array_equal` 的 `strict` 选项'
 - en: The `strict` option is now available for `testing.assert_array_equal`. Setting
     `strict=True` will disable the broadcasting behaviour for scalars and ensure that
     input arrays have the same data type.
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: '`strict` 选项现在可用于 `testing.assert_array_equal`。设置 `strict=True` 将禁用标量的广播行为，并确保输入数组具有相同的数据类型。'
 - en: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
 - en: New parameter `equal_nan` added to `np.unique`
+  id: totrans-295
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.unique` 添加了新参数 `equal_nan`'
 - en: '`np.unique` was changed in 1.21 to treat all `NaN` values as equal and return
     a single `NaN`. Setting `equal_nan=False` will restore pre-1.21 behavior to treat
     `NaNs` as unique. Defaults to `True`.'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: '`np.unique` 在 1.21 版本中已更改，将所有 `NaN` 值视为相等并返回单个 `NaN`。设置 `equal_nan=False` 将恢复到
+    1.21 版本之前的行为，将 `NaN` 视为唯一。默认为 `True`。'
 - en: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
 - en: '`casting` and `dtype` keyword arguments for `numpy.stack`'
+  id: totrans-298
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`casting` 和 `dtype` 关键字参数用于 `numpy.stack`'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.stack`.
     To use them, write `np.stack(..., dtype=None, casting='same_kind')`.
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: '`casting` 和 `dtype` 关键字参数现在可用于 `numpy.stack`。要使用它们，请写成 `np.stack(..., dtype=None,
+    casting=''same_kind'')`。'
 - en: '`casting` and `dtype` keyword arguments for `numpy.vstack`'
+  id: totrans-300
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`casting` 和 `dtype` 关键字参数用于 `numpy.vstack`'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.vstack`.
     To use them, write `np.vstack(..., dtype=None, casting='same_kind')`.
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: '`casting` 和 `dtype` 关键字参数现在可用于 `numpy.vstack`。要使用它们，请写成 `np.vstack(..., dtype=None,
+    casting=''same_kind'')`。'
 - en: '`casting` and `dtype` keyword arguments for `numpy.hstack`'
+  id: totrans-302
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`casting` 和 `dtype` 关键字参数用于 `numpy.hstack`'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.hstack`.
     To use them, write `np.hstack(..., dtype=None, casting='same_kind')`.
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: '`casting` 和 `dtype` 关键字参数现在可用于 `numpy.hstack`。要使用它们，请写成 `np.hstack(..., dtype=None,
+    casting=''same_kind'')`。'
 - en: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
 - en: The bit generator underlying the singleton RandomState can be changed
+  id: totrans-305
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 可更改单例 RandomState 底层的比特生成器
 - en: The singleton `RandomState` instance exposed in the `numpy.random` module is
     initialized at startup with the `MT19937` bit generator. The new function `set_bit_generator`
     allows the default bit generator to be replaced with a user-provided bit generator.
@@ -1242,169 +1886,258 @@
     function `get_bit_generator` returns the current bit generator being used by the
     singleton `RandomState`. This is provided to simplify restoring the original source
     of randomness if required.
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 在`numpy.random`模块中公开的单例`RandomState`实例在启动时使用`MT19937`位生成器进行初始化。新函数`set_bit_generator`允许用用户提供的位生成器替换默认位生成器。引入此函数是为了提供一种方法，使新代码中可以无缝集成高质量、现代的位生成器，并与使用单例提供的随机变量生成函数的现有代码进行整合。伴随函数`get_bit_generator`返回单例`RandomState`正在使用的当前位生成器。这是为了在需要时简化恢复原始随机性源的过程。
 - en: 'The preferred method to generate reproducible random numbers is to use a modern
     bit generator in an instance of `Generator`. The function `default_rng` simplifies
     instantiation:'
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成可复现随机数的首选方法是在`Generator`实例中使用现代位生成器。函数`default_rng`简化了实例化过程：
 - en: '[PRE29]'
+  id: totrans-308
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'The same bit generator can then be shared with the singleton instance so that
     calling functions in the `random` module will use the same bit generator:'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后可以将相同的位生成器与单例实例共享，以便调用`random`模块中的函数将使用相同的位生成器：
 - en: '[PRE30]'
+  id: totrans-310
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'The swap is permanent (until reversed) and so any call to functions in the
     `random` module will use the new bit generator. The original can be restored if
     required for code to run correctly:'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 交换是永久的（直到被撤销），因此对`random`模块中的函数的任何调用都将使用新的位生成器。如果需要，原始位生成器可以恢复以使代码正确运行：
 - en: '[PRE31]'
+  id: totrans-312
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
 - en: '`np.void` now has a `dtype` argument'
+  id: totrans-314
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.void`现在有一个`dtype`参数'
 - en: NumPy now allows constructing structured void scalars directly by passing the
     `dtype` argument to `np.void`.
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy 现在允许通过将`dtype`参数传递给`np.void`直接构造结构化空标量。
 - en: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
 - en: New attribute `symbol` added to polynomial classes
+  id: totrans-317
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多项式类添加了新属性`symbol`
 - en: 'The polynomial classes in the `numpy.polynomial` package have a new `symbol`
     attribute which is used to represent the indeterminate of the polynomial. This
     can be used to change the value of the variable when printing:'
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.polynomial`包中的多项式类具有一个新的`symbol`属性，用于表示多项式的未知数。这可用于在打印时更改变量的值：'
 - en: '[PRE32]'
+  id: totrans-319
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Note that the polynomial classes only support 1D polynomials, so operations
     that involve polynomials with different symbols are disallowed when the result
     would be multivariate:'
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，多项式类仅支持 1D 多项式，因此在涉及具有不同符号的多项式且结果为多变量时，不允许进行操作：
 - en: '[PRE33]'
+  id: totrans-321
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: The symbol can be any valid Python identifier. The default is `symbol=x`, consistent
     with existing behavior.
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
+  zh: 符号可以是任何有效的 Python 标识符。默认为`symbol=x`，与现有行为一致。
 - en: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-16154](https://github.com/numpy/numpy/pull/16154))
 - en: F2PY support for Fortran `character` strings
+  id: totrans-324
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY 对 Fortran `character` 字符串的支持
 - en: 'F2PY now supports wrapping Fortran functions with:'
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
+  zh: F2PY 现在支持包装 Fortran 函数：
 - en: character (e.g. `character x`)
+  id: totrans-326
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符（例如`character x`）
 - en: 'character array (e.g. `character, dimension(n) :: x`)'
+  id: totrans-327
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '字符数组（例如`character, dimension(n) :: x`）'
 - en: character string (e.g. `character(len=10) x`)
+  id: totrans-328
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 字符串（例如`character(len=10) x`）
 - en: 'and character string array (e.g. `character(len=10), dimension(n, m) :: x`)'
+  id: totrans-329
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '和字符字符串数组（例如`character(len=10), dimension(n, m) :: x`）'
 - en: arguments, including passing Python unicode strings as Fortran character string
     arguments.
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数，包括将 Python Unicode 字符串作为 Fortran 字符串参数传递。
 - en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
 - en: New function `np.show_runtime`
+  id: totrans-332
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 新函数`np.show_runtime`
 - en: A new function `numpy.show_runtime` has been added to display the runtime information
     of the machine in addition to `numpy.show_config` which displays the build-related
     information.
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
+  zh: 添加了一个新函数`numpy.show_runtime`，用于显示机器的运行时信息，此外`numpy.show_config`显示了与构建相关的信息。
 - en: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21468](https://github.com/numpy/numpy/pull/21468))
 - en: '`strict` option for `testing.assert_array_equal`'
+  id: totrans-335
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`testing.assert_array_equal`的`strict`选项'
 - en: The `strict` option is now available for `testing.assert_array_equal`. Setting
     `strict=True` will disable the broadcasting behaviour for scalars and ensure that
     input arrays have the same data type.
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
+  zh: '`testing.assert_array_equal`现在可用`strict`选项。设置`strict=True`将禁用标量的广播行为，并确保输入��组具有相同的数据类型。'
 - en: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21595](https://github.com/numpy/numpy/pull/21595))
 - en: New parameter `equal_nan` added to `np.unique`
+  id: totrans-338
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.unique`添加了新参数`equal_nan`'
 - en: '`np.unique` was changed in 1.21 to treat all `NaN` values as equal and return
     a single `NaN`. Setting `equal_nan=False` will restore pre-1.21 behavior to treat
     `NaNs` as unique. Defaults to `True`.'
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: '`np.unique`在1.21版本中已更改，将所有`NaN`值视为相等并返回单个`NaN`。设置`equal_nan=False`将恢复到1.21版本之前的行为，将`NaN`视为唯一。默认为`True`。'
 - en: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21623](https://github.com/numpy/numpy/pull/21623))
 - en: '`casting` and `dtype` keyword arguments for `numpy.stack`'
+  id: totrans-341
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.stack`的`casting`和`dtype`关键字参数'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.stack`.
     To use them, write `np.stack(..., dtype=None, casting='same_kind')`.
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.stack`现在也可以使用`casting`和`dtype`关键字参数。要使用它们，写成`np.stack(..., dtype=None,
+    casting=''same_kind'')`。'
 - en: '`casting` and `dtype` keyword arguments for `numpy.vstack`'
+  id: totrans-343
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.vstack`的`casting`和`dtype`关键字参数'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.vstack`.
     To use them, write `np.vstack(..., dtype=None, casting='same_kind')`.
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.vstack`的`casting`和`dtype`关键字参数现在也可用。要使用它们，写成`np.vstack(..., dtype=None,
+    casting=''same_kind'')`。'
 - en: '`casting` and `dtype` keyword arguments for `numpy.hstack`'
+  id: totrans-345
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.hstack`的`casting`和`dtype`关键字参数'
 - en: The `casting` and `dtype` keyword arguments are now available for `numpy.hstack`.
     To use them, write `np.hstack(..., dtype=None, casting='same_kind')`.
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在`numpy.hstack`也可以使用`casting`和`dtype`关键字参数。要使用它们，写成`np.hstack(..., dtype=None,
+    casting='same_kind')`。
 - en: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21627](https://github.com/numpy/numpy/pull/21627))
 - en: The bit generator underlying the singleton RandomState can be changed
+  id: totrans-348
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 单例`RandomState`的比特生成器可以更改
 - en: The singleton `RandomState` instance exposed in the `numpy.random` module is
     initialized at startup with the `MT19937` bit generator. The new function `set_bit_generator`
     allows the default bit generator to be replaced with a user-provided bit generator.
@@ -1414,449 +2147,660 @@
     function `get_bit_generator` returns the current bit generator being used by the
     singleton `RandomState`. This is provided to simplify restoring the original source
     of randomness if required.
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
+  zh: 在启动时，`numpy.random`模块中公开的单例`RandomState`实例使用`MT19937`比特生成器进行初始化。新函数`set_bit_generator`允许将默认比特生成器替换为用户提供的比特生成器。此函数已被引入，以提供一种方法，允许在新代码中无缝集成高质量、现代比特生成器，并与使用单例提供的随机变量生成函数的现有代码进行整合。配套函数`get_bit_generator`返回单例`RandomState`正在使用的当前比特生成器。这是为了在需要时简化恢复原始随机性源。
 - en: 'The preferred method to generate reproducible random numbers is to use a modern
     bit generator in an instance of `Generator`. The function `default_rng` simplifies
     instantiation:'
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成可复现随机数的首选方法是在`Generator`实例中使用现代比特生成器。函数`default_rng`简化了实例化：
 - en: '[PRE34]'
+  id: totrans-351
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'The same bit generator can then be shared with the singleton instance so that
     calling functions in the `random` module will use the same bit generator:'
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后可以将相同的比特生成器与单例实例共享，以便调用`random`模块中的函数将使用相同的比特生成器：
 - en: '[PRE35]'
+  id: totrans-353
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'The swap is permanent (until reversed) and so any call to functions in the
     `random` module will use the new bit generator. The original can be restored if
     required for code to run correctly:'
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
+  zh: 交换是永久的（直到被逆转），因此对`random`模块中的函数的任何调用都将使用新的比特生成器。如果需要代码正确运行，原始状态可以恢复：
 - en: '[PRE36]'
+  id: totrans-355
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21976](https://github.com/numpy/numpy/pull/21976))
 - en: '`np.void` now has a `dtype` argument'
+  id: totrans-357
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`np.void`现在有一个`dtype`参数'
 - en: NumPy now allows constructing structured void scalars directly by passing the
     `dtype` argument to `np.void`.
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在NumPy允许通过将`dtype`参数传递给`np.void`直接构造结构化空标量。
 - en: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22316](https://github.com/numpy/numpy/pull/22316))
 - en: Improvements
+  id: totrans-360
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 改进
 - en: F2PY Improvements
+  id: totrans-361
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY改进
 - en: The generated extension modules don’t use the deprecated NumPy-C API anymore
+  id: totrans-362
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 生成的扩展模块不再使用已弃用的NumPy-C API
 - en: Improved `f2py` generated exception messages
+  id: totrans-363
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 改进了由`f2py`生成的异常消息
 - en: Numerous bug and `flake8` warning fixes
+  id: totrans-364
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 大量错误和`flake8`警告修复
 - en: various CPP macros that one can use within C-expressions of signature files
     are prefixed with `f2py_`. For example, one should use `f2py_len(x)` instead of
     `len(x)`
+  id: totrans-365
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在签名文件的C表达式中可以使用的各种CPP宏都以`f2py_`为前缀。例如，应该使用`f2py_len(x)`而不是`len(x)`
 - en: A new construct `character(f2py_len=...)` is introduced to support returning
     assumed length character strings (e.g. `character(len=*)`) from wrapper functions
+  id: totrans-366
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 引入了一个新的构造`character(f2py_len=...)`来支持从包装函数返回假定长度的字符串（例如`character(len=*)`）
 - en: A hook to support rewriting `f2py` internal data structures after reading all
     its input files is introduced. This is required, for instance, for BC of SciPy
     support where character arguments are treated as character strings arguments in
     `C` expressions.
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
+  zh: 引入了一个钩子来支持在读取所有输入文件后重写`f2py`内部数据结构。例如，在SciPy支持的BC中，字符参数被视为`C`表达式中的字符串参数是必需的。
 - en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
 - en: IBM zSystems Vector Extension Facility (SIMD)
+  id: totrans-369
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: IBM zSystems 矢量扩展设施（SIMD）
 - en: 'Added support for SIMD extensions of zSystem (z13, z14, z15), through the universal
     intrinsics interface. This support leads to performance improvements for all SIMD
     kernels implemented using the universal intrinsics, including the following operations:
     rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal, tanh, sin, cos,
     equal, not_equal, greater, greater_equal, less, less_equal, maximum, minimum,
     fmax, fmin, argmax, argmin, add, subtract, multiply, divide.'
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
+  zh: 增加了对zSystem（z13、z14、z15）的SIMD扩展的支持，通过通用内在函数接口。这种支持导致使用通用内在函数实现的所有SIMD内核的性能提升，包括以下操作：rint、floor、trunc、ceil、sqrt、absolute、square、reciprocal、tanh、sin、cos、equal、not_equal、greater、greater_equal、less、less_equal、maximum、minimum、fmax、fmin、argmax、argmin、add、subtract、multiply、divide。
 - en: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
 - en: NumPy now gives floating point errors in casts
+  id: totrans-372
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: NumPy现在在转换中给出浮点错误
 - en: 'In most cases, NumPy previously did not give floating point warnings or errors
     when these happened during casts. For examples, casts like:'
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
+  zh: 在大多数情况下，NumPy以前在进行转换时不会给出浮点警告或错误。例如，像这样的转换：
 - en: '[PRE37]'
+  id: totrans-374
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: Should now generally give floating point warnings. These warnings should warn
     that floating point overflow occurred. For errors when converting floating point
     values to integers users should expect invalid value warnings.
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在通常会给出浮点警告。这些警告应该警告浮点溢出发生。在将浮点值转换为整数时出现错误时，用户应该期望无效值警告。
 - en: Users can modify the behavior of these warnings using `np.errstate`.
+  id: totrans-376
   prefs: []
   type: TYPE_NORMAL
+  zh: 用户可以使用`np.errstate`修改这些警告的行为。
 - en: 'Note that for float to int casts, the exact warnings that are given may be
     platform dependent. For example:'
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，对于浮点到整数的转换，给出的确切警告可能取决于平台。例如：
 - en: '[PRE38]'
+  id: totrans-378
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: 'May give a result equivalent to (the intermediate cast means no warning is
     given):'
+  id: totrans-379
   prefs: []
   type: TYPE_NORMAL
+  zh: 可能会给出等效于的结果（中间转换意味着没有警告）：
 - en: '[PRE39]'
+  id: totrans-380
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'May return an undefined result, with a warning set:'
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
+  zh: 可能返回未定义结果，并设置警告：
 - en: '[PRE40]'
+  id: totrans-382
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: The precise behavior is subject to the C99 standard and its implementation in
     both software and hardware.
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
+  zh: 精确行为取决于C99标准及其在软件和硬件中的实现。
 - en: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
 - en: F2PY supports the value attribute
+  id: totrans-385
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY支持value属性
 - en: 'The Fortran standard requires that variables declared with the `value` attribute
     must be passed by value instead of reference. F2PY now supports this use pattern
     correctly. So `integer, intent(in), value :: x` in Fortran codes will have correct
     wrappers generated.'
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 'Fortran标准要求使用`value`属性声明的变量必须按值传递而不是按引用传递。F2PY现在正确支持这种用法模式。因此，在Fortran代码中，`integer,
+    intent(in), value :: x`将生成正确的包装器。'
 - en: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
 - en: Added pickle support for third-party BitGenerators
+  id: totrans-388
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为第三方BitGenerators添加pickle支持
 - en: The pickle format for bit generators was extended to allow each bit generator
     to supply its own constructor when during pickling. Previous versions of NumPy
     only supported unpickling `Generator` instances created with one of the core set
     of bit generators supplied with NumPy. Attempting to unpickle a `Generator` that
     used a third-party bit generators would fail since the constructor used during
     the unpickling was only aware of the bit generators included in NumPy.
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
+  zh: 位生成器的pickle格式已扩展，以允许每个位生成器在pickling期间提供自己的构造函数。NumPy的先前版本仅支持使用NumPy提供的核心一组位生成器之一创建的`Generator`实例的反序列化。尝试反序列化使用第三方位生成器的`Generator`将失败，因为在反序列化期间使用的构造函数仅知道NumPy中包含的位生成器。
 - en: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
 - en: arange() now explicitly fails with dtype=str
+  id: totrans-391
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: arange()现在明确失败，dtype=str
 - en: 'Previously, the `np.arange(n, dtype=str)` function worked for `n=1` and `n=2`,
     but would raise a non-specific exception message for other values of `n`. Now,
     it raises a *TypeError* informing that `arange` does not support string dtypes:'
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
+  zh: 以前，`np.arange(n, dtype=str)`函数对于`n=1`和`n=2`有效，但对于其他值的`n`会引发一个非特定的异常消息。现在，它会引发一个*TypeError*，提示`arange`不支持字符串数据类型：
 - en: '[PRE41]'
+  id: totrans-393
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
 - en: '`numpy.typing` protocols are now runtime checkable'
+  id: totrans-395
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.typing`协议现在可以在运行时检查'
 - en: The protocols used in `numpy.typing.ArrayLike` and `numpy.typing.DTypeLike`
     are now properly marked as runtime checkable, making them easier to use for runtime
     type checkers.
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在在`numpy.typing.ArrayLike`和`numpy.typing.DTypeLike`中使用的协议已经正确标记为运行时可检查，使其更容易用于运行时类型检查。
 - en: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
+  id: totrans-397
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
 - en: F2PY Improvements
+  id: totrans-398
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY改进
 - en: The generated extension modules don’t use the deprecated NumPy-C API anymore
+  id: totrans-399
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 生成的扩展模块不再使用已弃用的NumPy-C API
 - en: Improved `f2py` generated exception messages
+  id: totrans-400
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 改进了`f2py`生成的异常消息
 - en: Numerous bug and `flake8` warning fixes
+  id: totrans-401
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 大量的错误和`flake8`警告修复
 - en: various CPP macros that one can use within C-expressions of signature files
     are prefixed with `f2py_`. For example, one should use `f2py_len(x)` instead of
     `len(x)`
+  id: totrans-402
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在签名文件的C表达式中可以使用的各种CPP宏都以`f2py_`为前缀。例如，应该使用`f2py_len(x)`而不是`len(x)`
 - en: A new construct `character(f2py_len=...)` is introduced to support returning
     assumed length character strings (e.g. `character(len=*)`) from wrapper functions
+  id: totrans-403
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 引入了一个新的构造`character(f2py_len=...)`来支持从包装函数返回假定长度的字符串（例如`character(len=*)`）。
 - en: A hook to support rewriting `f2py` internal data structures after reading all
     its input files is introduced. This is required, for instance, for BC of SciPy
     support where character arguments are treated as character strings arguments in
     `C` expressions.
+  id: totrans-404
   prefs: []
   type: TYPE_NORMAL
+  zh: 引入了一个钩子来支持在读取所有输入文件后重写`f2py`内部数据结构。例如，这对于SciPy支持的BC是必需的，其中字符参数在`C`表达式中被视为字符串参数。
 - en: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
+  id: totrans-405
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-19388](https://github.com/numpy/numpy/pull/19388))
 - en: IBM zSystems Vector Extension Facility (SIMD)
+  id: totrans-406
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: IBM zSystems 矢量扩展设施（SIMD）
 - en: 'Added support for SIMD extensions of zSystem (z13, z14, z15), through the universal
     intrinsics interface. This support leads to performance improvements for all SIMD
     kernels implemented using the universal intrinsics, including the following operations:
     rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal, tanh, sin, cos,
     equal, not_equal, greater, greater_equal, less, less_equal, maximum, minimum,
     fmax, fmin, argmax, argmin, add, subtract, multiply, divide.'
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
+  zh: 增加了对zSystem（z13、z14、z15）的SIMD扩展的支持，通过通用内在函数接口。这种支持导致使用通用内在函数实现的所有SIMD内核的性能提升，包括以下操作：rint、floor、trunc、ceil、sqrt、absolute、square、reciprocal、tanh、sin、cos、equal、not_equal、greater、greater_equal、less、less_equal、maximum、minimum、fmax、fmin、argmax、argmin、add、subtract、multiply、divide。
 - en: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
+  id: totrans-408
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-20913](https://github.com/numpy/numpy/pull/20913))
 - en: NumPy now gives floating point errors in casts
+  id: totrans-409
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: NumPy现在在转换中给出浮点错误
 - en: 'In most cases, NumPy previously did not give floating point warnings or errors
     when these happened during casts. For examples, casts like:'
+  id: totrans-410
   prefs: []
   type: TYPE_NORMAL
+  zh: 在大多数情况下，NumPy以前在转换过程中发生浮点警告或错误时并不会给出警告。例如，转换如下：
 - en: '[PRE42]'
+  id: totrans-411
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: Should now generally give floating point warnings. These warnings should warn
     that floating point overflow occurred. For errors when converting floating point
     values to integers users should expect invalid value warnings.
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在通常会给出浮点警告。这些警告应该警告浮点溢出发生。对于将浮点值转换为整数时出现的错误，用户应该期望无效值警告。
 - en: Users can modify the behavior of these warnings using `np.errstate`.
+  id: totrans-413
   prefs: []
   type: TYPE_NORMAL
+  zh: 用户可以使用`np.errstate`修改这些警告的行为。
 - en: 'Note that for float to int casts, the exact warnings that are given may be
     platform dependent. For example:'
+  id: totrans-414
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，对于浮点到整数的转换，给出的确切警告可能取决于平台。例如：
 - en: '[PRE43]'
+  id: totrans-415
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'May give a result equivalent to (the intermediate cast means no warning is
     given):'
+  id: totrans-416
   prefs: []
   type: TYPE_NORMAL
+  zh: 可能会给出等效于的结果（中间转换意味着不会给出警告）：
 - en: '[PRE44]'
+  id: totrans-417
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'May return an undefined result, with a warning set:'
+  id: totrans-418
   prefs: []
   type: TYPE_NORMAL
+  zh: 可能返回未定义的结果，并设置警告：
 - en: '[PRE45]'
+  id: totrans-419
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: The precise behavior is subject to the C99 standard and its implementation in
     both software and hardware.
+  id: totrans-420
   prefs: []
   type: TYPE_NORMAL
+  zh: 精确的行为取决于C99标准及其在软件和硬件中的实现。
 - en: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21437](https://github.com/numpy/numpy/pull/21437))
 - en: F2PY supports the value attribute
+  id: totrans-422
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: F2PY支持值属性
 - en: 'The Fortran standard requires that variables declared with the `value` attribute
     must be passed by value instead of reference. F2PY now supports this use pattern
     correctly. So `integer, intent(in), value :: x` in Fortran codes will have correct
     wrappers generated.'
+  id: totrans-423
   prefs: []
   type: TYPE_NORMAL
+  zh: 'Fortran标准要求使用`value`属性声明的变量必须按值传递而不是按引用传递。F2PY现在正确支持这种用法模式。因此，Fortran代码中的`integer,
+    intent(in), value :: x`将生成正确的包装器。'
 - en: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
+  id: totrans-424
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21807](https://github.com/numpy/numpy/pull/21807))
 - en: Added pickle support for third-party BitGenerators
+  id: totrans-425
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为第三方BitGenerators添加了pickle支持
 - en: The pickle format for bit generators was extended to allow each bit generator
     to supply its own constructor when during pickling. Previous versions of NumPy
     only supported unpickling `Generator` instances created with one of the core set
     of bit generators supplied with NumPy. Attempting to unpickle a `Generator` that
     used a third-party bit generators would fail since the constructor used during
     the unpickling was only aware of the bit generators included in NumPy.
+  id: totrans-426
   prefs: []
   type: TYPE_NORMAL
+  zh: 位生成器的pickle格式已扩展，允许每个位生成器在pickling期间提供自己的构造函数。以前的NumPy版本只支持使用NumPy提供的核心一组位生成器创建的`Generator`实例进行unpickling。尝试unpickle使用第三方位生成器的`Generator`将失败，因为在unpickling期间使用的构造函数只知道NumPy中包含的位生成器。
 - en: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
+  id: totrans-427
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22014](https://github.com/numpy/numpy/pull/22014))
 - en: arange() now explicitly fails with dtype=str
+  id: totrans-428
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: arange()现在明确不支持dtype=str
 - en: 'Previously, the `np.arange(n, dtype=str)` function worked for `n=1` and `n=2`,
     but would raise a non-specific exception message for other values of `n`. Now,
     it raises a *TypeError* informing that `arange` does not support string dtypes:'
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
+  zh: 以前，`np.arange(n, dtype=str)`函数对于`n=1`和`n=2`有效，但对于其他值的`n`会引发一个非特定的异常消息。现在，它会引发一个*TypeError*，提示`arange`不支持字符串dtype：
 - en: '[PRE46]'
+  id: totrans-430
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
+  id: totrans-431
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22055](https://github.com/numpy/numpy/pull/22055))
 - en: '`numpy.typing` protocols are now runtime checkable'
+  id: totrans-432
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`numpy.typing`协议现在可以在运行时进行检查'
 - en: The protocols used in `numpy.typing.ArrayLike` and `numpy.typing.DTypeLike`
     are now properly marked as runtime checkable, making them easier to use for runtime
     type checkers.
+  id: totrans-433
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.typing.ArrayLike`和`numpy.typing.DTypeLike`中使用的协议现在正确标记为运行时可检查，使其更容易用于运行时类型检查器。'
 - en: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
+  id: totrans-434
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-22357](https://github.com/numpy/numpy/pull/22357))
 - en: Performance improvements and changes
+  id: totrans-435
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 性能改进和变化
 - en: Faster version of `np.isin` and `np.in1d` for integer arrays
+  id: totrans-436
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更快的`np.isin`和`np.in1d`整数数组版本
 - en: '`np.in1d` (used by `np.isin`) can now switch to a faster algorithm (up to >10x
     faster) when it is passed two integer arrays. This is often automatically used,
     but you can use `kind="sort"` or `kind="table"` to force the old or new method,
     respectively.'
+  id: totrans-437
   prefs: []
   type: TYPE_NORMAL
+  zh: '`np.in1d`（被`np.isin`使用）现在可以在传递两个整数数组时切换到更快的算法（速度提高超过10倍）。这通常会自动使用，但您可以使用`kind="sort"`或`kind="table"`来分别强制使用旧方法或新方法。'
 - en: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
+  id: totrans-438
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
 - en: Faster comparison operators
+  id: totrans-439
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更快的比较运算符
 - en: The comparison functions (`numpy.equal`, `numpy.not_equal`, `numpy.less`, `numpy.less_equal`,
     `numpy.greater` and `numpy.greater_equal`) are now much faster as they are now
     vectorized with universal intrinsics. For a CPU with SIMD extension AVX512BW,
     the performance gain is up to 2.57x, 1.65x and 19.15x for integer, float and boolean
     data types, respectively (with N=50000).
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
+  zh: 比较函数（`numpy.equal`、`numpy.not_equal`、`numpy.less`、`numpy.less_equal`、`numpy.greater`和`numpy.greater_equal`）现在更快，因为它们现在使用通用内在函数进行向量化。对于具有SIMD扩展AVX512BW的CPU，整数、浮点和布尔数据类型的性能提升分别为2.57倍、1.65倍和19.15倍（N=50000）。
 - en: ([gh-21483](https://github.com/numpy/numpy/pull/21483))
+  id: totrans-441
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-21483](https://github.com/numpy/numpy/pull/21483))
 - en: Faster version of `np.isin` and `np.in1d` for integer arrays
+  id: totrans-442
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更快的`np.isin`和`np.in1d`整数数组版本
 - en: '`np.in1d` (used by `np.isin`) can now switch to a faster algorithm (up to >10x
     faster) when it is passed two integer arrays. This is often automatically used,
     but you can use `kind="sort"` or `kind="table"` to force the old or new method,
     respectively.'
+  id: totrans-443
   prefs: []
   type: TYPE_NORMAL
+  zh: '`np.in1d`（被`np.isin`使用）现在可以在传递两个整数数组时切换到更快的算法（速度提高超过10倍）。这通常会自动使用，但您可以使用`kind="sort"`或`kind="table"`来分别强制使用旧方法或新方法。'
 - en: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
+  id: totrans-444
   prefs: []
   type: TYPE_NORMAL
+  zh: ([gh-12065](https://github.com/numpy/numpy/pull/12065))
 - en: Faster comparison operators
+  id: totrans-445
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更快的比较运算符
 - en: The comparison functions (`numpy.equal`, `numpy.not_equal`, `numpy.less`, `numpy.less_equal`,
     `numpy.greater` and `numpy.greater_equal`) are now much faster as they are now
     vectorized with universal intrinsics. For a CPU with SIMD extension AVX512BW,
     the performance gain is up to 2.57x, 1.65x and 19.15x for integer, float and boolean
     data types, respectively (with N=50000).
+  id: totrans-446
   prefs: []
   type: TYPE_NORMAL
 - en: ([gh-21483](https://github.com/numpy/numpy/pull/21483))
+  id: totrans-447
   prefs: []
   type: TYPE_NORMAL
 - en: Changes
+  id: totrans-448
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: Better reporting of integer division overflow
+  id: totrans-449
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Integer division overflow of scalars and arrays used to provide a `RuntimeWarning`
     and the return value was undefined leading to crashes at rare occasions:'
+  id: totrans-450
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE47]'
+  id: totrans-451
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: 'Integer division overflow now returns the input dtype’s minimum value and raise
     the following `RuntimeWarning`:'
+  id: totrans-452
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE48]'
+  id: totrans-453
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: ([gh-21506](https://github.com/numpy/numpy/pull/21506))
+  id: totrans-454
   prefs: []
   type: TYPE_NORMAL
 - en: '`masked_invalid` now modifies the mask in-place'
+  id: totrans-455
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: When used with `copy=False`, `numpy.ma.masked_invalid` now modifies the input
     masked array in-place. This makes it behave identically to `masked_where` and
     better matches the documentation.
+  id: totrans-456
   prefs: []
   type: TYPE_NORMAL
 - en: ([gh-22046](https://github.com/numpy/numpy/pull/22046))
+  id: totrans-457
   prefs: []
   type: TYPE_NORMAL
 - en: '`nditer`/`NpyIter` allows all allocating all operands'
+  id: totrans-458
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1864,45 +2808,59 @@
     in C now supports allocating all arrays. The iterator shape defaults to `()` in
     this case. The operands dtype must be provided, since a “common dtype” cannot
     be inferred from the other inputs.
+  id: totrans-459
   prefs: []
   type: TYPE_NORMAL
 - en: ([gh-22457](https://github.com/numpy/numpy/pull/22457))
+  id: totrans-460
   prefs: []
   type: TYPE_NORMAL
 - en: Better reporting of integer division overflow
+  id: totrans-461
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Integer division overflow of scalars and arrays used to provide a `RuntimeWarning`
     and the return value was undefined leading to crashes at rare occasions:'
+  id: totrans-462
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE49]'
+  id: totrans-463
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'Integer division overflow now returns the input dtype’s minimum value and raise
     the following `RuntimeWarning`:'
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE50]'
+  id: totrans-465
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: ([gh-21506](https://github.com/numpy/numpy/pull/21506))
+  id: totrans-466
   prefs: []
   type: TYPE_NORMAL
 - en: '`masked_invalid` now modifies the mask in-place'
+  id: totrans-467
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: When used with `copy=False`, `numpy.ma.masked_invalid` now modifies the input
     masked array in-place. This makes it behave identically to `masked_where` and
     better matches the documentation.
+  id: totrans-468
   prefs: []
   type: TYPE_NORMAL
 - en: ([gh-22046](https://github.com/numpy/numpy/pull/22046))
+  id: totrans-469
   prefs: []
   type: TYPE_NORMAL
 - en: '`nditer`/`NpyIter` allows all allocating all operands'
+  id: totrans-470
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1910,8 +2868,10 @@
     in C now supports allocating all arrays. The iterator shape defaults to `()` in
     this case. The operands dtype must be provided, since a “common dtype” cannot
     be inferred from the other inputs.
+  id: totrans-471
   prefs: []
   type: TYPE_NORMAL
 - en: ([gh-22457](https://github.com/numpy/numpy/pull/22457))
+  id: totrans-472
   prefs: []
   type: TYPE_NORMAL
