@@ -3,16 +3,19 @@
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: numpy.i：NumPy的SWIG接口文件
 - en: 原文：[https://numpy.org/doc/1.26/reference/swig.interface-file.html](https://numpy.org/doc/1.26/reference/swig.interface-file.html)
   id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/reference/swig.interface-file.html](https://numpy.org/doc/1.26/reference/swig.interface-file.html)
 - en: Introduction
   id: totrans-2
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 简介
 - en: 'The Simple Wrapper and Interface Generator (or [SWIG](http://www.swig.org))
     is a powerful tool for generating wrapper code for interfacing to a wide variety
     of scripting languages. [SWIG](http://www.swig.org) can parse header files, and
@@ -22,6 +25,7 @@
   id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于生成适用于各种脚本语言的包装器代码的强大工具——简单包装器和接口生成器（或[SWIG](http://www.swig.org)）。[SWIG](http://www.swig.org)可以解析头文件，并仅使用代码原型，为目标语言创建接口。但[SWIG](http://www.swig.org)并非无所不能。例如，它无法通过原型了解到：
 - en: '[PRE0]'
   id: totrans-4
   prefs: []
@@ -34,6 +38,7 @@
   id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: '`seq`到底是什么。它是一个要原地更改的单个值吗？它是一个数组，如果是的话，它的长度是多少？它只能输入吗？只能输出？输入输出？[SWIG](http://www.swig.org)无法确定这些细节，并且也不试图这样做。'
 - en: If we designed `rms`, we probably made it a routine that takes an input-only
     array of length `n` of `double` values called `seq` and returns the root mean
     square. The default behavior of [SWIG](http://www.swig.org), however, will be
@@ -42,6 +47,7 @@
   id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们设计了`rms`，那么我们可能使其成为一个仅接受名为`seq`的`double`值长度为`n`的输入数组的例程，并返回均方根。然而，[SWIG](http://www.swig.org)的默认行为将是创建一个可编译但几乎无法像C例程预期的那样从脚本语言使用的包装器函数。
 - en: 'For Python, the preferred way of handling contiguous (or technically, *strided*)
     blocks of homogeneous data is with NumPy, which provides full object-oriented
     access to multidimensial arrays of data. Therefore, the most logical Python interface
@@ -49,6 +55,7 @@
   id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于Python，处理连续（或技术上的*跨度*）块的同质数据的首选方式是使用NumPy，它提供对数据的多维数组的完整面向对象访问。因此，`rms`函数的最合理Python接口应该是（包括文档字符串）：
 - en: '[PRE1]'
   id: totrans-8
   prefs: []
@@ -63,6 +70,7 @@
   id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中`seq`将是`double`值的NumPy数组，并且它的长度`n`将在传递给C例程之前从内部`seq`中提取。更好的是，由于NumPy支持从任意Python序列构建数组，`seq`本身可以是几乎任意序列（只要每个元素都可以转换为`double`），包装器代码会在提取数据和长度之前将其内部转换为NumPy数组。
 - en: '[SWIG](http://www.swig.org) allows these types of conversions to be defined
     via a mechanism called *typemaps*. This document provides information on how to
     use `numpy.i`, a [SWIG](http://www.swig.org) interface file that defines a series
@@ -74,6 +82,7 @@
   id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SWIG](http://www.swig.org)允许通过一种称为*typemaps*的机制定义这些类型的转换。本文为您提供了如何使用`numpy.i`，一个[SWIG](http://www.swig.org)接口文件的信息，该文件定义了一系列typemaps，旨在使上面描述的与数组相关的转换类型相对简单地实现。例如，假设上面定义的`rms`函数原型位于名为`rms.h`的头文件中。要获得上述讨论的Python接口，您的[SWIG](http://www.swig.org)接口文件将需要以下内容：'
 - en: '[PRE2]'
   id: totrans-11
   prefs: []
@@ -179,11 +188,13 @@
   id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 目前，`numpy.i` 文件位于 `numpy` 安装目录下的 `tools/swig` 子目录中。通常，您会希望将其复制到您开发包装器的目录中。
 - en: 'A simple module that only uses a single [SWIG](http://www.swig.org) interface
     file should include the following:'
   id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个只使用单个 [SWIG](http://www.swig.org) 接口文件的简单模块应包括以下内容：
 - en: '[PRE6]'
   id: totrans-26
   prefs: []
@@ -200,11 +211,16 @@
   id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 在编译的 Python 模块中，`import_array()` 只应调用一次。这可能在你编写并链接到该模块的 C/C++ 文件中。如果是这种情况，那么你的任何接口文件都不应该
+    `#define SWIG_FILE_WITH_INIT` 或调用 `import_array()`。或者，这个初始化调用可能在由 [SWIG](http://www.swig.org)
+    从具有上述 `%init` 块的接口文件生成的包装文件中。如果是这种情况，并且你有多个 [SWIG](http://www.swig.org) 接口文件，则只有一个接口文件应该
+    `#define SWIG_FILE_WITH_INIT` 并调用 `import_array()`。
 - en: Available Typemaps
   id: totrans-28
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 可用的类型映射
 - en: 'The typemap directives provided by `numpy.i` for arrays of different data types,
     say `double` and `int`, and dimensions of different types, say `int` or `long`,
     are identical to one another except for the C and NumPy type specifications. The
@@ -212,6 +228,8 @@
   id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 由 `numpy.i` 提供的针对不同数据类型（如 `双精度浮点型` 和 `整型`）和维度不同类型（如 `整型` 或 `长整型`）的数组���类型映射指令，除了
+    C 和 NumPy 类型规格外，是相同的。因此，这些类型映射是通过宏实现的（通常是在幕后）：
 - en: '[PRE7]'
   id: totrans-30
   prefs: []
@@ -222,6 +240,7 @@
   id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以为适当的 `(数据类型, 数据类型代码, DIM_TYPE)` 组合调用。例如：
 - en: '[PRE8]'
   id: totrans-32
   prefs: []
@@ -232,12 +251,14 @@
   id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.i` 接口文件使用 `%numpy_typemaps` 宏来为以下 C 数据类型和 `int` 维度类型实现类型映射：'
 - en: '`signed char`'
   id: totrans-34
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`有符号字符`'
 - en: ''
   id: totrans-35
   prefs:
@@ -256,6 +277,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`无符号字符`'
 - en: ''
   id: totrans-38
   prefs:
@@ -274,6 +296,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`短整型`'
 - en: ''
   id: totrans-41
   prefs:
@@ -292,6 +315,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`无符号短整型`'
 - en: ''
   id: totrans-44
   prefs:
@@ -310,6 +334,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`整型`'
 - en: ''
   id: totrans-47
   prefs:
@@ -328,6 +353,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`无符号整型`'
 - en: ''
   id: totrans-50
   prefs:
@@ -346,6 +372,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`长整型`'
 - en: ''
   id: totrans-53
   prefs:
@@ -364,6 +391,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`无符号长整型`'
 - en: ''
   id: totrans-56
   prefs:
@@ -382,6 +410,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`长长整型`'
 - en: ''
   id: totrans-59
   prefs:
@@ -400,6 +429,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`无符号长长整型`'
 - en: ''
   id: totrans-62
   prefs:
@@ -418,6 +448,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`单精度浮点型`'
 - en: ''
   id: totrans-65
   prefs:
@@ -436,23 +467,28 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`双精度浮点型`'
 - en: In the following descriptions, we reference a generic `DATA_TYPE`, which could
     be any of the C data types listed above, and `DIM_TYPE` which should be one of
     the many types of integers.
   id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 在以下描述中，我们引用了一个通用的 `数据类型`，它可以是上面列出的任何 C 数据类型之一，以及 `DIM_TYPE`，应该是多种类型中的其中一种。
 - en: The typemap signatures are largely differentiated on the name given to the buffer
     pointer. Names with `FARRAY` are for Fortran-ordered arrays, and names with `ARRAY`
     are for C-ordered (or 1D arrays).
   id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 类型映射签名在缓冲指针的名称上有很大的不同。带有 `FARRAY` 的名称用于 Fortran 排序数组，而带有 `ARRAY` 的名称用于 C 排序（或
+    1D 数组）。
 - en: Input Arrays
   id: totrans-70
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 输入数组
 - en: Input arrays are defined as arrays of data that are passed into a routine but
     are not altered in-place or returned to the user. The Python input array is therefore
     allowed to be almost any Python sequence (such as a list) that can be converted
@@ -460,16 +496,19 @@
   id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 输入数组被定义为传入例程但不在原地更改或返回给用户的数据数组。因此，Python 输入数组几乎可以是任何可以转换为请求类型的数组的 Python 序列（如列表）。输入数组签名为
 - en: '1D:'
   id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: '1D:'
 - en: '`( DATA_TYPE IN_ARRAY1[ANY] )`'
   id: totrans-73
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型 IN_ARRAY1[任意] )`'
 - en: ''
   id: totrans-74
   prefs:
@@ -488,6 +527,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* IN_ARRAY1, int DIM1 )`'
 - en: ''
   id: totrans-77
   prefs:
@@ -506,16 +546,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, 数据类型* IN_ARRAY1 )`'
 - en: '2D:'
   id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: '2D:'
 - en: '`( DATA_TYPE IN_ARRAY2[ANY][ANY] )`'
   id: totrans-81
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型 IN_ARRAY2[任意][任意] )`'
 - en: ''
   id: totrans-82
   prefs:
@@ -534,6 +577,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* IN_ARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-85
   prefs:
@@ -552,6 +596,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, 数据类型* IN_ARRAY2 )`'
 - en: ''
   id: totrans-88
   prefs:
@@ -570,6 +615,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* IN_FARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-91
   prefs:
@@ -588,16 +634,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, 数据类型* IN_FARRAY2 )`'
 - en: '3D:'
   id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: '3D:'
 - en: '`( DATA_TYPE IN_ARRAY3[ANY][ANY][ANY] )`'
   id: totrans-95
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型 IN_ARRAY3[任意][任意][任意] )`'
 - en: ''
   id: totrans-96
   prefs:
@@ -616,6 +665,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* IN_ARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-99
   prefs:
@@ -634,6 +684,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, 数据类型* IN_ARRAY3 )`'
 - en: ''
   id: totrans-102
   prefs:
@@ -652,6 +703,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* IN_FARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-105
   prefs:
@@ -670,16 +722,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, 数据类型* IN_FARRAY3 )`'
 - en: '4D:'
   id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: '4D:'
 - en: '`(DATA_TYPE IN_ARRAY4[ANY][ANY][ANY][ANY])`'
   id: totrans-109
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(数据类型 IN_ARRAY4[任意][任意][任意][任意])`'
 - en: ''
   id: totrans-110
   prefs:
@@ -699,6 +754,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(数据类型* IN_ARRAY4, 维度类型 维度1, 维度类型 维度2, 维度类型 维度3, 维度类型 维度4)`'
 - en: ''
   id: totrans-113
   prefs:
@@ -718,6 +774,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(维度类型 维度1, 维度类型 维度2, 维度类型 维度3, , 维度类型 维���4, 数据类型* IN_ARRAY4)`'
 - en: ''
   id: totrans-116
   prefs:
@@ -737,6 +794,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(数据类型* IN_FARRAY4, 维度类型 维度1, 维度类型 维度2, 维度类型 维度3, 维度类型 维度4)`'
 - en: ''
   id: totrans-119
   prefs:
@@ -755,6 +813,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(维度类型 维度1, 维度类型 维度2, 维度类型 维度3, 维度类型 维度4, 数据类型* IN_FARRAY4)`'
 - en: The first signature listed, `( DATA_TYPE IN_ARRAY[ANY] )` is for one-dimensional
     arrays with hard-coded dimensions. Likewise, `( DATA_TYPE IN_ARRAY2[ANY][ANY]
     )` is for two-dimensional arrays with hard-coded dimensions, and similarly for
@@ -762,11 +821,14 @@
   id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 所列的第一个签名 `( 数据类型 IN_ARRAY[任意] )` 是用于具有硬编码维度的一维数组。同样，`( 数据类型 IN_ARRAY2[任意][任意]
+    )` 用于具有硬编码维度的二维数组，以此类推和三维数组。
 - en: In-Place Arrays
   id: totrans-123
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 就地数组
 - en: In-place arrays are defined as arrays that are modified in-place. The input
     values may or may not be used, but the values at the time the function returns
     are significant. The provided Python argument must therefore be a NumPy array
@@ -774,16 +836,19 @@
   id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 就地数组被定义为原地修改的数组。输入值可能会被使用，也可能不会被使用，但函数返回时的值是重要的。因此，提供的Python参数必须是所需类型的NumPy数组。就地签名为
 - en: '1D:'
   id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: '1D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY1[ANY] )`'
   id: totrans-126
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型 INPLACE_ARRAY1[任意] )`'
 - en: ''
   id: totrans-127
   prefs:
@@ -802,6 +867,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* INPLACE_ARRAY1, int 维度1 )`'
 - en: ''
   id: totrans-130
   prefs:
@@ -820,16 +886,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int 维度1, 数据类型* INPLACE_ARRAY1 )`'
 - en: '2D:'
   id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: '2D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY2[ANY][ANY] )`'
   id: totrans-134
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型 INPLACE_ARRAY2[任意][任意] )`'
 - en: ''
   id: totrans-135
   prefs:
@@ -848,6 +917,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* INPLACE_ARRAY2, int 维度1, int 维度2 )`'
 - en: ''
   id: totrans-138
   prefs:
@@ -866,6 +936,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int 维度1, int 维度2, 数据类型* INPLACE_ARRAY2 )`'
 - en: ''
   id: totrans-141
   prefs:
@@ -884,6 +955,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* INPLACE_FARRAY2, int 维度1, int 维度2 )`'
 - en: ''
   id: totrans-144
   prefs:
@@ -902,16 +974,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int 维度1, int 维度2, 数据类型* INPLACE_FARRAY2 )`'
 - en: '3D:'
   id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: '3D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY] )`'
   id: totrans-148
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型 INPLACE_ARRAY3[任意][任意][任意] )`'
 - en: ''
   id: totrans-149
   prefs:
@@ -930,6 +1005,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* INPLACE_ARRAY3, int 维度1, int 维度2, int 维度3 )`'
 - en: ''
   id: totrans-152
   prefs:
@@ -948,6 +1024,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int 维度1, int 维度2, int 维度3, 数据类型* INPLACE_ARRAY3 )`'
 - en: ''
   id: totrans-155
   prefs:
@@ -966,6 +1043,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( 数据类型* INPLACE_FARRAY3, int 维度1, int 维度2, int 维度3 )`'
 - en: ''
   id: totrans-158
   prefs:
@@ -984,16 +1062,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int 维度1, int 维度2, int 维度3, 数据类型* INPLACE_FARRAY3 )`'
 - en: '4D:'
   id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: '4D:'
 - en: '`(DATA_TYPE INPLACE_ARRAY4[ANY][ANY][ANY][ANY])`'
   id: totrans-162
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(数据类型 INPLACE_ARRAY4[任意][任意][任意][任意])`'
 - en: ''
   id: totrans-163
   prefs:
@@ -1013,6 +1094,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(数据类型* INPLACE_ARRAY4, 维度类型 维度1, 维度类型 维度2, 维度类型 维度3, 维度类型 维度4)`'
 - en: ''
   id: totrans-166
   prefs:
@@ -1032,6 +1114,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(维度类型 维度1, 维度类型 维度2, 维度类型 维度3, , 维度类型 维度4, 数据类型* INPLACE_ARRAY4)`'
 - en: ''
   id: totrans-169
   prefs:
@@ -1051,6 +1134,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(数据类型* INPLACE_FARRAY4, 维度类型 维度1, 维度类型 维度2, 维度类型 维度3, 维度类型 维度4)`'
 - en: ''
   id: totrans-172
   prefs:
@@ -1069,11 +1153,13 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(维度类型 维度1, 维度类型 维度2, 维度类型 维度3, 维度类型 维度4, 数据类型* INPLACE_FARRAY4)`'
 - en: These typemaps now check to make sure that the `INPLACE_ARRAY` arguments use
     native byte ordering. If not, an exception is raised.
   id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些类型映射现在会检查`INPLACE_ARRAY`参数是否使用本机字节顺序。如果不是，则会引发异常。
 - en: There is also a “flat” in-place array for situations in which you would like
     to modify or process each element, regardless of the number of dimensions. One
     example is a “quantization” function that quantizes each element of an array in-place,
@@ -1082,21 +1168,26 @@
   id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 还有一种“flat”就地数组，适用于无论维度如何都想修改或处理每个元素的情况。一个例子是“量化”函数，在此函数中，对数组的每个元素进行原地量化处理，无论是
+    1D、2D 还是其他。此形式会检查连续性，但允许C或Fortran排序。
 - en: 'ND:'
   id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 'ND:'
 - en: '`(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)`'
   id: totrans-178
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(数据类型* INPLACE_ARRAY_FLAT, 维度类型 维度FLAT)`'
 - en: Argout Arrays
   id: totrans-179
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 输出数组
 - en: Argout arrays are arrays that appear in the input arguments in C, but are in
     fact output arrays. This pattern occurs often when there is more than one output
     variable and the single return argument is therefore not sufficient. In Python,
@@ -1951,6 +2042,7 @@
   id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SWIG](http://www.swig.org)的类型检查和转换系统是C宏、[SWIG](http://www.swig.org)宏、[SWIG](http://www.swig.org)类型映射和[SWIG](http://www.swig.org)片段的复杂组合。片段是一种在需要时有条件地将代码插入包装文件中的方法，并且如果不需要则不插入。如果多个类型映射需要相同的片段，则该片段只会在包装代码中插入一次。'
 - en: There is a fragment for converting a Python integer to a C `long`. There is
     a different fragment that converts a Python integer to a C `int`, that calls the
     routine defined in the `long` fragment. We can make the changes we want here by
@@ -1963,11 +2055,13 @@
   id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 有一个用于将Python整数转换为C `long`的片段。还有一个将Python整数转换为C `int`的不同片段，并调用`long`片段中定义的例程。我们可以通过更改`long`片段的定义来实现所需的更改。[SWIG](http://www.swig.org)使用“先到先得”系统确定片段的活动定义。也就是说，我们需要在[SWIG](http://www.swig.org)内部执行之前定义`long`转换的片段。通过将我们的片段定义放入文件`pyfragments.swg`中，[SWIG](http://www.swig.org)允许我们这样做。如果我们将新的片段定义放入`numpy.i`中，它们将被忽略。
 - en: Helper Functions
   id: totrans-307
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 辅助函数
 - en: 'The `numpy.i` file contains several macros and routines that it uses internally
     to build its typemaps. However, these functions may be useful elsewhere in your
     interface file. These macros and routines are implemented as fragments, which
@@ -1978,6 +2072,7 @@
   id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.i`文件包含几个宏和例程，它在内部使用这些内容来构建其类型映射。但是，这些功能在接口文件的其他地方也可能会有用。这些宏和例程被实现为片段，在上一节中简要描述。如果您尝试使用以下一个或多个宏或函数，但是您的编译器抱怨找不到该符号，则您需要使用以下方式强制使这些片段出现在代码中：'
 - en: '[PRE17]'
   id: totrans-309
   prefs: []
@@ -1987,16 +2082,19 @@
   id: totrans-310
   prefs: []
   type: TYPE_NORMAL
+  zh: 在你的[SWIG](http://www.swig.org)接口文件中。
 - en: Macros
   id: totrans-311
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 宏
 - en: '**is_array(a)**'
   id: totrans-312
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**is_array(a)**'
 - en: ''
   id: totrans-313
   prefs:
@@ -2007,6 +2105,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果`a`非`NULL`且可以被转换为`PyArrayObject*`，则为真。
 - en: ''
   id: totrans-315
   prefs:
@@ -2017,6 +2116,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_type(a)**'
 - en: ''
   id: totrans-317
   prefs:
@@ -2028,6 +2128,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '`a`的整数数据类型代码的值，假设`a`可以被转换为`PyArrayObject*`。'
 - en: ''
   id: totrans-319
   prefs:
@@ -2038,6 +2139,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_numdims(a)**'
 - en: ''
   id: totrans-321
   prefs:
@@ -2049,6 +2151,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '`a`的维度数目的整数值，假设`a`可以被转换为`PyArrayObject*`。'
 - en: ''
   id: totrans-323
   prefs:
@@ -2059,6 +2162,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_dimensions(a)**'
 - en: ''
   id: totrans-325
   prefs:
@@ -2070,6 +2174,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 评估为类型为`npy_intp`且长度为`array_numdims(a)`的数组，给出`a`的所有维度的长度，假设`a`可以被转换为`PyArrayObject*`。
 - en: ''
   id: totrans-327
   prefs:
@@ -2080,6 +2185,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_size(a,i)**'
 - en: ''
   id: totrans-329
   prefs:
@@ -2091,6 +2197,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '`a`的`i`维度大小的值，假设`a`可以被转换为`PyArrayObject*`。'
 - en: ''
   id: totrans-331
   prefs:
@@ -2101,6 +2208,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_strides(a)**'
 - en: ''
   id: totrans-333
   prefs:
@@ -2114,6 +2222,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 评估为类型为`npy_intp`且长度为`array_numdims(a)`的数组，给出`a`的所有维度的步长，假设`a`可以被转换为`PyArrayObject*`。步长是元素与沿着相同轴的相邻元素之间的字节距离。
 - en: ''
   id: totrans-335
   prefs:
@@ -2124,6 +2233,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_stride(a,i)**'
 - en: ''
   id: totrans-337
   prefs:
@@ -2134,6 +2244,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '`a`的第`i`个步长的值，假设`a`可以被转换为`PyArrayObject*`。'
 - en: ''
   id: totrans-339
   prefs:
@@ -2144,6 +2255,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_data(a)**'
 - en: ''
   id: totrans-341
   prefs:
@@ -2155,6 +2267,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 评估为指向`a`的数据缓冲区的`void*`类型的指针，假设`a`可以被转换为`PyArrayObject*`。
 - en: ''
   id: totrans-343
   prefs:
@@ -2165,6 +2278,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_descr(a)**'
 - en: ''
   id: totrans-345
   prefs:
@@ -2176,6 +2290,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回对`a`的dtype属性（`PyArray_Descr*`）的借用引用，假定`a`可转换为`PyArrayObject*`。
 - en: ''
   id: totrans-347
   prefs:
@@ -2186,6 +2301,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_flags(a)**'
 - en: ''
   id: totrans-349
   prefs:
@@ -2197,6 +2313,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回表示`a`的标志的整数，假定`a`可以转换为`PyArrayObject*`。
 - en: ''
   id: totrans-351
   prefs:
@@ -2207,6 +2324,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_enableflags(a,f)**'
 - en: ''
   id: totrans-353
   prefs:
@@ -2217,6 +2335,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 设置`a`的标志（`f`表示）的标志，假设`a`可以转换为`PyArrayObject*`。
 - en: ''
   id: totrans-355
   prefs:
@@ -2227,6 +2346,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_is_contiguous(a)**'
 - en: ''
   id: totrans-357
   prefs:
@@ -2237,6 +2357,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果`a`是一个连续的数组，则评估为true。等效于`（PyArray_ISCONTIGUOUS(a))`。
 - en: ''
   id: totrans-359
   prefs:
@@ -2247,6 +2368,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_is_native(a)**'
 - en: ''
   id: totrans-361
   prefs:
@@ -2258,6 +2380,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果`a`的数据缓冲区使用本机字节顺序，则评估为true。等效于`（PyArray_ISNOTSWAPPED(a))`。
 - en: ''
   id: totrans-363
   prefs:
@@ -2268,6 +2391,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_is_fortran(a)**'
 - en: ''
   id: totrans-365
   prefs:
@@ -2278,16 +2402,19 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果`a`是FORTRAN排序，则评估为true。
 - en: Routines
   id: totrans-367
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 例程
 - en: '**pytype_string()**'
   id: totrans-368
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**pytype_string()**'
 - en: ''
   id: totrans-369
   prefs:
@@ -2299,6 +2426,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`const char*`
 - en: ''
   id: totrans-371
   prefs:
@@ -2311,6 +2439,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-373
   prefs:
@@ -2324,6 +2453,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* py_obj`，一个一般的Python对象。'
 - en: ''
   id: totrans-375
   prefs:
@@ -2350,6 +2480,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回一个描述`py_obj`类型的字符串。
 - en: ''
   id: totrans-379
   prefs:
@@ -2360,6 +2491,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**typecode_string()**'
 - en: ''
   id: totrans-381
   prefs:
@@ -2371,6 +2503,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`const char*`
 - en: ''
   id: totrans-383
   prefs:
@@ -2383,6 +2516,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-385
   prefs:
@@ -2396,6 +2530,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，一个NumPy整数类型代码。'
 - en: ''
   id: totrans-387
   prefs:
@@ -2422,6 +2557,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回一个描述与NumPy`typecode`对应的类型的字符串。
 - en: ''
   id: totrans-391
   prefs:
@@ -2432,6 +2568,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**type_match()**'
 - en: ''
   id: totrans-393
   prefs:
@@ -2443,6 +2580,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`int`
 - en: ''
   id: totrans-395
   prefs:
@@ -2455,6 +2593,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-397
   prefs:
@@ -2468,6 +2607,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int actual_type`，NumPy数组的NumPy类型代码。'
 - en: ''
   id: totrans-399
   prefs:
@@ -2489,6 +2629,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int desired_type`，期望的NumPy类型代码。'
 - en: ''
   id: totrans-402
   prefs:
@@ -2517,6 +2658,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 确保`actual_type`与`desired_type`兼容。例如，这允许字符和字节类型，或整数和长整数类型相匹配。现在等同于`PyArray_EquivTypenums()`。
 - en: ''
   id: totrans-406
   prefs:
@@ -2527,6 +2669,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**obj_to_array_no_conversion()**'
 - en: ''
   id: totrans-408
   prefs:
@@ -2538,6 +2681,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-410
   prefs:
@@ -2550,6 +2694,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-412
   prefs:
@@ -2563,6 +2708,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* input`，一个一般的Python对象。'
 - en: ''
   id: totrans-414
   prefs:
@@ -2584,6 +2730,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，期望的NumPy类型代码。'
 - en: ''
   id: totrans-417
   prefs:
@@ -2612,6 +2759,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果合法，将`input`转换为`PyArrayObject*`，并确保其为`typecode`类型。如果无法转换`input`，或者`typecode`错误，则设置Python错误并返回`NULL`。
 - en: ''
   id: totrans-421
   prefs:
@@ -2622,6 +2770,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**obj_to_array_allow_conversion()**'
 - en: ''
   id: totrans-423
   prefs:
@@ -2633,6 +2782,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-425
   prefs:
@@ -2645,6 +2795,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-427
   prefs:
@@ -2658,6 +2809,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* input`，一个一般的Python对象。'
 - en: ''
   id: totrans-429
   prefs:
@@ -2679,6 +2831,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，结果数组的期望NumPy类型代码。'
 - en: ''
   id: totrans-432
   prefs:
@@ -2701,6 +2854,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有执行转换，则返回值为0，否则为1。'
 - en: ''
   id: totrans-435
   prefs:
@@ -2729,6 +2883,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将`input`转换为具有给定`typecode`的NumPy数组。成功时，返回一个具有正确类型的有效`PyArrayObject*`。失败时，将设置Python错误字符串，并返回`NULL`。
 - en: ''
   id: totrans-439
   prefs:
@@ -2739,6 +2894,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**make_contiguous()**'
 - en: ''
   id: totrans-441
   prefs:
@@ -2750,6 +2906,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-443
   prefs:
@@ -2762,6 +2919,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-445
   prefs:
@@ -2775,6 +2933,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个NumPy数组。'
 - en: ''
   id: totrans-447
   prefs:
@@ -2797,6 +2956,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有执行转换，则返回值为0，否则为1。'
 - en: ''
   id: totrans-450
   prefs:
@@ -2818,6 +2978,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int min_dims`，最小允许的维度。'
 - en: ''
   id: totrans-453
   prefs:
@@ -2839,6 +3000,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int max_dims`，最大允许的维度。'
 - en: ''
   id: totrans-456
   prefs:
@@ -2867,6 +3029,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 检查`ary`是否是连续的。如果是，返回输入指针并标记为不是新对象。如果不是连续的，使用原始数据创建一个新的`PyArrayObject*`，将其标记为新对象并返回指针。
 - en: ''
   id: totrans-460
   prefs:
@@ -2877,6 +3040,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**make_fortran()**'
 - en: ''
   id: totrans-462
   prefs:
@@ -2888,6 +3052,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-464
   prefs:
@@ -2900,6 +3065,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数
 - en: ''
   id: totrans-466
   prefs:
@@ -2913,6 +3079,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个NumPy数组。'
 - en: ''
   id: totrans-468
   prefs:
@@ -2935,6 +3102,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有执行转换，则返回值为0，否则为1。'
 - en: ''
   id: totrans-471
   prefs:
@@ -2964,6 +3132,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 检查`ary`是否是Fortran连续的。如果是，则返回输入指针，并将其标记为非新对象。如果它不是Fortran连续的，则使用原始数据创建一个新的`PyArrayObject*`，将其标记为新对象，并返回指针。
 - en: ''
   id: totrans-475
   prefs:
@@ -2974,6 +3143,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**obj_to_array_contiguous_allow_conversion()**'
 - en: ''
   id: totrans-477
   prefs:
@@ -2985,6 +3155,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-479
   prefs:
@@ -2997,6 +3168,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-481
   prefs:
@@ -3010,6 +3182,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* input`，一个通用的Python对象。'
 - en: ''
   id: totrans-483
   prefs:
@@ -3031,6 +3204,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，所得数组的所需NumPy类型代码。'
 - en: ''
   id: totrans-486
   prefs:
@@ -3053,6 +3227,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有进行任何转换，则返回0，否则返回1。'
 - en: ''
   id: totrans-489
   prefs:
@@ -3081,6 +3256,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将`input`转换为所需类型的连续`PyArrayObject*`。如果输入对象不是连续的`PyArrayObject*`，则将创建一个新的对象并设置新对象标志。
 - en: ''
   id: totrans-493
   prefs:
@@ -3091,6 +3267,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**obj_to_array_fortran_allow_conversion()**'
 - en: ''
   id: totrans-495
   prefs:
@@ -3102,6 +3279,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-497
   prefs:
@@ -3114,6 +3292,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-499
   prefs:
@@ -3127,6 +3306,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* input`，一个通用的Python对象。'
 - en: ''
   id: totrans-501
   prefs:
@@ -3148,6 +3328,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，所得数组的所需NumPy类型代码。'
 - en: ''
   id: totrans-504
   prefs:
@@ -3170,6 +3351,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有进行任何转换，则返回0，否则返回1。'
 - en: ''
   id: totrans-507
   prefs:
@@ -3198,6 +3380,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将`input`转换为所需类型的Fortran连续`PyArrayObject*`。如果输入对象不是Fortran连续的`PyArrayObject*`，则将创建一个新的对象并设置新对象标志。
 - en: ''
   id: totrans-511
   prefs:
@@ -3208,6 +3391,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**require_contiguous()**'
 - en: ''
   id: totrans-513
   prefs:
@@ -3219,6 +3403,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`int`
 - en: ''
   id: totrans-515
   prefs:
@@ -3231,6 +3416,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-517
   prefs:
@@ -3244,6 +3430,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个NumPy数组。'
 - en: ''
   id: totrans-519
   prefs:
@@ -3271,6 +3458,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 检查`ary`是否是连续的。如果是，则返回1。否则，设置Python错误并返回0。
 - en: ''
   id: totrans-523
   prefs:
@@ -3281,6 +3469,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**require_native()**'
 - en: ''
   id: totrans-525
   prefs:
@@ -3292,6 +3481,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`int`
 - en: ''
   id: totrans-527
   prefs:
@@ -3304,6 +3494,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-529
   prefs:
@@ -3317,6 +3508,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArray_Object* ary`，一个NumPy数组。'
 - en: ''
   id: totrans-531
   prefs:
@@ -3344,6 +3536,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要求`ary`不是字节交换的。如果数组没有字节交换，则返回1。否则，设置Python错误并返回0。
 - en: ''
   id: totrans-535
   prefs:
@@ -3354,6 +3547,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**require_dimensions()**'
 - en: ''
   id: totrans-537
   prefs:
@@ -3365,6 +3559,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`int`
 - en: ''
   id: totrans-539
   prefs:
@@ -3377,6 +3572,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-541
   prefs:
@@ -3390,6 +3586,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个NumPy数组。'
 - en: ''
   id: totrans-543
   prefs:
@@ -3411,6 +3608,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int exact_dimensions`，所需的维度数。'
 - en: ''
   id: totrans-546
   prefs:
@@ -3439,6 +3637,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要求`ary`有指定的维数。如果数组具有指定的维数，则返回1。否则，设置Python错误并返回0。
 - en: ''
   id: totrans-550
   prefs:
@@ -3449,6 +3648,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**require_dimensions_n()**'
 - en: ''
   id: totrans-552
   prefs:
@@ -3460,6 +3660,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`int`
 - en: ''
   id: totrans-554
   prefs:
@@ -3472,6 +3673,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-556
   prefs:
@@ -3485,6 +3687,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个NumPy数组。'
 - en: ''
   id: totrans-558
   prefs:
@@ -3507,6 +3710,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* exact_dimensions`，表示可接受维度数量的整数数组。'
 - en: ''
   id: totrans-561
   prefs:
@@ -3528,6 +3732,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int n`，`exact_dimensions`的长度。'
 - en: ''
   id: totrans-564
   prefs:
@@ -3556,6 +3761,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要求`ary`具有指定数量的维度之一。如果数组具有指定数量的维度之一，则返回1。否则，设置Python错误字符串并返回0。
 - en: ''
   id: totrans-568
   prefs:
@@ -3566,6 +3772,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**require_size()**'
 - en: ''
   id: totrans-570
   prefs:
@@ -3577,6 +3784,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`int`
 - en: ''
   id: totrans-572
   prefs:
@@ -3589,6 +3797,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-574
   prefs:
@@ -3602,6 +3811,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个NumPy数组。'
 - en: ''
   id: totrans-576
   prefs:
@@ -3623,6 +3833,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`npy_int* size`，表示每个维度的所需长度的数组。'
 - en: ''
   id: totrans-579
   prefs:
@@ -3644,6 +3855,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int n`，`size`的长度。'
 - en: ''
   id: totrans-582
   prefs:
@@ -3671,6 +3883,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要求`ary`具有指定的形状。如果数组具有指定的形状，则返回1。否则，设置Python错误字符串并返回0。
 - en: ''
   id: totrans-586
   prefs:
@@ -3681,6 +3894,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**require_fortran()**'
 - en: ''
   id: totrans-588
   prefs:
@@ -3692,6 +3906,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`int`
 - en: ''
   id: totrans-590
   prefs:
@@ -3704,6 +3919,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-592
   prefs:
@@ -3717,6 +3933,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个NumPy数组。'
 - en: ''
   id: totrans-594
   prefs:
@@ -3745,11 +3962,13 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要求给定的`PyArrayObject`是Fortran有序的。如果`PyArrayObject`已经是Fortran有序的，则不做任何处理。否则，设置Fortran排序标志并重新计算步进。
 - en: Beyond the Provided Typemaps
   id: totrans-598
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 提供的类型映射之外的内容
 - en: There are many C or C++ array/NumPy array situations not covered by a simple
     `%include "numpy.i"` and subsequent `%apply` directives.
   id: totrans-599
@@ -3932,11 +4151,16 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 编写类型映射可能有点不直观。如果您对为 NumPy 编写 [SWIG](http://www.swig.org) 类型映射有具体问题，`numpy.i`
+    的开发人员会监视 [Numpy-discussion](/cdn-cgi/l/email-protection#753b0018050c58111c06160006061c1a1b535646424e535640474e5356414d4e050c011d1a1b535641434e1a0712)
+    和 [Swig-user](/cdn-cgi/l/email-protection#aaf9ddc3cd87dfd9cfd88c89999d918c899f98918c899e9291c6c3d9ded98c899e9c91d9c5dfd8c9cfccc5d8cdcf8c899e9c91c4cfde)
+    邮件列表。
 - en: A Final Note
   id: totrans-625
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 最后说明
 - en: 'When you use the `%apply` directive, as is usually necessary to use `numpy.i`,
     it will remain in effect until you tell [SWIG](http://www.swig.org) that it shouldn’t
     be. If the arguments to the functions or methods that you are wrapping have common
@@ -3946,6 +4170,8 @@
   id: totrans-626
   prefs: []
   type: TYPE_NORMAL
+  zh: 当您使用 `%apply` 指令时，通常需要使用 `numpy.i`，它会一直有效，直到告诉 [SWIG](http://www.swig.org) 不再需要。如果您要封装的函数或方法的参数具有常见名称，例如
+    `length` 或 `vector`，这些类型映射可能会应用于您意料之外或不希望的情况。因此，在完成特定类型映射后，始终最好添加 `%clear` 指令：
 - en: '[PRE22]'
   id: totrans-627
   prefs: []
@@ -3956,16 +4182,19 @@
   id: totrans-628
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常应针对特定地方使用这些类型映射签名，然后在使用完成后清除它们。
 - en: Summary
   id: totrans-629
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 总结
 - en: 'Out of the box, `numpy.i` provides typemaps that support conversion between
     NumPy arrays and C arrays:'
   id: totrans-630
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，`numpy.i` 提供了支持在 NumPy 数组和 C 数组之间进行转换的类型映射：
 - en: 'That can be one of 12 different scalar types: `signed char`, `unsigned char`,
     `short`, `unsigned short`, `int`, `unsigned int`, `long`, `unsigned long`, `long
     long`, `unsigned long long`, `float` and `double`.'
@@ -3974,6 +4203,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 可以是 12 种不同的标量类型之一：`signed char`、`unsigned char`、`short`、`unsigned short`、`int`、`unsigned
+    int`、`long`、`unsigned long`、`long long`、`unsigned long long`、`float` 和 `double`。
 - en: ''
   id: totrans-632
   prefs:
@@ -3992,6 +4223,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 支持每种数据类型的 74 种不同参数签名，包括：
 - en: ''
   id: totrans-635
   prefs:
@@ -4011,6 +4243,7 @@
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一维、二维、三维和四维数组。
 - en: ''
   id: totrans-638
   prefs:
@@ -4032,6 +4265,7 @@
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 仅输入、原地、输出参数、输出参数视图和内存管理的输出参数视图行为。
 - en: ''
   id: totrans-641
   prefs:
@@ -4054,6 +4288,7 @@
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 硬编码的维度、数据缓冲区-维度规范和维度-数据缓冲区规范。
 - en: ''
   id: totrans-644
   prefs:
@@ -4076,11 +4311,13 @@
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 支持 C 排序（“最后一个维度最快”）或 Fortran 排序（“第一个维度最快”）的 2D、3D 和 4D 数组。
 - en: 'The `numpy.i` interface file also provides additional tools for wrapper developers,
     including:'
   id: totrans-647
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.i` 接口文件还为包装开发者提供了额外的工具，包括：'
 - en: A [SWIG](http://www.swig.org) macro (`%numpy_typemaps`) with three arguments
     for implementing the 74 argument signatures for the user’s choice of (1) C data
     type, (2) NumPy data type (assuming they match), and (3) dimension type.
@@ -4089,6 +4326,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个 [SWIG](http://www.swig.org) 宏 (`%numpy_typemaps`)，具有三个参数，用于为用户选择的 (1) C 数据类型、(2)
+    NumPy 数据类型（假设它们匹配）和 (3) 维度类型 实现 74 个参数签名。
 - en: ''
   id: totrans-649
   prefs:
@@ -4111,11 +4350,14 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 十四个 C 宏和十五个 C 函数，可用于编写专门的类型映射、扩展或处理提供的类型映射未涵盖的情况的内联函数。请注意，这些宏和函数是专门设计用于与 NumPy
+    C/API 一起使用，不管 NumPy 版本号如何，无论 1.6 版本之前和之后的一些 API 弃用后的情况如何。
 - en: Introduction
   id: totrans-652
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 介绍
 - en: 'The Simple Wrapper and Interface Generator (or [SWIG](http://www.swig.org))
     is a powerful tool for generating wrapper code for interfacing to a wide variety
     of scripting languages. [SWIG](http://www.swig.org) can parse header files, and
@@ -4125,6 +4367,8 @@
   id: totrans-653
   prefs: []
   type: TYPE_NORMAL
+  zh: 简单包装器和接口生成器（或 [SWIG](http://www.swig.org)）是一个强大的工具，用于为各种脚本语言生成包装器代码。[SWIG](http://www.swig.org)可以解析头文件，并仅使用代码原型，为目标语言创建接口。但
+    [SWIG](http://www.swig.org) 也不是无所不能的。例如，它无法从原型中知道：
 - en: '[PRE23]'
   id: totrans-654
   prefs: []
@@ -4137,6 +4381,8 @@
   id: totrans-655
   prefs: []
   type: TYPE_NORMAL
+  zh: '`seq`到底是什么。它是一个要就地更改的单个值吗？它是一个数组，如果是的话，它的长度是多少？它只能作为输入吗？输出？输入输出？[SWIG](http://www.swig.org)
+    无法确定这些细节，也不会尝试这样做。'
 - en: If we designed `rms`, we probably made it a routine that takes an input-only
     array of length `n` of `double` values called `seq` and returns the root mean
     square. The default behavior of [SWIG](http://www.swig.org), however, will be
@@ -4145,6 +4391,7 @@
   id: totrans-656
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们设计了`rms`，我们可能会将其设计成一个接受长度为`n`的`double`值数组（称为`seq`）作为输入并返回均方根的常规函数。然而，[SWIG](http://www.swig.org)的默认行为将是创建一个包装函数，可以编译，但几乎无法按照C例程预期的方式从脚本语言中使用。
 - en: 'For Python, the preferred way of handling contiguous (or technically, *strided*)
     blocks of homogeneous data is with NumPy, which provides full object-oriented
     access to multidimensial arrays of data. Therefore, the most logical Python interface
@@ -4152,6 +4399,8 @@
   id: totrans-657
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于 Python，处理连续（或技术上的*跨距*）的同质数据块的首选方式是使用 NumPy，它提供了对数据的多维数组的完全面向对象的访问。因此，`rms`
+    函数的最合理的 Python 接口应该是（包括文档字符串）：
 - en: '[PRE24]'
   id: totrans-658
   prefs: []
@@ -4166,6 +4415,7 @@
   id: totrans-659
   prefs: []
   type: TYPE_NORMAL
+  zh: '`seq`将是一个由`double`值组成的NumPy数组，其长度`n`将在传递给C例程之前从`seq`内部提取。更好的是，由于NumPy支持从任意Python序列构建数组，`seq`本身可以是一个几乎任意的序列（只要每个元素都可以转换为`double`），而包装代码将在提取其数据和长度之前在内部将其转换为NumPy数组。'
 - en: '[SWIG](http://www.swig.org) allows these types of conversions to be defined
     via a mechanism called *typemaps*. This document provides information on how to
     use `numpy.i`, a [SWIG](http://www.swig.org) interface file that defines a series
@@ -4177,6 +4427,10 @@
   id: totrans-660
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SWIG](http://www.swig.org)允许通过一种称为*typemaps*的机制来定义这些类型的转换。本文档提供了如何使用 `numpy.i`
+    的信息，这是一个定义了一系列旨在使上面描述的数组相关转换相对简单实现的 [SWIG](http://www.swig.org) 接口文件。例如，假设上面定义的
+    `rms` 函数原型在名为 `rms.h` 的头文件中。要获得上面讨论的 Python 接口，你的 [SWIG](http://www.swig.org)
+    接口文件需要包含以下内容：'
 - en: '[PRE25]'
   id: totrans-661
   prefs: []
@@ -4191,6 +4445,9 @@
   id: totrans-662
   prefs: []
   type: TYPE_NORMAL
+  zh: Typemaps 是根据一个或多个函数参数的列表（按类型或类型和名称）进行匹配的。我们将这样的列表称为*签名*。`numpy.i` 定义的众多 typemap
+    之一在上面的代码中使用，其签名为`(double* IN_ARRAY1, int DIM1)`。参数名称旨在建议 `double*` 参数是一个一维输入数组，而
+    `int` 表示该维度的大小。这恰好是 `rms` 原型中的模式。
 - en: Most likely, no actual prototypes to be wrapped will have the argument names
     `IN_ARRAY1` and `DIM1`. We use the [SWIG](http://www.swig.org) `%apply` directive
     to apply the typemap for one-dimensional input arrays of type `double` to the
@@ -4199,11 +4456,15 @@
   id: totrans-663
   prefs: []
   type: TYPE_NORMAL
+  zh: 很可能，没有实际的要包装的原型会具有参数名称 `IN_ARRAY1` 和 `DIM1`。 我们使用 [SWIG](http://www.swig.org)
+    `%apply` 指令将一个维度为 `double` 的一维输入数组的类型映射应用到 `rms` 实际使用的原型上。 因此，有效地使用 `numpy.i`
+    需要知道可用的类型映射及其作用。
 - en: 'A [SWIG](http://www.swig.org) interface file that includes the [SWIG](http://www.swig.org)
     directives given above will produce wrapper code that looks something like:'
   id: totrans-664
   prefs: []
   type: TYPE_NORMAL
+  zh: 包括上述 [SWIG](http://www.swig.org) 指令的 [SWIG](http://www.swig.org) 接口文件将生成类似于以下内容的包装器代码：
 - en: '[PRE26]'
   id: totrans-665
   prefs: []
@@ -4225,6 +4486,11 @@
   id: totrans-666
   prefs: []
   type: TYPE_NORMAL
+  zh: 来自 `numpy.i` 的类型映射负责以下代码行：12–20，25 和 30。 第10行解析输入到 `rms` 函数。从格式字符串`"O:rms"`，我们可以看到参数列表预期是单个
+    Python 对象（由冒号前的 `O` 指定），其指针存储在 `obj0` 中。 通过调用由 `numpy.i` 提供的一些函数，可以进行从通用 Python
+    对象到 NumPy 数组的转换（可能的）进行检查。 这些函数在 [辅助函数](#helper-functions) 部分中有所解释，但希望它们的名称是不言自明的。
+    第12行我们使用 `obj0` 构造一个 NumPy 数组。 在第17行，我们检查结果的有效性：它不为空，并且具有任意长度的单个维度。 一旦验证了这些状态，我们提取数据缓冲区和长度，以便我们可以在第22行调用底层
+    C 函数。 第25行对于我们创建了一个不再需要的新数组进行内存管理。
 - en: This code has a significant amount of error handling. Note the `SWIG_fail` is
     a macro for `goto fail`, referring to the label at line 28\. If the user provides
     the wrong number of arguments, this will be caught at line 10\. If construction
@@ -4234,10 +4500,13 @@
   id: totrans-667
   prefs: []
   type: TYPE_NORMAL
+  zh: 此代码有大量的错误处理。 请注意，`SWIG_fail` 是一个指向第28行标签的 `goto fail` 的宏。 如果用户提供了错误数量的参数，这将在第10行被捕获。
+    如果构造 NumPy 数组失败或产生了维度错误的数组，这些错误将在第17行被捕获。 最后，如果检测到错误，内存在第30行仍然被正确地管理。
 - en: 'Note that if the C function signature was in a different order:'
   id: totrans-668
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，如果 C 函数签名的顺序不同：
 - en: '[PRE27]'
   id: totrans-669
   prefs: []
@@ -4249,6 +4518,8 @@
   id: totrans-670
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SWIG](http://www.swig.org) 不会将上述类型映射签名与 `rms` 的参数列表匹配。 幸运的是，`numpy.i` 具有一套具有数据指针的类型映射：最后
+    given last：'
 - en: '[PRE28]'
   id: totrans-671
   prefs: []
@@ -4260,22 +4531,26 @@
   id: totrans-672
   prefs: []
   type: TYPE_NORMAL
+  zh: 这简单地将上面生成的代码中第3和第4行的 `arg1` 和 `arg2` 的定义进行了交换，以及在第19和第20行的赋值。
 - en: Using numpy.i
   id: totrans-673
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用 numpy.i
 - en: The `numpy.i` file is currently located in the `tools/swig` sub-directory under
     the `numpy` installation directory. Typically, you will want to copy it to the
     directory where you are developing your wrappers.
   id: totrans-674
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.i` 文件当前位于 `numpy` 安装目录下的 `tools/swig` 子目录中。通常，您会希望将其复制到您正在开发包装器的目录中。'
 - en: 'A simple module that only uses a single [SWIG](http://www.swig.org) interface
     file should include the following:'
   id: totrans-675
   prefs: []
   type: TYPE_NORMAL
+  zh: 只使用单个 [SWIG](http://www.swig.org) 接口文件的简单模块应该包括以下内容：
 - en: '[PRE29]'
   id: totrans-676
   prefs: []
@@ -4292,11 +4567,16 @@
   id: totrans-677
   prefs: []
   type: TYPE_NORMAL
+  zh: 在编译的 Python 模块中，`import_array()` 应该只被调用一次。这可以在一个你编写的并与模块链接的 C/C++ 文件中实现。如果是这种情况，则你的接口文件中不应该存在
+    `#define SWIG_FILE_WITH_INIT` 或调用 `import_array()`。或者，这个初始化调用可以在通过[SWIG](http://www.swig.org)从具有上述
+    `%init` 块的接口文件生成的包装文件中实现。如果是这种情况，并且你有多个[SWIG](http://www.swig.org)接口文件，则只有一个接口文件应该
+    `#define SWIG_FILE_WITH_INIT` 并调用 `import_array()`。
 - en: Available Typemaps
   id: totrans-678
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 可用的类型映射
 - en: 'The typemap directives provided by `numpy.i` for arrays of different data types,
     say `double` and `int`, and dimensions of different types, say `int` or `long`,
     are identical to one another except for the C and NumPy type specifications. The
@@ -4304,6 +4584,8 @@
   id: totrans-679
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.i` 提供了不同数据类型（如 `double` 和 `int`）和不同维度类型（如 `int` 或 `long`）的数组的类型映射指令。这些类型映射指令是相同的，只有
+    C 和 NumPy 类型的规定不同。这些类型映射指令通常通过宏来实现（通常在幕后实现）：'
 - en: '[PRE30]'
   id: totrans-680
   prefs: []
@@ -4314,6 +4596,7 @@
   id: totrans-681
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以根据适当的 `(DATA_TYPE, DATA_TYPECODE, DIM_TYPE)` 三元组调用它。例如：
 - en: '[PRE31]'
   id: totrans-682
   prefs: []
@@ -4324,12 +4607,14 @@
   id: totrans-683
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.i` 接口文件使用 `%numpy_typemaps` 宏为以下 C 数据类型和 `int` 维度类型实现类型映射：'
 - en: '`signed char`'
   id: totrans-684
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`signed char`'
 - en: ''
   id: totrans-685
   prefs:
@@ -4348,6 +4633,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned char`'
 - en: ''
   id: totrans-688
   prefs:
@@ -4366,6 +4652,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`short`'
 - en: ''
   id: totrans-691
   prefs:
@@ -4384,6 +4671,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned short`'
 - en: ''
   id: totrans-694
   prefs:
@@ -4402,6 +4690,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int`'
 - en: ''
   id: totrans-697
   prefs:
@@ -4420,6 +4709,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned int`'
 - en: ''
   id: totrans-700
   prefs:
@@ -4438,6 +4728,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`long`'
 - en: ''
   id: totrans-703
   prefs:
@@ -4456,6 +4747,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned long`'
 - en: ''
   id: totrans-706
   prefs:
@@ -4474,6 +4766,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`long long`'
 - en: ''
   id: totrans-709
   prefs:
@@ -4492,6 +4785,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned long long`'
 - en: ''
   id: totrans-712
   prefs:
@@ -4510,6 +4804,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`float`'
 - en: ''
   id: totrans-715
   prefs:
@@ -4528,23 +4823,28 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`double`'
 - en: In the following descriptions, we reference a generic `DATA_TYPE`, which could
     be any of the C data types listed above, and `DIM_TYPE` which should be one of
     the many types of integers.
   id: totrans-718
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下面的描述中，我们引用一个通用的 `DATA_TYPE`，它可以是上述 C 数据类型之一，以及 `DIM_TYPE`，它应该是许多类型的整数之一。
 - en: The typemap signatures are largely differentiated on the name given to the buffer
     pointer. Names with `FARRAY` are for Fortran-ordered arrays, and names with `ARRAY`
     are for C-ordered (or 1D arrays).
   id: totrans-719
   prefs: []
   type: TYPE_NORMAL
+  zh: 类型映射的签名在于缓冲区指针的命名方式。`FARRAY` 命名方式适用于 Fortran 排序的数组，`ARRAY` 命名方式适用于 C 排序（或 1D
+    数组）。
 - en: Input Arrays
   id: totrans-720
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 输入数组
 - en: Input arrays are defined as arrays of data that are passed into a routine but
     are not altered in-place or returned to the user. The Python input array is therefore
     allowed to be almost any Python sequence (such as a list) that can be converted
@@ -4552,16 +4852,19 @@
   id: totrans-721
   prefs: []
   type: TYPE_NORMAL
+  zh: 输入数组被定义为传递给例程但不进行原地修改或返回给用户的数据的数组。因此，Python 输入数组可以是几乎任何可以转换为请求类型数组的 Python 序列（如列表）。输入数组的签名为
 - en: '1D:'
   id: totrans-722
   prefs: []
   type: TYPE_NORMAL
+  zh: 1D：
 - en: '`( DATA_TYPE IN_ARRAY1[ANY] )`'
   id: totrans-723
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE IN_ARRAY1[ANY] )`'
 - en: ''
   id: totrans-724
   prefs:
@@ -4580,6 +4883,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_ARRAY1, int DIM1 )`'
 - en: ''
   id: totrans-727
   prefs:
@@ -4598,16 +4902,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, DATA_TYPE* IN_ARRAY1 )`'
 - en: '2D:'
   id: totrans-730
   prefs: []
   type: TYPE_NORMAL
+  zh: 2D：
 - en: '`( DATA_TYPE IN_ARRAY2[ANY][ANY] )`'
   id: totrans-731
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE IN_ARRAY2[ANY][ANY] )`'
 - en: ''
   id: totrans-732
   prefs:
@@ -4626,6 +4933,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-735
   prefs:
@@ -4644,6 +4952,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2 )`'
 - en: ''
   id: totrans-738
   prefs:
@@ -4662,6 +4971,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_FARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-741
   prefs:
@@ -4680,16 +4990,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, DATA_TYPE* IN_FARRAY2 )`'
 - en: '3D:'
   id: totrans-744
   prefs: []
   type: TYPE_NORMAL
+  zh: 3D：
 - en: '`( DATA_TYPE IN_ARRAY3[ANY][ANY][ANY] )`'
   id: totrans-745
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE IN_ARRAY3[ANY][ANY][ANY] )`'
 - en: ''
   id: totrans-746
   prefs:
@@ -4708,6 +5021,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_ARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-749
   prefs:
@@ -4726,6 +5040,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_ARRAY3 )`'
 - en: ''
   id: totrans-752
   prefs:
@@ -4744,6 +5059,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_FARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-755
   prefs:
@@ -4762,16 +5078,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_FARRAY3 )`'
 - en: '4D:'
   id: totrans-758
   prefs: []
   type: TYPE_NORMAL
+  zh: 4D：
 - en: '`(DATA_TYPE IN_ARRAY4[ANY][ANY][ANY][ANY])`'
   id: totrans-759
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE IN_ARRAY4[ANY][ANY][ANY][ANY])`'
 - en: ''
   id: totrans-760
   prefs:
@@ -4791,6 +5110,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* IN_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE
+    DIM4)`'
 - en: ''
   id: totrans-763
   prefs:
@@ -4810,6 +5131,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE*
+    IN_ARRAY4)`'
 - en: ''
   id: totrans-766
   prefs:
@@ -4829,6 +5152,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* IN_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE
+    DIM4)`'
 - en: ''
   id: totrans-769
   prefs:
@@ -4847,6 +5172,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* IN_FARRAY4)`'
 - en: The first signature listed, `( DATA_TYPE IN_ARRAY[ANY] )` is for one-dimensional
     arrays with hard-coded dimensions. Likewise, `( DATA_TYPE IN_ARRAY2[ANY][ANY]
     )` is for two-dimensional arrays with hard-coded dimensions, and similarly for
@@ -4854,11 +5180,14 @@
   id: totrans-772
   prefs: []
   type: TYPE_NORMAL
+  zh: 列出的第一个签名，`( DATA_TYPE IN_ARRAY[ANY] )`是用于具有硬编码维度的一维数组。同样，`( DATA_TYPE IN_ARRAY2[ANY][ANY]
+    )`用于具有硬编码维度的二维数组，三维数组类似。
 - en: In-Place Arrays
   id: totrans-773
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 原位数组
 - en: In-place arrays are defined as arrays that are modified in-place. The input
     values may or may not be used, but the values at the time the function returns
     are significant. The provided Python argument must therefore be a NumPy array
@@ -4866,16 +5195,19 @@
   id: totrans-774
   prefs: []
   type: TYPE_NORMAL
+  zh: 原位数组定义为在原地修改的数组。输入值可能会被使用，也可能不会被使用，但在函数返回时的值是重要的。因此，提供的Python参数必须是所需类型的NumPy数组。原地签名为
 - en: '1D:'
   id: totrans-775
   prefs: []
   type: TYPE_NORMAL
+  zh: '1D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY1[ANY] )`'
   id: totrans-776
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE INPLACE_ARRAY1[ANY] )`'
 - en: ''
   id: totrans-777
   prefs:
@@ -4894,6 +5226,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_ARRAY1, int DIM1 )`'
 - en: ''
   id: totrans-780
   prefs:
@@ -4912,16 +5245,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, DATA_TYPE* INPLACE_ARRAY1 )`'
 - en: '2D:'
   id: totrans-783
   prefs: []
   type: TYPE_NORMAL
+  zh: '2D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY2[ANY][ANY] )`'
   id: totrans-784
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE INPLACE_ARRAY2[ANY][ANY] )`'
 - en: ''
   id: totrans-785
   prefs:
@@ -4940,6 +5276,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-788
   prefs:
@@ -4958,6 +5295,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2 )`'
 - en: ''
   id: totrans-791
   prefs:
@@ -4976,6 +5314,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_FARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-794
   prefs:
@@ -4994,16 +5333,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, DATA_TYPE* INPLACE_FARRAY2 )`'
 - en: '3D:'
   id: totrans-797
   prefs: []
   type: TYPE_NORMAL
+  zh: '3D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY] )`'
   id: totrans-798
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY] )`'
 - en: ''
   id: totrans-799
   prefs:
@@ -5022,6 +5364,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-802
   prefs:
@@ -5040,6 +5383,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_ARRAY3 )`'
 - en: ''
   id: totrans-805
   prefs:
@@ -5058,6 +5402,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_FARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-808
   prefs:
@@ -5076,16 +5421,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_FARRAY3 )`'
 - en: '4D:'
   id: totrans-811
   prefs: []
   type: TYPE_NORMAL
+  zh: '4D:'
 - en: '`(DATA_TYPE INPLACE_ARRAY4[ANY][ANY][ANY][ANY])`'
   id: totrans-812
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE INPLACE_ARRAY4[ANY][ANY][ANY][ANY])`'
 - en: ''
   id: totrans-813
   prefs:
@@ -5105,6 +5453,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* INPLACE_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE
+    DIM4)`'
 - en: ''
   id: totrans-816
   prefs:
@@ -5124,6 +5474,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE*
+    INPLACE_ARRAY4)`'
 - en: ''
   id: totrans-819
   prefs:
@@ -5143,6 +5495,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* INPLACE_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3,
+    DIM_TYPE DIM4)`'
 - en: ''
   id: totrans-822
   prefs:
@@ -5161,11 +5515,13 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* INPLACE_FARRAY4)`'
 - en: These typemaps now check to make sure that the `INPLACE_ARRAY` arguments use
     native byte ordering. If not, an exception is raised.
   id: totrans-825
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些typemap现在检查以确保`INPLACE_ARRAY`参数使用本机字节顺序。如果不是，则会引发异常。
 - en: There is also a “flat” in-place array for situations in which you would like
     to modify or process each element, regardless of the number of dimensions. One
     example is a “quantization” function that quantizes each element of an array in-place,
@@ -5174,21 +5530,25 @@
   id: totrans-826
   prefs: []
   type: TYPE_NORMAL
+  zh: 还有一种“平坦”的原地数组，用于您希望修改或处理每个元素的情况，无论维度的数量如何。一个例子是一个在原地量化数组的“量化”函数，无论是1D、2D还是其他维度，都可以对每个元素进行量化。这种形式检查连续性，但允许C或Fortran排序。
 - en: 'ND:'
   id: totrans-827
   prefs: []
   type: TYPE_NORMAL
+  zh: 'ND:'
 - en: '`(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)`'
   id: totrans-828
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)`'
 - en: Argout Arrays
   id: totrans-829
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Argout数组
 - en: Argout arrays are arrays that appear in the input arguments in C, but are in
     fact output arrays. This pattern occurs often when there is more than one output
     variable and the single return argument is therefore not sufficient. In Python,
@@ -5834,6 +6194,7 @@
   id: totrans-938
   prefs: []
   type: TYPE_NORMAL
+  zh: 将导致Typemaps产生引用不正确数据长度的代码。您可以实现以下宏扩展：
 - en: '[PRE35]'
   id: totrans-939
   prefs: []
@@ -5844,11 +6205,13 @@
   id: totrans-940
   prefs: []
   type: TYPE_NORMAL
+  zh: 来解决数据长度问题，[输入数组](#input-arrays) 可能有效，但[原位数组](#in-place-arrays) 可能无法通过类型检查。
 - en: 'Other Common Types: complex'
   id: totrans-941
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 其他常见类型：复数
 - en: 'Typemap conversions for complex floating-point types is also not supported
     automatically. This is because Python and NumPy are written in C, which does not
     have native complex types. Both Python and NumPy implement their own (essentially
@@ -5856,6 +6219,7 @@
   id: totrans-942
   prefs: []
   type: TYPE_NORMAL
+  zh: 复杂浮点类型的Typemap转换也不能自动支持。这是因为Python和NumPy是用C编写的，它们没有本地复杂类型。Python和NumPy都实现了它们自己的（本质上等效的）`struct`定义，用于复杂变量：
 - en: '[PRE36]'
   id: totrans-943
   prefs: []
@@ -5865,6 +6229,7 @@
   id: totrans-944
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们本来可以实现：
 - en: '[PRE37]'
   id: totrans-945
   prefs: []
@@ -5882,11 +6247,14 @@
   id: totrans-946
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将为`Py_complex`、`npy_cfloat`和`npy_cdouble`类型的数组提供自动类型转换。然而，似乎不太可能有任何独立的（非Python、非NumPy）应用代码会使用
+    [SWIG](http://www.swig.org) 生成Python接口，并且还使用这些定义的复杂类型。更有可能的是，这些应用代码将定义它们自己的复杂类型，或者在C++的情况下使用`std::complex`。假设这些数据结构与Python和NumPy的复杂类型兼容，那么以上的`%numpy_typemap`扩展（用用户的复杂类型替换第一个参数）应该有效。
 - en: Input Arrays
   id: totrans-947
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 输入数组
 - en: Input arrays are defined as arrays of data that are passed into a routine but
     are not altered in-place or returned to the user. The Python input array is therefore
     allowed to be almost any Python sequence (such as a list) that can be converted
@@ -5894,16 +6262,19 @@
   id: totrans-948
   prefs: []
   type: TYPE_NORMAL
+  zh: 输入数组被定义为传入程序但不会被直接更改或返回给用户的数据数组。因此，Python输入数组几乎可以是任何可转换为所请求数组类型的Python序列（如列表）。输入数组签名为
 - en: '1D:'
   id: totrans-949
   prefs: []
   type: TYPE_NORMAL
+  zh: '1D:'
 - en: '`( DATA_TYPE IN_ARRAY1[ANY] )`'
   id: totrans-950
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE IN_ARRAY1[ANY] )`'
 - en: ''
   id: totrans-951
   prefs:
@@ -5922,6 +6293,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_ARRAY1, int DIM1 )`'
 - en: ''
   id: totrans-954
   prefs:
@@ -5940,16 +6312,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, DATA_TYPE* IN_ARRAY1 )`'
 - en: '2D:'
   id: totrans-957
   prefs: []
   type: TYPE_NORMAL
+  zh: '2D:'
 - en: '`( DATA_TYPE IN_ARRAY2[ANY][ANY] )`'
   id: totrans-958
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE IN_ARRAY2[ANY][ANY] )`'
 - en: ''
   id: totrans-959
   prefs:
@@ -5968,6 +6343,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-962
   prefs:
@@ -5986,6 +6362,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2 )`'
 - en: ''
   id: totrans-965
   prefs:
@@ -6004,6 +6381,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_FARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-968
   prefs:
@@ -6022,16 +6400,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, DATA_TYPE* IN_FARRAY2 )`'
 - en: '3D:'
   id: totrans-971
   prefs: []
   type: TYPE_NORMAL
+  zh: '3D:'
 - en: '`( DATA_TYPE IN_ARRAY3[ANY][ANY][ANY] )`'
   id: totrans-972
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE IN_ARRAY3[ANY][ANY][ANY] )`'
 - en: ''
   id: totrans-973
   prefs:
@@ -6050,6 +6431,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_ARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-976
   prefs:
@@ -6068,6 +6450,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_ARRAY3 )`'
 - en: ''
   id: totrans-979
   prefs:
@@ -6086,6 +6469,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* IN_FARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-982
   prefs:
@@ -6104,16 +6488,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_FARRAY3 )`'
 - en: '4D:'
   id: totrans-985
   prefs: []
   type: TYPE_NORMAL
+  zh: '4D:'
 - en: '`(DATA_TYPE IN_ARRAY4[ANY][ANY][ANY][ANY])`'
   id: totrans-986
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE IN_ARRAY4[ANY][ANY][ANY][ANY])`'
 - en: ''
   id: totrans-987
   prefs:
@@ -6133,6 +6520,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* IN_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE
+    DIM4)`'
 - en: ''
   id: totrans-990
   prefs:
@@ -6152,6 +6541,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE*
+    IN_ARRAY4)`'
 - en: ''
   id: totrans-993
   prefs:
@@ -6171,6 +6562,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* IN_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE
+    DIM4)`'
 - en: ''
   id: totrans-996
   prefs:
@@ -6189,6 +6582,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* IN_FARRAY4)`'
 - en: The first signature listed, `( DATA_TYPE IN_ARRAY[ANY] )` is for one-dimensional
     arrays with hard-coded dimensions. Likewise, `( DATA_TYPE IN_ARRAY2[ANY][ANY]
     )` is for two-dimensional arrays with hard-coded dimensions, and similarly for
@@ -6196,11 +6590,14 @@
   id: totrans-999
   prefs: []
   type: TYPE_NORMAL
+  zh: 列出的第一个签名，`( DATA_TYPE IN_ARRAY[ANY] )`，是给定固定维度的一维数组。同样，`( DATA_TYPE IN_ARRAY2[ANY][ANY]
+    )`是给定固定维度的二维数组，类似地适用于三维数组。
 - en: In-Place Arrays
   id: totrans-1000
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 原位数组
 - en: In-place arrays are defined as arrays that are modified in-place. The input
     values may or may not be used, but the values at the time the function returns
     are significant. The provided Python argument must therefore be a NumPy array
@@ -6208,16 +6605,22 @@
   id: totrans-1001
   prefs: []
   type: TYPE_NORMAL
+  zh: In-place arrays are defined as arrays that are modified in-place. The input
+    values may or may not be used, but the values at the time the function returns
+    are significant. The provided Python argument must therefore be a NumPy array
+    of the required type. The in-place signatures are
 - en: '1D:'
   id: totrans-1002
   prefs: []
   type: TYPE_NORMAL
+  zh: '1D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY1[ANY] )`'
   id: totrans-1003
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE INPLACE_ARRAY1[ANY] )`'
 - en: ''
   id: totrans-1004
   prefs:
@@ -6236,6 +6639,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_ARRAY1, int DIM1 )`'
 - en: ''
   id: totrans-1007
   prefs:
@@ -6254,16 +6658,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, DATA_TYPE* INPLACE_ARRAY1 )`'
 - en: '2D:'
   id: totrans-1010
   prefs: []
   type: TYPE_NORMAL
+  zh: '2D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY2[ANY][ANY] )`'
   id: totrans-1011
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE INPLACE_ARRAY2[ANY][ANY] )`'
 - en: ''
   id: totrans-1012
   prefs:
@@ -6282,6 +6689,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-1015
   prefs:
@@ -6300,6 +6708,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2 )`'
 - en: ''
   id: totrans-1018
   prefs:
@@ -6318,6 +6727,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_FARRAY2, int DIM1, int DIM2 )`'
 - en: ''
   id: totrans-1021
   prefs:
@@ -6336,16 +6746,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, DATA_TYPE* INPLACE_FARRAY2 )`'
 - en: '3D:'
   id: totrans-1024
   prefs: []
   type: TYPE_NORMAL
+  zh: '3D:'
 - en: '`( DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY] )`'
   id: totrans-1025
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY] )`'
 - en: ''
   id: totrans-1026
   prefs:
@@ -6364,6 +6777,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-1029
   prefs:
@@ -6382,6 +6796,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_ARRAY3 )`'
 - en: ''
   id: totrans-1032
   prefs:
@@ -6400,6 +6815,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* INPLACE_FARRAY3, int DIM1, int DIM2, int DIM3 )`'
 - en: ''
   id: totrans-1035
   prefs:
@@ -6418,16 +6834,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_FARRAY3 )`'
 - en: '4D:'
   id: totrans-1038
   prefs: []
   type: TYPE_NORMAL
+  zh: '4D:'
 - en: '`(DATA_TYPE INPLACE_ARRAY4[ANY][ANY][ANY][ANY])`'
   id: totrans-1039
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE INPLACE_ARRAY4[ANY][ANY][ANY][ANY])`'
 - en: ''
   id: totrans-1040
   prefs:
@@ -6447,6 +6866,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* INPLACE_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE
+    DIM4)`'
 - en: ''
   id: totrans-1043
   prefs:
@@ -6466,6 +6887,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE*
+    INPLACE_ARRAY4)`'
 - en: ''
   id: totrans-1046
   prefs:
@@ -6485,6 +6908,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* INPLACE_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3,
+    DIM_TYPE DIM4)`'
 - en: ''
   id: totrans-1049
   prefs:
@@ -6503,11 +6928,14 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* INPLACE_FARRAY4)`'
 - en: These typemaps now check to make sure that the `INPLACE_ARRAY` arguments use
     native byte ordering. If not, an exception is raised.
   id: totrans-1052
   prefs: []
   type: TYPE_NORMAL
+  zh: These typemaps now check to make sure that the `INPLACE_ARRAY` arguments use
+    native byte ordering. If not, an exception is raised.
 - en: There is also a “flat” in-place array for situations in which you would like
     to modify or process each element, regardless of the number of dimensions. One
     example is a “quantization” function that quantizes each element of an array in-place,
@@ -6516,21 +6944,29 @@
   id: totrans-1053
   prefs: []
   type: TYPE_NORMAL
+  zh: There is also a “flat” in-place array for situations in which you would like
+    to modify or process each element, regardless of the number of dimensions. One
+    example is a “quantization” function that quantizes each element of an array in-place,
+    be it 1D, 2D or whatever. This form checks for continuity but allows either C
+    or Fortran ordering.
 - en: 'ND:'
   id: totrans-1054
   prefs: []
   type: TYPE_NORMAL
+  zh: 'ND:'
 - en: '`(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)`'
   id: totrans-1055
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)`'
 - en: Argout Arrays
   id: totrans-1056
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Argout Arrays
 - en: Argout arrays are arrays that appear in the input arguments in C, but are in
     fact output arrays. This pattern occurs often when there is more than one output
     variable and the single return argument is therefore not sufficient. In Python,
@@ -6544,16 +6980,28 @@
   id: totrans-1057
   prefs: []
   type: TYPE_NORMAL
+  zh: Argout arrays are arrays that appear in the input arguments in C, but are in
+    fact output arrays. This pattern occurs often when there is more than one output
+    variable and the single return argument is therefore not sufficient. In Python,
+    the conventional way to return multiple arguments is to pack them into a sequence
+    (tuple, list, etc.) and return the sequence. This is what the argout typemaps
+    do. If a wrapped function that uses these argout typemaps has more than one return
+    argument, they are packed into a tuple or list, depending on the version of Python.
+    The Python user does not pass these arrays in, they simply get returned. For the
+    case where a dimension is specified, the python user must provide that dimension
+    as an argument. The argout signatures are
 - en: '1D:'
   id: totrans-1058
   prefs: []
   type: TYPE_NORMAL
+  zh: '1D:'
 - en: '`( DATA_TYPE ARGOUT_ARRAY1[ANY] )`'
   id: totrans-1059
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE ARGOUT_ARRAY1[ANY] )`'
 - en: ''
   id: totrans-1060
   prefs:
@@ -6572,6 +7020,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE* ARGOUT_ARRAY1, int DIM1 )`'
 - en: ''
   id: totrans-1063
   prefs:
@@ -6590,42 +7039,50 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( int DIM1, DATA_TYPE* ARGOUT_ARRAY1 )`'
 - en: '2D:'
   id: totrans-1066
   prefs: []
   type: TYPE_NORMAL
+  zh: '2D:'
 - en: '`( DATA_TYPE ARGOUT_ARRAY2[ANY][ANY] )`'
   id: totrans-1067
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE ARGOUT_ARRAY2[ANY][ANY] )`'
 - en: '3D:'
   id: totrans-1068
   prefs: []
   type: TYPE_NORMAL
+  zh: '3D:'
 - en: '`( DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY] )`'
   id: totrans-1069
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY] )`'
 - en: '4D:'
   id: totrans-1070
   prefs: []
   type: TYPE_NORMAL
+  zh: '4D:'
 - en: '`( DATA_TYPE ARGOUT_ARRAY4[ANY][ANY][ANY][ANY] )`'
   id: totrans-1071
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE ARGOUT_ARRAY4[ANY][ANY][ANY][ANY] )`'
 - en: These are typically used in situations where in C/C++, you would allocate a(n)
     array(s) on the heap, and call the function to fill the array(s) values. In Python,
     the arrays are allocated for you and returned as new array objects.
   id: totrans-1072
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些通常用于在C/C++中，您会在堆上分配一个或多个数组，并调用函数填充数组的值的情况。 在Python中，数组将为您分配并返回为新的数组对象。
 - en: Note that we support `DATA_TYPE*` argout typemaps in 1D, but not 2D or 3D. This
     is because of a quirk with the [SWIG](http://www.swig.org) typemap syntax and
     cannot be avoided. Note that for these types of 1D typemaps, the Python function
@@ -6633,11 +7090,14 @@
   id: totrans-1073
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，我们支持`DATA_TYPE*` argout typemaps在1D中，但不支持2D或3D。 这是由于[SWIG](http://www.swig.org)
+    typemap语法的一个怪癖，无法避免。 请注意，对于这些类型的1D typemaps，Python函数将采用一个表示`DIM1`的单个参数。
 - en: Argout View Arrays
   id: totrans-1074
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 输出视图数组
 - en: Argoutview arrays are for when your C code provides you with a view of its internal
     data and does not require any memory to be allocated by the user. This can be
     dangerous. There is almost no way to guarantee that the internal data from the
@@ -6649,22 +7109,27 @@
   id: totrans-1075
   prefs: []
   type: TYPE_NORMAL
+  zh: Argoutview数组用于当您的C代码向您提供其内部数据的视图且不需要用户分配任何内存时。 这可能很危险。 几乎没有办法保证来自C代码的内部数据将在封装它的NumPy数组的整个生命周期中保持存在。
+    如果用户在销毁提供数据视图的对象之前销毁了封装该数组的NumPy数组，那么使用该数组可能会导致不良的内存引用或段错误。 尽管如此，在处理大型数据集的情况下，有时只有这一个选择。
 - en: 'The C code to be wrapped for argoutview arrays are characterized by pointers:
     pointers to the dimensions and double pointers to the data, so that these values
     can be passed back to the user. The argoutview typemap signatures are therefore'
   id: totrans-1076
   prefs: []
   type: TYPE_NORMAL
+  zh: 要为argoutview数组包装的C代码以指针为特征：指向尺寸和指向数据的双指针，以便将这些值传递回用户。 因此，argoutview typemap签名为
 - en: '1D:'
   id: totrans-1077
   prefs: []
   type: TYPE_NORMAL
+  zh: '1D:'
 - en: '`( DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1 )`'
   id: totrans-1078
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1 )`'
 - en: ''
   id: totrans-1079
   prefs:
@@ -6683,16 +7148,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1 )`'
 - en: '2D:'
   id: totrans-1082
   prefs: []
   type: TYPE_NORMAL
+  zh: '2D:'
 - en: '`( DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )`'
   id: totrans-1083
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )`'
 - en: ''
   id: totrans-1084
   prefs:
@@ -6711,6 +7179,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2 )`'
 - en: ''
   id: totrans-1087
   prefs:
@@ -6729,6 +7198,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEW_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)`'
 - en: ''
   id: totrans-1090
   prefs:
@@ -6747,10 +7217,12 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_FARRAY2 )`'
 - en: '3D:'
   id: totrans-1093
   prefs: []
   type: TYPE_NORMAL
+  zh: '3D:'
 - en: '`( DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
     DIM3)`'
   id: totrans-1094
@@ -6758,6 +7230,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
+    DIM3)`'
 - en: ''
   id: totrans-1095
   prefs:
@@ -6776,6 +7250,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)`'
 - en: ''
   id: totrans-1098
   prefs:
@@ -6795,6 +7270,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DATA_TYPE** ARGOUTVIEW_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
+    DIM3)`'
 - en: ''
   id: totrans-1101
   prefs:
@@ -6813,10 +7290,12 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_FARRAY3)`'
 - en: '4D:'
   id: totrans-1104
   prefs: []
   type: TYPE_NORMAL
+  zh: '4D:'
 - en: '`(DATA_TYPE** ARGOUTVIEW_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
     DIM3, DIM_TYPE* DIM4)`'
   id: totrans-1105
@@ -6824,6 +7303,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEW_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
+    DIM3, DIM_TYPE* DIM4)`'
 - en: ''
   id: totrans-1106
   prefs:
@@ -6843,6 +7324,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE**
+    ARGOUTVIEW_ARRAY4)`'
 - en: ''
   id: totrans-1109
   prefs:
@@ -6862,6 +7345,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEW_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
+    DIM3, DIM_TYPE* DIM4)`'
 - en: ''
   id: totrans-1112
   prefs:
@@ -6881,31 +7366,38 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE**
+    ARGOUTVIEW_FARRAY4)`'
 - en: Note that arrays with hard-coded dimensions are not supported. These cannot
     follow the double pointer signatures of these typemaps.
   id: totrans-1115
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，不支持具有硬编码尺寸的数组。 这些无法遵循这些typemaps的双指针签名。
 - en: Memory Managed Argout View Arrays
   id: totrans-1116
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 内存管理的Argout视图数组
 - en: A recent addition to `numpy.i` are typemaps that permit argout arrays with views
     into memory that is managed. See the discussion [here](http://blog.enthought.com/python/numpy-arrays-with-pre-allocated-memory).
   id: totrans-1117
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.i`最近新增了允许管理视图的argout数组的typemaps。请查看[这里](http://blog.enthought.com/python/numpy-arrays-with-pre-allocated-memory)的讨论。'
 - en: '1D:'
   id: totrans-1118
   prefs: []
   type: TYPE_NORMAL
+  zh: '1D:'
 - en: '`(DATA_TYPE** ARGOUTVIEWM_ARRAY1, DIM_TYPE* DIM1)`'
   id: totrans-1119
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEWM_ARRAY1, DIM_TYPE* DIM1)`'
 - en: ''
   id: totrans-1120
   prefs:
@@ -6924,16 +7416,19 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEWM_ARRAY1)`'
 - en: '2D:'
   id: totrans-1123
   prefs: []
   type: TYPE_NORMAL
+  zh: 2D：
 - en: '`(DATA_TYPE** ARGOUTVIEWM_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)`'
   id: totrans-1124
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEWM_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)`'
 - en: ''
   id: totrans-1125
   prefs:
@@ -6952,6 +7447,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_ARRAY2)`'
 - en: ''
   id: totrans-1128
   prefs:
@@ -6970,6 +7466,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEWM_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)`'
 - en: ''
   id: totrans-1131
   prefs:
@@ -6988,10 +7485,12 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_FARRAY2)`'
 - en: '3D:'
   id: totrans-1134
   prefs: []
   type: TYPE_NORMAL
+  zh: 3D：
 - en: '`(DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
     DIM3)`'
   id: totrans-1135
@@ -6999,6 +7498,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
+    DIM3)`'
 - en: ''
   id: totrans-1136
   prefs:
@@ -7017,6 +7518,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_ARRAY3)`'
 - en: ''
   id: totrans-1139
   prefs:
@@ -7036,6 +7538,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
+    DIM3)`'
 - en: ''
   id: totrans-1142
   prefs:
@@ -7054,10 +7558,12 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_FARRAY3)`'
 - en: '4D:'
   id: totrans-1145
   prefs: []
   type: TYPE_NORMAL
+  zh: 4D：
 - en: '`(DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
     DIM3, DIM_TYPE* DIM4)`'
   id: totrans-1146
@@ -7065,6 +7571,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
+    DIM3, DIM_TYPE* DIM4)`'
 - en: ''
   id: totrans-1147
   prefs:
@@ -7084,6 +7592,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE**
+    ARGOUTVIEWM_ARRAY4)`'
 - en: ''
   id: totrans-1150
   prefs:
@@ -7103,6 +7613,8 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE*
+    DIM3, DIM_TYPE* DIM4)`'
 - en: ''
   id: totrans-1153
   prefs:
@@ -7122,11 +7634,14 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE**
+    ARGOUTVIEWM_FARRAY4)`'
 - en: Output Arrays
   id: totrans-1156
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 输出数组
 - en: 'The `numpy.i` interface file does not support typemaps for output arrays, for
     several reasons. First, C/C++ return arguments are limited to a single value.
     This prevents obtaining dimension information in a general way. Second, arrays
@@ -7134,6 +7649,7 @@
   id: totrans-1157
   prefs: []
   type: TYPE_NORMAL
+  zh: '`numpy.i` 接口文件不支持用于输出数组的 typemaps，原因有几点。首先，C/C++ 返回参数限制为单个值。这阻止了以一般方式获取维度信息。其次，不允许作为返回参数的硬编码长度的数组。换句话说：'
 - en: '[PRE38]'
   id: totrans-1158
   prefs: []
@@ -7143,6 +7659,7 @@
   id: totrans-1159
   prefs: []
   type: TYPE_NORMAL
+  zh: 不是合法的 C/C++ 语法。因此，我们不能提供以下形式的 typemaps：
 - en: '[PRE39]'
   id: totrans-1160
   prefs: []
@@ -7155,17 +7672,21 @@
   id: totrans-1161
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果遇到函数或方法返回指向数组的指针的情况，最好编写要包装的函数的自定义版本，对于类方法的情况，可以使用`%extend`，对于函数的情况，可以使用`%ignore`和`%rename`。
 - en: 'Other Common Types: bool'
   id: totrans-1162
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 其他常见类型：布尔值
 - en: 'Note that C++ type `bool` is not supported in the list in the [Available Typemaps](#available-typemaps)
     section. NumPy bools are a single byte, while the C++ `bool` is four bytes (at
     least on my system). Therefore:'
   id: totrans-1163
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意：C++ 类型`bool`在[可用类型映射](#available-typemaps)部分不受支持。 NumPy 的布尔值占用一个字节，而 C++
+    的`bool`占用四个字节（至少在我的系统上是这样）。因此：
 - en: '[PRE40]'
   id: totrans-1164
   prefs: []
@@ -7176,6 +7697,7 @@
   id: totrans-1165
   prefs: []
   type: TYPE_NORMAL
+  zh: 会产生引用错误数据长度的 typemaps。您可以实现以下宏扩展：
 - en: '[PRE41]'
   id: totrans-1166
   prefs: []
@@ -7186,11 +7708,13 @@
   id: totrans-1167
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了解决数据长度问题，[输入数组](#input-arrays)将正常工作，但[原位数组](#in-place-arrays)可能会失败类型检查。
 - en: 'Other Common Types: complex'
   id: totrans-1168
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 其他常见类型：复数
 - en: 'Typemap conversions for complex floating-point types is also not supported
     automatically. This is because Python and NumPy are written in C, which does not
     have native complex types. Both Python and NumPy implement their own (essentially
@@ -7198,6 +7722,8 @@
   id: totrans-1169
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于复杂浮点类型的 typemap 转换也不会自动支持。这是因为 Python 和 NumPy 是用 C 编写的，没有本地复杂类型。 Python 和
+    NumPy 都实现了自己的（本质上等效的）`struct`定义以用于复数变量：
 - en: '[PRE42]'
   id: totrans-1170
   prefs: []
@@ -7207,6 +7733,7 @@
   id: totrans-1171
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们本来可以实现：
 - en: '[PRE43]'
   id: totrans-1172
   prefs: []
@@ -7224,11 +7751,15 @@
   id: totrans-1173
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将为`Py_complex`、`npy_cfloat`和`npy_cdouble`类型的数组提供自动类型转换。但是，这些定义对于复数类型的独立（非 Python，非
+    NumPy）应用代码的使用似乎不太可能使用 [SWIG](http://www.swig.org) 生成 Python 接口，并且使用这些定义处理复数类型。更可能的是，这些应用代码将定义它们自己的复数类型，或者在
+    C++ 的情况下，使用`std::complex`。假设这些数据结构与 Python 和 NumPy 的复数类型兼容，那么以上（用用户的复数类型代替第一个参数）的`%numpy_typemap`扩展应该起作用。
 - en: NumPy Array Scalars and SWIG
   id: totrans-1174
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: NumPy 数组标量和 SWIG
 - en: '[SWIG](http://www.swig.org) has sophisticated type checking for numerical types.
     For example, if your C/C++ routine expects an integer as input, the code generated
     by [SWIG](http://www.swig.org) will check for both Python integers and Python
@@ -7244,10 +7775,16 @@
   id: totrans-1175
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SWIG](http://www.swig.org) 对数值类型有复杂的类型检查。例如，如果你的 C/C++ 程序期望整数作为输入，那么由 [SWIG](http://www.swig.org)
+    生成的代码将同时检查 Python 整数和 Python 长整数，并且如果提供的 Python 整数太大而无法转换为 C 整数，则会引发溢出错误。引入 NumPy
+    标量数组到你的 Python 代码中，你可能会从 NumPy 数组中提取整数，并尝试将其传递给一个期望`int`的 [SWIG](http://www.swig.org)
+    包装的 C/C++ 函数，但是 [SWIG](http://www.swig.org) 的类型检查不会将 NumPy 数组标量识别为整数。（通常情况下，这实际上是有效的-这取决于
+    NumPy 是否识别你所用的整数类型作为继承于你所用平台上的 Python 整数类型。有时，这意味着在 32 位机器上工作的代码在 64 位机器上会失败。）'
 - en: 'If you get a Python error that looks like the following:'
   id: totrans-1176
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你遇到一个看起来像下面的 Python 错误：
 - en: '[PRE44]'
   id: totrans-1177
   prefs: []
@@ -7261,6 +7798,8 @@
   id: totrans-1178
   prefs: []
   type: TYPE_NORMAL
+  zh: 并且你传递的参数是从 NumPy 数组中提取的整数，那么你就遇到了这个问题。解决方法是修改 [SWIG](http://www.swig.org) 的类型转换系统以接受
+    NumPy 数组标量，除了标准整数类型之外。幸运的是，这个功能已经为你提供了。只需复制文件：
 - en: '[PRE45]'
   id: totrans-1179
   prefs: []
@@ -7272,11 +7811,13 @@
   id: totrans-1180
   prefs: []
   type: TYPE_NORMAL
+  zh: 到你的项目工作构建目录，并且这个问题就会被解决。建议你无论如何都这样做，因为它只会增加你的 Python 接口的功能。
 - en: Why is There a Second File?
   id: totrans-1181
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为什么还有第二个文件？
 - en: The [SWIG](http://www.swig.org) type checking and conversion system is a complicated
     combination of C macros, [SWIG](http://www.swig.org) macros, [SWIG](http://www.swig.org)
     typemaps and [SWIG](http://www.swig.org) fragments. Fragments are a way to conditionally
@@ -7286,6 +7827,8 @@
   id: totrans-1182
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SWIG](http://www.swig.org)的类型检查和转换系统是复杂的 C 宏、[SWIG](http://www.swig.org) 宏、[SWIG](http://www.swig.org)
+    类型映射和 [SWIG](http://www.swig.org) 片段的复杂组合。片段是一种在需要时有条件地将代码插入到包装文件中的方法，如果不需要，则不插入。如果多个类型映射需要同一个片段，那么片段只会被插入你的包装代码一次。'
 - en: There is a fragment for converting a Python integer to a C `long`. There is
     a different fragment that converts a Python integer to a C `int`, that calls the
     routine defined in the `long` fragment. We can make the changes we want here by
@@ -7298,11 +7841,13 @@
   id: totrans-1183
   prefs: []
   type: TYPE_NORMAL
+  zh: 有一个片段用于将 Python 整数转换为 C 的`long`。有另一个片段将 Python 整数转换为 C 的`int`，并调用在`long`片段中定义的例程。我们可以通过更改`long`片段的定义在这里做我们想要的更改。[SWIG](http://www.swig.org)使用“先到先服务”系统来确定片段的活动定义。也就是说，我们需要在[SWIG](http://www.swig.org)内部执行之前为`long`转换定义片段。[SWIG](http://www.swig.org)允许我们通过将我们的片段定义放在文件`pyfragments.swg`中来实现这一点。如果我们将新的片段定义放在`numpy.i`中，它们将被忽略。
 - en: Why is There a Second File?
   id: totrans-1184
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为什么有第二个文件？
 - en: The [SWIG](http://www.swig.org) type checking and conversion system is a complicated
     combination of C macros, [SWIG](http://www.swig.org) macros, [SWIG](http://www.swig.org)
     typemaps and [SWIG](http://www.swig.org) fragments. Fragments are a way to conditionally
@@ -7312,6 +7857,7 @@
   id: totrans-1185
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SWIG](http://www.swig.org)类型检查和转换系统是C宏、[SWIG](http://www.swig.org)宏、[SWIG](http://www.swig.org)类型映射和[SWIG](http://www.swig.org)片段的复杂组合。片段是一种在需要时有条件地将代码插入到您的包装文件中的方法，在不需要时不插入。如果多个类型映射需要相同的片段，则该片段只会被插入到您的包装代码中一次。'
 - en: There is a fragment for converting a Python integer to a C `long`. There is
     a different fragment that converts a Python integer to a C `int`, that calls the
     routine defined in the `long` fragment. We can make the changes we want here by
@@ -7324,11 +7870,13 @@
   id: totrans-1186
   prefs: []
   type: TYPE_NORMAL
+  zh: 有一个片段用于将 Python 整数转换为 C 的`long`。还有一个不同的片段将 Python 整数转换为 C 的`int`，它调用`long`片段中定义的例程。我们可以通过更改`long`片段的定义在这里做我们想要的更改。[SWIG](http://www.swig.org)使用“先到先服务”系统来确定片段的活动定义。也就是说，我们需要在[SWIG](http://www.swig.org)内部执行之前为`long`转换定义片段。[SWIG](http://www.swig.org)允许我们通过将我们的片段定义放在文件`pyfragments.swg`中来实现这一点。如果我们将新的片段定义放在`numpy.i`中，它们将被忽略。
 - en: Helper Functions
   id: totrans-1187
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 辅助函数
 - en: 'The `numpy.i` file contains several macros and routines that it uses internally
     to build its typemaps. However, these functions may be useful elsewhere in your
     interface file. These macros and routines are implemented as fragments, which
@@ -7339,6 +7887,7 @@
   id: totrans-1188
   prefs: []
   type: TYPE_NORMAL
+  zh: 文件`numpy.i`包含许多宏和例程，它们在内部用于构建其类型映射。但是，这些函数可能在接口文件中其他地方也有用。这些宏和例程被实现为片段，在前一节中简要描述了这些片段。如果您尝试使用以下一个或多个宏或函数，但是您的编译器抱怨它不能识别该符号，那么您需要使用以下方法强制这些片段出现在您的代码中：
 - en: '[PRE46]'
   id: totrans-1189
   prefs: []
@@ -7348,16 +7897,19 @@
   id: totrans-1190
   prefs: []
   type: TYPE_NORMAL
+  zh: 在您的[SWIG](http://www.swig.org)接口文件中。
 - en: Macros
   id: totrans-1191
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 宏
 - en: '**is_array(a)**'
   id: totrans-1192
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**is_array(a)**'
 - en: ''
   id: totrans-1193
   prefs:
@@ -7368,6 +7920,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果`a`是非`NULL`并且可以转换为`PyArrayObject*`，则求值为真。
 - en: ''
   id: totrans-1195
   prefs:
@@ -7378,6 +7931,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_type(a)**'
 - en: ''
   id: totrans-1197
   prefs:
@@ -7389,6 +7943,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 对 `a` 的整数数据类型代码求值，假设`a`可以转换为`PyArrayObject*`。
 - en: ''
   id: totrans-1199
   prefs:
@@ -7399,6 +7954,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_numdims(a)**'
 - en: ''
   id: totrans-1201
   prefs:
@@ -7410,6 +7966,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 对`a`的维数求值，假设`a`可以转换为`PyArrayObject*`。
 - en: ''
   id: totrans-1203
   prefs:
@@ -7420,6 +7977,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**array_dimensions(a)**'
 - en: ''
   id: totrans-1205
   prefs:
@@ -9515,6 +10073,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，一个 NumPy 整数类型码。'
 - en: ''
   id: totrans-1554
   prefs:
@@ -9541,6 +10100,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回一个描述与 NumPy `typecode` 对应的类型的字符串。
 - en: ''
   id: totrans-1558
   prefs:
@@ -9551,6 +10111,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**type_match()**'
 - en: ''
   id: totrans-1560
   prefs:
@@ -9562,6 +10123,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`int`
 - en: ''
   id: totrans-1562
   prefs:
@@ -9574,6 +10136,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-1564
   prefs:
@@ -9587,6 +10150,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int actual_type`，一个 NumPy 数组的 NumPy 类型码。'
 - en: ''
   id: totrans-1566
   prefs:
@@ -9608,6 +10172,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int desired_type`，所需的 NumPy 类型码。'
 - en: ''
   id: totrans-1569
   prefs:
@@ -9636,6 +10201,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 确保 `actual_type` 与 `desired_type` 兼容。例如，这允许字符和字节类型，或整数和长整数类型匹配。这现在等同于 `PyArray_EquivTypenums()`。
 - en: ''
   id: totrans-1573
   prefs:
@@ -9646,6 +10212,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**obj_to_array_no_conversion()**'
 - en: ''
   id: totrans-1575
   prefs:
@@ -9657,6 +10224,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-1577
   prefs:
@@ -9669,6 +10237,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-1579
   prefs:
@@ -9682,6 +10251,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* input`，一个通用的 Python 对象。'
 - en: ''
   id: totrans-1581
   prefs:
@@ -9703,6 +10273,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，所需的 NumPy 类型码。'
 - en: ''
   id: totrans-1584
   prefs:
@@ -9731,6 +10302,8 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果合法，将 `input` 强制转换为 `PyArrayObject*`，并确保其为 `typecode` 类型。如果无法强制转换 `input`，或者
+    `typecode` 错误，则设置 Python 错误并返回 `NULL`。
 - en: ''
   id: totrans-1588
   prefs:
@@ -9741,6 +10314,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**obj_to_array_allow_conversion()**'
 - en: ''
   id: totrans-1590
   prefs:
@@ -9752,6 +10326,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-1592
   prefs:
@@ -9764,6 +10339,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-1594
   prefs:
@@ -9777,6 +10353,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* input`，一个通用的 Python 对象。'
 - en: ''
   id: totrans-1596
   prefs:
@@ -9798,6 +10375,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，所需的 NumPy 类型码。'
 - en: ''
   id: totrans-1599
   prefs:
@@ -9820,6 +10398,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有进行转换，则返回0，否则返回1。'
 - en: ''
   id: totrans-1602
   prefs:
@@ -9848,6 +10427,8 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将 `input` 转换成具有给定 `typecode` 的 NumPy 数组。成功时，返回具有正确类型的有效 `PyArrayObject*`。失败时，将设置
+    Python 错误字符串，并返回 `NULL`。
 - en: ''
   id: totrans-1606
   prefs:
@@ -9858,6 +10439,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**make_contiguous()**'
 - en: ''
   id: totrans-1608
   prefs:
@@ -9869,6 +10451,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-1610
   prefs:
@@ -9881,6 +10464,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-1612
   prefs:
@@ -9894,6 +10478,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个 NumPy 数组。'
 - en: ''
   id: totrans-1614
   prefs:
@@ -9916,6 +10501,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有进行转换，则返回0，否则返回1。'
 - en: ''
   id: totrans-1617
   prefs:
@@ -9937,6 +10523,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int min_dims`，最小可允许的维数。'
 - en: ''
   id: totrans-1620
   prefs:
@@ -9958,6 +10545,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int max_dims`，最大可允许的维数。'
 - en: ''
   id: totrans-1623
   prefs:
@@ -9986,6 +10574,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 检查 `ary` 是否是连续的。如果是，则返回输入指针，并标记为非新对象。如果它不是连续的，使用原始数据创建一个新的 `PyArrayObject*`，并将其标记为新对象，然后返回指针。
 - en: ''
   id: totrans-1627
   prefs:
@@ -9996,6 +10585,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**make_fortran()**'
 - en: ''
   id: totrans-1629
   prefs:
@@ -10007,6 +10597,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-1631
   prefs:
@@ -10019,6 +10610,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-1633
   prefs:
@@ -10032,6 +10624,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyArrayObject* ary`，一个 NumPy 数组。'
 - en: ''
   id: totrans-1635
   prefs:
@@ -10054,6 +10647,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有进行转换，则返回0，否则返回1。'
 - en: ''
   id: totrans-1638
   prefs:
@@ -10083,6 +10677,8 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 检查 `ary` 是否是 Fortran 连续的。如果是，则返回输入指针，并标记为非新对象。如果它不是 Fortran 连续的，使用原始数据创建一个新的
+    `PyArrayObject*`，并将其标记为新对象，然后返回指针。
 - en: ''
   id: totrans-1642
   prefs:
@@ -10093,6 +10689,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**obj_to_array_contiguous_allow_conversion()**'
 - en: ''
   id: totrans-1644
   prefs:
@@ -10104,6 +10701,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-1646
   prefs:
@@ -10116,6 +10714,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-1648
   prefs:
@@ -10129,6 +10728,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* input`，一个通用的 Python 对象。'
 - en: ''
   id: totrans-1650
   prefs:
@@ -10150,6 +10750,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，所需的 NumPy 类型码。'
 - en: ''
   id: totrans-1653
   prefs:
@@ -10172,6 +10773,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有进行转换，则返回0，否则返回1。'
 - en: ''
   id: totrans-1656
   prefs:
@@ -10200,6 +10802,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将 `input` 转换成指定类型的连续的 `PyArrayObject*`。如果输入对象不是连续的 `PyArrayObject*`，则会创建一个新对象，并设置新对象标志。
 - en: ''
   id: totrans-1660
   prefs:
@@ -10210,6 +10813,7 @@
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**obj_to_array_fortran_allow_conversion()**'
 - en: ''
   id: totrans-1662
   prefs:
@@ -10221,6 +10825,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回类型：`PyArrayObject*`
 - en: ''
   id: totrans-1664
   prefs:
@@ -10233,6 +10838,7 @@
   - PREF_BQ
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 参数：
 - en: ''
   id: totrans-1666
   prefs:
@@ -10246,6 +10852,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PyObject* input`，一个通用的 Python 对象。'
 - en: ''
   id: totrans-1668
   prefs:
@@ -10267,6 +10874,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int typecode`，所需的 NumPy 类型码。'
 - en: ''
   id: totrans-1671
   prefs:
@@ -10289,6 +10897,7 @@
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int* is_new_object`，如果没有进行转换，则返回0，否则返回1。'
 - en: ''
   id: totrans-1674
   prefs:
