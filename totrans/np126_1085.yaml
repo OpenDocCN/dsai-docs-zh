@@ -1,15 +1,21 @@
 - en: Testing the numpy.i Typemaps
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 测试 numpy.i 类型映射
 - en: 原文：[https://numpy.org/doc/1.26/reference/swig.testing.html](https://numpy.org/doc/1.26/reference/swig.testing.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/reference/swig.testing.html](https://numpy.org/doc/1.26/reference/swig.testing.html)
 - en: Introduction
+  id: totrans-2
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 介绍
 - en: Writing tests for the `numpy.i` [SWIG](http://www.swig.org) interface file is
     a combinatorial headache. At present, 12 different data types are supported, each
     with 74 different argument signatures, for a total of 888 typemaps supported “out
@@ -17,267 +23,363 @@
     in order to verify expected behavior for both proper and improper inputs. Currently,
     this results in more than 1,000 individual unit tests executed when `make test`
     is run in the `numpy/tools/swig` subdirectory.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 为 `numpy.i` [SWIG](http://www.swig.org) 接口文件编写测试是一种组合性的头痛。目前，支持 12 种不同的数据类型，每种类型有
+    74 种不同的参数签名，总共支持 888 个类型映射“开箱即用”。每个类型映射可能需要多个单元测试来验证预期行为，无论是对正确还是不正确的输入。目前，在 `numpy/tools/swig`
+    子目录中运行 `make test` 时会执行超过 1,000 个单独的单元测试。
 - en: To facilitate this many similar unit tests, some high-level programming techniques
     are employed, including C and [SWIG](http://www.swig.org) macros, as well as Python
     inheritance. The purpose of this document is to describe the testing infrastructure
     employed to verify that the `numpy.i` typemaps are working as expected.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了简化这些相似的单元测试，采用了一些高级编程技术，包括 C 和 [SWIG](http://www.swig.org) 宏，以及 Python 继承。本文档的目的是描述用于验证
+    `numpy.i` 类型映射是否按预期工作的测试基础设施。
 - en: Testing Organization
+  id: totrans-5
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试组织
 - en: 'There are three independent testing frameworks supported, for one-, two-, and
     three-dimensional arrays respectively. For one-dimensional arrays, there are two
     C++ files, a header and a source, named:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 支持三个独立的测试框架，分别用于一维、二维和三维数组。对于一维数组，有两个 C++ 文件，一个头文件和一个源文件，分别命名为：
 - en: '[PRE0]'
+  id: totrans-7
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'that contain prototypes and code for a variety of functions that have one-dimensional
     arrays as function arguments. The file:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 包含原型和代码的文件，其中有多种函数，其函数参数为一维数组。该文件为：
 - en: '[PRE1]'
+  id: totrans-9
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: is a [SWIG](http://www.swig.org) interface file that defines a python module
     `Vector` that wraps the functions in `Vector.h` while utilizing the typemaps in
     `numpy.i` to correctly handle the C arrays.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 是一个 [SWIG](http://www.swig.org) 接口文件，定义了一个名为 `Vector` 的 Python 模块，用于包装 `Vector.h`
+    中的函数，同时利用 `numpy.i` 中的类型映射正确处理 C 数组。
 - en: The `Makefile` calls `swig` to generate `Vector.py` and `Vector_wrap.cxx`, and
     also executes the `setup.py` script that compiles `Vector_wrap.cxx` and links
     together the extension module `_Vector.so` or `_Vector.dylib`, depending on the
     platform. This extension module and the proxy file `Vector.py` are both placed
     in a subdirectory under the `build` directory.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Makefile` 调用 `swig` 来生成 `Vector.py` 和 `Vector_wrap.cxx`，并执行 `setup.py` 脚本来编译
+    `Vector_wrap.cxx` 并链接扩展模块 `_Vector.so` 或 `_Vector.dylib`，取决于平台。这个扩展模块和代理文件 `Vector.py`
+    都放在 `build` 目录下的子目录中。'
 - en: 'The actual testing takes place with a Python script named:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际测试是通过名为 Python 脚本执行的：
 - en: '[PRE2]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: that uses the standard Python library module `unittest`, which performs several
     tests of each function defined in `Vector.h` for each data type supported.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用标准 Python 库模块 `unittest` 编写，该模块为 `Vector.h` 中定义的每个函数的每种支持的数据类型执行多个测试。
 - en: Two-dimensional arrays are tested in exactly the same manner. The above description
     applies, but with `Matrix` substituted for `Vector`. For three-dimensional tests,
     substitute `Tensor` for `Vector`. For four-dimensional tests, substitute `SuperTensor`
     for `Vector`. For flat in-place array tests, substitute `Flat` for `Vector`. For
     the descriptions that follow, we will reference the `Vector` tests, but the same
     information applies to `Matrix`, `Tensor` and `SuperTensor` tests.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 二维数组的测试方式完全相同。上述描述同样适用，只是将 `Vector` 替换为 `Matrix`。对于三维测试，将 `Vector` 替换为 `Tensor`。对于四维测试，将
+    `Vector` 替换为 `SuperTensor`。对于平坦的原位数组测试，将 `Vector` 替换为 `Flat`。对于接下来的描述，我们将引用 `Vector`
+    测试，但相同的信息也适用于 `Matrix`、`Tensor` 和 `SuperTensor` 测试。
 - en: The command `make test` will ensure that all of the test software is built and
     then run all three test scripts.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 命令 `make test` 将确保构建所有测试软件，然后运行所有三个测试脚本。
 - en: Testing Header Files
+  id: totrans-17
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试头文件
 - en: '`Vector.h` is a C++ header file that defines a C macro called `TEST_FUNC_PROTOS`
     that takes two arguments: `TYPE`, which is a data type name such as `unsigned
     int`; and `SNAME`, which is a short name for the same data type with no spaces,
     e.g. `uint`. This macro defines several function prototypes that have the prefix
     `SNAME` and have at least one argument that is an array of type `TYPE`. Those
     functions that have return arguments return a `TYPE` value.'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Vector.h` 是一个 C++ 头文件，定义了一个名为`TEST_FUNC_PROTOS`的 C 宏，它接受两个参数：`TYPE`，这是一个数据类型名称，比如`unsigned
+    int`；和`SNAME`，这是没有空格的同一数据类型的简称，例如`uint`。此宏定义了几个具有前缀`SNAME`的函数原型，并且至少有一个参数是`TYPE`类型的数组。那些有返回参数的函数返回一个`TYPE`值。'
 - en: '`TEST_FUNC_PROTOS` is then implemented for all of the data types supported
     by `numpy.i`:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: '`TEST_FUNC_PROTOS` 然后还针对`numpy.i`所支持的所有数据类型进行了实现：'
 - en: '`signed char`'
+  id: totrans-20
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`signed char`'
 - en: ''
+  id: totrans-21
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-22
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned char`'
+  id: totrans-23
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned char`'
 - en: ''
+  id: totrans-24
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-25
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`short`'
+  id: totrans-26
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`short`'
 - en: ''
+  id: totrans-27
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-28
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned short`'
+  id: totrans-29
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned short`'
 - en: ''
+  id: totrans-30
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-31
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`int`'
+  id: totrans-32
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int`'
 - en: ''
+  id: totrans-33
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-34
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned int`'
+  id: totrans-35
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned int`'
 - en: ''
+  id: totrans-36
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-37
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`long`'
+  id: totrans-38
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`long`'
 - en: ''
+  id: totrans-39
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-40
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned long`'
+  id: totrans-41
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned long`'
 - en: ''
+  id: totrans-42
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-43
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`long long`'
+  id: totrans-44
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`long long`'
 - en: ''
+  id: totrans-45
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-46
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned long long`'
+  id: totrans-47
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`unsigned long long`'
 - en: ''
+  id: totrans-48
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-49
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`float`'
+  id: totrans-50
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`float`'
 - en: ''
+  id: totrans-51
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-52
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`double`'
+  id: totrans-53
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`double`'
 - en: Testing Source Files
+  id: totrans-54
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试源文件
 - en: '`Vector.cxx` is a C++ source file that implements compilable code for each
     of the function prototypes specified in `Vector.h`. It defines a C macro `TEST_FUNCS`
     that has the same arguments and works in the same way as `TEST_FUNC_PROTOS` does
     in `Vector.h`. `TEST_FUNCS` is implemented for each of the 12 data types as above.'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Vector.cxx` 是一个 C++ 源文件，实现了`Vector.h`中指定的每个函数原型的可编译代码。它定义了一个 C 宏 `TEST_FUNCS`，其参数和`Vector.h`中的`TEST_FUNC_PROTOS`的工作方式相同。`TEST_FUNCS`针对上述的
+    12 种数据类型实现。'
 - en: Testing SWIG Interface Files
+  id: totrans-56
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试 SWIG 接口文件
 - en: '`Vector.i` is a [SWIG](http://www.swig.org) interface file that defines python
     module `Vector`. It follows the conventions for using `numpy.i` as described in
     this chapter. It defines a [SWIG](http://www.swig.org) macro `%apply_numpy_typemaps`
@@ -286,83 +388,120 @@
     This macro is then implemented for all of the data types supported by `numpy.i`.
     It then does a `%include "Vector.h"` to wrap all of the function prototypes in
     `Vector.h` using the typemaps in `numpy.i`.'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Vector.i` 是一个[SWIG](http://www.swig.org) 接口文件，定义了 python 模块`Vector`。它遵循使用`numpy.i`的惯例，如本章所述。它定义了一个[SWIG](http://www.swig.org)宏`%apply_numpy_typemaps`，它有一个名为`TYPE`的单参数。它使用[SWIG](http://www.swig.org)指令`%apply`，将提供的
+    typemap 应用于`Vector.h`中发现的参数签名。然后，它为`numpy.i`支持的所有数据类型实现了这个宏。然后它通过`%include "Vector.h"`来使用`numpy.i`中的
+    typemap 包装`Vector.h`中的所有函数原型。'
 - en: Testing Python Scripts
+  id: totrans-58
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试 Python 脚本
 - en: 'After `make` is used to build the testing extension modules, `testVector.py`
     can be run to execute the tests. As with other scripts that use `unittest` to
     facilitate unit testing, `testVector.py` defines a class that inherits from `unittest.TestCase`:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`make`构建测试扩展模块后，可以运行`testVector.py`来执行测试。与其他使用`unittest`来进行单元测试的脚本一样，`testVector.py`定义了一个从`unittest.TestCase`继承的类：
 - en: '[PRE3]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'However, this class is not run directly. Rather, it serves as a base class
     to several other python classes, each one specific to a particular data type.
     The `VectorTestCase` class stores two strings for typing information:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，此类不会直接运行。它作为几个其他 python 类的基类，每个类都专门针对特定的数据类型。`VectorTestCase` 类存储了两个字符串以供输入信息：
 - en: '**self.typeStr**'
+  id: totrans-62
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**self.typeStr**'
 - en: ''
+  id: totrans-63
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: A string that matches one of the `SNAME` prefixes used in `Vector.h` and `Vector.cxx`.
     For example, `"double"`.
+  id: totrans-64
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个与`Vector.h`和`Vector.cxx`中使用的`SNAME`前缀之一匹配的字符串。例如，`"double"`。
 - en: ''
+  id: totrans-65
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: '**self.typeCode**'
+  id: totrans-66
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '**self.typeCode**'
 - en: ''
+  id: totrans-67
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: A short (typically single-character) string that represents a data type in numpy
     and corresponds to `self.typeStr`. For example, if `self.typeStr` is `"double"`,
     then `self.typeCode` should be `"d"`.
+  id: totrans-68
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个短字符串（通常是单字符），代表 numpy 中的数据类型，并对应于`self.typeStr`。例如，如果`self.typeStr`是`"double"`，那么`self.typeCode`应该是`"d"`。
 - en: 'Each test defined by the `VectorTestCase` class extracts the python function
     it is trying to test by accessing the `Vector` module’s dictionary:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: '`VectorTestCase` 类定义的每个测试通过访问`Vector`模块的字典来提取其尝试测试的 python 函数：'
 - en: '[PRE4]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: In the case of double precision tests, this will return the python function
     `Vector.doubleLength`.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于双精度测试，这将返回 python 函数`Vector.doubleLength`。
 - en: 'We then define a new test case class for each supported data type with a short
     definition such as:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们针对每种支持的数据类型定义了一个新的测试用例类，其定义如下：
 - en: '[PRE5]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Each of these 12 classes is collected into a `unittest.TestSuite`, which is
     then executed. Errors and failures are summed together and returned as the exit
     argument. Any non-zero result indicates that at least one test did not pass.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 这12个类都被收集到一个`unittest.TestSuite`中，然后执行。错误和失败被汇总并作为退出参数返回。任何非零结果表示至少一个测试未通过。
 - en: Introduction
+  id: totrans-75
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 介绍
 - en: Writing tests for the `numpy.i` [SWIG](http://www.swig.org) interface file is
     a combinatorial headache. At present, 12 different data types are supported, each
     with 74 different argument signatures, for a total of 888 typemaps supported “out
@@ -370,254 +509,322 @@
     in order to verify expected behavior for both proper and improper inputs. Currently,
     this results in more than 1,000 individual unit tests executed when `make test`
     is run in the `numpy/tools/swig` subdirectory.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 为`numpy.i` [SWIG](http://www.swig.org)接口文件编写测试是一个组合头痛的问题。目前支持12种不同数据类型，每种数据类型有74个不同的参数签名，总共支持888个类型映射“开箱即用”。每个类型映射可能需要多个单元测试，以验证对于正确和不正确的输入，行为是否符合预期。当前，当在`numpy/tools/swig`子目录中运行`make
+    test`时，会执行超过1,000个单独的单元测试。
 - en: To facilitate this many similar unit tests, some high-level programming techniques
     are employed, including C and [SWIG](http://www.swig.org) macros, as well as Python
     inheritance. The purpose of this document is to describe the testing infrastructure
     employed to verify that the `numpy.i` typemaps are working as expected.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了简化这些类似的单元测试，采用了一些高级编程技术，包括C和[SWIG](http://www.swig.org)宏，以及Python继承。本文档的目的是描述用于验证`numpy.i`类型映射是否按预期工作的测试基础设施。
 - en: Testing Organization
+  id: totrans-78
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试组织
 - en: 'There are three independent testing frameworks supported, for one-, two-, and
     three-dimensional arrays respectively. For one-dimensional arrays, there are two
     C++ files, a header and a source, named:'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 支持三种独立的测试框架，分别针对一维、二维和三维数组。对于一维数组，有两个C++文件，一个头文件和一个源文件，命名为：
 - en: '[PRE6]'
+  id: totrans-80
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'that contain prototypes and code for a variety of functions that have one-dimensional
     arrays as function arguments. The file:'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 包含原型和代码的头文件，其中有各种函数，这些函数以一维数组作为函数参数。该文件为：
 - en: '[PRE7]'
+  id: totrans-82
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: is a [SWIG](http://www.swig.org) interface file that defines a python module
     `Vector` that wraps the functions in `Vector.h` while utilizing the typemaps in
     `numpy.i` to correctly handle the C arrays.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 是一个[SWIG](http://www.swig.org)接口文件，定义了一个包装`Vector.h`中函数的python模块`Vector`，同时利用`numpy.i`中的类型映射来正确处理C数组。
 - en: The `Makefile` calls `swig` to generate `Vector.py` and `Vector_wrap.cxx`, and
     also executes the `setup.py` script that compiles `Vector_wrap.cxx` and links
     together the extension module `_Vector.so` or `_Vector.dylib`, depending on the
     platform. This extension module and the proxy file `Vector.py` are both placed
     in a subdirectory under the `build` directory.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Makefile`调用`swig`生成`Vector.py`和`Vector_wrap.cxx`，还执行`setup.py`脚本编译`Vector_wrap.cxx`，并链接扩展模块`_Vector.so`或`_Vector.dylib`，取决于平台。这个扩展模块和代理文件`Vector.py`都放在`build`目录下的一个子目录中。'
 - en: 'The actual testing takes place with a Python script named:'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际测试是通过名为Python脚本进行的：
 - en: '[PRE8]'
+  id: totrans-86
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: that uses the standard Python library module `unittest`, which performs several
     tests of each function defined in `Vector.h` for each data type supported.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用标准Python库模块`unittest`，对`Vector.h`中定义的每个函数进行多个测试，支持多种数据类型。
 - en: Two-dimensional arrays are tested in exactly the same manner. The above description
     applies, but with `Matrix` substituted for `Vector`. For three-dimensional tests,
     substitute `Tensor` for `Vector`. For four-dimensional tests, substitute `SuperTensor`
     for `Vector`. For flat in-place array tests, substitute `Flat` for `Vector`. For
     the descriptions that follow, we will reference the `Vector` tests, but the same
     information applies to `Matrix`, `Tensor` and `SuperTensor` tests.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 二维数组以完全相同的方式进行测试。上述描述适用，但用`Matrix`替换`Vector`。对于三维测试，用`Tensor`替换`Vector`。对于四维测试，用`SuperTensor`替换`Vector`。对于平面原地数组测试，将`Flat`替换为`Vector`。在接下来的描述中，我们将参考`Vector`测试，但相同信息也适用于`Matrix`，`Tensor`和`SuperTensor`测试。
 - en: The command `make test` will ensure that all of the test software is built and
     then run all three test scripts.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 命令`make test`将确保构建所有测试软件，然后运行所有三个测试脚本。
 - en: Testing Header Files
+  id: totrans-90
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试头文件
 - en: '`Vector.h` is a C++ header file that defines a C macro called `TEST_FUNC_PROTOS`
     that takes two arguments: `TYPE`, which is a data type name such as `unsigned
     int`; and `SNAME`, which is a short name for the same data type with no spaces,
     e.g. `uint`. This macro defines several function prototypes that have the prefix
     `SNAME` and have at least one argument that is an array of type `TYPE`. Those
     functions that have return arguments return a `TYPE` value.'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
 - en: '`TEST_FUNC_PROTOS` is then implemented for all of the data types supported
     by `numpy.i`:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
 - en: '`signed char`'
+  id: totrans-93
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-94
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-95
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned char`'
+  id: totrans-96
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-97
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-98
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`short`'
+  id: totrans-99
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-100
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-101
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned short`'
+  id: totrans-102
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-103
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-104
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`int`'
+  id: totrans-105
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-106
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-107
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned int`'
+  id: totrans-108
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-109
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-110
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`long`'
+  id: totrans-111
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-112
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-113
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned long`'
+  id: totrans-114
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-115
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-116
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`long long`'
+  id: totrans-117
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-118
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-119
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`unsigned long long`'
+  id: totrans-120
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-121
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-122
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`float`'
+  id: totrans-123
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-124
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-125
   prefs:
   - PREF_BQ
   - PREF_IND
   type: TYPE_NORMAL
 - en: '`double`'
+  id: totrans-126
   prefs:
   - PREF_BQ
   - PREF_UL
   type: TYPE_NORMAL
 - en: Testing Source Files
+  id: totrans-127
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -625,9 +832,11 @@
     of the function prototypes specified in `Vector.h`. It defines a C macro `TEST_FUNCS`
     that has the same arguments and works in the same way as `TEST_FUNC_PROTOS` does
     in `Vector.h`. `TEST_FUNCS` is implemented for each of the 12 data types as above.'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
 - en: Testing SWIG Interface Files
+  id: totrans-129
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -639,76 +848,98 @@
     This macro is then implemented for all of the data types supported by `numpy.i`.
     It then does a `%include "Vector.h"` to wrap all of the function prototypes in
     `Vector.h` using the typemaps in `numpy.i`.'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
 - en: Testing Python Scripts
+  id: totrans-131
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'After `make` is used to build the testing extension modules, `testVector.py`
     can be run to execute the tests. As with other scripts that use `unittest` to
     facilitate unit testing, `testVector.py` defines a class that inherits from `unittest.TestCase`:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'However, this class is not run directly. Rather, it serves as a base class
     to several other python classes, each one specific to a particular data type.
     The `VectorTestCase` class stores two strings for typing information:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
 - en: '**self.typeStr**'
+  id: totrans-135
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-136
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: A string that matches one of the `SNAME` prefixes used in `Vector.h` and `Vector.cxx`.
     For example, `"double"`.
+  id: totrans-137
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-138
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: '**self.typeCode**'
+  id: totrans-139
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: ''
+  id: totrans-140
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: A short (typically single-character) string that represents a data type in numpy
     and corresponds to `self.typeStr`. For example, if `self.typeStr` is `"double"`,
     then `self.typeCode` should be `"d"`.
+  id: totrans-141
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: 'Each test defined by the `VectorTestCase` class extracts the python function
     it is trying to test by accessing the `Vector` module’s dictionary:'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-143
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: In the case of double precision tests, this will return the python function
     `Vector.doubleLength`.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
 - en: 'We then define a new test case class for each supported data type with a short
     definition such as:'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-146
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Each of these 12 classes is collected into a `unittest.TestSuite`, which is
     then executed. Errors and failures are summed together and returned as the exit
     argument. Any non-zero result indicates that at least one test did not pass.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个这12个类都被收集到一个`unittest.TestSuite`中，然后被执行。错误和失败会被汇总在一起并作为退出参数返回。任何非零结果都表示至少有一个测试未通过。
