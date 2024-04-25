@@ -1,193 +1,262 @@
 - en: Advanced debugging tools
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 高级调试工具
 - en: 原文：[https://numpy.org/doc/1.26/dev/development_advanced_debugging.html#](https://numpy.org/doc/1.26/dev/development_advanced_debugging.html#)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/dev/development_advanced_debugging.html#](https://numpy.org/doc/1.26/dev/development_advanced_debugging.html#)
 - en: If you reached here, you want to dive into, or use, more advanced tooling. This
     is usually not necessary for first time contributors and most day-to-day development.
     These are used more rarely, for example close to a new NumPy release, or when
     a large or particular complex change was made.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您到达这里，您想深入使用更高级的工具。这通常对于首次贡献者和日常开发来说并不需要。这些通常很少使用，例如接近新的 NumPy 发布时，或者进行了大型或特别复杂的更改时。
 - en: Since not all of these tools are used on a regular bases and only available
     on some systems, please expect differences, issues, or quirks; we will be happy
     to help if you get stuck and appreciate any improvements or suggestions to these
     workflows.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于这些工具不是在常规基础上使用，且仅在某些系统上可用，请预期差异、问题或特异行为；如果您遇到困难，我们将乐意帮助，并感激对这些工作流程的任何改进或建议。
 - en: Finding C errors with additional tooling
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用额外工具找到 C 错误
 - en: Most development will not require more than a typical debugging toolchain as
     shown in [Debugging](development_environment.html#debugging). But for example
     memory leaks can be particularly subtle or difficult to narrow down.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数开发不需要超过 [调试](development_environment.html#debugging) 中显示的典型调试工具链。但例如，内存泄漏可能特别微妙或难以缩小范围。
 - en: 'We do not expect any of these tools to be run by most contributors. However,
     you can ensure that we can track down such issues more easily:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们不希望大多数贡献者运行这些工具中的任何一个。但是，您可以确保我们更容易地追踪此类问题：
 - en: Tests should cover all code paths, including error paths.
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 测试应该覆盖所有代码路径，包括错误路径。
 - en: Try to write short and simple tests. If you have a very complicated test consider
     creating an additional simpler test as well. This can be helpful, because often
     it is only easy to find which test triggers an issue and not which line of the
     test.
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 尽量编写简短且简单的测试。如果您有一个非常复杂的测试，请考虑创建一个额外的简单测试。这可能会有帮助，因为通常只有找到触发问题的测试而不是测试哪一行容易。
 - en: Never use `np.empty` if data is read/used. `valgrind` will notice this and report
     an error. When you do not care about values, you can generate random values instead.
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果数据被读取/使用，千万不要使用 `np.empty`。`valgrind` 会注意到这一点并报告错误。当您不关心数值时，可以代替生成随机数值。
 - en: This will help us catch any oversights before your change is released and means
     you do not have to worry about making reference counting errors, which can be
     intimidating.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 这会帮助我们在您的更改发布之前捕捉任何疏忽，并且意味着您不必担心制造参考计数错误，这可能令人望而却步。
 - en: Python debug build
+  id: totrans-11
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Python 调试版本
 - en: 'Debug builds of Python are easily available for example via the system package
     manager on Linux systems, but are also available on other platforms, possibly
     in a less convenient format. If you cannot easily install a debug build of Python
     from a system package manager, you can build one yourself using [pyenv](https://github.com/pyenv/pyenv).
     For example, to install and globally activate a debug build of Python 3.10.8,
     one would do:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: Python 的调试构建在 Linux 系统上通常通过系统包管理器轻松可用，但也可以在其他平台上使用，可能是在不太方便的格式中。如果您无法从系统包管理器轻松安装
+    Python 的调试构建，您可以使用 [pyenv](https://github.com/pyenv/pyenv) 自行构建。例如，要安装并全局激活 Python
+    3.10.8 的调试构建，您可以执行：
 - en: '[PRE0]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Note that `pyenv install` builds Python from source, so you must ensure that
     Python’s dependencies are installed before building, see the pyenv documentation
     for platform-specific installation instructions. You can use `pip` to install
     Python dependencies you may need for your debugging session. If there is no debug
     wheel available on *pypi,* you will need to build the dependencies from source
     and ensure that your dependencies are also compiled as debug builds.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，`pyenv install` 通过源代码构建 Python，所以在构建之前，您必须确保安装了 Python 的依赖项，请参阅 pyenv 文档获取平台特定的安装说明。您可以使用
+    `pip` 安装调试会话中可能需要的 Python 依赖项。如果 *pypi* 上没有调试版的依赖包，您将需要从源代码构建依赖项，并确保您的依赖项也被编译为调试版本。
 - en: Often debug builds of Python name the Python executable `pythond` instead of
     `python`. To check if you have a debug build of Python installed, you can run
     e.g. `pythond -m sysconfig` to get the build configuration for the Python executable.
     A debug build will be built with debug compiler options in `CFLAGS` (e.g. `-g
     -Og`).
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: Python 的调试构建通常将 Python 可执行文件命名为 `pythond` 而不是 `python`。要检查是否安装了 Python 的调试构建，您可以运行，例如
+    `pythond -m sysconfig` 以获取 Python 可执行文件的构建配置。调试构建将使用 `CFLAGS` 中的调试编译器选项构建（例如 `-g
+    -Og`）。
 - en: 'Running the Numpy tests or an interactive terminal is usually as easy as:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE1]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: and were already mentioned in [Debugging](development_environment.html#debugging).
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
 - en: 'A Python debug build will help:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
 - en: Find bugs which may otherwise cause random behaviour. One example is when an
     object is still used after it has been deleted.
+  id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Python debug builds allows to check correct reference counting. This works
     using the additional commands:'
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '[PRE2]'
+  id: totrans-22
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Python debug builds allow easier debugging with gdb and other C debuggers.
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Use together with `pytest`
+  id: totrans-24
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: Running the test suite only with a debug python build will not find many errors
     on its own. An additional advantage of a debug build of Python is that it allows
     detecting memory leaks.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
 - en: 'A tool to make this easier is [pytest-leaks](https://github.com/abalkin/pytest-leaks),
     which can be installed using `pip`. Unfortunately, `pytest` itself may leak memory,
     but good results can usually (currently) be achieved by removing:'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE3]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: from `numpy/conftest.py` (This may change with new `pytest-leaks` versions or
     `pytest` updates).
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
 - en: 'This allows to run the test suite, or part of it, conveniently:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE4]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: where `-R2:3` is the `pytest-leaks` command (see its documentation), the `-s`
     causes output to print and may be necessary (in some versions captured output
     was detected as a leak).
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
 - en: Note that some tests are known (or even designed) to leak references, we try
     to mark them, but expect some false positives.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
 - en: '`valgrind`'
+  id: totrans-33
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Valgrind is a powerful tool to find certain memory access problems and should
     be run on complicated C code. Basic use of `valgrind` usually requires no more
     than:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE5]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: where `PYTHONMALLOC=malloc` is necessary to avoid false positives from python
     itself. Depending on the system and valgrind version, you may see more false positives.
     `valgrind` supports “suppressions” to ignore some of these, and Python does have
     a suppression file (and even a compile time option) which may help if you find
     it necessary.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
 - en: 'Valgrind helps:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
 - en: Find use of uninitialized variables/memory.
+  id: totrans-38
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Detect memory access violations (reading or writing outside of allocated memory).
+  id: totrans-39
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Find *many* memory leaks. Note that for *most* leaks the python debug build
     approach (and `pytest-leaks`) is much more sensitive. The reason is that `valgrind`
     can only detect if memory is definitely lost. If:'
+  id: totrans-40
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '[PRE6]'
+  id: totrans-41
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Has incorrect reference counting for `dtype`, this is a bug, but valgrind cannot
     see it because `np.dtype(np.int64)` always returns the same object. However, not
     all dtypes are singletons, so this might leak memory for different input. In rare
@@ -195,127 +264,178 @@
     to the Python debug build. `malloc` should normally be avoided, but there are
     some exceptions (e.g. the `PyArray_Dims` structure is public API and cannot use
     the Python allocators.)
+  id: totrans-42
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: 'Even though using valgrind for memory leak detection is slow and less sensitive
     it can be a convenient: you can run most programs with valgrind without modification.'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
 - en: 'Things to be aware of:'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
 - en: Valgrind does not support the numpy `longdouble`, this means that tests will
     fail or be flagged errors that are completely fine.
+  id: totrans-45
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Valgrind不支持numpy的`longdouble`，这意味着测试将失败或被标记为完全正常的错误。
 - en: Expect some errors before and after running your NumPy code.
+  id: totrans-46
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在运行NumPy代码之前和之后预计会有一些错误。
 - en: Caches can mean that errors (specifically memory leaks) may not be detected
     or are only detect at a later, unrelated time.
+  id: totrans-47
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 缓存可能意味着错误（特别是内存泄漏）可能无法检测到，或者只在以后的不相关时间检测到。
 - en: A big advantage of valgrind is that it has no requirements aside from valgrind
     itself (although you probably want to use debug builds for better tracebacks).
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: valgrind的一个巨大优势是，除了valgrind本身外，它几乎没有其他要求（尽管你可能希望使用调试构建来获得更好的回溯）。
 - en: Use together with `pytest`
+  id: totrans-49
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 与`pytest`一起使用
 - en: 'You can run the test suite with valgrind which may be sufficient when you are
     only interested in a few tests:'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: '您可以使用valgrind运行测试套件，当您只对部分测试感兴趣时，这可能就足够了： '
 - en: '[PRE7]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Note the `--continue-on-collection-errors`, which is currently necessary due
     to missing `longdouble` support causing failures (this will usually not be necessary
     if you do not run the full test suite).
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意`--continue-on-collection-errors`，这是目前必需的，因为缺少`longdouble`支持导致失败（如果不运行完整的测试套件，通常不需要这样做）。
 - en: If you wish to detect memory leaks you will also require `--show-leak-kinds=definite`
     and possibly more valgrind options. Just as for `pytest-leaks` certain tests are
     known to leak cause errors in valgrind and may or may not be marked as such.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您希望检测内存泄漏，您还将需要`--show-leak-kinds=definite`和可能更多的valgrind选项。就像`pytest-leaks`一样，某些测试已知会导致valgrind中的泄漏错误，可能会被标记为这样。
 - en: 'We have developed [pytest-valgrind](https://github.com/seberg/pytest-valgrind)
     which:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们开发了[pytest-valgrind](https://github.com/seberg/pytest-valgrind)，它：
 - en: Reports errors for each test individually
+  id: totrans-55
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 分别为每个测试报告错误
 - en: Narrows down memory leaks to individual tests (by default valgrind only checks
     for memory leaks after a program stops, which is very cumbersome).
+  id: totrans-56
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将内存泄漏缩小到单个测试（默认情况下，valgrind仅在程序停止后检查内存泄漏，这非常麻烦）。
 - en: Please refer to its `README` for more information (it includes an example command
     for NumPy).
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 请参考其`README`获取更多信息（其中包括一个针对NumPy的示例命令）。
 - en: Finding C errors with additional tooling
+  id: totrans-58
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用额外的工具找到C错误
 - en: Most development will not require more than a typical debugging toolchain as
     shown in [Debugging](development_environment.html#debugging). But for example
     memory leaks can be particularly subtle or difficult to narrow down.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数开发不需要超出典型的调试工具链，如[调试](development_environment.html#debugging)所示。但例如，内存泄漏可能特别微妙或难以缩小范围。
 - en: 'We do not expect any of these tools to be run by most contributors. However,
     you can ensure that we can track down such issues more easily:'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们不希望大多数贡献者运行其中的任何工具。但是，您可以确保我们可以更轻松地跟踪此类问题：
 - en: Tests should cover all code paths, including error paths.
+  id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 测试应覆盖所有代码路径，包括错误路径。
 - en: Try to write short and simple tests. If you have a very complicated test consider
     creating an additional simpler test as well. This can be helpful, because often
     it is only easy to find which test triggers an issue and not which line of the
     test.
+  id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 尽量编写简短和简单的测试。如果您有非常复杂的测试，请考虑创建额外的简单测试。这可能会有所帮助，因为通常只有找到触发问题的测试而不是测试的哪一行是容易的。
 - en: Never use `np.empty` if data is read/used. `valgrind` will notice this and report
     an error. When you do not care about values, you can generate random values instead.
+  id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果读取/使用数据，则永远不要使用`np.empty`。`valgrind`会注意到这一点并报告错误。当您不关心值时，您可以生成随机值。
 - en: This will help us catch any oversights before your change is released and means
     you do not have to worry about making reference counting errors, which can be
     intimidating.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将帮助我们在您的更改发布之前捕捉任何疏忽，并且意味着您不必担心制作参考计数错误，这可能会令人畏惧。
 - en: Python debug build
+  id: totrans-65
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Python调试构建
 - en: 'Debug builds of Python are easily available for example via the system package
     manager on Linux systems, but are also available on other platforms, possibly
     in a less convenient format. If you cannot easily install a debug build of Python
     from a system package manager, you can build one yourself using [pyenv](https://github.com/pyenv/pyenv).
     For example, to install and globally activate a debug build of Python 3.10.8,
     one would do:'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: Python的调试构建很容易在Linux系统的系统包管理器中提供，但也可以在其他平台上获得，可能是以不太方便的格式。如果您无法轻松地从系统包管理器安装Python的调试构建，您可以使用[pyenv](https://github.com/pyenv/pyenv)自行构建。例如，要安装并全局激活Python
+    3.10.8的调试构建，可以执行：
 - en: '[PRE8]'
+  id: totrans-67
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Note that `pyenv install` builds Python from source, so you must ensure that
     Python’s dependencies are installed before building, see the pyenv documentation
     for platform-specific installation instructions. You can use `pip` to install
     Python dependencies you may need for your debugging session. If there is no debug
     wheel available on *pypi,* you will need to build the dependencies from source
     and ensure that your dependencies are also compiled as debug builds.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
 - en: Often debug builds of Python name the Python executable `pythond` instead of
@@ -323,114 +443,148 @@
     e.g. `pythond -m sysconfig` to get the build configuration for the Python executable.
     A debug build will be built with debug compiler options in `CFLAGS` (e.g. `-g
     -Og`).
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
 - en: 'Running the Numpy tests or an interactive terminal is usually as easy as:'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: and were already mentioned in [Debugging](development_environment.html#debugging).
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
 - en: 'A Python debug build will help:'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
 - en: Find bugs which may otherwise cause random behaviour. One example is when an
     object is still used after it has been deleted.
+  id: totrans-74
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Python debug builds allows to check correct reference counting. This works
     using the additional commands:'
+  id: totrans-75
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-76
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Python debug builds allow easier debugging with gdb and other C debuggers.
+  id: totrans-77
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Use together with `pytest`
+  id: totrans-78
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: Running the test suite only with a debug python build will not find many errors
     on its own. An additional advantage of a debug build of Python is that it allows
     detecting memory leaks.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
 - en: 'A tool to make this easier is [pytest-leaks](https://github.com/abalkin/pytest-leaks),
     which can be installed using `pip`. Unfortunately, `pytest` itself may leak memory,
     but good results can usually (currently) be achieved by removing:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: from `numpy/conftest.py` (This may change with new `pytest-leaks` versions or
     `pytest` updates).
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
 - en: 'This allows to run the test suite, or part of it, conveniently:'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE12]'
+  id: totrans-84
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: where `-R2:3` is the `pytest-leaks` command (see its documentation), the `-s`
     causes output to print and may be necessary (in some versions captured output
     was detected as a leak).
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
 - en: Note that some tests are known (or even designed) to leak references, we try
     to mark them, but expect some false positives.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
 - en: '`valgrind`'
+  id: totrans-87
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Valgrind is a powerful tool to find certain memory access problems and should
     be run on complicated C code. Basic use of `valgrind` usually requires no more
     than:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: where `PYTHONMALLOC=malloc` is necessary to avoid false positives from python
     itself. Depending on the system and valgrind version, you may see more false positives.
     `valgrind` supports “suppressions” to ignore some of these, and Python does have
     a suppression file (and even a compile time option) which may help if you find
     it necessary.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
 - en: 'Valgrind helps:'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
 - en: Find use of uninitialized variables/memory.
+  id: totrans-92
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Detect memory access violations (reading or writing outside of allocated memory).
+  id: totrans-93
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Find *many* memory leaks. Note that for *most* leaks the python debug build
     approach (and `pytest-leaks`) is much more sensitive. The reason is that `valgrind`
     can only detect if memory is definitely lost. If:'
+  id: totrans-94
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 发现*许多*内存泄漏。请注意，*大多数*泄漏对于python调试构建方法（以及`pytest-leaks`）都更为敏感。原因是`valgrind`只能检测内存是否确实丢失。如果：
 - en: '[PRE14]'
+  id: totrans-95
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Has incorrect reference counting for `dtype`, this is a bug, but valgrind cannot
     see it because `np.dtype(np.int64)` always returns the same object. However, not
     all dtypes are singletons, so this might leak memory for different input. In rare
@@ -438,93 +592,133 @@
     to the Python debug build. `malloc` should normally be avoided, but there are
     some exceptions (e.g. the `PyArray_Dims` structure is public API and cannot use
     the Python allocators.)
+  id: totrans-96
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 对于`dtype`的引用计数不正确，这是一个bug，但valgrind无法看到它，因为`np.dtype(np.int64)`总是返回相同的对象。然而，并非所有的dtypes都是单例，所以这可能会导致不同输入的内存泄漏。在罕见的情况下，NumPy使用`malloc`而不是Python内存分配器，这对Python调试构建是不可见的。通常应该避免使用`malloc`，但也有一些例外情况（例如，`PyArray_Dims`结构是公共API，不能使用Python的分配器）。
 - en: 'Even though using valgrind for memory leak detection is slow and less sensitive
     it can be a convenient: you can run most programs with valgrind without modification.'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 即使valgrind用于内存泄漏检测很慢且不太敏感，它也可能是方便的：你可以在不修改大多数程序的情况下运行valgrind。
 - en: 'Things to be aware of:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要注意的事项：
 - en: Valgrind does not support the numpy `longdouble`, this means that tests will
     fail or be flagged errors that are completely fine.
+  id: totrans-99
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Valgrind不支持numpy的`longdouble`，这意味着测试将失败或被标记为完全正常的错误。
 - en: Expect some errors before and after running your NumPy code.
+  id: totrans-100
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在运行NumPy代码之前和之后，预计会出现一些错误。
 - en: Caches can mean that errors (specifically memory leaks) may not be detected
     or are only detect at a later, unrelated time.
+  id: totrans-101
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 缓存可能意味着错误（特别是内存泄漏）可能无法检测出，或者只能在以后无关的时间检测出。
 - en: A big advantage of valgrind is that it has no requirements aside from valgrind
     itself (although you probably want to use debug builds for better tracebacks).
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: valgrind的一个很大优势是除了valgrind本身外没有其他要求（虽然你可能希望使用调试构建获得更好的回溯）。
 - en: Use together with `pytest`
+  id: totrans-103
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 与`pytest`一起使用
 - en: 'You can run the test suite with valgrind which may be sufficient when you are
     only interested in a few tests:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用valgrind运行测试套件，当你只对其中几个测试感兴趣时，这可能足够了：
 - en: '[PRE15]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Note the `--continue-on-collection-errors`, which is currently necessary due
     to missing `longdouble` support causing failures (this will usually not be necessary
     if you do not run the full test suite).
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意`--continue-on-collection-errors`，因为缺少`longdouble`支持导致失败，目前这是必需的（如果不运行完整的测试套件，则通常不需要这样做）。
 - en: If you wish to detect memory leaks you will also require `--show-leak-kinds=definite`
     and possibly more valgrind options. Just as for `pytest-leaks` certain tests are
     known to leak cause errors in valgrind and may or may not be marked as such.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你希望检测内存泄漏，还需要`--show-leak-kinds=definite`以及可能更多的valgrind选项。就像`pytest-leaks`一样，某些测试已知会在valgrind中泄漏导致错误，可能标记为这样也可能不会。
 - en: 'We have developed [pytest-valgrind](https://github.com/seberg/pytest-valgrind)
     which:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们开发了[pytest-valgrind](https://github.com/seberg/pytest-valgrind)，它：
 - en: Reports errors for each test individually
+  id: totrans-109
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 报告每个测试的错误
 - en: Narrows down memory leaks to individual tests (by default valgrind only checks
     for memory leaks after a program stops, which is very cumbersome).
+  id: totrans-110
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将内存泄漏限制在单个测试中（默认情况下，valgrind仅在程序停止后检查内存泄漏，这非常麻烦）。
 - en: Please refer to its `README` for more information (it includes an example command
     for NumPy).
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 请参考其`README`获取更多信息（其中包括NumPy的示例命令）。
 - en: Python debug build
+  id: totrans-112
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Python调试构建
 - en: 'Debug builds of Python are easily available for example via the system package
     manager on Linux systems, but are also available on other platforms, possibly
     in a less convenient format. If you cannot easily install a debug build of Python
     from a system package manager, you can build one yourself using [pyenv](https://github.com/pyenv/pyenv).
     For example, to install and globally activate a debug build of Python 3.10.8,
     one would do:'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 调试构建的Python很容易通过Linux系统上的系统包管理器等方式获得，但它也可以在其他平台上以不太方便的格式获得。如果不能轻松地从系统包管理器安装Python的调试构建，则可以使用[pyenv](https://github.com/pyenv/pyenv)自行构建一个。例如，要安装并全局激活Python
+    3.10.8的调试构建，可以执行以下操作：
 - en: '[PRE16]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Note that `pyenv install` builds Python from source, so you must ensure that
     Python’s dependencies are installed before building, see the pyenv documentation
     for platform-specific installation instructions. You can use `pip` to install
     Python dependencies you may need for your debugging session. If there is no debug
     wheel available on *pypi,* you will need to build the dependencies from source
     and ensure that your dependencies are also compiled as debug builds.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
 - en: Often debug builds of Python name the Python executable `pythond` instead of
@@ -532,150 +726,194 @@
     e.g. `pythond -m sysconfig` to get the build configuration for the Python executable.
     A debug build will be built with debug compiler options in `CFLAGS` (e.g. `-g
     -Og`).
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
 - en: 'Running the Numpy tests or an interactive terminal is usually as easy as:'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: and were already mentioned in [Debugging](development_environment.html#debugging).
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
 - en: 'A Python debug build will help:'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
 - en: Find bugs which may otherwise cause random behaviour. One example is when an
     object is still used after it has been deleted.
+  id: totrans-121
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Python debug builds allows to check correct reference counting. This works
     using the additional commands:'
+  id: totrans-122
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-123
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Python debug builds allow easier debugging with gdb and other C debuggers.
+  id: totrans-124
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Use together with `pytest`
+  id: totrans-125
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: Running the test suite only with a debug python build will not find many errors
     on its own. An additional advantage of a debug build of Python is that it allows
     detecting memory leaks.
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
 - en: 'A tool to make this easier is [pytest-leaks](https://github.com/abalkin/pytest-leaks),
     which can be installed using `pip`. Unfortunately, `pytest` itself may leak memory,
     but good results can usually (currently) be achieved by removing:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: from `numpy/conftest.py` (This may change with new `pytest-leaks` versions or
     `pytest` updates).
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
 - en: 'This allows to run the test suite, or part of it, conveniently:'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: where `-R2:3` is the `pytest-leaks` command (see its documentation), the `-s`
     causes output to print and may be necessary (in some versions captured output
     was detected as a leak).
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
 - en: Note that some tests are known (or even designed) to leak references, we try
     to mark them, but expect some false positives.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
 - en: Use together with `pytest`
+  id: totrans-134
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: Running the test suite only with a debug python build will not find many errors
     on its own. An additional advantage of a debug build of Python is that it allows
     detecting memory leaks.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
 - en: 'A tool to make this easier is [pytest-leaks](https://github.com/abalkin/pytest-leaks),
     which can be installed using `pip`. Unfortunately, `pytest` itself may leak memory,
     but good results can usually (currently) be achieved by removing:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: from `numpy/conftest.py` (This may change with new `pytest-leaks` versions or
     `pytest` updates).
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
 - en: 'This allows to run the test suite, or part of it, conveniently:'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-140
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: where `-R2:3` is the `pytest-leaks` command (see its documentation), the `-s`
     causes output to print and may be necessary (in some versions captured output
     was detected as a leak).
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
 - en: Note that some tests are known (or even designed) to leak references, we try
     to mark them, but expect some false positives.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
 - en: '`valgrind`'
+  id: totrans-143
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Valgrind is a powerful tool to find certain memory access problems and should
     be run on complicated C code. Basic use of `valgrind` usually requires no more
     than:'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE23]'
+  id: totrans-145
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: where `PYTHONMALLOC=malloc` is necessary to avoid false positives from python
     itself. Depending on the system and valgrind version, you may see more false positives.
     `valgrind` supports “suppressions” to ignore some of these, and Python does have
     a suppression file (and even a compile time option) which may help if you find
     it necessary.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
 - en: 'Valgrind helps:'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
 - en: Find use of uninitialized variables/memory.
+  id: totrans-148
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Detect memory access violations (reading or writing outside of allocated memory).
+  id: totrans-149
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Find *many* memory leaks. Note that for *most* leaks the python debug build
     approach (and `pytest-leaks`) is much more sensitive. The reason is that `valgrind`
     can only detect if memory is definitely lost. If:'
+  id: totrans-150
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-151
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Has incorrect reference counting for `dtype`, this is a bug, but valgrind cannot
     see it because `np.dtype(np.int64)` always returns the same object. However, not
     all dtypes are singletons, so this might leak memory for different input. In rare
@@ -683,107 +921,134 @@
     to the Python debug build. `malloc` should normally be avoided, but there are
     some exceptions (e.g. the `PyArray_Dims` structure is public API and cannot use
     the Python allocators.)
+  id: totrans-152
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: 'Even though using valgrind for memory leak detection is slow and less sensitive
     it can be a convenient: you can run most programs with valgrind without modification.'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
 - en: 'Things to be aware of:'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
 - en: Valgrind does not support the numpy `longdouble`, this means that tests will
     fail or be flagged errors that are completely fine.
+  id: totrans-155
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Expect some errors before and after running your NumPy code.
+  id: totrans-156
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Caches can mean that errors (specifically memory leaks) may not be detected
     or are only detect at a later, unrelated time.
+  id: totrans-157
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: A big advantage of valgrind is that it has no requirements aside from valgrind
     itself (although you probably want to use debug builds for better tracebacks).
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
 - en: Use together with `pytest`
+  id: totrans-159
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'You can run the test suite with valgrind which may be sufficient when you are
     only interested in a few tests:'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE25]'
+  id: totrans-161
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Note the `--continue-on-collection-errors`, which is currently necessary due
     to missing `longdouble` support causing failures (this will usually not be necessary
     if you do not run the full test suite).
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
 - en: If you wish to detect memory leaks you will also require `--show-leak-kinds=definite`
     and possibly more valgrind options. Just as for `pytest-leaks` certain tests are
     known to leak cause errors in valgrind and may or may not be marked as such.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
 - en: 'We have developed [pytest-valgrind](https://github.com/seberg/pytest-valgrind)
     which:'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
 - en: Reports errors for each test individually
+  id: totrans-165
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Narrows down memory leaks to individual tests (by default valgrind only checks
     for memory leaks after a program stops, which is very cumbersome).
+  id: totrans-166
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Please refer to its `README` for more information (it includes an example command
     for NumPy).
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
 - en: Use together with `pytest`
+  id: totrans-168
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'You can run the test suite with valgrind which may be sufficient when you are
     only interested in a few tests:'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE26]'
+  id: totrans-170
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Note the `--continue-on-collection-errors`, which is currently necessary due
     to missing `longdouble` support causing failures (this will usually not be necessary
     if you do not run the full test suite).
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
 - en: If you wish to detect memory leaks you will also require `--show-leak-kinds=definite`
     and possibly more valgrind options. Just as for `pytest-leaks` certain tests are
     known to leak cause errors in valgrind and may or may not be marked as such.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
 - en: 'We have developed [pytest-valgrind](https://github.com/seberg/pytest-valgrind)
     which:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
 - en: Reports errors for each test individually
+  id: totrans-174
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Narrows down memory leaks to individual tests (by default valgrind only checks
     for memory leaks after a program stops, which is very cumbersome).
+  id: totrans-175
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Please refer to its `README` for more information (it includes an example command
     for NumPy).
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
