@@ -1,150 +1,208 @@
 - en: NumPy security
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: NumPy安全性
 - en: 原文：[https://numpy.org/doc/1.26/reference/security.html](https://numpy.org/doc/1.26/reference/security.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://numpy.org/doc/1.26/reference/security.html](https://numpy.org/doc/1.26/reference/security.html)
 - en: Security issues can be reported privately as described in the project README
     and when opening a [new issue on the issue tracker](https://github.com/numpy/numpy/issues/new/choose).
     The [Python security reporting guidelines](https://www.python.org/dev/security/)
     are a good resource and its notes apply also to NumPy.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 安全问题可以按照项目README中描述的方式进行私下报告，也可以在打开[问题跟踪器上的新问题](https://github.com/numpy/numpy/issues/new/choose)时进行报告。[Python安全报告指南](https://www.python.org/dev/security/)是一个很好的资源，其中的注意事项也适用于NumPy。
 - en: NumPy’s maintainers are not security experts. However, we are conscientious
     about security and experts of both the NumPy codebase and how it’s used. Please
     do notify us before creating security advisories against NumPy as we are happy
     to prioritize issues or help with assessing the severity of a bug. A security
     advisory we are not aware of beforehand can lead to a lot of work for all involved
     parties.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: NumPy的维护人员不是安全专家。然而，我们对安全问题持有责任感，对NumPy代码库及其使用方式的专家。在发布针对NumPy的安全公告之前，请通知我们，因为我们乐意优先处理问题或帮助评估错误的严重性。我们事先不知道的安全公告可能会给所有相关方带来大量工作。
 - en: Advice for using NumPy on untrusted data
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 在处理不可信数据时的建议使用NumPy
 - en: A user who can freely execute NumPy (or Python) functions must be considered
     to have the same privilege as the process/Python interpreter.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以自由执行NumPy（或Python）函数的用户必须被视为具有相同特权的进程/Python解释器。
 - en: That said, NumPy should be generally safe to use on *data* provided by unprivileged
     users and read through safe API functions (e.g. loaded from a text file or `.npy`
     file without pickle support). Malicious *values* or *data sizes* should never
     lead to privilege escalation.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 也就是说，NumPy通常能够安全使用来自非特权用户的*数据*，并且通过安全的API函数读取（例如从文本文件或没有pickle支持的`.npy`文件加载）。恶意*值*或*数据大小*不应导致特权升级。
 - en: 'The following points may be useful or should be noted when working with untrusted
     data:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用不受信任数据时，以下要点可能很有用或应该注意：
 - en: 'Exhausting memory can result in an out-of-memory kill, which is a possible
     denial of service attack. Possible causes could be:'
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 耗尽内存可能导致内存溢出杀死，这是可能的拒绝服务攻击。可能的原因包括：
 - en: Functions reading text files, which may require much more memory than the original
     input file size.
+  id: totrans-9
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 读取文本文件的函数可能需要比原始输入文件大小多得多的内存。
 - en: If users can create arbitrarily shaped arrays, NumPy’s broadcasting means that
     intermediate or result arrays can be much larger than the inputs.
+  id: totrans-10
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果用户可以创建任意形状的数组，NumPy的广播意味着中间或结果数组可能比输入大得多。
 - en: NumPy structured dtypes allow for a large amount of complexity. Fortunately,
     most code fails gracefully when a structured dtype is provided unexpectedly. However,
     code should either disallow untrusted users to provide these (e.g. via `.npy`
     files) or carefully check the fields included for nested structured/subarray dtypes.
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: NumPy结构化dtype允许大量的复杂性。幸运的是，当提供意外的结构化dtype时，大多数代码会出现优雅失效。然而，代码应该禁止不受信任的用户提供这些（例如通过`.npy`文件）或仔细检查包含的字段以防止嵌套结构/子数组dtype。
 - en: Passing on user input should generally be considered unsafe (except for the
     data being read). An example would be `np.dtype(user_string)` or `dtype=user_string`.
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通常应考虑通过用户输入传递是不安全的（除了被读取的数据）。例如，`np.dtype(user_string)`或`dtype=user_string`。
 - en: The speed of operations can depend on values and memory order can lead to larger
     temporary memory use and slower execution. This means that operations may be significantly
     slower or use more memory compared to simple test cases.
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 操作的速度可能取决于值和内存顺序可能导致更大的临时内存使用和较慢的执行。这意味着操作可能比简单测试用例显着慢或使用更多内存。
 - en: When reading data, consider enforcing a specific shape (e.g. one dimensional)
     or dtype such as `float64`, `float32`, or `int64` to reduce complexity.
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在读取数据时，考虑强制规定特定形状（例如一维）或dtype，如`float64`、`float32`或`int64`，以减少复杂性。
 - en: When working with non-trivial untrusted data, it is advisable to sandbox the
     analysis to guard against potential privilege escalation. This is especially advisable
     if further libraries based on NumPy are used since these add additional complexity
     and potential security issues.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 当处理非常规不可信数据时，建议对分析进行沙盒化，以防潜在的特权升级。如果使用基于NumPy的进一步库，则特别建议这样做，因为这些库会增加额外的复杂性和潜在的安全问题。
 - en: Advice for using NumPy on untrusted data
+  id: totrans-16
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 在处理不受信任数据时的建议使用NumPy
 - en: A user who can freely execute NumPy (or Python) functions must be considered
     to have the same privilege as the process/Python interpreter.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 能够自由执行 NumPy（或 Python）函数的用户必须被视为拥有与进程/Python 解释器相同的特权。
 - en: That said, NumPy should be generally safe to use on *data* provided by unprivileged
     users and read through safe API functions (e.g. loaded from a text file or `.npy`
     file without pickle support). Malicious *values* or *data sizes* should never
     lead to privilege escalation.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 也就是说,NumPy 应该通常是安全的,可用于由特权用户提供的*数据*,并通过安全的 API 函数读取（例如从文本文件或不支持 pickle 的 `.npy`
+    文件加载）。恶意的*值*或*数据大小*绝不应导致特权升级。
 - en: 'The following points may be useful or should be noted when working with untrusted
     data:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 在处理不受信任的数据时,以下几点可能有用或值得注意：
 - en: 'Exhausting memory can result in an out-of-memory kill, which is a possible
     denial of service attack. Possible causes could be:'
+  id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 耗尽内存可能导致内存溢出,这是一种可能的拒绝服务攻击。可能的原因包括：
 - en: Functions reading text files, which may require much more memory than the original
     input file size.
+  id: totrans-21
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 读取文本文件的函数可能需要比原始输入文件大得多的内存。
 - en: If users can create arbitrarily shaped arrays, NumPy’s broadcasting means that
     intermediate or result arrays can be much larger than the inputs.
+  id: totrans-22
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果用户可以创建任意形状的数组,NumPy 的广播意味着中间或结果数组可能远大于输入。
 - en: NumPy structured dtypes allow for a large amount of complexity. Fortunately,
     most code fails gracefully when a structured dtype is provided unexpectedly. However,
     code should either disallow untrusted users to provide these (e.g. via `.npy`
     files) or carefully check the fields included for nested structured/subarray dtypes.
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: NumPy 结构化 dtypes 允许大量复杂性。幸运的是,当提供意外的结构化 dtype 时,大多数代码都能优雅地失败。然而,代码应该禁止不受信任的用户提供这些（例如通过
+    `.npy` 文件）,或仔细检查包含的嵌套结构化/子数组 dtypes 的字段。
 - en: Passing on user input should generally be considered unsafe (except for the
     data being read). An example would be `np.dtype(user_string)` or `dtype=user_string`.
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将用户输入传递下去通常应被视为不安全的（读取的数据除外）。一个例子是 `np.dtype(user_string)` 或 `dtype=user_string`。
 - en: The speed of operations can depend on values and memory order can lead to larger
     temporary memory use and slower execution. This means that operations may be significantly
     slower or use more memory compared to simple test cases.
+  id: totrans-25
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 操作的速度可能取决于值,内存顺序可能导致更大的临时内存使用和更慢的执行。这意味着与简单的测试用例相比,操作可能显著更慢或使用更多内存。
 - en: When reading data, consider enforcing a specific shape (e.g. one dimensional)
     or dtype such as `float64`, `float32`, or `int64` to reduce complexity.
+  id: totrans-26
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在读取数据时,考虑强制执行特定的形状（例如一维）或 dtype，如 `float64`、`float32` 或 `int64`，以减少复杂性。
 - en: When working with non-trivial untrusted data, it is advisable to sandbox the
     analysis to guard against potential privilege escalation. This is especially advisable
     if further libraries based on NumPy are used since these add additional complexity
     and potential security issues.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 在处理非平凡的不受信任数据时，建议对分析进行沙箱化以防止潜在的特权升级。如果进一步使用基于 NumPy 的库，这尤其是个好主意,因为这些库增加了额外的复杂性和潜在的安全问题。
