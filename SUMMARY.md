@@ -1,6 +1,7 @@
 +   [OpenCV 4.0.0 中文文档](docs/cv400/README.md)
 +   [FastText 中文文档](docs/fasttext/README.md)
 +   [Gensim 中文文档](docs/gensim/README.md)
++   [JAX 中文文档](docs/jax/README.md)
 +   [LightGBM 中文文档](docs/lgbm/README.md)
 +   [Matplotlib 2.0 用户指南](docs/mpl20/README.md)
 +   [NumPy 1.26 中文文档](docs/np126/README.md)
