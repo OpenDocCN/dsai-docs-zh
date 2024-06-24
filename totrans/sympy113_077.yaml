@@ -1,59 +1,84 @@
 - en: Computing Integrals using Meijer G-Functions
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 Meijer G 函数计算积分
 - en: 原文：[https://docs.sympy.org/latest/modules/integrals/g-functions.html](https://docs.sympy.org/latest/modules/integrals/g-functions.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '[https://docs.sympy.org/latest/modules/integrals/g-functions.html](https://docs.sympy.org/latest/modules/integrals/g-functions.html)'
 - en: This text aims do describe in some detail the steps (and subtleties) involved
     in using Meijer G-functions for computing definite and indefinite integrals. We
     shall ignore proofs completely.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 本文旨在详细描述使用 Meijer G 函数计算定积分和不定积分所涉及的步骤（及其微妙之处）。我们将完全忽略证明。
 - en: Overview
+  id: totrans-3
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 概述
 - en: 'The algorithm to compute \(\int f(x) \mathrm{d}x\) or \(\int_0^\infty f(x)
     \mathrm{d}x\) generally consists of three steps:'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算 \(\int f(x) \mathrm{d}x\) 或 \(\int_0^\infty f(x) \mathrm{d}x\) 的算法通常包括三个步骤：
 - en: Rewrite the integrand using Meijer G-functions (one or sometimes two).
+  id: totrans-5
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用 Meijer G 函数（有时一个或两个）重新写出被积函数。
 - en: Apply an integration theorem, to get the answer (usually expressed as another
     G-function).
+  id: totrans-6
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 应用积分定理得到答案（通常表示为另一个 G 函数）。
 - en: Expand the result in named special functions.
+  id: totrans-7
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在命名的特殊函数中展开结果。
 - en: Step (3) is implemented in the function hyperexpand (q.v.). Steps (1) and (2)
     are described below. Moreover, G-functions are usually branched. Thus our treatment
     of branched functions is described first.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 步骤 (3) 在函数 hyperexpand 中实现。步骤 (1) 和 (2) 如下所述。此外，G 函数通常是分支的。因此，我们首先描述了分支函数的处理方式。
 - en: Some other integrals (e.g. \(\int_{-\infty}^\infty\)) can also be computed by
     first recasting them into one of the above forms. There is a lot of choice involved
     here, and the algorithm is heuristic at best.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 有些其他积分（例如 \(\int_{-\infty}^\infty\)) 可以通过首先将它们重新表述为上述形式之一来计算。这里有很多选择，算法至多是一种启发式算法。
 - en: Polar Numbers and Branched Functions
+  id: totrans-10
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 极数和分支函数
 - en: Both Meijer G-Functions and Hypergeometric functions are typically branched
     (possible branchpoints being \(0\), \(\pm 1\), \(\infty\)). This is not very important
     when e.g. expanding a single hypergeometric function into named special functions,
     since sorting out the branches can be left to the human user. However this algorithm
     manipulates and transforms G-functions, and to do this correctly it needs at least
     some crude understanding of the branchings involved.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: Meijer G 函数和超几何函数通常是分支的（可能的分支点为 \(0\)，\(\pm 1\)，\(\infty\)）。当例如将单个超几何函数展开为命名的特殊函数时，这并不是很重要，因为可以将分支问题留给人类用户。然而，这个算法操纵和转换
+    G 函数，要正确地做到这一点，至少需要一些关于所涉及分支的粗略理解。
 - en: 'To begin, we consider the set \(\mathcal{S} = \{(r, \theta) : r > 0, \theta
     \in \mathbb{R}\}\). We have a map \(p: \mathcal{S}: \rightarrow \mathbb{C}-\{0\},
     (r, \theta) \mapsto r e^{i \theta}\). Decreeing this to be a local biholomorphism
@@ -63,8 +88,14 @@
     (x + i y) \mapsto (\exp(x), y)\) and \(\operatorname{Log}: \mathcal{S} \rightarrow
     \mathbb{C}, (e^x, y) \mapsto x + iy\). These can both be shown to be holomorphic,
     and are indeed mutual inverses.'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: '首先，我们考虑集合 \(\mathcal{S} = \{(r, \theta) : r > 0, \theta \in \mathbb{R}\}\)。我们有一个映射
+    \(p: \mathcal{S} \rightarrow \mathbb{C}-\{0\}, (r, \theta) \mapsto r e^{i \theta}\)。将其定为局部双全纯映射给了
+    \(\mathcal{S}\) 一个拓扑和一个复结构。这个黎曼面通常被称为对数的黎曼面，原因如下：我们可以定义映射 \(\operatorname{Exp}:
+    \mathbb{C} \rightarrow \mathcal{S}, (x + i y) \mapsto (\exp(x), y)\) 和 \(\operatorname{Log}:
+    \mathcal{S} \rightarrow \mathbb{C}, (e^x, y) \mapsto x + iy\)。这两者都可以显示为全纯的，并且是互为逆映射。'
 - en: 'We also sometimes formally attach a point “zero” (\(0\)) to \(\mathcal{S}\)
     and denote the resulting object \(\mathcal{S}_0\). Notably there is no complex
     structure defined near \(0\). A fundamental system of neighbourhoods is given
@@ -73,8 +104,14 @@
     functions \(\operatorname{Arg}: \mathcal{S} \rightarrow \mathbb{R}, (r, \theta)
     \mapsto \theta\) and \(|.|: \mathcal{S}_0 \rightarrow \mathbb{R}_{>0}, (r, \theta)
     \mapsto r\). These have evident meaning and are both continuous everywhere.'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: '有时我们还正式将点 “零” (\(0\)) 附加到 \(\mathcal{S}\) 上，并将结果对象称为 \(\mathcal{S}_0\)。显然，在
+    \(0\) 附近未定义复结构。一个基本的邻域系统由 \(\{\operatorname{Exp}(z) : \Re(z) < k\}\) 给出，至少定义了一个拓扑。
+    \(\mathcal{S}_0\) 的元素称为极数。我们进一步定义函数 \(\operatorname{Arg}: \mathcal{S} \rightarrow
+    \mathbb{R}, (r, \theta) \mapsto \theta\) 和 \(|.|: \mathcal{S}_0 \rightarrow \mathbb{R}_{>0},
+    (r, \theta) \mapsto r\)。这些函数具有明显的意义，并且在所有地方都是连续的。'
 - en: Using these maps many operations can be extended from \(\mathbb{C}\) to \(\mathcal{S}\).
     We define \(\operatorname{Exp}(a) \operatorname{Exp}(b) = \operatorname{Exp}(a
     + b)\) for \(a, b \in \mathbb{C}\), also for \(a \in \mathcal{S}\) and \(b \in
@@ -82,8 +119,13 @@
     It can be checked easily that using these definitions, many algebraic properties
     holding for positive reals (e.g. \((ab)^c = a^c b^c\)) which hold in \(\mathbb{C}\)
     only for some numbers (because of branch cuts) hold indeed for all polar numbers.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这些映射，许多操作可以从\(\mathbb{C}\)扩展到\(\mathcal{S}\)。我们定义\(\operatorname{Exp}(a) \operatorname{Exp}(b)
+    = \operatorname{Exp}(a + b)\)对于\(a, b \in \mathbb{C}\)，同时对于\(a \in \mathcal{S}\)和\(b
+    \in \mathbb{C}\)，我们定义\(a^b = \operatorname{Exp}(b \operatorname{Log}(a))\)。可以轻松地检验到，使用这些定义，许多代数性质（例如\((ab)^c
+    = a^c b^c\))在正实数中适用（由于分支切割）在所有极坐标数中确实适用。
 - en: As one peculiarity it should be mentioned that addition of polar numbers is
     not usually defined. However, formal sums of polar numbers can be used to express
     branching behaviour. For example, consider the functions \(F(z) = \sqrt{1 + z}\)
@@ -92,21 +134,32 @@
     they are continuous on circles, and agree with the usual definition for positive
     reals. Thus if \(S(z)\) denotes the standard branch of the square root function
     on \(\mathbb{C}\), we are forced to define
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为一种特殊性质，应当提到极坐标数的加法通常是未定义的。然而，极坐标数的形式和可以用来表达分支行为。例如，考虑函数\(F(z) = \sqrt{1 +
+    z}\)和\(G(a, b) = \sqrt{a + b}\)，其中\(a, b, z\)为极坐标数。一般规则是，单个极坐标变量的函数定义为在圆上连续，并且与正实数的通常定义一致。因此，如果\(S(z)\)表示在\(\mathbb{C}\)上的平方根函数的标准分支，则我们被迫定义
 - en: '\[\begin{split}F(z) = \begin{cases} S(p(z)) &: |z| < 1 \\ S(p(z)) &: -\pi <
     \operatorname{Arg}(z) + 4\pi n \le \pi \text{ for some } n \in \mathbb{Z} \\ -S(p(z))
     &: \text{else} \end{cases}.\end{split}\]'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: '\[\begin{split}F(z) = \begin{cases} S(p(z)) &: |z| < 1 \\ S(p(z)) &: -\pi <
+    \operatorname{Arg}(z) + 4\pi n \le \pi \text{ for some } n \in \mathbb{Z} \\ -S(p(z))
+    &: \text{else} \end{cases}.\end{split}\]'
 - en: (We are omitting \(|z| = 1\) here, this does not matter for integration.) Finally
     we define \(G(a, b) = \sqrt{a}F(b/a)\).
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: (我们在这里省略了\( |z| = 1 \)，这对于积分不重要。) 最后我们定义\(G(a, b) = \sqrt{a}F(b/a)\)。
 - en: Representing Branched Functions on the Argand Plane
+  id: totrans-18
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 在阿干平面上表示分支函数
 - en: 'Suppose \(f: \mathcal{S} \to \mathbb{C}\) is a holomorphic function. We wish
     to define a function \(F\) on (part of) the complex numbers \(\mathbb{C}\) that
     represents \(f\) as closely as possible. This process is knows as “introducing
@@ -117,12 +170,19 @@
     Here \(r > 0\) and \(-\pi < \theta \le \pi\). Then \(l\) is holomorphic, and we
     define \(G = f \circ l\). This called “lifting to the principal branch” throughout
     the SymPy documentation.'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: '假设\(f: \mathcal{S} \to \mathbb{C}\)是一个全纯函数。我们希望在（部分）复数\(\mathbb{C}\)上定义一个函数\(F\)，尽可能地代表\(f\)。这个过程称为“引入分支切割”。在我们的情况下，实际上有一种标准做法（在SymPy的所有情况下都遵循），如下：引入“切割复平面”\(C
+    = \mathbb{C} \setminus \mathbb{R}_{\le 0}\)。通过\(re^{i\theta} \mapsto r \operatorname{Exp}(i\theta)\)定义一个函数\(l:
+    C \to \mathcal{S}\)。这里\(r > 0\)和\(-\pi < \theta \le \pi\)。然后\(l\)是全纯的，并且我们定义\(G
+    = f \circ l\)。这称为在SymPy文档中的“提升到主分支”。'
 - en: Table Lookups and Inverse Mellin Transforms
+  id: totrans-20
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 表查找和反梅林变换
 - en: Suppose we are given an integrand \(f(x)\) and are trying to rewrite it as a
     single G-function. To do this, we first split \(f(x)\) into the form \(x^s g(x)\)
     (where \(g(x)\) is supposed to be simpler than \(f(x)\)). This is because multiplicative
@@ -133,8 +193,13 @@
     with this tuple. This (hopefully) yields a list of Meijer G-function formulae
     involving these functions, we then pattern-match all of them. If one fits, we
     were successful, otherwise not and we have to try something else.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们有一个被积函数 \(f(x)\)，并尝试将其重写为一个单一的 G 函数。为此，我们首先将 \(f(x)\) 分解为 \(x^s g(x)\) 的形式（其中
+    \(g(x)\) 应该比 \(f(x)\) 简单）。这是通过函数 `_split_mul(f, x)` 完成的。然后我们将出现在 \(f\) 中的函数组装成一个元组（例如，如果
+    \(f(x) = e^x \cos{x}\)，我们将组装成 \((\cos, \exp)\)）。这是由函数 `_mytype(f, x)` 完成的。接下来，我们使用
+    `_create_lookup_table()` 创建一个查找表，并用这个元组索引它。这（希望地）会产生涉及这些函数的 Meijer G 函数公式的列表，然后我们尝试模式匹配它们。如果有一个匹配成功，我们就成功了；否则，我们需要尝试其他方法。
 - en: Suppose now we want to rewrite as a product of two G-functions. To do this,
     we (try to) find all inequivalent ways of splitting \(f(x)\) into a product \(f_1(x)
     f_2(x)\). We could try these splittings in any order, but it is often a good idea
@@ -142,16 +207,25 @@
     of different functions occurring in \(f_i(x)\). Thus given e.g. \(f(x) = \sin{x}\,
     e^{x} \sin{2x}\) we should try \(f_1(x) = \sin{x}\, \sin{2x}\), \(f_2(x) = e^{x}\)
     first. All of this is done by the function `_mul_as_two_parts(f)`.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在假设我们想将 \(f(x)\) 重写为两个 G 函数的乘积形式。为此，我们（试图）找出将 \(f(x)\) 分解为 \(f_1(x) f_2(x)\)
+    的所有不等价方式。我们可以按任意顺序尝试这些分解，但通常建议最小化 \(f_i(x)\) 中出现的幂次数和不同函数的数量。例如，给定 \(f(x) = \sin{x}\,
+    e^{x} \sin{2x}\)，我们首先尝试 \(f_1(x) = \sin{x}\, \sin{2x}\)，\(f_2(x) = e^{x}\)。所有这些操作都由函数
+    `_mul_as_two_parts(f)` 完成。
 - en: Finally, we can try a recursive Mellin transform technique. Since the Meijer
     G-function is defined essentially as a certain inverse mellin transform, if we
     want to write a function \(f(x)\) as a G-function, we can compute its mellin transform
     \(F(s)\). If \(F(s)\) is in the right form, the G-function expression can be read
     off. This technique generalises many standard rewritings, e.g. \(e^{ax} e^{bx}
     = e^{(a + b) x}\).
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们可以尝试递归的 Mellin 变换技术。由于 Meijer G 函数本质上被定义为某种反 Mellin 变换，如果我们想将函数 \(f(x)\)
+    写成一个 G 函数，我们可以计算它的 Mellin 变换 \(F(s)\)。如果 \(F(s)\) 符合要求的形式，那么 G 函数表达式可以直接得到。这种技术推广了许多标准的重写，例如
+    \(e^{ax} e^{bx} = e^{(a + b) x}\)。
 - en: One twist is that some functions don’t have mellin transforms, even though they
     can be written as G-functions. This is true for example for \(f(x) = e^x \sin{x}\)
     (the function grows too rapidly to have a mellin transform). However if the function
@@ -160,17 +234,26 @@
     continuation. (Checking for analyticity is easy. Since we can only deal with a
     certain subset of functions anyway, we only have to filter out those which are
     not analyitc.)
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个小变化是，一些函数没有 Mellin 变换，尽管它们可以被写成 G 函数。例如，对于 \(f(x) = e^x \sin{x}\)（函数增长太快，没有
+    Mellin 变换）。然而，如果函数被认为是解析的，那么我们可以尝试计算 \(f(ax)\) 的 Mellin 变换（其中 \(a\) 是参数），并通过解析延拓推导出
+    G 函数表达式。（检查解析性是容易的。由于我们只能处理一定的函数子集，我们只需过滤掉那些不是解析的函数。）
 - en: The function `_rewrite_single` does the table lookup and recursive mellin transform.
     The functions `_rewrite1` and `_rewrite2` respectively use above-mentioned helpers
     and `_rewrite_single` to rewrite their argument as respectively one or two G-functions.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数 `_rewrite_single` 执行表查找和递归 Mellin 变换。函数 `_rewrite1` 和 `_rewrite2` 分别使用上述辅助函数和
+    `_rewrite_single` 来将它们的参数重写为一个或两个 G 函数。
 - en: Applying the Integral Theorems
+  id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 应用积分定理
 - en: 'If the integrand has been recast into G-functions, evaluating the integral
     is relatively easy. We first do some substitutions to reduce e.g. the exponent
     of the argument of the G-function to unity (see `_rewrite_saxena_1` and `_rewrite_saxena`,
@@ -178,6 +261,7 @@
     under which the integral theorem applies. It can fail for basically two reasons:
     either the integral does not exist, or the manipulations in deriving the theorem
     may not be allowed (for more details, see this [[BlogPost]](#blogpost)).'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
 - en: Sometimes this can be remedied by reducing the argument of the G-functions involved.
@@ -186,15 +270,19 @@
     function `meijerg.get_period()` can be used to discover this, and the function
     `principal_branch(z, period)` in `functions/elementary/complexes.py` can be used
     to exploit the information. This is done transparently by the integration code.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
 - en: '[[BlogPost](#id1)]'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
 - en: '[https://nessgrh.wordpress.com/2011/07/07/tricky-branch-cuts/](https://nessgrh.wordpress.com/2011/07/07/tricky-branch-cuts/)'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
 - en: The G-Function Integration Theorems
+  id: totrans-31
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -204,12 +292,14 @@
     more general form. However it is very easy to deduce the general formulae from
     the ones we give here. It seemed best to keep the theorems as simple as possible,
     since they are very complicated anyway.):'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\int_0^\infty G_{p, q}^{m, n} \left.\left(\begin{matrix} a_1,
     \cdots, a_p \\ b_1, \cdots, b_q \end{matrix} \right| \eta x \right) \mathrm{d}x
     = \frac{\prod_{j=1}^m \Gamma(b_j + 1) \prod_{j=1}^n \Gamma(-a_j)}{\eta \prod_{j=m+1}^q
     \Gamma(-b_j) \prod_{j=n+1}^p \Gamma(a_j + 1)}\end{split}\]
+  id: totrans-33
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -220,6 +310,7 @@
     a_1, \cdots, a_n, -d_1, \cdots, -d_v, a_{n+1}, \cdots, a_p \\ b_1, \cdots, b_m,
     -c_1, \cdots, -c_u, b_{m+1}, \cdots, b_q \end{matrix} \right| \frac{\omega}{\sigma}
     \right)\end{split}\]
+  id: totrans-34
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -228,9 +319,11 @@
     of conditions found in [[Prudnikov1990]](../simplify/hyperexpand.html#prudnikov1990)
     and [[Luke1969]](../simplify/hyperexpand.html#luke1969); please let us know if
     you find any errors.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
 - en: Conditions of Convergence for Integral (1)
+  id: totrans-36
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -238,15 +331,24 @@
     of indices \(m, n, p, q\) and of indices \(n, m, q, p\) can be related easily
     (see e.g. [[Luke1969]](../simplify/hyperexpand.html#luke1969), section 5.3). We
     introduce the following notation:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以假设没有一般性损失地认为 \(p \le q\)，因为指标 \(m, n, p, q\) 的 G 函数和指标 \(n, m, q, p\) 的
+    G 函数可以轻松相关联（见例如 [[Luke1969]](../simplify/hyperexpand.html#luke1969)，第 5.3 节）。我们引入以下符号：
 - en: '\[\begin{split}\xi = m + n - p \\ \delta = m + n - \frac{p + q}{2}\end{split}\]\[\begin{split}C_3:
     -\Re(b_j) < 1 \text{ for } j=1, \ldots, m \\ 0 < -\Re(a_j) \text{ for } j=1, \ldots,
     n\end{split}\]\[\begin{split}C_3^*: -\Re(b_j) < 1 \text{ for } j=1, \ldots, q
     \\ 0 < -\Re(a_j) \text{ for } j=1, \ldots, p\end{split}\]\[C_4: -\Re(\delta) +
     \frac{q + 1 - p}{2} > q - p\]'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: '\[\begin{split}\xi = m + n - p \\ \delta = m + n - \frac{p + q}{2}\end{split}\]\[\begin{split}C_3:
+    -\Re(b_j) < 1 \text{ for } j=1, \ldots, m \\ 0 < -\Re(a_j) \text{ for } j=1, \ldots,
+    n\end{split}\]\[\begin{split}C_3^*: -\Re(b_j) < 1 \text{ for } j=1, \ldots, q
+    \\ 0 < -\Re(a_j) \text{ for } j=1, \ldots, p\end{split}\]\[C_4: -\Re(\delta) +
+    \frac{q + 1 - p}{2} > q - p\]'
 - en: The convergence conditions will be detailed in several “cases”, numbered one
     to five. For later use it will be helpful to separate conditions “at infinity”
     from conditions “at zero”. By conditions “at infinity” we mean conditions that
@@ -256,78 +358,121 @@
     conditions are specified in terms of parameters of the G-functions, this distinction
     is not immediately visible. They are, however, of very distinct character mathematically;
     the conditions at infinity being in particular much harder to control.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 收敛条件将在几个“情况”中详细说明，编号从一到五。为了以后的使用，将“无限远处”的条件与“零点”的条件分开将是有帮助的。我们所说的“无限远处”的条件是指仅依赖于积分被积函数在大正值
+    \(x\) 处的行为，而所说的“零点”的条件是指仅依赖于积分被积函数在 \((0, \epsilon)\) 内的行为，对于任意 \(\epsilon > 0\)。由于我们所有的条件都是用
+    G 函数的参数来指定的，这种区别并不立即可见。然而，在数学上它们是非常不同的；特别是无限远处的条件更难控制。
 - en: In order for the integral theorem to be valid, conditions \(n\) “at zero” and
     “at infinity” both have to be fulfilled, for some \(n\).
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了使积分定理有效，必须同时满足 \(n\) 在“零点”和“无限远处”的条件，对于某些 \(n\)。
 - en: 'These are the conditions “at infinity”:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些是“无限远处”的条件：
 - en: \[\delta > 0 \wedge |\arg(\eta)| < \delta \pi \wedge (A \vee B \vee C),\]
+  id: totrans-42
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[\delta > 0 \wedge |\arg(\eta)| < \delta \pi \wedge (A \vee B \vee C)\]
 - en: where
+  id: totrans-43
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 其中
 - en: \[A = 1 \le n \wedge p < q \wedge 1 \le m\]\[B = 1 \le p \wedge 1 \le m \wedge
     q = p+1 \wedge \neg (n = 0 \wedge m = p + 1 )\]\[C = 1 \le n \wedge q = p \wedge
     |\arg(\eta)| \ne (\delta - 2k)\pi \text{ for } k = 0, 1, \ldots \left\lceil \frac{\delta}{2}
     \right\rceil.\]
+  id: totrans-44
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: \[A = 1 \le n \wedge p < q \wedge 1 \le m\]\[B = 1 \le p \wedge 1 \le m \wedge
+    q = p+1 \wedge \neg (n = 0 \wedge m = p + 1 )\]\[C = 1 \le n \wedge q = p \wedge
+    |\arg(\eta)| \ne (\delta - 2k)\pi \text{ for } k = 0, 1, \ldots \left\lceil \frac{\delta}{2}
+    \right\rceil.\]
 - en: \[n = 0 \wedge p + 1 \le m \wedge |\arg(\eta)| < \delta \pi\]
+  id: totrans-45
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[n = 0 \wedge p + 1 \le m \wedge |\arg(\eta)| < \delta \pi\]
 - en: \[(p < q \wedge 1 \le m \wedge \delta > 0 \wedge |\arg(\eta)| = \delta \pi)
     \vee (p \le q - 2 \wedge \delta = 0 \wedge \arg(\eta) = 0)\]
+  id: totrans-46
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[(p < q \wedge 1 \le m \wedge \delta > 0 \wedge |\arg(\eta)| = \delta \pi)
+    \vee (p \le q - 2 \wedge \delta = 0 \wedge \arg(\eta) = 0)\]
 - en: \[p = q \wedge \delta = 0 \wedge \arg(\eta) = 0 \wedge \eta \ne 0 \wedge \Re\left(\sum_{j=1}^p
     b_j - a_j \right) < 0\]
+  id: totrans-47
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p = q \wedge \delta = 0 \wedge \arg(\eta) = 0 \wedge \eta \ne 0 \wedge \Re\left(\sum_{j=1}^p
+    b_j - a_j \right) < 0\]
 - en: \[\delta > 0 \wedge |\arg(\eta)| < \delta \pi\]
+  id: totrans-48
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[\delta > 0 \wedge |\arg(\eta)| < \delta \pi\]
 - en: 'And these are the conditions “at zero”:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 而这些是“零点”的条件：
 - en: \[\eta \ne 0 \wedge C_3\]
+  id: totrans-50
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[\eta \ne 0 \wedge C_3\]
 - en: \[C_3\]
+  id: totrans-51
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[C_3\]
 - en: \[C_3 \wedge C_4\]
+  id: totrans-52
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[C_3 \wedge C_4\]
 - en: \[C_3\]
+  id: totrans-53
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[C_3\]
 - en: \[C_3\]
+  id: totrans-54
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[C_3\]
 - en: Conditions of Convergence for Integral (2)
+  id: totrans-55
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 积分（2）的收敛条件
 - en: 'We introduce the following notation:'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们引入以下符号：
 - en: '\[b^* = s + t - \frac{u + v}{2}\]\[c^* = m + n - \frac{p + q}{2}\]\[\rho =
     \sum_{j=1}^v d_j - \sum_{j=1}^u c_j + \frac{u - v}{2} + 1\]\[\mu = \sum_{j=1}^q
     b_j - \sum_{j=1}^p a_j + \frac{p - q}{2} + 1\]\[\phi = q - p - \frac{u - v}{2}
@@ -344,11 +489,30 @@
     & \text{for}\: \arg(\omega) = 0 \wedge \arg(\sigma) \ne 0) \\\operatorname{\lambda_{s0}}\left(\operatorname{sign}\left(\operatorname{\arg}\left(\omega\right)\right),\operatorname{sign}\left(\operatorname{\arg}\left(\sigma\right)\right)\right)
     & \text{otherwise} \end{cases}\end{split}\]\[z_0 = \frac{\omega}{\sigma} e^{-i\pi
     (b^* + c^*)}\]\[z_1 = \frac{\sigma}{\omega} e^{-i\pi (b^* + c^*)}\]'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: '\[b^* = s + t - \frac{u + v}{2}\]\[c^* = m + n - \frac{p + q}{2}\]\[\rho =
+    \sum_{j=1}^v d_j - \sum_{j=1}^u c_j + \frac{u - v}{2} + 1\]\[\mu = \sum_{j=1}^q
+    b_j - \sum_{j=1}^p a_j + \frac{p - q}{2} + 1\]\[\phi = q - p - \frac{u - v}{2}
+    + 1\]\[\eta = 1 - (v - u) - \mu - \rho\]\[\psi = \frac{\pi(q - m - n) + |\arg(\omega)|}{q
+    - p}\]\[\theta = \frac{\pi(v - s - t) + |\arg(\sigma)|)}{v - u}\]\[\lambda_c =
+    (q - p)|\omega|^{1/(q - p)} \cos{\psi} + (v - u)|\sigma|^{1/(v - u)} \cos{\theta}\]\[\lambda_{s0}(c_1,
+    c_2) = c_1 (q - p)|\omega|^{1/(q - p)} \sin{\psi} + c_2 (v - u)|\sigma|^{1/(v
+    - u)} \sin{\theta}\]\[\begin{split}\lambda_s = \begin{cases} \operatorname{\lambda_{s0}}\left(-1,-1\right)
+    \operatorname{\lambda_{s0}}\left(1,1\right) & \text{for}\: \arg(\omega) = 0 \wedge
+    \arg(\sigma) = 0 \\\operatorname{\lambda_{s0}}\left(\operatorname{sign}\left(\operatorname{\arg}\left(\omega\right)\right),-1\right)
+    \operatorname{\lambda_{s0}}\left(\operatorname{sign}\left(\operatorname{\arg}\left(\omega\right)\right),1\right)
+    & \text{for}\: \arg(\omega) \ne 0 \wedge \arg(\sigma) = 0 \\\operatorname{\lambda_{s0}}\left(-1,\operatorname{sign}\left(\operatorname{\arg}\left(\sigma\right)\right)\right)
+    \operatorname{\lambda_{s0}}\left(1,\operatorname{sign}\left(\operatorname{\arg}\left(\sigma\right)\right)\right)
+    & \text{for}\: \arg(\omega) = 0 \wedge \arg(\sigma) \ne 0) \\\operatorname{\lambda_{s0}}\left(\operatorname{sign}\left(\operatorname{\arg}\left(\omega\right)\right),\operatorname{sign}\left(\operatorname{\arg}\left(\sigma\right)\right)\right)
+    & \text{otherwise} \end{cases}\end{split}\]\[z_0 = \frac{\omega}{\sigma} e^{-i\pi
+    (b^* + c^*)}\]\[z_1 = \frac{\sigma}{\omega} e^{-i\pi (b^* + c^*)}\]'
 - en: 'The following conditions will be helpful:'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下条件将会非常有帮助：
 - en: '\[\begin{split}C_1: (a_i - b_j \notin \mathbb{Z}_{>0} \text{ for } i = 1, \ldots,
     n, j = 1, \ldots, m) \\ \wedge (c_i - d_j \notin \mathbb{Z}_{>0} \text{ for }
     i = 1, \ldots, t, j = 1, \ldots, s)\end{split}\]\[C_2: \Re(1 + b_i + d_j) > 0
@@ -372,300 +536,510 @@
     = 0 \wedge \lambda_s = 0 \wedge \Re(\eta) > 0)\]\[C_{16}: \int_0^\infty G_{u,
     v}^{s, t}(\sigma x) \mathrm{d} x \text{ converges at infinity }\]\[C_{17}: \int_0^\infty
     G_{p, q}^{m, n}(\omega x) \mathrm{d} x \text{ converges at infinity }\]'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '\[\begin{split}C_1: (a_i - b_j \notin \mathbb{Z}_{>0} \text{ for } i = 1, \ldots,
+    n, j = 1, \ldots, m) \\ \wedge (c_i - d_j \notin \mathbb{Z}_{>0} \text{ for }
+    i = 1, \ldots, t, j = 1, \ldots, s)\end{split}\]\[C_2: \Re(1 + b_i + d_j) > 0
+    \text{ for } i = 1, \ldots, m, j = 1, \ldots, s\]\[C_3: \Re(a_i + c_j) < 1 \text{
+    for } i = 1, \ldots, n, j = 1, \ldots, t\]\[C_4: (p - q)\Re(c_i) - \Re(\mu) >
+    -\frac{3}{2} \text{ for } i=1, \ldots, t\]\[C_5: (p - q)\Re(1 + d_i) - \Re(\mu)
+    > -\frac{3}{2} \text{ for } i=1, \ldots, s\]\[C_6: (u - v)\Re(a_i) - \Re(\rho)
+    > -\frac{3}{2} \text{ for } i=1, \ldots, n\]\[C_7: (u - v)\Re(1 + b_i) - \Re(\rho)
+    > -\frac{3}{2} \text{ for } i=1, \ldots, m\]\[C_8: 0 < \lvert{\phi}\rvert + 2
+    \Re\left(\left(\mu -1\right) \left(- u + v\right) + \left(- p + q\right) \left(\rho
+    -1\right) + \left(- p + q\right) \left(- u + v\right)\right)\]\[C_9: 0 < \lvert{\phi}\rvert
+    - 2 \Re\left(\left(\mu -1\right) \left(- u + v\right) + \left(- p + q\right) \left(\rho
+    -1\right) + \left(- p + q\right) \left(- u + v\right)\right)\]\[C_{10}: \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
+    < \pi b^{*}\]\[C_{11}: \lvert{\operatorname{arg}\left(\sigma\right)}\rvert = \pi
+    b^{*}\]\[C_{12}: |\arg(\omega)| < c^*\pi\]\[C_{13}: |\arg(\omega)| = c^*\pi\]\[C_{14}^1:
+    \left(z_0 \ne 1 \wedge |\arg(1 - z_0)| < \pi \right) \vee \left(z_0 = 1 \wedge
+    \Re(\mu + \rho - u + v) < 1 \right)\]\[C_{14}^2: \left(z_1 \ne 1 \wedge |\arg(1
+    - z_1)| < \pi \right) \vee \left(z_1 = 1 \wedge \Re(\mu + \rho - p + q) < 1 \right)\]\[C_{14}:
+    \phi = 0 \wedge b^* + c^* \le 1 \wedge (C_{14}^1 \vee C_{14}^2)\]\[C_{15}: \lambda_c
+    > 0 \vee (\lambda_c = 0 \wedge \lambda_s \ne 0 \wedge \Re(\eta) > -1) \vee (\lambda_c
+    = 0 \wedge \lambda_s = 0 \wedge \Re(\eta) > 0)\]\[C_{16}: \int_0^\infty G_{u,
+    v}^{s, t}(\sigma x) \mathrm{d} x \text{ 在无穷远处收敛 }\]\[C_{17}: \int_0^\infty G_{p,
+    q}^{m, n}(\omega x) \mathrm{d} x \text{ 在无穷远处收敛 }\]'
 - en: Note that \(C_{16}\) and \(C_{17}\) are the reason we split the convergence
     conditions for integral (1).
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意 \(C_{16}\) 和 \(C_{17}\) 是我们为积分 (1) 拆分收敛条件的原因。
 - en: 'With this notation established, the implemented convergence conditions can
     be enumerated as follows:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 确定了这些符号后，实施的收敛条件可以列举如下：
 - en: \[m n s t \neq 0 \wedge 0 < b^{*} \wedge 0 < c^{*} \wedge C_{1} \wedge C_{2}
     \wedge C_{3} \wedge C_{10} \wedge C_{12}\]
+  id: totrans-62
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[m n s t \neq 0 \wedge 0 < b^{*} \wedge 0 < c^{*} \wedge C_{1} \wedge C_{2}
+    \wedge C_{3} \wedge C_{10} \wedge C_{12}\]
 - en: \[u = v \wedge b^{*} = 0 \wedge 0 < c^{*} \wedge 0 < \sigma \wedge \Re{\rho}
     < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{12}\]
+  id: totrans-63
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[u = v \wedge b^{*} = 0 \wedge 0 < c^{*} \wedge 0 < \sigma \wedge \Re{\rho}
+    < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{12}\]
 - en: \[p = q \wedge u = v \wedge b^{*} = 0 \wedge c^{*} = 0 \wedge 0 < \sigma \wedge
     0 < \omega \wedge \Re{\mu} < 1 \wedge \Re{\rho} < 1 \wedge \sigma \neq \omega
     \wedge C_{1} \wedge C_{2} \wedge C_{3}\]
+  id: totrans-64
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p = q \wedge u = v \wedge b^{*} = 0 \wedge c^{*} = 0 \wedge 0 < \sigma \wedge
+    0 < \omega \wedge \Re{\mu} < 1 \wedge \Re{\rho} < 1 \wedge \sigma \neq \omega
+    \wedge C_{1} \wedge C_{2} \wedge C_{3}\]
 - en: \[p = q \wedge u = v \wedge b^{*} = 0 \wedge c^{*} = 0 \wedge 0 < \sigma \wedge
     0 < \omega \wedge \Re\left(\mu + \rho\right) < 1 \wedge \omega \neq \sigma \wedge
     C_{1} \wedge C_{2} \wedge C_{3}\]
+  id: totrans-65
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p = q \wedge u = v \wedge b^{*} = 0 \wedge c^{*} = 0 \wedge 0 < \sigma \wedge
+    0 < \omega \wedge \Re\left(\mu + \rho\right) < 1 \wedge \omega \neq \sigma \wedge
+    C_{1} \wedge C_{2} \wedge C_{3}\]
 - en: \[p = q \wedge u = v \wedge b^{*} = 0 \wedge c^{*} = 0 \wedge 0 < \sigma \wedge
     0 < \omega \wedge \Re\left(\mu + \rho\right) < 1 \wedge \omega \neq \sigma \wedge
     C_{1} \wedge C_{2} \wedge C_{3}\]
+  id: totrans-66
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p = q \wedge u = v \wedge b^{*} = 0 \wedge c^{*} = 0 \wedge 0 < \sigma \wedge
+    0 < \omega \wedge \Re\left(\mu + \rho\right) < 1 \wedge \omega \neq \sigma \wedge
+    C_{1} \wedge C_{2} \wedge C_{3}\]
 - en: \[q < p \wedge 0 < s \wedge 0 < b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
     C_{2} \wedge C_{3} \wedge C_{5} \wedge C_{10} \wedge C_{13}\]
+  id: totrans-67
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[q < p \wedge 0 < s \wedge 0 < b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
+    C_{2} \wedge C_{3} \wedge C_{5} \wedge C_{10} \wedge C_{13}\]
 - en: \[p < q \wedge 0 < t \wedge 0 < b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
     C_{2} \wedge C_{3} \wedge C_{4} \wedge C_{10} \wedge C_{13}\]
+  id: totrans-68
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p < q \wedge 0 < t \wedge 0 < b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
+    C_{2} \wedge C_{3} \wedge C_{4} \wedge C_{10} \wedge C_{13}\]
 - en: \[v < u \wedge 0 < m \wedge 0 < c^{*} \wedge 0 \leq b^{*} \wedge C_{1} \wedge
     C_{2} \wedge C_{3} \wedge C_{7} \wedge C_{11} \wedge C_{12}\]
+  id: totrans-69
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[v < u \wedge 0 < m \wedge 0 < c^{*} \wedge 0 \leq b^{*} \wedge C_{1} \wedge
+    C_{2} \wedge C_{3} \wedge C_{7} \wedge C_{11} \wedge C_{12}\]
 - en: \[u < v \wedge 0 < n \wedge 0 < c^{*} \wedge 0 \leq b^{*} \wedge C_{1} \wedge
     C_{2} \wedge C_{3} \wedge C_{6} \wedge C_{11} \wedge C_{12}\]
+  id: totrans-70
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[u < v \wedge 0 < n \wedge 0 < c^{*} \wedge 0 \leq b^{*} \wedge C_{1} \wedge
+    C_{2} \wedge C_{3} \wedge C_{6} \wedge C_{11} \wedge C_{12}\]
 - en: \[q < p \wedge u = v \wedge b^{*} = 0 \wedge 0 \leq c^{*} \wedge 0 < \sigma
     \wedge \Re{\rho} < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{5} \wedge
     C_{13}\]
+  id: totrans-71
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[q < p \wedge u = v \wedge b^{*} = 0 \wedge 0 \leq c^{*} \wedge 0 < \sigma
+    \wedge \Re{\rho} < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{5} \wedge
+    C_{13}\]
 - en: \[p < q \wedge u = v \wedge b^{*} = 0 \wedge 0 \leq c^{*} \wedge 0 < \sigma
     \wedge \Re{\rho} < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{4} \wedge
     C_{13}\]
+  id: totrans-72
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p < q \wedge u = v \wedge b^{*} = 0 \wedge 0 \leq c^{*} \wedge 0 < \sigma
+    \wedge \Re{\rho} < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{4} \wedge
+    C_{13}\]
 - en: \[p = q \wedge v < u \wedge 0 \leq b^{*} \wedge c^{*} = 0 \wedge 0 < \omega
     \wedge \Re{\mu} < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{7} \wedge
     C_{11}\]
+  id: totrans-73
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p = q \wedge v < u \wedge 0 \leq b^{*} \wedge c^{*} = 0 \wedge 0 < \omega
+    \wedge \Re{\mu} < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{7} \wedge
+    C_{11}\]
 - en: \[p = q \wedge u < v \wedge 0 \leq b^{*} \wedge c^{*} = 0 \wedge 0 < \omega
     \wedge \Re{\mu} < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{6} \wedge
     C_{11}\]
+  id: totrans-74
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p = q \wedge u < v \wedge 0 \leq b^{*} \wedge c^{*} = 0 \wedge 0 < \omega
+    \wedge \Re{\mu} < 1 \wedge C_{1} \wedge C_{2} \wedge C_{3} \wedge C_{6} \wedge
+    C_{11}\]
 - en: \[p < q \wedge v < u \wedge 0 \leq b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
     C_{2} \wedge C_{3} \wedge C_{4} \wedge C_{7} \wedge C_{11} \wedge C_{13}\]
+  id: totrans-75
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p < q \wedge v < u \wedge 0 \leq b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
+    C_{2} \wedge C_{3} \wedge C_{4} \wedge C_{7} \wedge C_{11} \wedge C_{13}\]
 - en: \[q < p \wedge u < v \wedge 0 \leq b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
     C_{2} \wedge C_{3} \wedge C_{5} \wedge C_{6} \wedge C_{11} \wedge C_{13}\]
+  id: totrans-76
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[q < p \wedge u < v \wedge 0 \leq b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
+    C_{2} \wedge C_{3} \wedge C_{5} \wedge C_{6} \wedge C_{11} \wedge C_{13}\]
 - en: \[q < p \wedge v < u \wedge 0 \leq b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
     C_{2} \wedge C_{3} \wedge C_{5} \wedge C_{7} \wedge C_{8} \wedge C_{11} \wedge
     C_{13} \wedge C_{14}\]
+  id: totrans-77
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[q < p \wedge v < u \wedge 0 \leq b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
+    C_{2} \wedge C_{3} \wedge C_{5} \wedge C_{7} \wedge C_{8} \wedge C_{11} \wedge
+    C_{13} \wedge C_{14}\]
 - en: \[p < q \wedge u < v \wedge 0 \leq b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
     C_{2} \wedge C_{3} \wedge C_{4} \wedge C_{6} \wedge C_{9} \wedge C_{11} \wedge
     C_{13} \wedge C_{14}\]
+  id: totrans-78
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p < q \wedge u < v \wedge 0 \leq b^{*} \wedge 0 \leq c^{*} \wedge C_{1} \wedge
+    C_{2} \wedge C_{3} \wedge C_{4} \wedge C_{6} \wedge C_{9} \wedge C_{11} \wedge
+    C_{13} \wedge C_{14}\]
 - en: \[t = 0 \wedge 0 < s \wedge 0 < b^{*} \wedge 0 < \phi \wedge C_{1} \wedge C_{2}
     \wedge C_{10}\]
+  id: totrans-79
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[t = 0 \wedge 0 < s \wedge 0 < b^{*} \wedge 0 < \phi \wedge C_{1} \wedge C_{2}
+    \wedge C_{10}\]
 - en: \[s = 0 \wedge 0 < t \wedge 0 < b^{*} \wedge \phi < 0 \wedge C_{1} \wedge C_{3}
     \wedge C_{10}\]
+  id: totrans-80
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[s = 0 \wedge 0 < t \wedge 0 < b^{*} \wedge \phi < 0 \wedge C_{1} \wedge C_{3}
+    \wedge C_{10}\]
 - en: \[n = 0 \wedge 0 < m \wedge 0 < c^{*} \wedge \phi < 0 \wedge C_{1} \wedge C_{2}
     \wedge C_{12}\]
+  id: totrans-81
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[n = 0 \wedge 0 < m \wedge 0 < c^{*} \wedge \phi < 0 \wedge C_{1} \wedge C_{2}
+    \wedge C_{12}\]
 - en: \[m = 0 \wedge 0 < n \wedge 0 < c^{*} \wedge 0 < \phi \wedge C_{1} \wedge C_{3}
     \wedge C_{12}\]
+  id: totrans-82
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[m = 0 \wedge 0 < n \wedge 0 < c^{*} \wedge 0 < \phi \wedge C_{1} \wedge C_{3}
+    \wedge C_{12}\]
 - en: \[s t = 0 \wedge 0 < b^{*} \wedge 0 < c^{*} \wedge C_{1} \wedge C_{2} \wedge
     C_{3} \wedge C_{10} \wedge C_{12}\]
+  id: totrans-83
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[s t = 0 \wedge 0 < b^{*} \wedge 0 < c^{*} \wedge C_{1} \wedge C_{2} \wedge
+    C_{3} \wedge C_{10} \wedge C_{12}\]
 - en: \[m n = 0 \wedge 0 < b^{*} \wedge 0 < c^{*} \wedge C_{1} \wedge C_{2} \wedge
     C_{3} \wedge C_{10} \wedge C_{12}\]
+  id: totrans-84
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[m n = 0 \wedge 0 < b^{*} \wedge 0 < c^{*} \wedge C_{1} \wedge C_{2} \wedge
+    C_{3} \wedge C_{10} \wedge C_{12}\]
 - en: \[p < m + n \wedge t = 0 \wedge \phi = 0 \wedge 0 < s \wedge 0 < b^{*} \wedge
     c^{*} < 0 \wedge \lvert{\operatorname{arg}\left(\omega\right)}\rvert < \pi \left(m
     + n - p + 1\right) \wedge C_{1} \wedge C_{2} \wedge C_{10} \wedge C_{14} \wedge
     C_{15}\]
+  id: totrans-85
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p < m + n \wedge t = 0 \wedge \phi = 0 \wedge 0 < s \wedge 0 < b^{*} \wedge
+    c^{*} < 0 \wedge \lvert{\operatorname{arg}\left(\omega\right)}\rvert < \pi \left(m
+    + n - p + 1\right) \wedge C_{1} \wedge C_{2} \wedge C_{10} \wedge C_{14} \wedge
+    C_{15}\]
 - en: \[q < m + n \wedge s = 0 \wedge \phi = 0 \wedge 0 < t \wedge 0 < b^{*} \wedge
     c^{*} < 0 \wedge \lvert{\operatorname{arg}\left(\omega\right)}\rvert < \pi \left(m
     + n - q + 1\right) \wedge C_{1} \wedge C_{3} \wedge C_{10} \wedge C_{14} \wedge
     C_{15}\]
+  id: totrans-86
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[q < m + n \wedge s = 0 \wedge \phi = 0 \wedge 0 < t \wedge 0 < b^{*} \wedge
+    c^{*} < 0 \wedge \lvert{\operatorname{arg}\left(\omega\right)}\rvert < \pi \left(m
+    + n - q + 1\right) \wedge C_{1} \wedge C_{3} \wedge C_{10} \wedge C_{14} \wedge
+    C_{15}\]
 - en: \[p = q -1 \wedge t = 0 \wedge \phi = 0 \wedge 0 < s \wedge 0 < b^{*} \wedge
     0 \leq c^{*} \wedge \pi c^{*} < \lvert{\operatorname{arg}\left(\omega\right)}\rvert
     \wedge C_{1} \wedge C_{2} \wedge C_{10} \wedge C_{14} \wedge C_{15}\]
+  id: totrans-87
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p = q -1 \wedge t = 0 \wedge \phi = 0 \wedge 0 < s \wedge 0 < b^{*} \wedge
+    0 \leq c^{*} \wedge \pi c^{*} < \lvert{\operatorname{arg}\left(\omega\right)}\rvert
+    \wedge C_{1} \wedge C_{2} \wedge C_{10} \wedge C_{14} \wedge C_{15}\]
 - en: \[p = q + 1 \wedge s = 0 \wedge \phi = 0 \wedge 0 < t \wedge 0 < b^{*} \wedge
     0 \leq c^{*} \wedge \pi c^{*} < \lvert{\operatorname{arg}\left(\omega\right)}\rvert
     \wedge C_{1} \wedge C_{3} \wedge C_{10} \wedge C_{14} \wedge C_{15}\]
+  id: totrans-88
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p = q + 1 \wedge s = 0 \wedge \phi = 0 \wedge 0 < t \wedge 0 < b^{*} \wedge
+    0 \leq c^{*} \wedge \pi c^{*} < \lvert{\operatorname{arg}\left(\omega\right)}\rvert
+    \wedge C_{1} \wedge C_{3} \wedge C_{10} \wedge C_{14} \wedge C_{15}\]
 - en: \[p < q -1 \wedge t = 0 \wedge \phi = 0 \wedge 0 < s \wedge 0 < b^{*} \wedge
     0 \leq c^{*} \wedge \pi c^{*} < \lvert{\operatorname{arg}\left(\omega\right)}\rvert
     \wedge \lvert{\operatorname{arg}\left(\omega\right)}\rvert < \pi \left(m + n -
     p + 1\right) \wedge C_{1} \wedge C_{2} \wedge C_{10} \wedge C_{14} \wedge C_{15}\]
+  id: totrans-89
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[p < q -1 \wedge t = 0 \wedge \phi = 0 \wedge 0 < s \wedge 0 < b^{*} \wedge
+    0 \leq c^{*} \wedge \pi c^{*} < \lvert{\operatorname{arg}\left(\omega\right)}\rvert
+    \wedge \lvert{\operatorname{arg}\left(\omega\right)}\rvert < \pi \left(m + n -
+    p + 1\right) \wedge C_{1} \wedge C_{2} \wedge C_{10} \wedge C_{14} \wedge C_{15}\]
 - en: \[q + 1 < p \wedge s = 0 \wedge \phi = 0 \wedge 0 < t \wedge 0 < b^{*} \wedge
     0 \leq c^{*} \wedge \pi c^{*} < \lvert{\operatorname{arg}\left(\omega\right)}\rvert
     \wedge \lvert{\operatorname{arg}\left(\omega\right)}\rvert < \pi \left(m + n -
     q + 1 \right) \wedge C_{1} \wedge C_{3} \wedge C_{10} \wedge C_{14} \wedge C_{15}\]
+  id: totrans-90
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[q + 1 < p \wedge s = 0 \wedge \phi = 0 \wedge 0 < t \wedge 0 < b^{*} \wedge
+    0 \leq c^{*} \wedge \pi c^{*} < \lvert{\operatorname{arg}\left(\omega\right)}\rvert
+    \wedge \lvert{\operatorname{arg}\left(\omega\right)}\rvert < \pi \left(m + n -
+    q + 1 \right) \wedge C_{1} \wedge C_{3} \wedge C_{10} \wedge C_{14} \wedge C_{15}\]
 - en: \[n = 0 \wedge \phi = 0 \wedge 0 < s + t \wedge 0 < m \wedge 0 < c^{*} \wedge
     b^{*} < 0 \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(s
     + t - u + 1\right) \wedge C_{1} \wedge C_{2} \wedge C_{12} \wedge C_{14} \wedge
     C_{15}\]
+  id: totrans-91
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[n = 0 \wedge \phi = 0 \wedge 0 < s + t \wedge 0 < m \wedge 0 < c^{*} \wedge
+    b^{*} < 0 \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(s
+    + t - u + 1\right) \wedge C_{1} \wedge C_{2} \wedge C_{12} \wedge C_{14} \wedge
+    C_{15}\]
 - en: \[m = 0 \wedge \phi = 0 \wedge v < s + t \wedge 0 < n \wedge 0 < c^{*} \wedge
     b^{*} < 0 \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(s
     + t - v + 1\right) \wedge C_{1} \wedge C_{3} \wedge C_{12} \wedge C_{14} \wedge
     C_{15}\]
+  id: totrans-92
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[m = 0 \wedge \phi = 0 \wedge v < s + t \wedge 0 < n \wedge 0 < c^{*} \wedge
+    b^{*} < 0 \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(s
+    + t - v + 1\right) \wedge C_{1} \wedge C_{3} \wedge C_{12} \wedge C_{14} \wedge
+    C_{15}\]
 - en: \[n = 0 \wedge \phi = 0 \wedge u = v -1 \wedge 0 < m \wedge 0 < c^{*} \wedge
     0 \leq b^{*} \wedge \pi b^{*} < \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
     \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(b^{*} +
     1\right) \wedge C_{1} \wedge C_{2} \wedge C_{12} \wedge C_{14} \wedge C_{15}\]
+  id: totrans-93
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[n = 0 \wedge \phi = 0 \wedge u = v -1 \wedge 0 < m \wedge 0 < c^{*} \wedge
+    0 \leq b^{*} \wedge \pi b^{*} < \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
+    \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(b^{*} +
+    1\right) \wedge C_{1} \wedge C_{2} \wedge C_{12} \wedge C_{14} \wedge C_{15}\]
 - en: \[m = 0 \wedge \phi = 0 \wedge u = v + 1 \wedge 0 < n \wedge 0 < c^{*} \wedge
     0 \leq b^{*} \wedge \pi b^{*} < \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
     \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(b^{*} +
     1\right) \wedge C_{1} \wedge C_{3} \wedge C_{12} \wedge C_{14} \wedge C_{15}\]
+  id: totrans-94
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[m = 0 \wedge \phi = 0 \wedge u = v + 1 \wedge 0 < n \wedge 0 < c^{*} \wedge
+    0 \leq b^{*} \wedge \pi b^{*} < \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
+    \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(b^{*} +
+    1\right) \wedge C_{1} \wedge C_{3} \wedge C_{12} \wedge C_{14} \wedge C_{15}\]
 - en: \[n = 0 \wedge \phi = 0 \wedge u < v -1 \wedge 0 < m \wedge 0 < c^{*} \wedge
     0 \leq b^{*} \wedge \pi b^{*} < \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
     \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(s + t -
     u + 1\right) \wedge C_{1} \wedge C_{2} \wedge C_{12} \wedge C_{14} \wedge C_{15}\]
+  id: totrans-95
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[n = 0 \wedge \phi = 0 \wedge u < v -1 \wedge 0 < m \wedge 0 < c^{*} \wedge
+    0 \leq b^{*} \wedge \pi b^{*} < \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
+    \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(s + t -
+    u + 1\right) \wedge C_{1} \wedge C_{2} \wedge C_{12} \wedge C_{14} \wedge C_{15}\]
 - en: \[m = 0 \wedge \phi = 0 \wedge v + 1 < u \wedge 0 < n \wedge 0 < c^{*} \wedge
     0 \leq b^{*} \wedge \pi b^{*} < \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
     \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(s + t -
     v + 1 \right) \wedge C_{1} \wedge C_{3} \wedge C_{12} \wedge C_{14} \wedge C_{15}\]
+  id: totrans-96
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[m = 0 \wedge \phi = 0 \wedge v + 1 < u \wedge 0 < n \wedge 0 < c^{*} \wedge
+    0 \leq b^{*} \wedge \pi b^{*} < \lvert{\operatorname{arg}\left(\sigma\right)}\rvert
+    \wedge \lvert{\operatorname{arg}\left(\sigma\right)}\rvert < \pi \left(s + t -
+    v + 1 \right) \wedge C_{1} \wedge C_{3} \wedge C_{12} \wedge C_{14} \wedge C_{15}\]
 - en: \[C_{17} \wedge t = 0 \wedge u < s \wedge 0 < b^{*} \wedge C_{10} \wedge C_{1}
     \wedge C_{2} \wedge C_{3}\]
+  id: totrans-97
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[C_{17} \wedge t = 0 \wedge u < s \wedge 0 < b^{*} \wedge C_{10} \wedge C_{1}
+    \wedge C_{2} \wedge C_{3}\]
 - en: \[C_{17} \wedge s = 0 \wedge v < t \wedge 0 < b^{*} \wedge C_{10} \wedge C_{1}
     \wedge C_{2} \wedge C_{3}\]
+  id: totrans-98
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[C_{17} \wedge s = 0 \wedge v < t \wedge 0 < b^{*} \wedge C_{10} \wedge C_{1}
+    \wedge C_{2} \wedge C_{3}\]
 - en: \[C_{16} \wedge n = 0 \wedge p < m \wedge 0 < c^{*} \wedge C_{12} \wedge C_{1}
     \wedge C_{2} \wedge C_{3}\]
+  id: totrans-99
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[C_{16} \wedge n = 0 \wedge p < m \wedge 0 < c^{*} \wedge C_{12} \wedge C_{1}
+    \wedge C_{2} \wedge C_{3}\]
 - en: \[C_{16} \wedge m = 0 \wedge q < n \wedge 0 < c^{*} \wedge C_{12} \wedge C_{1}
     \wedge C_{2} \wedge C_{3}\]
+  id: totrans-100
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[C_{16} \wedge m = 0 \wedge q < n \wedge 0 < c^{*} \wedge C_{12} \wedge C_{1}
+    \wedge C_{2} \wedge C_{3}\]
 - en: The Inverse Laplace Transform of a G-function
+  id: totrans-101
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 一个 G-函数的拉普拉斯逆变换
 - en: The inverse laplace transform of a Meijer G-function can be expressed as another
     G-function. This is a fairly versatile method for computing this transform. However,
     I could not find the details in the literature, so I work them out here. In [[Luke1969]](../simplify/hyperexpand.html#luke1969),
     section 5.6.3, there is a formula for the inverse Laplace transform of a G-function
     of argument \(bz\), and convergence conditions are also given. However, we need
     a formula for argument \(bz^a\) for rational \(a\).
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: Meijer G-函数的拉普拉斯逆变换可以表示为另一个 G-函数。这是计算该变换的一种非常通用的方法。然而，我在文献中找不到详细信息，所以在这里进行了推导。在
+    [[Luke1969]](../simplify/hyperexpand.html#luke1969) 的第5.6.3节中，给出了关于 G-函数的拉普拉斯逆变换的公式，同时也给出了收敛条件。然而，我们需要一个关于参数
+    \(bz^a\) 的公式，其中 \(a\) 是有理数。
 - en: We are asked to compute
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们被要求计算
 - en: \[f(t) = \frac{1}{2\pi i} \int_{c-i\infty}^{c+i\infty} e^{zt} G(bz^a) \mathrm{d}z,\]
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: \[f(t) = \frac{1}{2\pi i} \int_{c-i\infty}^{c+i\infty} e^{zt} G(bz^a) \mathrm{d}z,\]
 - en: 'for positive real \(t\). Three questions arise:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于正实数 \(t\)。三个问题出现：
 - en: When does this integral converge?
+  id: totrans-106
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 这个积分何时收敛？
 - en: How can we compute the integral?
+  id: totrans-107
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 怎样计算积分？
 - en: When is our computation valid?
+  id: totrans-108
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们的计算何时有效？
 - en: How to compute the integral
+  id: totrans-109
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何计算积分
 - en: We shall work formally for now. Denote by \(\Delta(s)\) the product of gamma
     functions appearing in the definition of \(G\), so that
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们暂时形式化处理。用 \(\Delta(s)\) 表示在 \(G\) 的定义中出现的伽玛函数的乘积，因此
 - en: \[G(z) = \frac{1}{2\pi i} \int_L \Delta(s) z^s \mathrm{d}s.\]
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: \[G(z) = \frac{1}{2\pi i} \int_L \Delta(s) z^s \mathrm{d}s.\]
 - en: Thus
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此
 - en: \[f(t) = \frac{1}{(2\pi i)^2} \int_{c - i\infty}^{c + i\infty} \int_L e^{zt}
     \Delta(s) b^s z^{as} \mathrm{d}s \mathrm{d}z.\]
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: \[f(t) = \frac{1}{(2\pi i)^2} \int_{c - i\infty}^{c + i\infty} \int_L e^{zt}
+    \Delta(s) b^s z^{as} \mathrm{d}s \mathrm{d}z.\]
 - en: We interchange the order of integration to get
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们交换积分的顺序得到
 - en: \[f(t) = \frac{1}{2\pi i} \int_L b^s \Delta(s) \int_{c-i\infty}^{c+i\infty}
     e^{zt} z^{as} \frac{\mathrm{d}z}{2\pi i} \mathrm{d}s.\]
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: \[f(t) = \frac{1}{2\pi i} \int_L b^s \Delta(s) \int_{c-i\infty}^{c+i\infty}
+    e^{zt} z^{as} \frac{\mathrm{d}z}{2\pi i} \mathrm{d}s.\]
 - en: The inner integral is easily seen to be \(\frac{1}{\Gamma(-as)} \frac{1}{t^{1+as}}\).
     (Using Cauchy’s theorem and Jordan’s lemma deform the contour to run from \(-\infty\)
     to \(-\infty\), encircling \(0\) once in the negative sense. For \(as\) real and
@@ -674,18 +1048,26 @@
     is then proved using the functional equation of the gamma function, and extended
     to the entire domain of convergence of the original integral by appealing to analytic
     continuation.) Hence we find
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 内积分很容易看出为 \(\frac{1}{\Gamma(-as)} \frac{1}{t^{1+as}}\)。（使用柯西定理和约当引理使轮廓从 \(-\infty\)
+    变形到 \(-\infty\)，围绕 \(0\) 一次。对于实数且大于一的 \(as\)，这个轮廓可以推到负实轴上，并且积分被识别为正弦和伽玛函数的乘积。然后利用伽玛函数的函数方程证明该公式，并通过解析延拓到原积分的收敛域）因此我们得到
 - en: \[f(t) = \frac{1}{t} \frac{1}{2\pi i} \int_L \Delta(s) \frac{1}{\Gamma(-as)}
     \left(\frac{b}{t^a}\right)^s \mathrm{d}s,\]
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: \[f(t) = \frac{1}{t} \frac{1}{2\pi i} \int_L \Delta(s) \frac{1}{\Gamma(-as)}
+    \left(\frac{b}{t^a}\right)^s \mathrm{d}s,\]
 - en: which is a so-called Fox H function (of argument \(\frac{b}{t^a}\)). For rational
     \(a\), this can be expressed as a Meijer G-function using the gamma function multiplication
     theorem.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
 - en: When this computation is valid
+  id: totrans-119
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -694,12 +1076,14 @@
     the inner integral has to converge. Also, for our identification of the final
     integral as a Fox H / Meijer G-function to be correct, the poles of the newly
     obtained gamma function must be separated properly.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
 - en: It is easy to check that the inner integral converges absolutely for \(\Re(as)
     < -1\). Thus the contour \(L\) has to run left of the line \(\Re(as) = -1\). Under
     this condition, the poles of the newly-introduced gamma function are separated
     properly.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
 - en: It remains to observe that the Meijer G-function is an analytic, unbranched
@@ -709,21 +1093,26 @@
     If we assume w.l.o.g. that \(a > 0\), then the latter condition is fulfilled if
     \(G\) converges along contours (2) or (3) of [[Luke1969]](../simplify/hyperexpand.html#luke1969),
     section 5.2, i.e. either \(\delta \ge \frac{a}{2}\) or \(p \ge 1, p \ge q\).
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
 - en: When the integral exists
+  id: totrans-123
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: Using [[Luke1969]](../simplify/hyperexpand.html#luke1969), section 5.10, for
     any given meijer G-function we can find a dominant term of the form \(z^a e^{bz^c}\)
     (although this expression might not be the best possible, because of cancellation).
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
 - en: We must thus investigate
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
 - en: \[\lim_{T \to \infty} \int_{c-iT}^{c+iT} e^{zt} z^a e^{bz^c} \mathrm{d}z.\]
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
 - en: (This principal value integral is the exact statement used in the Laplace inversion
@@ -731,27 +1120,33 @@
     and so \(e^{zt} \sim e^{it \tau}\) (where \(\sim\) shall always mean “asymptotically
     equivalent up to a positive real multiplicative constant”). Also \(z^{x + iy}
     \sim |\tau|^x e^{i y \log{|\tau|}} e^{\pm x i \frac{\pi}{2}}.\)
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
 - en: 'Set \(\omega_{\pm} = b e^{\pm i \Re(c) \frac{\pi}{2}}\). We have three cases:'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
 - en: \(b=0\) or \(\Re(c) \le 0\). In this case the integral converges if \(\Re(a)
     \le -1\).
+  id: totrans-129
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: \(b \ne 0\), \(\Im(c) = 0\), \(\Re(c) > 0\). In this case the integral converges
     if \(\Re(\omega_{\pm}) < 0\).
+  id: totrans-130
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: \(b \ne 0\), \(\Im(c) = 0\), \(\Re(c) > 0\), \(\Re(\omega_{\pm}) \le 0\), and
     at least one of \(\Re(\omega_{\pm}) = 0\). Here the same condition as in (1) applies.
+  id: totrans-131
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Implemented G-Function Formulae
+  id: totrans-132
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -762,11 +1157,15 @@
     number of parameters. This table is intended to shrink in future, when the algorithm’s
     capabilities of deriving new formulae improve. Of course it has to grow whenever
     a new class of special functions is to be dealt with.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 算法的一个重要部分是将各种函数表达为Meijer G函数的表格。实质上，这是一个掩盖着的Mellin变换表格。以下是自动生成的表格，显示了目前在SymPy中实现的公式。条目“generated”表示相应的G函数具有可变数量的参数。这张表格预计会在算法改进导出新公式的能力时缩减。当然，每当需要处理新的特殊函数类时，它也必须增长。
 - en: 'Elementary functions:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 基本函数：
 - en: \[\begin{split}a = a {G_{1, 1}^{1, 0}\left(\begin{matrix} & 1 \\0 & \end{matrix}
     \middle| {z} \right)} + a {G_{1, 1}^{0, 1}\left(\begin{matrix} 1 & \\ & 0 \end{matrix}
     \middle| {z} \right)}\end{split}\]\[\begin{split}\left(z^{q} p + b\right)^{- a}
@@ -801,11 +1200,48 @@
     - \frac{1}{2}} {G_{2, 2}^{2, 1}\left(\begin{matrix} \frac{1}{2} - \frac{b}{2}
     & \frac{b}{2} + \frac{1}{2} \\0, \frac{1}{2} & \end{matrix} \middle| {\frac{z^{q}
     p}{a}} \right)}}{\sqrt{\pi}}\end{split}\]
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数涉及\(\theta\left(z^{q} p - b\right)\)：
 - en: 'Functions involving \(\theta\left(z^{q} p - b\right)\):'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}a = a {G_{1, 1}^{1, 0}\left(\begin{matrix} & 1 \\0 & \end{matrix}
+    \middle| {z} \right)} + a {G_{1, 1}^{0, 1}\left(\begin{matrix} 1 & \\ & 0 \end{matrix}
+    \middle| {z} \right)}\end{split}\]\[\begin{split}\left(z^{q} p + b\right)^{- a}
+    = \frac{b^{- a} {G_{1, 1}^{1, 1}\left(\begin{matrix} 1 - a & \\0 & \end{matrix}
+    \middle| {\frac{z^{q} p}{b}} \right)}}{\Gamma\left(a\right)}\end{split}\]\[\begin{split}\frac{-
+    b^{a} + \left(z^{q} p\right)^{a}}{z^{q} p - b} = \frac{b^{a - 1} {G_{2, 2}^{2,
+    2}\left(\begin{matrix} 0, a & \\0, a & \end{matrix} \middle| {\frac{z^{q} p}{b}}
+    \right)} \sin{\left(\pi a \right)}}{\pi}\end{split}\]\[\begin{split}\left(a +
+    \sqrt{z^{q} p + a^{2}}\right)^{b} = - \frac{a^{b} b {G_{2, 2}^{1, 2}\left(\begin{matrix}
+    \frac{b}{2} + \frac{1}{2}, \frac{b}{2} + 1 & \\0 & b \end{matrix} \middle| {\frac{z^{q}
+    p}{a^{2}}} \right)}}{2 \sqrt{\pi}}\end{split}\]\[\begin{split}\left(- a + \sqrt{z^{q}
+    p + a^{2}}\right)^{b} = \frac{a^{b} b {G_{2, 2}^{1, 2}\left(\begin{matrix} \frac{b}{2}
+    + \frac{1}{2}, \frac{b}{2} + 1 & \\b & 0 \end{matrix} \middle| {\frac{z^{q} p}{a^{2}}}
+    \right)}}{2 \sqrt{\pi}}\end{split}\]\[\begin{split}\frac{\left(a + \sqrt{z^{q}
+    p + a^{2}}\right)^{b}}{\sqrt{z^{q} p + a^{2}}} = \frac{a^{b - 1} {G_{2, 2}^{1,
+    2}\left(\begin{matrix} \frac{b}{2}, \frac{b}{2} + \frac{1}{2} & \\0 & b \end{matrix}
+    \middle| {\frac{z^{q} p}{a^{2}}} \right)}}{\sqrt{\pi}}\end{split}\]\[\begin{split}\frac{\left(-
+    a + \sqrt{z^{q} p + a^{2}}\right)^{b}}{\sqrt{z^{q} p + a^{2}}} = \frac{a^{b -
+    1} {G_{2, 2}^{1, 2}\left(\begin{matrix} \frac{b}{2}, \frac{b}{2} + \frac{1}{2}
+    & \\b & 0 \end{matrix} \middle| {\frac{z^{q} p}{a^{2}}} \right)}}{\sqrt{\pi}}\end{split}\]\[\begin{split}\left(z^{\frac{q}{2}}
+    \sqrt{p} + \sqrt{z^{q} p + a}\right)^{b} = - \frac{a^{\frac{b}{2}} b {G_{2, 2}^{2,
+    1}\left(\begin{matrix} \frac{b}{2} + 1 & 1 - \frac{b}{2} \\0, \frac{1}{2} & \end{matrix}
+    \middle| {\frac{z^{q} p}{a}} \right)}}{2 \sqrt{\pi}}\end{split}\]\[\begin{split}\left(-
+    z^{\frac{q}{2}} \sqrt{p} + \sqrt{z^{q} p + a}\right)^{b} = \frac{a^{\frac{b}{2}}
+    b {G_{2, 2}^{2, 1}\left(\begin{matrix} 1 - \frac{b}{2} & \frac{b}{2} + 1 \\0,
+    \frac{1}{2} & \end{matrix} \middle| {\frac{z^{q} p}{a}} \right)}}{2 \sqrt{\pi}}\end{split}\]\[\begin{split}\frac{\left(z^{\frac{q}{2}}
+    \sqrt{p} + \sqrt{z^{q} p + a}\right)^{b}}{\sqrt{z^{q} p + a}} = \frac{a^{\frac{b}{2}
+    - \frac{1}{2}} {G_{2, 2}^{2, 1}\left(\begin{matrix} \frac{b}{2} + \frac{1}{2}
+    & \frac{1}{2} - \frac{b}{2} \\0, \frac{1}{2} & \end{matrix} \middle| {\frac{z^{q}
+    p}{a}} \right)}}{\sqrt{\pi}}\end{split}\]\[\begin{split}\frac{\left(- z^{\frac{q}{2}}
+    \sqrt{p} + \sqrt{z^{q} p + a}\right)^{b}}{\sqrt{z^{q} p + a}} = \frac{a^{\frac{b}{2}
+    - \frac{1}{2}} {G_{2, 2}^{2, 1}\left(\begin{matrix} \frac{1}{2} - \frac{b}{2}
+    & \frac{b}{2} + \frac{1}{2} \\0, \frac{1}{2} & \end{matrix} \middle| {\frac{z^{q}
+    p}{a}} \right)}}{\sqrt{\pi}}\end{split}\]
 - en: \[\begin{split}\left(z^{q} p - b\right)^{a - 1} \theta\left(z^{q} p - b\right)
     = b^{a - 1} {G_{1, 1}^{0, 1}\left(\begin{matrix} a & \\ & 0 \end{matrix} \middle|
     {\frac{z^{q} p}{b}} \right)} \Gamma\left(a\right),\text{ if } b > 0\end{split}\]\[\begin{split}\left(-
@@ -818,73 +1254,94 @@
     z^{q} p + b\right)^{a - 1} \theta\left(- z + \left(\frac{b}{p}\right)^{\frac{1}{q}}\right)
     = b^{a - 1} {G_{1, 1}^{1, 0}\left(\begin{matrix} & a \\0 & \end{matrix} \middle|
     {\frac{z^{q} p}{b}} \right)} \Gamma\left(a\right),\text{ if } b > 0\end{split}\]
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\left|{z^{q} p - b}\right|\):'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\left|{z^{q} p - b}\right|^{- a} = 2 {G_{2, 2}^{1, 1}\left(\begin{matrix}
     1 - a & \frac{1}{2} - \frac{a}{2} \\0 & \frac{1}{2} - \frac{a}{2} \end{matrix}
     \middle| {\frac{z^{q} p}{b}} \right)} \sin{\left(\frac{\pi a}{2} \right)} \left|{b}\right|^{-
     a} \Gamma\left(1 - a\right),\text{ if } \operatorname{re}{\left(a\right)} < 1\end{split}\]
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(e^{z^{q} p e^{i \pi}}\):'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}e^{z^{q} p e^{i \pi}} = {G_{0, 1}^{1, 0}\left(\begin{matrix}
     & \\0 & \end{matrix} \middle| {z^{q} p} \right)}\end{split}\]
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\sinh{\left(z^{q} p \right)}\):'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\sinh{\left(z^{q} p \right)} = \pi^{\frac{3}{2}} {G_{1, 3}^{1,
     0}\left(\begin{matrix} & 1 \\\frac{1}{2} & 0, 1 \end{matrix} \middle| {\frac{z^{2
     q} p^{2}}{4}} \right)}\end{split}\]
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\cosh{\left(z^{q} p \right)}\):'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\cosh{\left(z^{q} p \right)} = \pi^{\frac{3}{2}} {G_{1, 3}^{1,
     0}\left(\begin{matrix} & \frac{1}{2} \\0 & \frac{1}{2}, \frac{1}{2} \end{matrix}
     \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\sin{\left(z^{q} p \right)}\):'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\sin{\left(z^{q} p \right)} = \sqrt{\pi} {G_{0, 2}^{1, 0}\left(\begin{matrix}
     & \\\frac{1}{2} & 0 \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\cos{\left(z^{q} p \right)}\):'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\cos{\left(z^{q} p \right)} = \sqrt{\pi} {G_{0, 2}^{1, 0}\left(\begin{matrix}
     & \\0 & \frac{1}{2} \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\operatorname{sinc}{\left(z^{q} p \right)}\):'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\operatorname{sinc}{\left(z^{q} p \right)} = \frac{\sqrt{\pi}
     {G_{0, 2}^{1, 0}\left(\begin{matrix} & \\0 & - \frac{1}{2} \end{matrix} \middle|
     {\frac{z^{2 q} p^{2}}{4}} \right)}}{2}\end{split}\]
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\log{\left(z^{q} p \right)}\), \(\theta\left(- z^{q}
     p + 1\right)\):'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
 - en: \[\log{\left(z^{q} p \right)}^{n} \theta\left(- z^{q} p + 1\right) = \text{generated}\]\[\log{\left(z^{q}
     p \right)}^{n} \theta\left(z^{q} p - 1\right) = \text{generated}\]
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\log{\left(z^{q} p \right)}^{n} \theta\left(- z^{q} p + 1\right) = \text{生成}\]\[\log{\left(z^{q}
+    p \right)}^{n} \theta\left(z^{q} p - 1\right) = \text{生成}\]
 - en: 'Functions involving \(\log{\left(z^{q} p \right)}\):'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及 \(\log{\left(z^{q} p \right)}\):'
 - en: \[\log{\left(z^{q} p \right)}^{n} = \text{generated}\]\[\begin{split}\log{\left(z^{q}
     p + a \right)} = {G_{1, 1}^{1, 0}\left(\begin{matrix} & 1 \\0 & \end{matrix} \middle|
     {z} \right)} \log{\left(a \right)} + {G_{1, 1}^{0, 1}\left(\begin{matrix} 1 &
@@ -896,594 +1353,851 @@
     & \\ & 0 \end{matrix} \middle| {z} \right)} \log{\left(\left|{a}\right| \right)}
     + \pi {G_{3, 3}^{1, 2}\left(\begin{matrix} 1, 1 & \frac{1}{2} \\1 & 0, \frac{1}{2}
     \end{matrix} \middle| {\frac{z^{q} p}{a}} \right)}\end{split}\]
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\log{\left(z^{q} p \right)}^{n} = \text{生成}\]\[\begin{split}\log{\left(z^{q}
+    p + a \right)} = {G_{1, 1}^{1, 0}\left(\begin{matrix} & 1 \\0 & \end{matrix} \middle|
+    {z} \right)} \log{\left(a \right)} + {G_{1, 1}^{0, 1}\left(\begin{matrix} 1 &
+    \\ & 0 \end{matrix} \middle| {z} \right)} \log{\left(a \right)} + {G_{2, 2}^{1,
+    2}\left(\begin{matrix} 1, 1 & \\1 & 0 \end{matrix} \middle| {\frac{z^{q} p}{a}}
+    \right)}\end{split}\]\[\begin{split}\log{\left(\left|{z^{q} p - a}\right| \right)}
+    = {G_{1, 1}^{1, 0}\left(\begin{matrix} & 1 \\0 & \end{matrix} \middle| {z} \right)}
+    \log{\left(\left|{a}\right| \right)} + {G_{1, 1}^{0, 1}\left(\begin{matrix} 1
+    & \\ & 0 \end{matrix} \middle| {z} \right)} \log{\left(\left|{a}\right| \right)}
+    + \pi {G_{3, 3}^{1, 2}\left(\begin{matrix} 1, 1 & \frac{1}{2} \\1 & 0, \frac{1}{2}
+    \end{matrix} \middle| {\frac{z^{q} p}{a}} \right)}\end{split}\]
 - en: 'Functions involving \(\operatorname{Ei}{\left(z^{q} p \right)}\):'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及 \(\operatorname{Ei}{\left(z^{q} p \right)}\):'
 - en: \[\begin{split}\operatorname{Ei}{\left(z^{q} p \right)} = - i \pi {G_{1, 1}^{1,
     0}\left(\begin{matrix} & 1 \\0 & \end{matrix} \middle| {z} \right)} - {G_{1, 2}^{2,
     0}\left(\begin{matrix} & 1 \\0, 0 & \end{matrix} \middle| {z^{q} p e^{i \pi}}
     \right)} - i \pi {G_{1, 1}^{0, 1}\left(\begin{matrix} 1 & \\ & 0 \end{matrix}
     \middle| {z} \right)}\end{split}\]
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{Ei}{\left(z^{q} p \right)} = - i \pi {G_{1, 1}^{1,
+    0}\left(\begin{matrix} & 1 \\0 & \end{matrix} \middle| {z} \right)} - {G_{1, 2}^{2,
+    0}\left(\begin{matrix} & 1 \\0, 0 & \end{matrix} \middle| {z^{q} p e^{i \pi}}
+    \right)} - i \pi {G_{1, 1}^{0, 1}\left(\begin{matrix} 1 & \\ & 0 \end{matrix}
+    \middle| {z} \right)}\end{split}\]
 - en: 'Functions involving \(\operatorname{Si}{\left(z^{q} p \right)}\):'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及 \(\operatorname{Si}{\left(z^{q} p \right)}\):'
 - en: \[\begin{split}\operatorname{Si}{\left(z^{q} p \right)} = \frac{\sqrt{\pi} {G_{1,
     3}^{1, 1}\left(\begin{matrix} 1 & \\\frac{1}{2} & 0, 0 \end{matrix} \middle| {\frac{z^{2
     q} p^{2}}{4}} \right)}}{2}\end{split}\]
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{Si}{\left(z^{q} p \right)} = \frac{\sqrt{\pi} {G_{1,
+    3}^{1, 1}\left(\begin{matrix} 1 & \\\frac{1}{2} & 0, 0 \end{matrix} \middle| {\frac{z^{2
+    q} p^{2}}{4}} \right)}}{2}\end{split}\]
 - en: 'Functions involving \(\operatorname{Ci}{\left(z^{q} p \right)}\):'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及 \(\operatorname{Ci}{\left(z^{q} p \right)}\):'
 - en: \[\begin{split}\operatorname{Ci}{\left(z^{q} p \right)} = - \frac{\sqrt{\pi}
     {G_{1, 3}^{2, 0}\left(\begin{matrix} & 1 \\0, 0 & \frac{1}{2} \end{matrix} \middle|
     {\frac{z^{2 q} p^{2}}{4}} \right)}}{2}\end{split}\]
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{Ci}{\left(z^{q} p \right)} = - \frac{\sqrt{\pi}
+    {G_{1, 3}^{2, 0}\left(\begin{matrix} & 1 \\0, 0 & \frac{1}{2} \end{matrix} \middle|
+    {\frac{z^{2 q} p^{2}}{4}} \right)}}{2}\end{split}\]
 - en: 'Functions involving \(\operatorname{Shi}{\left(z^{q} p \right)}\):'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及 \(\operatorname{Shi}{\left(z^{q} p \right)}\):'
 - en: \[\begin{split}\operatorname{Shi}{\left(z^{q} p \right)} = \frac{z^{q} \sqrt{\pi}
     p {G_{1, 3}^{1, 1}\left(\begin{matrix} \frac{1}{2} & \\0 & - \frac{1}{2}, - \frac{1}{2}
     \end{matrix} \middle| {\frac{z^{2 q} p^{2} e^{i \pi}}{4}} \right)}}{4}\end{split}\]
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{Shi}{\left(z^{q} p \right)} = \frac{z^{q} \sqrt{\pi}
+    p {G_{1, 3}^{1, 1}\left(\begin{matrix} \frac{1}{2} & \\0 & - \frac{1}{2}, - \frac{1}{2}
+    \end{matrix} \middle| {\frac{z^{2 q} p^{2} e^{i \pi}}{4}} \right)}}{4}\end{split}\]
 - en: 'Functions involving \(\operatorname{Chi}\left(z^{q} p\right)\):'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及 \(\operatorname{Chi}\left(z^{q} p\right)\):'
 - en: \[\begin{split}\operatorname{Chi}\left(z^{q} p\right) = - \frac{\pi^{\frac{3}{2}}
     {G_{2, 4}^{2, 0}\left(\begin{matrix} & \frac{1}{2}, 1 \\0, 0 & \frac{1}{2}, \frac{1}{2}
     \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}}{2}\end{split}\]
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{Chi}\left(z^{q} p\right) = - \frac{\pi^{\frac{3}{2}}
+    {G_{2, 4}^{2, 0}\left(\begin{matrix} & \frac{1}{2}, 1 \\0, 0 & \frac{1}{2}, \frac{1}{2}
+    \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}}{2}\end{split}\]
 - en: 'Functions involving \(\operatorname{E}_{a}\left(z^{q} p\right)\):'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及 \(\operatorname{E}_{a}\left(z^{q} p\right)\):'
 - en: \[\begin{split}\operatorname{E}_{a}\left(z^{q} p\right) = {G_{1, 2}^{2, 0}\left(\begin{matrix}
     & a \\0, a - 1 & \end{matrix} \middle| {z^{q} p} \right)}\end{split}\]
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{E}_{a}\left(z^{q} p\right) = {G_{1, 2}^{2, 0}\left(\begin{matrix}
+    & a \\0, a - 1 & \end{matrix} \middle| {z^{q} p} \right)}\end{split}\]
 - en: 'Functions involving \(\operatorname{erf}{\left(z^{q} p \right)}\):'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\operatorname{erf}{\left(z^{q} p \right)} = \frac{{G_{1, 2}^{1,
     1}\left(\begin{matrix} 1 & \\\frac{1}{2} & 0 \end{matrix} \middle| {z^{2 q} p^{2}}
     \right)}}{\sqrt{\pi}}\end{split}\]
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\operatorname{erfc}{\left(z^{q} p \right)}\):'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\operatorname{erfc}{\left(z^{q} p \right)} = \frac{{G_{1, 2}^{2,
     0}\left(\begin{matrix} & 1 \\0, \frac{1}{2} & \end{matrix} \middle| {z^{2 q} p^{2}}
     \right)}}{\sqrt{\pi}}\end{split}\]
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(\operatorname{erfi}{\left(z^{q} p \right)}\):'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\operatorname{erfi}{\left(z^{q} p \right)} = \frac{z^{q} p {G_{1,
     2}^{1, 1}\left(\begin{matrix} \frac{1}{2} & \\0 & - \frac{1}{2} \end{matrix} \middle|
     {- z^{2 q} p^{2}} \right)}}{\sqrt{\pi}}\end{split}\]
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(S\left(z^{q} p\right)\):'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}S\left(z^{q} p\right) = \frac{{G_{1, 3}^{1, 1}\left(\begin{matrix}
     1 & \\\frac{3}{4} & 0, \frac{1}{4} \end{matrix} \middle| {\frac{z^{4 q} \pi^{2}
     p^{4}}{16}} \right)}}{2}\end{split}\]
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(C\left(z^{q} p\right)\):'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}C\left(z^{q} p\right) = \frac{{G_{1, 3}^{1, 1}\left(\begin{matrix}
     1 & \\\frac{1}{4} & 0, \frac{3}{4} \end{matrix} \middle| {\frac{z^{4 q} \pi^{2}
     p^{4}}{16}} \right)}}{2}\end{split}\]
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(J_{a}\left(z^{q} p\right)\):'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}J_{a}\left(z^{q} p\right) = {G_{0, 2}^{1, 0}\left(\begin{matrix}
     & \\\frac{a}{2} & - \frac{a}{2} \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}}
     \right)}\end{split}\]
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(Y_{a}\left(z^{q} p\right)\):'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}Y_{a}\left(z^{q} p\right) = {G_{1, 3}^{2, 0}\left(\begin{matrix}
     & - \frac{a}{2} - \frac{1}{2} \\- \frac{a}{2}, \frac{a}{2} & - \frac{a}{2} - \frac{1}{2}
     \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(I_{a}\left(z^{q} p\right)\):'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}I_{a}\left(z^{q} p\right) = \pi {G_{1, 3}^{1, 0}\left(\begin{matrix}
     & \frac{a}{2} + \frac{1}{2} \\\frac{a}{2} & - \frac{a}{2}, \frac{a}{2} + \frac{1}{2}
     \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(K_{a}\left(z^{q} p\right)\):'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}K_{a}\left(z^{q} p\right) = \frac{{G_{0, 2}^{2, 0}\left(\begin{matrix}
     & \\- \frac{a}{2}, \frac{a}{2} & \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}}
     \right)}}{2}\end{split}\]
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(K\left(z^{q} p\right)\):'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}K\left(z^{q} p\right) = \frac{{G_{2, 2}^{1, 2}\left(\begin{matrix}
     \frac{1}{2}, \frac{1}{2} & \\0 & 0 \end{matrix} \middle| {- z^{q} p} \right)}}{2}\end{split}\]
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
 - en: 'Functions involving \(E\left(z^{q} p\right)\):'
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
 - en: '\[\begin{split}E\left(z^{q} p\right) = - \frac{{G_{2, 2}^{1, 2}\left(\begin{matrix}
     \frac{1}{2}, \frac{3}{2} & \\0 & 0 \end{matrix} \middle| {- z^{q} p} \right)}}{4}\end{split}\]
     ### Internal API Reference'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
 - en: Integrate functions by rewriting them as Meijer G-functions.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
 - en: 'There are three user-visible functions that can be used by other parts of the
     sympy library to solve various integration problems:'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
 - en: meijerint_indefinite
+  id: totrans-192
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: meijerint_definite
+  id: totrans-193
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: meijerint_inversion
+  id: totrans-194
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: They can be used to compute, respectively, indefinite integrals, definite integrals
     over intervals of the real line, and inverse laplace-type integrals (from c-I*oo
     to c+I*oo). See the respective docstrings for details.
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
 - en: 'The main references for this are:'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
 - en: '[L] Luke, Y. L. (1969), The Special Functions and Their Approximations,'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
 - en: Volume 1
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
 - en: '[R] Kelly B. Roach. Meijer G Function Representations.'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
 - en: 'In: Proceedings of the 1997 International Symposium on Symbolic and Algebraic
     Computation, pages 205-211, New York, 1997\. ACM.'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
 - en: '[P] A. P. Prudnikov, Yu. A. Brychkov and O. I. Marichev (1990).'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
 - en: 'Integrals and Series: More Special Functions, Vol. 3,. Gordon and Breach Science
     Publisher'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE0]'
+  id: totrans-203
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Exception raised by _get_coeff_exp, for internal use only.
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE1]'
+  id: totrans-205
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Return a condition under which the integral theorem applies.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE2]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Return a condition under which the mellin transform of g exists. Any power of
     x has already been absorbed into the G function, so this is just \(\int_0^\infty
     g\, dx\).
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
 - en: See [L, section 5.6.1]. (Note that s=1.)
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
 - en: If `helper` is True, only check if the MT exists at infinity, i.e. if \(\int_1^\infty
     g\, dx\) exists.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE3]'
+  id: totrans-211
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Check antecedents for the laplace inversion integral.
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE4]'
+  id: totrans-213
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Do naive simplifications on `cond`.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
 - en: Explanation
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
 - en: Note that this routine is completely ad-hoc, simplification rules being added
     as need arises rather than following any logical pattern.
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE5]'
+  id: totrans-218
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: '[PRE6]'
+  id: totrans-219
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Add formulae for the function -> meijerg lookup table.
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE7]'
+  id: totrans-221
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Return a dummy. This will return the same dummy if the same token+name is requested
     more than once, and it is not already in expr. This is for being cache-friendly.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE8]'
+  id: totrans-223
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Return a dummy associated to name and token. Same effect as declaring it globally.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-225
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Re-evaluate the conditions.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-227
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Find the exponents of `x` (not including zero) in `expr`.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-230
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: '[PRE12]'
+  id: totrans-231
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Find numbers a such that a linear substitution x -> x + a would (hopefully)
     simplify expr.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-234
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: '[PRE14]'
+  id: totrans-235
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Turn the G function into one of inverse argument (i.e. G(1/x) -> G’(x))
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-237
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Find the types of functions in expr, to estimate the complexity.
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-239
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: When expr is known to be of the form c*x**b, with c and/or b possibly 1, return
     c, b.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-242
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: '[PRE18]'
+  id: totrans-243
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Try to guess sensible rewritings for integrand f(x).
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-245
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Let d denote the integrand in the definition of the G function `g`. Consider
     the function H which is defined in the same way, but with integrand d/Gamma(a*s)
     (contour conventions as usual).
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
 - en: If `a` is rational, the function H can be written as C*G, for a constant C and
     a G-function G.
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: This function returns C, G.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-249
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: Return C, h such that h is a G function of argument z**n and g = C*h.
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-251
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: Express integral from zero to infinity g1*g2 using a G function, assuming the
     necessary conditions are fulfilled.
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-254
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: '[PRE23]'
+  id: totrans-255
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Evaluate \(\int_0^\infty g\, dx\) using G functions, assuming the necessary
     conditions are fulfilled.
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-258
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '[PRE25]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Compute the laplace inversion integral, assuming the formula applies.
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE26]'
+  id: totrans-261
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Check if f(x), when expressed using G functions on the positive reals, will
     in fact agree with the G functions almost everywhere
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE27]'
+  id: totrans-263
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: Try to integrate f dx from zero to infinity.
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
 - en: The body of this function computes various ‘simplifications’ f1, f2, … of f
     (e.g. by calling expand_mul(), trigexpand() - see _guess_expansion) and calls
     _meijerint_definite_3 with each of these in succession. If _meijerint_definite_3
     succeeds with any of the simplified functions, returns this result.
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE28]'
+  id: totrans-266
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: Try to integrate f dx from zero to infinity.
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
 - en: This function calls _meijerint_definite_4 to try to compute the integral. If
     this fails, it tries using linearity.
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE29]'
+  id: totrans-269
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: Try to integrate f dx from zero to infinity.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
 - en: Explanation
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
 - en: This function tries to apply the integration theorems found in literature, i.e.
     it tries to rewrite f as either one or a product of two G-functions.
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
 - en: The parameter `only_double` is used internally in the recursive algorithm to
     disable trying to rewrite f as a single G-function.
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE30]'
+  id: totrans-274
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: Helper that does not attempt any substitution.
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE31]'
+  id: totrans-276
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Return a list `L` such that `Mul(*L) == f`.
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
 - en: If `f` is not a `Mul` or `Pow`, `L=[f]`. If `f=g**n` for an integer `n`, `L=[g]*n`.
     If `f` is a `Mul`, `L` comes from applying `_mul_args` to all factors of `f`.
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE32]'
+  id: totrans-279
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: Find all the ways to split `f` into a product of two terms. Return None on failure.
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
 - en: Explanation
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
 - en: Although the order is canonical from multiset_partitions, this is not necessarily
     the best order to process the terms. For example, if the case of len(gs) == 2
     is removed and multiset is allowed to sort the terms, some tests fail.
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE33]'
+  id: totrans-284
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: '[PRE34]'
+  id: totrans-285
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: Bring expr nearer to its principal branch by removing superfluous factors. This
     function does *not* guarantee to yield the principal branch, to avoid introducing
     opaque principal_branch() objects, unless full_pb=True.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE35]'
+  id: totrans-287
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: Create a hashable entity describing the type of f.
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE36]'
+  id: totrans-289
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: Try to rewrite `f` using a (sum of) single G functions with argument a*x**b.
     Return fac, po, g such that f = fac*po*g, fac is independent of `x`. and po =
     x**s. Here g is a result from _rewrite_single. Return None on failure.
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE37]'
+  id: totrans-291
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: Try to rewrite `f` as a product of two G functions of arguments a*x**b. Return
     fac, po, g1, g2 such that f = fac*po*g1*g2, where fac is independent of x and
     po is x**s. Here g1 and g2 are results of _rewrite_single. Returns None on failure.
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE38]'
+  id: totrans-293
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: Absorb `po` == x**s into g.
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE39]'
+  id: totrans-295
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: Rewrite the integral `fac*po*g1*g2` from 0 to oo in terms of G functions with
     argument `c*x`.
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
 - en: Explanation
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
 - en: Return C, f1, f2 such that integral C f1 f2 from 0 to infinity equals integral
     fac `po`, `g1`, `g2` from 0 to infinity.
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE40]'
+  id: totrans-300
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: '[PRE41]'
+  id: totrans-301
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: Rewrite the integral fac*po*g dx, from zero to infinity, as integral fac*G,
     where G has argument a*x. Note po=x**s. Return fac, G.
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE42]'
+  id: totrans-303
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: Try to rewrite f as a sum of single G functions of the form C*x**s*G(a*x**b),
     where b is a rational number and C is independent of x. We guarantee that result.argument.as_coeff_mul(x)
     returns (a, (x**b,)) or (a, ()). Returns a list of tuples (C, s, G) and a condition
     cond. Returns None on failure.
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE43]'
+  id: totrans-305
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: Split expression `f` into fac, po, g, where fac is a constant factor, po = x**s
     for some s independent of s, and g is “the rest”.
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE44]'
+  id: totrans-308
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: '[PRE45]'
+  id: totrans-309
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: Integrate `f` over the interval [`a`, `b`], by rewriting it as a product of
     two G functions, or as a single G function.
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: Return res, cond, where cond are convergence conditions.
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE46]'
+  id: totrans-313
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: This function is implemented as a succession of functions meijerint_definite,
     _meijerint_definite_2, _meijerint_definite_3, _meijerint_definite_4\. Each function
     in the list calls the next one (presumably) several times. This means that calling
     meijerint_definite can be very costly.
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE47]'
+  id: totrans-315
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: Compute an indefinite integral of `f` by rewriting it as a G function.
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE48]'
+  id: totrans-318
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: '[PRE49]'
+  id: totrans-319
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: Compute the inverse laplace transform \(\int_{c+i\infty}^{c-i\infty} f(x) e^{tx}\,
     dx\), for real c larger than the real part of all singularities of `f`.
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
 - en: Note that `t` is always assumed real and positive.
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: Return None if the integral does not exist or could not be evaluated.
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
 - en: Examples
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE50]'
+  id: totrans-324
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
