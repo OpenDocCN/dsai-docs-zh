@@ -1817,6 +1817,8 @@
   id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 要更符合[`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT")的实现，重构方程 [(1)](#equation-eq-dstft) 为两个步骤是有意义的：
 - en: Extract the \(p\)-th slice by windowing with the window \(w[m]\) made up of
     \(M\) samples (see [`m_num`](../reference/generated/scipy.signal.ShortTimeFFT.m_num.html#scipy.signal.ShortTimeFFT.m_num
     "scipy.signal.ShortTimeFFT.m_num")) centered at \(t[p] := p \Delta t = h T\) (see
@@ -1826,6 +1828,9 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 通过窗口 \(w[m]\) 提取由 \(M\) 个样本组成的第 \(p\) 个切片（参见[`m_num`](../reference/generated/scipy.signal.ShortTimeFFT.m_num.html#scipy.signal.ShortTimeFFT.m_num
+    "scipy.signal.ShortTimeFFT.m_num")），其中心位于 \(t[p] := p \Delta t = h T\)（参见[`delta_t`](../reference/generated/scipy.signal.ShortTimeFFT.delta_t.html#scipy.signal.ShortTimeFFT.delta_t
+    "scipy.signal.ShortTimeFFT.delta_t")），即，
 - en: (2)\[x_p[m] = x\!\big[m - \lfloor M/2\rfloor + h p\big]\, \conj{w[m]}\ , \quad
     m = 0, \ldots M-1\ ,\]
   id: totrans-245
@@ -1833,6 +1838,8 @@
   - PREF_IND
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: (2)\[x_p[m] = x\!\big[m - \lfloor M/2\rfloor + h p\big]\, \conj{w[m]}\ , \quad
+    m = 0, \ldots M-1\ ,\]
 - en: where the integer \(\lfloor M/2\rfloor\) represents `M//2`, i.e, it is the mid
     point of the window ([`m_num_mid`](../reference/generated/scipy.signal.ShortTimeFFT.m_num_mid.html#scipy.signal.ShortTimeFFT.m_num_mid
     "scipy.signal.ShortTimeFFT.m_num_mid")). For notational convenience, \(x[k]:=0\)
@@ -1842,18 +1849,24 @@
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 整数 \(\lfloor M/2\rfloor\) 表示 `M//2`，即窗口的中点（[`m_num_mid`](../reference/generated/scipy.signal.ShortTimeFFT.m_num_mid.html#scipy.signal.ShortTimeFFT.m_num_mid
+    "scipy.signal.ShortTimeFFT.m_num_mid")）。为了符号方便，假设对于 \(k\not\in\{0, 1, \ldots,
+    N-1\}\)，有 \(x[k]:=0\)。在子节[滑动窗口](#tutorial-stft-sliding-win)中详细讨论了切片的索引。
 - en: Then perform a discrete Fourier transform (i.e., an [FFT](fft.html#tutorial-fft))
     of \(x_p[m]\).
   id: totrans-247
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后执行离散傅立叶变换（即，一个[FFT](fft.html#tutorial-fft)）对 \(x_p[m]\) 进行操作。
 - en: (3)\[S[q, p] = \sum_{m=0}^{M-1} x_p[m] \exp\!\big\{% -2\jj\pi (q + \phi_m)\,
     m / M\big\}\ .\]
   id: totrans-248
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: (3)\[S[q, p] = \sum_{m=0}^{M-1} x_p[m] \exp\!\big\{% -2\jj\pi (q + \phi_m)\,
+    m / M\big\}\ .\]
 - en: Note that a linear phase \(\phi_m\) (see [`phase_shift`](../reference/generated/scipy.signal.ShortTimeFFT.phase_shift.html#scipy.signal.ShortTimeFFT.phase_shift
     "scipy.signal.ShortTimeFFT.phase_shift")) can be specified, which corresponds
     to shifting the input by \(\phi_m\) samples. The default is \(\phi_m = \lfloor
@@ -1868,40 +1881,57 @@
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 注意可以指定线性相位 \(\phi_m\)（参见[`phase_shift`](../reference/generated/scipy.signal.ShortTimeFFT.phase_shift.html#scipy.signal.ShortTimeFFT.phase_shift
+    "scipy.signal.ShortTimeFFT.phase_shift")），它对应于将输入向右移动 \(\phi_m\) 个样本。默认值为 \(\phi_m
+    = \lfloor M/2\rfloor\)（与 `phase_shift = 0` 定义对应），这样可以抑制未移动信号的线性相位成分。此外，FFT 可能通过用零填充
+    \(w[m]\) 来进行过采样。这可以通过指定[`mfft`](../reference/generated/scipy.signal.ShortTimeFFT.mfft.html#scipy.signal.ShortTimeFFT.mfft
+    "scipy.signal.ShortTimeFFT.mfft")大于窗口长度[`m_num`](../reference/generated/scipy.signal.ShortTimeFFT.m_num.html#scipy.signal.ShortTimeFFT.m_num
+    "scipy.signal.ShortTimeFFT.m_num")来实现——这将把 \(M\) 设置为[`mfft`](../reference/generated/scipy.signal.ShortTimeFFT.mfft.html#scipy.signal.ShortTimeFFT.mfft
+    "scipy.signal.ShortTimeFFT.mfft")（这意味着对于 \(m\not\in\{0, 1, \ldots, M-1\}\)，也有
+    \(w[m]:=0\)）。
 - en: 'The inverse short-time Fourier transform ([`istft`](../reference/generated/scipy.signal.ShortTimeFFT.istft.html#scipy.signal.ShortTimeFFT.istft
     "scipy.signal.ShortTimeFFT.istft")) is implemented by reversing these two steps:'
   id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: 反短时傅立叶变换（[`istft`](../reference/generated/scipy.signal.ShortTimeFFT.istft.html#scipy.signal.ShortTimeFFT.istft
+    "scipy.signal.ShortTimeFFT.istft")）通过颠倒这两个步骤来实现：
 - en: Perform the inverse discrete Fourier transform, i.e.,
   id: totrans-251
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 执行逆离散傅立叶变换，即，
 - en: \[x_p[m] = \frac{1}{M}\sum_{q=0}^M S[q, p]\, \exp\!\big\{ 2\jj\pi (q + \phi_m)\,
     m / M\big\}\ .\]
   id: totrans-252
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: \[x_p[m] = \frac{1}{M}\sum_{q=0}^M S[q, p]\, \exp\!\big\{ 2\jj\pi (q + \phi_m)\,
+    m / M\big\}\ .\]
 - en: Sum the shifted slices weighted by \(w_d[m]\) to reconstruct the original signal,
     i.e.,
   id: totrans-253
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 加权求和偏移的切片，以重构原始信号，即，
 - en: \[x[k] = \sum_p x_p\!\big[\mu_p(k)\big]\, w_d\!\big[\mu_p(k)\big]\ ,\quad \mu_p(k)
     = k + \lfloor M/2\rfloor - h p\]
   id: totrans-254
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: \[x[k] = \sum_p x_p\!\big[\mu_p(k)\big]\, w_d\!\big[\mu_p(k)\big]\ ,\quad \mu_p(k)
+    = k + \lfloor M/2\rfloor - h p\]
 - en: for \(k \in [0, \ldots, n-1]\). \(w_d[m]\) is the so-called canonical dual window
     of \(w[m]\) and is also made up of \(M\) samples.
   id: totrans-255
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 对于 \(k \in [0, \ldots, n-1]\)。\(w_d[m]\) 是称为规范对偶窗口的 \(w[m]\)，也由 \(M\) 个样本组成。
 - en: Note that an inverse STFT does not necessarily exist for all windows and hop
     sizes. For a given window \(w[m]\) the hop size \(h\) must be small enough to
     ensure that every sample of \(x[k]\) is touched by a non-zero value of at least
@@ -1912,10 +1942,13 @@
   id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，并非所有窗口和跳跃大小都必然存在逆 STFT。对于给定的窗口 \(w[m]\)，跳跃大小 \(h\) 必须足够小，以确保 \(x[k]\) 的每个样本都受到至少一个窗口片段的非零值影响。这有时被称为“非零重叠条件”（参见[`check_NOLA`](../reference/generated/scipy.signal.check_NOLA.html#scipy.signal.check_NOLA
+    "scipy.signal.check_NOLA")）。有关更多细节，请参阅小节 [Inverse STFT and Dual Windows](#tutorial-stft-dual-win)。
 - en: '### Sliding Windows'
   id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 滑动窗口'
 - en: 'This subsection discusses how the sliding window is indexed in the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT") by means of an example: Consider a window of length
     6 with a [`hop`](../reference/generated/scipy.signal.ShortTimeFFT.hop.html#scipy.signal.ShortTimeFFT.hop
@@ -1926,10 +1959,14 @@
   id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 本小节讨论了如何通过一个例子来索引[`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") 中的滑动窗口：考虑一个长度为 6 的窗口，`hop` 间隔为 2，采样间隔为 [`T`](../reference/generated/scipy.signal.ShortTimeFFT.T.html#scipy.signal.ShortTimeFFT.T
+    "scipy.signal.ShortTimeFFT.T") 为 1，例如 `ShortTimeFFT (np.ones(6), 2, fs=1)`。下图以示意图的方式展示了前四个窗口位置，也称为时间片段：
 - en: '[![../_images/tutorial_stft_sliding_win_start.svg](../Images/590d72d6177cc14fc3a3fabdc9c4e8db.png)](../_images/tutorial_stft_sliding_win_start.svg)'
   id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: '[![../_images/tutorial_stft_sliding_win_start.svg](../Images/590d72d6177cc14fc3a3fabdc9c4e8db.png)](../_images/tutorial_stft_sliding_win_start.svg)'
 - en: The x-axis denotes the time \(t\), which corresponds to the sample index *k*
     indicated by the bottom row of blue boxes. The y-axis denotes the time slice index
     \(p\). The signal \(x[k]\) starts at index \(k=0\) and is marked by a light blue
@@ -1947,15 +1984,25 @@
   id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: x轴表示时间 \(t\)，对应于底部蓝色框的样本索引 *k*。y轴表示时间片段索引 \(p\)。信号 \(x[k]\) 从索引 \(k=0\) 开始，并以浅蓝色背景标出。按定义，零片段
+    (\(p=0\)) 居中于 \(t=0\)。每个片段的中心点 ([`m_num_mid`](../reference/generated/scipy.signal.ShortTimeFFT.m_num_mid.html#scipy.signal.ShortTimeFFT.m_num_mid
+    "scipy.signal.ShortTimeFFT.m_num_mid"))，这里是样本 `6//2=3`，用文本“mid”标记。默认情况下，[`stft`](../reference/generated/scipy.signal.ShortTimeFFT.stft.html#scipy.signal.ShortTimeFFT.stft
+    "scipy.signal.ShortTimeFFT.stft") 计算所有与信号有重叠的片段。因此，第一个片段在 [`p_min`](../reference/generated/scipy.signal.ShortTimeFFT.p_min.html#scipy.signal.ShortTimeFFT.p_min
+    "scipy.signal.ShortTimeFFT.p_min") = -1，最低样本索引为 [`k_min`](../reference/generated/scipy.signal.ShortTimeFFT.k_min.html#scipy.signal.ShortTimeFFT.k_min
+    "scipy.signal.ShortTimeFFT.k_min") = -5。第一个不被片段左边伸出影响的样本索引为 \(p_{lb} = 2\)，第一个不受边界影响的样本索引为
+    \(k_{lb} = 5\)。属性[`lower_border_end`](../reference/generated/scipy.signal.ShortTimeFFT.lower_border_end.html#scipy.signal.ShortTimeFFT.lower_border_end
+    "scipy.signal.ShortTimeFFT.lower_border_end") 返回元组 \((k_{lb}, p_{lb})\)。
 - en: 'The behavior at the end of the signal is depicted for a signal with \(n=50\)
     samples below, as indicated by the blue background:'
   id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 信号末端的行为如下所示，信号具有 \(n=50\) 个样本，如下所示，以蓝色背景标示：
 - en: '[![../_images/tutorial_stft_sliding_win_stop.svg](../Images/02f510b38185a0f60e9de8ba3c331a6f.png)](../_images/tutorial_stft_sliding_win_stop.svg)'
   id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: '[![../_images/tutorial_stft_sliding_win_stop.svg](../Images/02f510b38185a0f60e9de8ba3c331a6f.png)](../_images/tutorial_stft_sliding_win_stop.svg)'
 - en: 'Here the last slice has index \(p=26\). Hence, following Python convention
     of the end index being outside the range, [`p_max`](../reference/generated/scipy.signal.ShortTimeFFT.p_max.html#scipy.signal.ShortTimeFFT.p_max
     "scipy.signal.ShortTimeFFT.p_max") = 27 indicates the first slice not touching
@@ -1968,6 +2015,11 @@
   id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: '这里最后一个片段索引为 \(p=26\)。因此，遵循Python约定的结束索引在范围之外，[`p_max`](../reference/generated/scipy.signal.ShortTimeFFT.p_max.html#scipy.signal.ShortTimeFFT.p_max
+    "scipy.signal.ShortTimeFFT.p_max") = 27 表示第一个不接触信号的片段。相应的样本索引为 [`k_max`](../reference/generated/scipy.signal.ShortTimeFFT.k_max.html#scipy.signal.ShortTimeFFT.k_max
+    "scipy.signal.ShortTimeFFT.k_max") = 55。第一个向右伸出的片段是 \(p_{ub} = 24\)，其第一个样本为 \(k_{ub}=45\)。函数[`upper_border_begin`](../reference/generated/scipy.signal.ShortTimeFFT.upper_border_begin.html#scipy.signal.ShortTimeFFT.upper_border_begin
+    "scipy.signal.ShortTimeFFT.upper_border_begin") 返回元组 \((k_{ub}, p_{ub})\)。  ###
+    逆STFT和双窗口'
 - en: The term dual window stems from frame theory [[5]](#id15) where a frame is a
     series expansion which can represent any function in a given Hilbert space. There
     the expansions \(\{g_k\}\) and \(\{h_k\}\) are dual frames if for all functions
@@ -1975,16 +2027,21 @@
   id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 双窗口术语源于框架理论 [[5]](#id15)，在那里，框架是一种能够表示给定希尔伯特空间中任何函数的级数展开。在那里，展开式 \(\{g_k\}\)
+    和 \(\{h_k\}\) 如果对于给定希尔伯特空间 \(\mathcal{H}\) 中的所有函数 \(f\)，它们是双框架。
 - en: \[f = \sum_{k\in\IN} \langle f, g_k\rangle h_k = \sum_{k\in\IN} \langle f, h_k\rangle
     g_k\ , \quad f \in \mathcal{H}\ ,\]
   id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: \[f = \sum_{k\in\IN} \langle f, g_k\rangle h_k = \sum_{k\in\IN} \langle f, h_k\rangle
+    g_k\ , \quad f \in \mathcal{H}\ ,
 - en: holds, where \(\langle ., .\rangle\) denotes the scalar product of \(\mathcal{H}\).
     All frames have dual frames [[5]](#id15).
   id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: holds，其中 \(\langle ., .\rangle\) 表示 \(\mathcal{H}\) 的标量积。所有框架都有对偶框架 [[5]](#id15)。
 - en: 'An STFT evaluated only at discrete grid points \(S(q \Delta f, p\Delta t)\)
     is called a “Gabor frame” in literature [[4]](#id14) [[5]](#id15). Since the support
     of the window \(w[m]\) is limited to a finite interval, the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
@@ -1996,6 +2053,9 @@
   id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 在文献中，仅在离散网格点 \(S(q \Delta f, p\Delta t)\) 处评估的 STFT 被称为 “Gabor 框架” [[4]](#id14)
+    [[5]](#id15)。由于窗口 \(w[m]\) 的支持仅限于有限区间，[`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") 属于所谓的 “无痛非正交展开” 类别 [[4]](#id14)。在这种情况下，对偶窗口始终具有相同的支持，并且可以通过反转对角矩阵来计算。以下将粗略推导需要理解矩阵操作的过程：
 - en: Since the STFT given in Eq. [(1)](#equation-eq-dstft) is a linear mapping in
     \(x[k]\), it can be expressed in vector-matrix notation. This allows us to express
     the inverse via the formal solution of the linear least squares method (as in
@@ -2004,10 +2064,13 @@
   id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于 Eq. [(1)](#equation-eq-dstft) 中给出的 STFT 是 \(x[k]\) 的线性映射，可以用向量-矩阵表示法表达。这使得通过线性最小二乘方法的形式解可以表达其逆（如
+    [`lstsq`](../reference/generated/scipy.linalg.lstsq.html#scipy.linalg.lstsq "scipy.linalg.lstsq")），从而导出了一个漂亮而简单的结果。
 - en: We begin by reformulating the windowing of Eq. [(2)](#equation-eq-stft-windowing)
   id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们从重新表述 Eq. [(2)](#equation-eq-stft-windowing) 的窗函数开始。
 - en: (4)\[\begin{split} \vb{x}_p = \vb{W}_{\!p}\,\vb{x} = \begin{bmatrix} \cdots
     & 0 & w[0] & 0 & \cdots&&&\\ & \cdots & 0 & w[1] & 0 & \cdots&&\\ & & & & \ddots&&&\\
     &&\cdots & 0 & 0 & w[M-1] & 0 & \cdots \end{bmatrix}\begin{bmatrix} x[0]\\ x[1]\\
@@ -2015,65 +2078,87 @@
   id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: (4)\[\begin{split} \vb{x}_p = \vb{W}_{\!p}\,\vb{x} = \begin{bmatrix} \cdots
+    & 0 & w[0] & 0 & \cdots&&&\\ & \cdots & 0 & w[1] & 0 & \cdots&&\\ & & & & \ddots&&&\\
+    &&\cdots & 0 & 0 & w[M-1] & 0 & \cdots \end{bmatrix}\begin{bmatrix} x[0]\\ x[1]\\
+    \vdots\\ x[N-1] \end{bmatrix}\ ,\end{split}\]
 - en: where the \(M\times N\) matrix \(\vb{W}_{\!p}\) has only non-zeros entries on
     the \((ph)\)-th minor diagonal, i.e.,
   id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 \(M \times N\) 矩阵 \(\vb{W}_{\!p}\) 在 \((ph)\) 主对角线上具有非零条目，即，
 - en: (5)\[\begin{split} W_p[m,k] = w[m]\, \delta_{m+ph,k}\ ,\quad \delta_{k,l} &=
     \begin{cases} 1 & \text{ for } k=l\ ,\\ 0 & \text{ elsewhere ,} \end{cases}\end{split}\]
   id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: (5)\[\begin{split} W_p[m,k] = w[m]\, \delta_{m+ph,k}\ ,\quad \delta_{k,l} &=
+    \begin{cases} 1 & \text{ for } k=l\ ,\\ 0 & \text{ elsewhere ,} \end{cases}\end{split}\]
 - en: with \(\delta_{k,l}\) being the Kronecker Delta. Eq. [(3)](#equation-eq-stft-dft)
     can be expressed as
   id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 \(\delta_{k,l}\) 是 Kronecker Delta。Eq. [(3)](#equation-eq-stft-dft) 可以表示为
 - en: \[\vb{s}_p = \vb{F}\,\vb{x}_p \quad\text{with}\quad F[q,m] =\exp\!\big\{-2\jj\pi
     (q + \phi_m)\, m / M\big\}\ ,\]
   id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\vb{s}_p = \vb{F}\,\vb{x}_p \quad\text{with}\quad F[q,m] =\exp\!\big\{-2\jj\pi
+    (q + \phi_m)\, m / M\big\}\ ,\]
 - en: which allows the STFT of the \(p\)-th slice to be written as
   id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: 允许将第 \(p\) 切片的 STFT 写为
 - en: '(6)\[\vb{s}_p = \vb{F}\vb{W}_{\!p}\,\vb{x} =: \vb{G}_p\,\vb{x} \quad\text{with}\quad
     s_p[q] = S[p,q]\ .\]'
   id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: '(6)\[\vb{s}_p = \vb{F}\vb{W}_{\!p}\,\vb{x} =: \vb{G}_p\,\vb{x} \quad\text{with}\quad
+    s_p[q] = S[p,q]\ .'
 - en: Note that \(\vb{F}\) is unitary, i.e., the inverse equals its conjugate transpose
     meaning \(\conjT{\vb{F}}\vb{F} = \vb{I}\).
   id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意 \(\vb{F}\) 是酉的，即其逆等于其共轭转置，意味着 \(\conjT{\vb{F}}\vb{F} = \vb{I}\)。
 - en: To obtain a single vector-matrix equation for the STFT, the slices are stacked
     into one vector, i.e.,
   id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了获得 STFT 的单个向量-矩阵方程，这些切片被堆叠成一个向量。
 - en: '\[\begin{split}\vb{s} := \begin{bmatrix} \vb{s}_0\\ \vb{s}_1\\ \vdots\\ \vb{s}_{P-1}
     \end{bmatrix} = \begin{bmatrix} \vb{G}_0\\ \vb{G}_1\\ \vdots\\ \vb{G}_{P-1} \end{bmatrix}\,
     \vb{x} =: \vb{G}\, \vb{x}\ ,\end{split}\]'
   id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: '\[\begin{split}\vb{s} := \begin{bmatrix} \vb{s}_0\\ \vb{s}_1\\ \vdots\\ \vb{s}_{P-1}
+    \end{bmatrix} = \begin{bmatrix} \vb{G}_0\\ \vb{G}_1\\ \vdots\\ \vb{G}_{P-1} \end{bmatrix}\,
+    \vb{x} =: \vb{G}\, \vb{x}\ ,'
 - en: where \(P\) is the number of columns of the resulting STFT. To invert this equation
     the Moore-Penrose inverse \(\vb{G}^\dagger\) can be utilized
   id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 \(P\) 是生成的 STFT 的列数。为了反演这个方程，可以利用 Moore-Penrose 逆 \(\vb{G}^\dagger\)。
 - en: '(7)\[\vb{x} = \inv{\conjT{\vb{G}}\vb{G}}\, \conjT{\vb{G}} \vb{s} =: \vb{G}^\dagger
     \vb{s}\ ,\]'
   id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: '(7)\[\vb{x} = \inv{\conjT{\vb{G}}\vb{G}}\, \conjT{\vb{G}} \vb{s} =: \vb{G}^\dagger
+    \vb{s}\ ,\]'
 - en: which exists if
   id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果存在
 - en: \[\begin{split}\vb{D} := \conjT{\vb{G}}\vb{G} = \begin{bmatrix} \conjT{\vb{G}_0}&
     \conjT{\vb{G}_1}& \cdots & \conjT{\vb{G}_{P-1}} \end{bmatrix}^T \begin{bmatrix}
     \vb{G}_0\\ \vb{G}_1\\ \vdots\\ \vb{G}_{P-1} \end{bmatrix} = \sum_{p=0}^{P-1} \conjT{\vb{G}_p}\vb{G}_p
@@ -2081,34 +2166,47 @@
   id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\vb{D} := \conjT{\vb{G}}\vb{G} = \begin{bmatrix} \conjT{\vb{G}_0}&
+    \conjT{\vb{G}_1}& \cdots & \conjT{\vb{G}_{P-1}} \end{bmatrix}^T \begin{bmatrix}
+    \vb{G}_0\\ \vb{G}_1\\ \vdots\\ \vb{G}_{P-1} \end{bmatrix} = \sum_{p=0}^{P-1} \conjT{\vb{G}_p}\vb{G}_p
+    \ .\end{split}\]
 - en: is invertible. Then \(\vb{x} = \vb{G}^\dagger\vb{G}\,\vb{x} = \inv{\conjT{\vb{G}}\vb{G}}\,\conjT{\vb{G}}\vb{G}\,\vb{x}\)
     obviously holds. \(\vb{D}\) is always a diagonal matrix with non-negative diagonal
     entries. This becomes clear, when simplifying \(\vb{D}\) further to
   id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 是可逆的。因此\(\vb{x} = \vb{G}^\dagger\vb{G}\,\vb{x} = \inv{\conjT{\vb{G}}\vb{G}}\,\conjT{\vb{G}}\vb{G}\,\vb{x}\)显然成立。\(\vb{D}\)始终是一个具有非负对角条目的对角矩阵。这在进一步简化\(\vb{D}\)时变得清晰，
 - en: '(8)\[\vb{D} = \sum_{p=0}^{P-1} \conjT{\vb{G}_p}\vb{G}_p = \sum_{p=0}^{P-1}
     \conjT{(\vb{F}\,\vb{W}_{\!p})}\, \vb{F}\,\vb{W}_{\!p} = \sum_{p=0}^{P-1} \conjT{\vb{W}_{\!p}}\vb{W}_{\!p}
     =: \sum_{p=0}^{P-1} \vb{D}_p\]'
   id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: '(8)\[\vb{D} = \sum_{p=0}^{P-1} \conjT{\vb{G}_p}\vb{G}_p = \sum_{p=0}^{P-1}
+    \conjT{(\vb{F}\,\vb{W}_{\!p})}\, \vb{F}\,\vb{W}_{\!p} = \sum_{p=0}^{P-1} \conjT{\vb{W}_{\!p}}\vb{W}_{\!p}
+    =: \sum_{p=0}^{P-1} \vb{D}_p\]'
 - en: due to \(\vb{F}\) being unitary. Furthermore
   id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于\(\vb{F}\)是酉矩阵。此外，
 - en: (9)\[\begin{split}D_p[r,s] &= \sum_{m=0}^{M-1} \conj{W_p^T[r,m]}\,W_p[m,s] =
     \sum_{m=0}^{M-1} \left(\conj{w[m]}\, \delta_{m+ph,r}\right) \left(w[m]\, \delta_{m+ph,s}\right)\\
     &= \sum_{m=0}^{M-1} \big|w[m]\big|^2\, \delta_{r,s}\, \delta_{r,m+ph}\ .\end{split}\]
   id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: (9)\[\begin{split}D_p[r,s] &= \sum_{m=0}^{M-1} \conj{W_p^T[r,m]}\,W_p[m,s] =
+    \sum_{m=0}^{M-1} \left(\conj{w[m]}\, \delta_{m+ph,r}\right) \left(w[m]\, \delta_{m+ph,s}\right)\\
+    &= \sum_{m=0}^{M-1} \big|w[m]\big|^2\, \delta_{r,s}\, \delta_{r,m+ph}\ .\end{split}\]
 - en: shows that \(\vb{D}_p\) is a diagonal matrix with non-negative entries. Hence,
     summing \(\vb{D}_p\) preserves that property. This allows to simplify Eq. [(7)](#equation-eq-stft-moorepenrose)
     further, i.e,
   id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 表明\(\vb{D}_p\)是一个具有非负实数条目的对角矩阵。因此，对\(\vb{D}_p\)求和保持这一性质。这允许进一步简化方程[(7)](#equation-eq-stft-moorepenrose)，即
 - en: '(10)\[\begin{split}\vb{x} &= \vb{D}^{-1} \conjT{\vb{G}}\vb{s} = \sum_{p=0}^{P-1}
     \vb{D}^{-1}\conjT{\vb{W}_{\!p}}\, \conjT{\vb{F}}\vb{s}_p = \sum_{p=0}^{P-1} (\conj{\vb{W}_{\!p}\vb{D}^{-1}})^T\,
     \conjT{\vb{F}}\vb{s}_p\\ &=: \sum_{p=0}^{P-1}\conjT{\vb{U}_p}\,\conjT{\vb{F}}\vb{s}_p\
@@ -2116,12 +2214,17 @@
   id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: '(10)\[\begin{split}\vb{x} &= \vb{D}^{-1} \conjT{\vb{G}}\vb{s} = \sum_{p=0}^{P-1}
+    \vb{D}^{-1}\conjT{\vb{W}_{\!p}}\, \conjT{\vb{F}}\vb{s}_p = \sum_{p=0}^{P-1} (\conj{\vb{W}_{\!p}\vb{D}^{-1}})^T\,
+    \conjT{\vb{F}}\vb{s}_p\\ &=: \sum_{p=0}^{P-1}\conjT{\vb{U}_p}\,\conjT{\vb{F}}\vb{s}_p\
+    .\end{split}\]'
 - en: Utilizing Eq. [(5)](#equation-eq-stft-winmatrix1), [(8)](#equation-eq-stft-diagm2),
     [(9)](#equation-eq-stft-diagm3), \(\vb{U}_p=\vb{W}_{\!p}\vb{D}^{-1}\) can be expressed
     as
   id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 利用方程[(5)](#equation-eq-stft-winmatrix1)，[(8)](#equation-eq-stft-diagm2)，[(9)](#equation-eq-stft-diagm3)，\(\vb{U}_p=\vb{W}_{\!p}\vb{D}^{-1}\)可以表达为
 - en: (11)\[\begin{split}U_p[m, k] &= W[m,k]\, D^{-1}[k,k] = \left(w[m] \delta_{m+ph,k}\right)
     \inv{\sum_{\eta=0}^{P-1} \vb{D}_\eta[k,k]} \delta_{m+ph,k}\\ &= w[m] \inv{\sum_{\eta=0}^{P-1}\sum_{\mu=0}^{M-1}
     \big|w[\mu]\big|^2\,\delta_{m+ph, \mu+\eta h}} \delta_{m+ph,k}\\ &= w[m] \inv{\sum_{\eta=0}^{P-1}
@@ -2129,6 +2232,10 @@
   id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: (11)\[\begin{split}U_p[m, k] &= W[m,k]\, D^{-1}[k,k] = \left(w[m] \delta_{m+ph,k}\right)
+    \inv{\sum_{\eta=0}^{P-1} \vb{D}_\eta[k,k]} \delta_{m+ph,k}\\ &= w[m] \inv{\sum_{\eta=0}^{P-1}\sum_{\mu=0}^{M-1}
+    \big|w[\mu]\big|^2\,\delta_{m+ph, \mu+\eta h}} \delta_{m+ph,k}\\ &= w[m] \inv{\sum_{\eta=0}^{P-1}
+    \big|w[m+(p-\eta)h]\big|^2} \delta_{m+ph,k} \ .\end{split}\]
 - en: This shows \(\vb{U}_p\) has the identical structure as \(\vb{W}_p\) in Eq. [(5)](#equation-eq-stft-winmatrix1),
     i.e., having only non-zero entries on the \((ph)\)-th minor diagonal. The sum
     term in the inverse can be interpreted as sliding \(|w[\mu]|^2\) over \(w[m]\)
@@ -2139,10 +2246,13 @@
   id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 这表明\(\vb{U}_p\)在方程[(5)](#equation-eq-stft-winmatrix1)中与\(\vb{W}_p\)具有相同的结构，即只在\(ph\)次副对角线上有非零条目。逆中的求和项可以解释为将\(w[\mu]^2\)滑动到\(w[m]\)（带有反演），因此只有与\(w[m]\)重叠的分量才会起作用。因此，所有远离边界的\(U_p[m,
+    k]\)都是相同的窗口。为了避免边界效应，\(x[k]\)用零填充，扩大\(\vb{U}\)，使所有接触到\(x[k]\)的切片都包含相同的双窗口。
 - en: \[w_d[m] = w[m] \inv{\sum_{\eta\in\IZ} \big|w[m + \eta\, h]\big|^2}\ .\]
   id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: \[w_d[m] = w[m] \inv{\sum_{\eta\in\IZ} \big|w[m + \eta\, h]\big|^2}\ .\]
 - en: Since \(w[m] = 0\) holds for \(m \not\in\{0, \ldots, M-1\}\), it is only required
     to sum over the indexes \(\eta\) fulfilling \(|\eta| < M/h\). The name dual window
     can be justified by inserting Eq. [(6)](#equation-eq-stft-slice-p) into Eq. [(10)](#equation-eq-stft-istftm),
@@ -2150,11 +2260,15 @@
   id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于 \(w[m] = 0\) 对 \(m \not\in\{0, \ldots, M-1\}\) 成立，因此只需要对满足 \(|\eta| < M/h\)
+    的索引 \(\eta\) 进行求和。插入方程 [(6)](#equation-eq-stft-slice-p) 到方程 [(10)](#equation-eq-stft-istftm)，可以证明名为双窗口的名称，
 - en: \[\vb{x} = \sum_{p=0}^{P-1} \conjT{\vb{U}_p}\,\conjT{\vb{F}}\, \vb{F}\,\vb{W}_{\!p}\,\vb{x}
     = \left(\sum_{p=0}^{P-1} \conjT{\vb{U}_p}\,\vb{W}_{\!p}\right)\vb{x}\ ,\]
   id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\vb{x} = \sum_{p=0}^{P-1} \conjT{\vb{U}_p}\,\conjT{\vb{F}}\, \vb{F}\,\vb{W}_{\!p}\,\vb{x}
+    = \left(\sum_{p=0}^{P-1} \conjT{\vb{U}_p}\,\vb{W}_{\!p}\right)\vb{x}\ ,\]
 - en: 'showing that \(\vb{U}_p\) and \(\vb{W}_{\!p}\) are interchangeable. Hence,
     \(w_d[m]\) is also a valid window with dual window \(w[m]\). Note that \(w_d[m]\)
     is not a unique dual window, due to \(\vb{s}\) typically having more entries than
@@ -2164,6 +2278,9 @@
   id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 表明 \(\vb{U}_p\) 和 \(\vb{W}_{\!p}\) 是可互换的。因此，\(w_d[m]\) 也是具有双窗口 \(w[m]\) 的有效窗口。注意
+    \(w_d[m]\) 不是唯一的双窗口，因为通常 \(\vb{s}\) 的条目比 \(\vb{x}\) 多。可以证明，\(w_d[m]\) 具有最小能量（或
+    \(L_2\) 范数）[[4](#id14)]，这就是被称为“规范双窗口”的原因。### 与旧版本实现的比较
 - en: The functions [`stft`](../reference/generated/scipy.signal.stft.html#scipy.signal.stft
     "scipy.signal.stft"), [`istft`](../reference/generated/scipy.signal.istft.html#scipy.signal.istft
     "scipy.signal.istft"), and the [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
@@ -2178,11 +2295,19 @@
   id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数 [`stft`](../reference/generated/scipy.signal.stft.html#scipy.signal.stft
+    "scipy.signal.stft")，[`istft`](../reference/generated/scipy.signal.istft.html#scipy.signal.istft
+    "scipy.signal.istft") 和 [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") 的实现早于 [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT")。本节讨论了旧的“遗留”版本和新的 [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") 实现之间的关键区别。重写的主要动机是认识到集成 [双窗口](#tutorial-stft-dual-win)
+    不能在不破坏兼容性的情况下以合理的方式进行。这为重新思考代码结构和参数化提供了机会，从而使一些隐含的行为更加显式。
 - en: 'The following example compares the two STFTs of a complex valued chirp signal
     with a negative slope:'
   id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: '以下示例比较了具有负斜率的复值啁啾信号的两个 STFTs:'
 - en: '[PRE41]'
   id: totrans-299
   prefs: []
@@ -2192,6 +2317,7 @@
   id: totrans-300
   prefs: []
   type: TYPE_IMG
+  zh: '![../_images/signal-10.png](../Images/92e6559bfae39d3827d8e9f0d15bc682.png)'
 - en: That the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT") produces 3 more time slices than the legacy version
     is the main difference. As laid out in the [Sliding Windows](#tutorial-stft-sliding-win)
@@ -2203,11 +2329,16 @@
   id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") 生成比旧版本多 3 个时间切片是主要的不同点。正如在 [滑动窗口](#tutorial-stft-sliding-win)
+    部分中所述，所有接触信号的切片都包含在新版本中。这具有将 STFT 切片和重新组装的优势，如 [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") 的代码示例所示。此外，使用所有接触切片使得 ISTFT 在某些位置为零的窗口情况下更加稳健。'
 - en: 'Note that the slices with identical time stamps produce equal results (up to
     numerical accuracy), i.e.:'
   id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意具有相同时间戳的切片产生相等的结果（在数值精度上），即：
 - en: '[PRE42]'
   id: totrans-303
   prefs: []
@@ -2218,6 +2349,7 @@
   id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，这些额外的切片包含非零值。由于我们示例中的大重叠，它们非常小。例如：
 - en: '[PRE43]'
   id: totrans-305
   prefs: []
@@ -2227,6 +2359,7 @@
   id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: ISTFT 可用于重建原始信号：
 - en: '[PRE44]'
   id: totrans-307
   prefs: []
@@ -2241,10 +2374,13 @@
   id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，旧实现返回的信号比原始信号更长。另一方面，新版 [`istft`](../reference/generated/scipy.signal.ShortTimeFFT.istft.html#scipy.signal.ShortTimeFFT.istft
+    "scipy.signal.ShortTimeFFT.istft") 允许明确指定重建信号的起始索引 *k0* 和结束索引 *k1*。旧实现中的长度差异是因为信号长度不是切片的倍数。
 - en: 'Further differences between the new and legacy versions in this example are:'
   id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个示例中，新版和旧版之间的进一步差异包括：
 - en: The parameter `fft_mode='centered'` ensures that the zero frequency is vertically
     centered for two-sided FFTs in the plot. With the legacy implementation, [`fftshift`](../reference/generated/scipy.fft.fftshift.html#scipy.fft.fftshift
     "scipy.fft.fftshift") needs to be utilized. `fft_mode='twosided'` produces the
@@ -2253,6 +2389,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 参数 `fft_mode='centered'` 确保在图中的双边 FFT 中，零频率垂直居中。在旧实现中，需要使用 [`fftshift`](../reference/generated/scipy.fft.fftshift.html#scipy.fft.fftshift
+    "scipy.fft.fftshift")。`fft_mode='twosided'` 产生与旧版本相同的行为。
 - en: The parameter `phase_shift=None` ensures identical phases of the two versions.
     [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT")’s default value of `0` produces STFT slices with
@@ -2261,6 +2399,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 参数 `phase_shift=None` 确保两个版本的相位相同。[`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") 的默认值 `0` 产生带有额外线性相位项的 STFT 切片。
 - en: 'A spectrogram is defined as the absolute square of the STFT [[4]](#id14). The
     [`spectrogram`](../reference/generated/scipy.signal.ShortTimeFFT.spectrogram.html#scipy.signal.ShortTimeFFT.spectrogram
     "scipy.signal.ShortTimeFFT.spectrogram") provided by the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
@@ -2268,6 +2408,8 @@
   id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: 谱图被定义为 STFT 的绝对平方 [[4]](#id14)。[`spectrogram`](../reference/generated/scipy.signal.ShortTimeFFT.spectrogram.html#scipy.signal.ShortTimeFFT.spectrogram
+    "scipy.signal.ShortTimeFFT.spectrogram") 提供的是与该定义一致的内容，即：
 - en: '[PRE45]'
   id: totrans-313
   prefs: []
@@ -2283,6 +2425,10 @@
   id: totrans-314
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一方面，旧版 [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") 提供了另一种带有不同信号边界处理的 STFT 实现。以下示例展示了如何使用 [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") 来获取与旧版 [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") 生成的相同 SFT：
 - en: '[PRE46]'
   id: totrans-315
   prefs: []
@@ -2293,6 +2439,7 @@
   id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 与其他 STFT 不同的是，时间切片不是从 0 开始，而是从 `nperseg//2` 开始，即：
 - en: '[PRE47]'
   id: totrans-317
   prefs: []
@@ -2304,6 +2451,8 @@
   id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，只返回不突出到右侧的切片，将最后一个切片居中于 4.875 秒，使其比默认的 [`stft`](../reference/generated/scipy.signal.ShortTimeFFT.stft.html#scipy.signal.ShortTimeFFT.stft
+    "scipy.signal.ShortTimeFFT.stft") 参数化更短。
 - en: 'Using the `mode` parameter, the legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
     "scipy.signal.spectrogram") can also return the ‘angle’, ‘phase’, ‘psd’ or the
     ‘magnitude’. The [`scaling`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
@@ -2318,78 +2467,106 @@
   id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 `mode` 参数，传统 [`频谱图`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") 还可以返回 ‘角度’、‘相位’、‘PSD’ 或 ‘幅度’。传统 [`频谱图`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") 的 [`缩放`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
+    "scipy.signal.ShortTimeFFT.scaling") 行为并不简单，因为它取决于参数 `mode`、`scaling` 和 `return_onesided`。在
+    [`短时傅里叶变换`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") 中，并没有所有组合的直接对应关系，因为它仅提供窗口的 ‘幅度’、‘PSD’ 或根本没有 [`缩放`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
+    "scipy.signal.ShortTimeFFT.scaling")。以下表格展示了这些对应关系：
 - en: '| Legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
     "scipy.signal.spectrogram") |  | [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT") |'
   id: totrans-320
   prefs: []
   type: TYPE_TB
+  zh: '| 传统 [`频谱图`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") |  | [`短时傅里叶变换`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") |'
 - en: '| --- | --- | --- |'
   id: totrans-321
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| mode | scaling | return_onesided |  | [`fft_mode`](../reference/generated/scipy.signal.ShortTimeFFT.fft_mode.html#scipy.signal.ShortTimeFFT.fft_mode
     "scipy.signal.ShortTimeFFT.fft_mode") | [`scaling`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
     "scipy.signal.ShortTimeFFT.scaling") |'
   id: totrans-322
   prefs: []
   type: TYPE_TB
+  zh: '| 模式 | 缩放 | return_onesided |  | [`fft模式`](../reference/generated/scipy.signal.ShortTimeFFT.fft_mode.html#scipy.signal.ShortTimeFFT.fft_mode
+    "scipy.signal.ShortTimeFFT.fft_mode") | [`缩放`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
+    "scipy.signal.ShortTimeFFT.scaling") |'
 - en: '| --- | --- | --- | --- | --- | --- |'
   id: totrans-323
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- |'
 - en: '| psd | density | True |  | onesided2X | psd |'
   id: totrans-324
   prefs: []
   type: TYPE_TB
+  zh: '| PSD | 密度 | 真实 |  | 单边2X | PSD |'
 - en: '| psd | density | False |  | twosided | psd |'
   id: totrans-325
   prefs: []
   type: TYPE_TB
+  zh: '| PSD | 密度 | 错误 |  | 双边 | PSD |'
 - en: '| magnitude | spectrum | True |  | onesided | magnitude |'
   id: totrans-326
   prefs: []
   type: TYPE_TB
+  zh: '| 幅度 | 谱 | 真实 |  | 单边 | 幅度 |'
 - en: '| magnitude | spectrum | False |  | twosided | magnitude |'
   id: totrans-327
   prefs: []
   type: TYPE_TB
+  zh: '| 幅度 | 谱 | 错误 |  | 双边 | 幅度 |'
 - en: '| complex | spectrum | True |  | onesided | magnitude |'
   id: totrans-328
   prefs: []
   type: TYPE_TB
+  zh: '| 复数 | 谱 | 真实 |  | 单边 | 幅度 |'
 - en: '| complex | spectrum | False |  | twosided | magnitude |'
   id: totrans-329
   prefs: []
   type: TYPE_TB
+  zh: '| 复数 | 谱 | 错误 |  | 双边 | 幅度 |'
 - en: '| psd | spectrum | True |  | — | — |'
   id: totrans-330
   prefs: []
   type: TYPE_TB
+  zh: '| PSD | 谱 | 真实 |  | — | — |'
 - en: '| psd | spectrum | False |  | — | — |'
   id: totrans-331
   prefs: []
   type: TYPE_TB
+  zh: '| PSD | 谱 | 错误 |  | — | — |'
 - en: '| complex | density | True |  | — | — |'
   id: totrans-332
   prefs: []
   type: TYPE_TB
+  zh: '| 复数 | 密度 | 真实 |  | — | — |'
 - en: '| complex | density | False |  | — | — |'
   id: totrans-333
   prefs: []
   type: TYPE_TB
+  zh: '| 复数 | 密度 | 错误 |  | — | — |'
 - en: '| magnitude | density | True |  | — | — |'
   id: totrans-334
   prefs: []
   type: TYPE_TB
+  zh: '| 幅度 | 密度 | 真实 |  | — | — |'
 - en: '| magnitude | density | False |  | — | — |'
   id: totrans-335
   prefs: []
   type: TYPE_TB
+  zh: '| 幅度 | 密度 | 错误 |  | — | — |'
 - en: '| — | — | — |  | `*` | `None` |'
   id: totrans-336
   prefs: []
   type: TYPE_TB
+  zh: '| — | — | — |  | `*` | `None` |'
 - en: When using `onesided` output on complex-valued input signals, the old [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
     "scipy.signal.spectrogram") switches to `two-sided` mode. The [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT") raises a [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
@@ -2401,22 +2578,32 @@
   id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: 当在复值输入信号上使用`onesided`输出时，旧的[`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram")切换到`two-sided`模式。[`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT")引发了一个[`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "（在Python v3.12中）")，因为所使用的[`rfft`](../reference/generated/scipy.fft.rfft.html#scipy.fft.rfft
+    "scipy.fft.rfft")函数只接受实值输入。这个[评论](https://github.com/scipy/scipy/issues/14903#issuecomment-1100249704)讨论了旧的[`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram")参数在单个余弦输入时的变化。
 - en: Detrend
   id: totrans-338
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 去趋势
 - en: SciPy provides the function [`detrend`](../reference/generated/scipy.signal.detrend.html#scipy.signal.detrend
     "scipy.signal.detrend") to remove a constant or linear trend in a data series
     in order to see effect of higher order.
   id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: SciPy提供了函数[`detrend`](../reference/generated/scipy.signal.detrend.html#scipy.signal.detrend
+    "scipy.signal.detrend")，用于去除数据系列中的常数或线性趋势，以查看更高阶效果。
 - en: The example below removes the constant and linear trend of a second-order polynomial
     time series and plots the remaining signal components.
   id: totrans-340
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的示例去除了二阶多项式时间序列的常数和线性趋势，并绘制了剩余的信号分量。
 - en: '[PRE48]'
   id: totrans-341
   prefs: []
@@ -2441,11 +2628,14 @@
   id: totrans-344
   prefs: []
   type: TYPE_IMG
+  zh: '![“此代码生成一个没有单位的X-Y图。红色轨迹对应于原始信号曲线，从左下到右上。蓝色轨迹具有常数去趋势，并位于红色轨迹下方，Y轴偏移为零。最后的黑色轨迹具有线性去趋势，并且从左到右几乎平坦，突出显示原始信号的曲线。这最后的轨迹具有平均斜率为零，并且看起来非常不同。”](../Images/490b1d459a50a325dd605fac2835b18a.png)'
 - en: References
   id: totrans-345
   prefs: []
   type: TYPE_NORMAL
+  zh: 参考资料
 - en: 'Some further reading and related software:'
   id: totrans-346
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些进一步阅读和相关软件：
