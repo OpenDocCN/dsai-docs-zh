@@ -1,0 +1,189 @@
+- en: scipy.io.netcdf_file
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/reference/generated/scipy.io.netcdf_file.html#scipy.io.netcdf_file](https://docs.scipy.org/doc/scipy-1.12.0/reference/generated/scipy.io.netcdf_file.html#scipy.io.netcdf_file)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: A file object for NetCDF data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A [`netcdf_file`](#scipy.io.netcdf_file "scipy.io.netcdf_file") object has
+    two standard attributes: *dimensions* and *variables*. The values of both are
+    dictionaries, mapping dimension names to their associated lengths and variable
+    names to variables, respectively. Application programs should never modify these
+    dictionaries.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: All other attributes correspond to global attributes defined in the NetCDF file.
+    Global file attributes are created by assigning to an attribute of the [`netcdf_file`](#scipy.io.netcdf_file
+    "scipy.io.netcdf_file") object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**filename**string or file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: string -> filename
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**mode**{‘r’, ‘w’, ‘a’}, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: read-write-append mode, default is ‘r’
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**mmap**None or bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether to mmap *filename* when reading. Default is True when *filename* is
+    a file name, False when *filename* is a file-like object. Note that when mmap
+    is in use, data arrays returned refer directly to the mmapped data on disk, and
+    the file cannot be closed as long as references to it exist.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**version**{1, 2}, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: version of netcdf to read / write, where 1 means *Classic format* and 2 means
+    *64-bit offset format*. Default is 1\. See [here](https://docs.unidata.ucar.edu/nug/current/netcdf_introduction.html#select_format)
+    for more info.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**maskandscale**bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether to automatically scale and/or mask data based on attributes. Default
+    is False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: The major advantage of this module over other modules is that it doesn’t require
+    the code to be linked to the NetCDF libraries. This module is derived from [pupynere](https://bitbucket.org/robertodealmeida/pupynere/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NetCDF files are a self-describing binary data format. The file contains metadata
+    that describes the dimensions and variables in the file. More details about NetCDF
+    files can be found [here](https://www.unidata.ucar.edu/software/netcdf/guide_toc.html).
+    There are three main sections to a NetCDF data structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dimensions
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Variables
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Attributes
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The dimensions section records the name and length of each dimension used by
+    the variables. The variables would then indicate which dimensions it uses and
+    any attributes such as data units, along with containing the data values for the
+    variable. It is good practice to include a variable that is the same name as a
+    dimension to provide the values for that axes. Lastly, the attributes section
+    would contain additional information such as the name of the file creator or the
+    instrument used to collect the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When writing data to a NetCDF file, there is often the need to indicate the
+    ‘record dimension’. A record dimension is the unbounded dimension for a variable.
+    For example, a temperature variable may have dimensions of latitude, longitude
+    and time. If one wants to add more temperature data to the NetCDF file as time
+    progresses, then the temperature variable should have the time dimension flagged
+    as the record dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition, the NetCDF file header contains the position of the data in the
+    file, so access can be done in an efficient manner without loading unnecessary
+    data into memory. It uses the `mmap` module to create Numpy arrays mapped to the
+    data on disk, for the same purpose.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that when [`netcdf_file`](#scipy.io.netcdf_file "scipy.io.netcdf_file")
+    is used to open a file with mmap=True (default for read-only), arrays returned
+    by it refer to data directly on the disk. The file should not be closed, and cannot
+    be cleanly closed when asked, if such arrays are alive. You may want to copy data
+    arrays obtained from mmapped Netcdf file if they are to be processed after the
+    file is closed, see the example below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To create a NetCDF file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note the assignment of `arange(10)` to `time[:]`. Exposing the slice of the
+    time variable allows for the data to be set in the object, rather than letting
+    `arange(10)` overwrite the `time` variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To read the NetCDF file we just created:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'NetCDF files, when opened read-only, return arrays that refer directly to memory-mapped
+    data on disk:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the data is to be processed after the file is closed, it needs to be copied
+    to main memory:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A NetCDF file can also be used as context manager:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Methods
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [`close`](scipy.io.netcdf_file.close.html#scipy.io.netcdf_file.close "scipy.io.netcdf_file.close")()
+    | Closes the NetCDF file. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`createDimension`](scipy.io.netcdf_file.createDimension.html#scipy.io.netcdf_file.createDimension
+    "scipy.io.netcdf_file.createDimension")(name, length) | Adds a dimension to the
+    Dimension section of the NetCDF data structure. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`createVariable`](scipy.io.netcdf_file.createVariable.html#scipy.io.netcdf_file.createVariable
+    "scipy.io.netcdf_file.createVariable")(name, type, dimensions) | Create an empty
+    variable for the [`netcdf_file`](#scipy.io.netcdf_file "scipy.io.netcdf_file")
+    object, specifying its data type and the dimensions it uses. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`flush`](scipy.io.netcdf_file.flush.html#scipy.io.netcdf_file.flush "scipy.io.netcdf_file.flush")()
+    | Perform a sync-to-disk flush if the [`netcdf_file`](#scipy.io.netcdf_file "scipy.io.netcdf_file")
+    object is in write mode. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`sync`](scipy.io.netcdf_file.sync.html#scipy.io.netcdf_file.sync "scipy.io.netcdf_file.sync")()
+    | Perform a sync-to-disk flush if the [`netcdf_file`](#scipy.io.netcdf_file "scipy.io.netcdf_file")
+    object is in write mode. |'
+  prefs: []
+  type: TYPE_TB

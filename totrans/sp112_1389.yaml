@@ -1,0 +1,91 @@
+- en: BLAS and LAPACK
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/building/blas_lapack.html](https://docs.scipy.org/doc/scipy-1.12.0/building/blas_lapack.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## Selecting BLAS and LAPACK libraries'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'BLAS and LAPACK library selection, other than the OpenBLAS default, is implemented
+    via Meson [build options](https://mesonbuild.com/Build-options.html#build-options).
+    For example, to select plain `libblas` and `liblapack` (this is typically Netlib
+    BLAS/LAPACK on Linux distros, and can be dynamically switched between implementations
+    on conda-forge), use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Other options that should work (as long as they’re installed with `pkg-config`
+    or CMake support) include `mkl`, `atlas` and `blis`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using pkg-config to detect libraries in a nonstandard location
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The way BLAS and LAPACK detection works under the hood is that Meson tries
+    to discover the specified libraries first with `pkg-config`, and then with CMake.
+    If all you have is a standalone shared library file (e.g., `armpl_lp64.so` in
+    `/a/random/path/lib/` and a corresponding header file in `/a/random/path/include/`),
+    then what you have to do is craft your own pkg-config file. It should have a matching
+    name (so in this example, `armpl_lp64.pc`) and may be located anywhere. The `PKG_CONFIG_PATH`
+    environment variable should be set to point to the location of the `.pc` file.
+    The contents of that file should be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To check that this works as expected, you should be able to run:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Specifying the Fortran ABI to use
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Some linear algebra libraries are built with the `g77` ABI (also known as “the
+    `f2c` calling convention”) and others with GFortran ABI, and these two ABIs are
+    incompatible. Therefore, if you build SciPy with `gfortran` and link to a linear
+    algebra library like MKL, which is built with a `g77` ABI, there’ll be an exception
+    or a segfault. SciPy fixes this by using ABI wrappers which rely on the CBLAS
+    API for the few functions in the BLAS API that suffer from this issue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that SciPy needs to know at build time, what needs to be done and the
+    build system will automatically check whether linear algebra library is MKL or
+    Accelerate (which both always use the `g77` ABI) and if so, use the CBLAS API
+    instead of the BLAS API. If autodetection fails or if the user wants to override
+    this autodetection mechanism for building against plain `libblas`/`liblapack`
+    (this is what conda-forge does for example), use the `-Duse-g77-abi=true` build
+    option. E.g.,:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Work-in-progress
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'These options are planned to be fully supported, but currently not usable out
+    of the box:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'ILP64 (64-bit integer size) builds: large parts of SciPy support using ILP64
+    BLAS/LAPACK. Note that support is still incomplete, so SciPy *also* requires LP64
+    (32-bit integer size) BLAS/LAPACK.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Automatically selecting from multiple possible BLAS and LAPACK options, with
+    a user-provided order of precedence
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

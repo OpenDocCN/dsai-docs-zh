@@ -1,0 +1,193 @@
+- en: Special functions (scipy.special)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/tutorial/special.html](https://docs.scipy.org/doc/scipy-1.12.0/tutorial/special.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The main feature of the [`scipy.special`](../reference/special.html#module-scipy.special
+    "scipy.special") package is the definition of numerous special functions of mathematical
+    physics. Available functions include airy, elliptic, bessel, gamma, beta, hypergeometric,
+    parabolic cylinder, mathieu, spheroidal wave, struve, and kelvin. There are also
+    some low-level stats functions that are not intended for general use as an easier
+    interface to these functions is provided by the `stats` module. Most of these
+    functions can take array arguments and return array results following the same
+    broadcasting rules as other math functions in Numerical Python. Many of these
+    functions also accept complex numbers as input. For a complete list of the available
+    functions with a one-line description type `>>> help(special).` Each function
+    also has its own documentation accessible using help. If you don’t see a function
+    you need, consider writing it and contributing it to the library. You can write
+    the function in either C, Fortran, or Python. Look in the source code of the library
+    for examples of each of these kinds of functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bessel functions of real order([`jv`](../reference/generated/scipy.special.jv.html#scipy.special.jv
+    "scipy.special.jv"), [`jn_zeros`](../reference/generated/scipy.special.jn_zeros.html#scipy.special.jn_zeros
+    "scipy.special.jn_zeros"))
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Bessel functions are a family of solutions to Bessel’s differential equation
+    with real or complex order alpha:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[x^2 \frac{d^2 y}{dx^2} + x \frac{dy}{dx} + (x^2 - \alpha^2)y = 0\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Among other uses, these functions arise in wave propagation problems, such
+    as the vibrational modes of a thin drum head. Here is an example of a circular
+    drum head anchored at the edge:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code generates a 3-D representation of the vibrational modes on a drum
+    head viewed at a three-quarter angle. A circular region on the X-Y plane is defined
+    with a Z value of 0 around the edge. Within the circle a single smooth valley
+    exists on the -X side and a smooth peak exists on the +X side. The image resembles
+    a yin-yang at this angle."](../Images/8aea0ad305c97b42c06df7d252814a5f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Cython Bindings for Special Functions ([`scipy.special.cython_special`](../reference/special.cython_special.html#module-scipy.special.cython_special
+    "scipy.special.cython_special"))
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'SciPy also offers Cython bindings for scalar, typed versions of many of the
+    functions in special. The following Cython code gives a simple example of how
+    to use these functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '(See the [Cython documentation](http://docs.cython.org/en/latest/src/reference/compilation.html)
+    for help with compiling Cython.) In the example the function `csc.gamma` works
+    essentially like its ufunc counterpart [`gamma`](../reference/generated/scipy.special.gamma.html#scipy.special.gamma
+    "scipy.special.gamma"), though it takes C types as arguments instead of NumPy
+    arrays. Note, in particular, that the function is overloaded to support real and
+    complex arguments; the correct variant is selected at compile time. The function
+    `csc.sici` works slightly differently from [`sici`](../reference/generated/scipy.special.sici.html#scipy.special.sici
+    "scipy.special.sici"); for the ufunc we could write `ai, bi = sici(x)`, whereas
+    in the Cython version multiple return values are passed as pointers. It might
+    help to think of this as analogous to calling a ufunc with an output array: `sici(x,
+    out=(si, ci))`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two potential advantages to using the Cython bindings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: they avoid Python function overhead
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: they do not require the Python Global Interpreter Lock (GIL)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The following sections discuss how to use these advantages to potentially speed
+    up your code, though, of course, one should always profile the code first to make
+    sure putting in the extra effort will be worth it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Avoiding Python Function Overhead
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For the ufuncs in special, Python function overhead is avoided by vectorizing,
+    that is, by passing an array to the function. Typically, this approach works quite
+    well, but sometimes it is more convenient to call a special function on scalar
+    inputs inside a loop, for example, when implementing your own ufunc. In this case,
+    the Python function overhead can become significant. Consider the following example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On one computer `python_tight_loop` took about 131 microseconds to run and
+    `cython_tight_loop` took about 18.2 microseconds to run. Obviously this example
+    is contrived: one could just call `special.jv(np.arange(100), 1)` and get results
+    just as fast as in `cython_tight_loop`. The point is that if Python function overhead
+    becomes significant in your code, then the Cython bindings might be useful.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Releasing the GIL
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'One often needs to evaluate a special function at many points, and typically
+    the evaluations are trivially parallelizable. Since the Cython bindings do not
+    require the GIL, it is easy to run them in parallel using Cython’s `prange` function.
+    For example, suppose that we wanted to compute the fundamental solution to the
+    Helmholtz equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\Delta_x G(x, y) + k^2G(x, y) = \delta(x - y),\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(k\) is the wavenumber and \(\delta\) is the Dirac delta function. It
+    is known that in two dimensions the unique (radiating) solution is
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[G(x, y) = \frac{i}{4}H_0^{(1)}(k|x - y|),\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'where \(H_0^{(1)}\) is the Hankel function of the first kind, i.e., the function
+    [`hankel1`](../reference/generated/scipy.special.hankel1.html#scipy.special.hankel1
+    "scipy.special.hankel1"). The following example shows how we could compute this
+    function in parallel:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '(For help with compiling parallel code in Cython see [here](http://docs.cython.org/en/latest/src/userguide/parallelism.html#compiling).)
+    If the above Cython code is in a file `test.pyx`, then we can write an informal
+    benchmark which compares the parallel and serial versions of the function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: On one quad-core computer the serial method took 1.29 seconds and the parallel
+    method took 0.29 seconds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Functions not in [`scipy.special`](../reference/special.html#module-scipy.special
+    "scipy.special")
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Some functions are not included in special because they are straightforward
+    to implement with existing functions in NumPy and SciPy. To prevent reinventing
+    the wheel, this section provides implementations of several such functions, which
+    hopefully illustrate how to handle similar functions. In all examples NumPy is
+    imported as `np` and special is imported as `sc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [binary entropy function](https://en.wikipedia.org/wiki/Binary_entropy_function):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A rectangular step function on [0, 1]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Translating and scaling can be used to get an arbitrary step function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [ramp function](https://en.wikipedia.org/wiki/Ramp_function):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE

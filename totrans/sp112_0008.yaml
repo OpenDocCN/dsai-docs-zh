@@ -1,0 +1,1695 @@
+- en: Signal Processing (scipy.signal)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/tutorial/signal.html](https://docs.scipy.org/doc/scipy-1.12.0/tutorial/signal.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The signal processing toolbox currently contains some filtering functions, a
+    limited set of filter design tools, and a few B-spline interpolation algorithms
+    for 1- and 2-D data. While the B-spline algorithms could technically be placed
+    under the interpolation category, they are included here because they only work
+    with equally-spaced data and make heavy use of filter-theory and transfer-function
+    formalism to provide a fast B-spline transform. To understand this section, you
+    will need to understand that a signal in SciPy is an array of real or complex
+    numbers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## B-splines'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A B-spline is an approximation of a continuous function over a finite- domain
+    in terms of B-spline coefficients and knot points. If the knot- points are equally
+    spaced with spacing \(\Delta x\), then the B-spline approximation to a 1-D function
+    is the finite-basis expansion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y\left(x\right)\approx\sum_{j}c_{j}\beta^{o}\left(\frac{x}{\Delta x}-j\right).\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: In two dimensions with knot-spacing \(\Delta x\) and \(\Delta y\), the function
+    representation is
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[z\left(x,y\right)\approx\sum_{j}\sum_{k}c_{jk}\beta^{o}\left(\frac{x}{\Delta
+    x}-j\right)\beta^{o}\left(\frac{y}{\Delta y}-k\right).\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: In these expressions, \(\beta^{o}\left(\cdot\right)\) is the space-limited B-spline
+    basis function of order \(o\). The requirement of equally-spaced knot-points and
+    equally-spaced data points, allows the development of fast (inverse-filtering)
+    algorithms for determining the coefficients, \(c_{j}\), from sample-values, \(y_{n}\).
+    Unlike the general spline interpolation algorithms, these algorithms can quickly
+    find the spline coefficients for large images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The advantage of representing a set of samples via B-spline basis functions
+    is that continuous-domain operators (derivatives, re- sampling, integral, etc.),
+    which assume that the data samples are drawn from an underlying continuous function,
+    can be computed with relative ease from the spline coefficients. For example,
+    the second derivative of a spline is
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y{}^{\prime\prime}\left(x\right)=\frac{1}{\Delta x^{2}}\sum_{j}c_{j}\beta^{o\prime\prime}\left(\frac{x}{\Delta
+    x}-j\right).\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the property of B-splines that
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\frac{d^{2}\beta^{o}\left(w\right)}{dw^{2}}=\beta^{o-2}\left(w+1\right)-2\beta^{o-2}\left(w\right)+\beta^{o-2}\left(w-1\right),\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: it can be seen that
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y^{\prime\prime}\left(x\right)=\frac{1}{\Delta x^{2}}\sum_{j}c_{j}\left[\beta^{o-2}\left(\frac{x}{\Delta
+    x}-j+1\right)-2\beta^{o-2}\left(\frac{x}{\Delta x}-j\right)+\beta^{o-2}\left(\frac{x}{\Delta
+    x}-j-1\right)\right].\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If \(o=3\), then at the sample points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \begin{eqnarray*} \Delta x^{2}\left.y^{\prime}\left(x\right)\right|_{x=n\Delta
+    x} & = & \sum_{j}c_{j}\delta_{n-j+1}-2c_{j}\delta_{n-j}+c_{j}\delta_{n-j-1},\\
+    & = & c_{n+1}-2c_{n}+c_{n-1}.\end{eqnarray*}
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thus, the second-derivative signal can be easily calculated from the spline
+    fit. If desired, smoothing splines can be found to make the second derivative
+    less sensitive to random errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The savvy reader will have already noticed that the data samples are related
+    to the knot coefficients via a convolution operator, so that simple convolution
+    with the sampled B-spline function recovers the original data from the spline
+    coefficients. The output of convolutions can change depending on how the boundaries
+    are handled (this becomes increasingly more important as the number of dimensions
+    in the dataset increases). The algorithms relating to B-splines in the signal-processing
+    subpackage assume mirror-symmetric boundary conditions. Thus, spline coefficients
+    are computed based on that assumption, and data-samples can be recovered exactly
+    from the spline coefficients by assuming them to be mirror-symmetric also.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Currently the package provides functions for determining second- and third-
+    order cubic spline coefficients from equally-spaced samples in one and two dimensions
+    ([`qspline1d`](../reference/generated/scipy.signal.qspline1d.html#scipy.signal.qspline1d
+    "scipy.signal.qspline1d"), [`qspline2d`](../reference/generated/scipy.signal.qspline2d.html#scipy.signal.qspline2d
+    "scipy.signal.qspline2d"), [`cspline1d`](../reference/generated/scipy.signal.cspline1d.html#scipy.signal.cspline1d
+    "scipy.signal.cspline1d"), [`cspline2d`](../reference/generated/scipy.signal.cspline2d.html#scipy.signal.cspline2d
+    "scipy.signal.cspline2d")). For large \(o\), the B-spline basis function can be
+    approximated well by a zero-mean Gaussian function with standard-deviation equal
+    to \(\sigma_{o}=\left(o+1\right)/12\) :'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\beta^{o}\left(x\right)\approx\frac{1}{\sqrt{2\pi\sigma_{o}^{2}}}\exp\left(-\frac{x^{2}}{2\sigma_{o}}\right).\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function to compute this Gaussian for arbitrary \(x\) and \(o\) is also available
+    ( [`gauss_spline`](../reference/generated/scipy.signal.gauss_spline.html#scipy.signal.gauss_spline
+    "scipy.signal.gauss_spline") ). The following code and figure use spline-filtering
+    to compute an edge-image (the second derivative of a smoothed spline) of a raccoon’s
+    face, which is an array returned by the command [`scipy.datasets.face`](../reference/generated/scipy.datasets.face.html#scipy.datasets.face
+    "scipy.datasets.face"). The command [`sepfir2d`](../reference/generated/scipy.signal.sepfir2d.html#scipy.signal.sepfir2d
+    "scipy.signal.sepfir2d") was used to apply a separable 2-D FIR filter with mirror-symmetric
+    boundary conditions to the spline coefficients. This function is ideally-suited
+    for reconstructing samples from spline coefficients and is faster than [`convolve2d`](../reference/generated/scipy.signal.convolve2d.html#scipy.signal.convolve2d
+    "scipy.signal.convolve2d"), which convolves arbitrary 2-D filters and allows for
+    choosing mirror-symmetric boundary conditions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Alternatively, we could have done:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays two plots. The first plot is a normal grayscale photo
+    of a raccoon climbing on a palm plant. The second plot has the 2-D spline filter
+    applied to the photo and is completely grey except the edges of the photo have
+    been emphasized, especially on the raccoon fur and palm fronds."](../Images/6afce5c3a77c44be51837f10c7459f44.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays two plots. The first plot is a normal grayscale photo
+    of a raccoon climbing on a palm plant. The second plot has the 2-D spline filter
+    applied to the photo and is completely grey except the edges of the photo have
+    been emphasized, especially on the raccoon fur and palm fronds."](../Images/2d7bb4e70d091dce966908ca963a5b43.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Filtering
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Filtering is a generic name for any system that modifies an input signal in
+    some way. In SciPy, a signal can be thought of as a NumPy array. There are different
+    kinds of filters for different kinds of operations. There are two broad kinds
+    of filtering operations: linear and non-linear. Linear filters can always be reduced
+    to multiplication of the flattened NumPy array by an appropriate matrix resulting
+    in another flattened NumPy array. Of course, this is not usually the best way
+    to compute the filter, as the matrices and vectors involved may be huge. For example,
+    filtering a \(512 \times 512\) image with this method would require multiplication
+    of a \(512^2 \times 512^2\) matrix with a \(512^2\) vector. Just trying to store
+    the \(512^2 \times 512^2\) matrix using a standard NumPy array would require \(68,719,476,736\)
+    elements. At 4 bytes per element this would require \(256\textrm{GB}\) of memory.
+    In most applications, most of the elements of this matrix are zero and a different
+    method for computing the output of the filter is employed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolution/Correlation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Many linear filters also have the property of shift-invariance. This means that
+    the filtering operation is the same at different locations in the signal and it
+    implies that the filtering matrix can be constructed from knowledge of one row
+    (or column) of the matrix alone. In this case, the matrix multiplication can be
+    accomplished using Fourier transforms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let \(x\left[n\right]\) define a 1-D signal indexed by the integer \(n.\) Full
+    convolution of two 1-D signals can be expressed as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y\left[n\right]=\sum_{k=-\infty}^{\infty}x\left[k\right]h\left[n-k\right].\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: This equation can only be implemented directly if we limit the sequences to
+    finite-support sequences that can be stored in a computer, choose \(n=0\) to be
+    the starting point of both sequences, let \(K+1\) be that value for which \(x\left[n\right]=0\)
+    for all \(n\geq K+1\) and \(M+1\) be that value for which \(h\left[n\right]=0\)
+    for all \(n\geq M+1\), then the discrete convolution expression is
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y\left[n\right]=\sum_{k=\max\left(n-M,0\right)}^{\min\left(n,K\right)}x\left[k\right]h\left[n-k\right].\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: For convenience, assume \(K\geq M.\) Then, more explicitly, the output of this
+    operation is
+  prefs: []
+  type: TYPE_NORMAL
+- en: \begin{eqnarray*} y\left[0\right] & = & x\left[0\right]h\left[0\right]\\ y\left[1\right]
+    & = & x\left[0\right]h\left[1\right]+x\left[1\right]h\left[0\right]\\ y\left[2\right]
+    & = & x\left[0\right]h\left[2\right]+x\left[1\right]h\left[1\right]+x\left[2\right]h\left[0\right]\\
+    \vdots & \vdots & \vdots\\ y\left[M\right] & = & x\left[0\right]h\left[M\right]+x\left[1\right]h\left[M-1\right]+\cdots+x\left[M\right]h\left[0\right]\\
+    y\left[M+1\right] & = & x\left[1\right]h\left[M\right]+x\left[2\right]h\left[M-1\right]+\cdots+x\left[M+1\right]h\left[0\right]\\
+    \vdots & \vdots & \vdots\\ y\left[K\right] & = & x\left[K-M\right]h\left[M\right]+\cdots+x\left[K\right]h\left[0\right]\\
+    y\left[K+1\right] & = & x\left[K+1-M\right]h\left[M\right]+\cdots+x\left[K\right]h\left[1\right]\\
+    \vdots & \vdots & \vdots\\ y\left[K+M-1\right] & = & x\left[K-1\right]h\left[M\right]+x\left[K\right]h\left[M-1\right]\\
+    y\left[K+M\right] & = & x\left[K\right]h\left[M\right].\end{eqnarray*}
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thus, the full discrete convolution of two finite sequences of lengths \(K+1\)
+    and \(M+1\), respectively, results in a finite sequence of length \(K+M+1=\left(K+1\right)+\left(M+1\right)-1.\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1-D convolution is implemented in SciPy with the function [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
+    "scipy.signal.convolve"). This function takes as inputs the signals \(x,\) \(h\),
+    and two optional flags ‘mode’ and ‘method’, and returns the signal \(y.\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first optional flag, ‘mode’, allows for the specification of which part
+    of the output signal to return. The default value of ‘full’ returns the entire
+    signal. If the flag has a value of ‘same’, then only the middle \(K\) values are
+    returned, starting at \(y\left[\left\lfloor \frac{M-1}{2}\right\rfloor \right]\),
+    so that the output has the same length as the first input. If the flag has a value
+    of ‘valid’, then only the middle \(K-M+1=\left(K+1\right)-\left(M+1\right)+1\)
+    output values are returned, where \(z\) depends on all of the values of the smallest
+    input from \(h\left[0\right]\) to \(h\left[M\right].\) In other words, only the
+    values \(y\left[M\right]\) to \(y\left[K\right]\) inclusive are returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second optional flag, ‘method’, determines how the convolution is computed,
+    either through the Fourier transform approach with [`fftconvolve`](../reference/generated/scipy.signal.fftconvolve.html#scipy.signal.fftconvolve
+    "scipy.signal.fftconvolve") or through the direct method. By default, it selects
+    the expected faster method. The Fourier transform method has order \(O(N\log N)\),
+    while the direct method has order \(O(N^2)\). Depending on the big O constant
+    and the value of \(N\), one of these two methods may be faster. The default value,
+    ‘auto’, performs a rough calculation and chooses the expected faster method, while
+    the values ‘direct’ and ‘fft’ force computation with the other two methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The code below shows a simple example for convolution of 2 sequences:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This same function [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
+    "scipy.signal.convolve") can actually take N-D arrays as inputs and will return
+    the N-D convolution of the two arrays, as is shown in the code example below.
+    The same input flags are available for that case as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Correlation is very similar to convolution except that the minus sign becomes
+    a plus sign. Thus,
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[w\left[n\right]=\sum_{k=-\infty}^{\infty}y\left[k\right]x\left[n+k\right],\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: is the (cross) correlation of the signals \(y\) and \(x.\) For finite-length
+    signals with \(y\left[n\right]=0\) outside of the range \(\left[0,K\right]\) and
+    \(x\left[n\right]=0\) outside of the range \(\left[0,M\right],\) the summation
+    can simplify to
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[w\left[n\right]=\sum_{k=\max\left(0,-n\right)}^{\min\left(K,M-n\right)}y\left[k\right]x\left[n+k\right].\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assuming again that \(K\geq M\), this is
+  prefs: []
+  type: TYPE_NORMAL
+- en: \begin{eqnarray*} w\left[-K\right] & = & y\left[K\right]x\left[0\right]\\ w\left[-K+1\right]
+    & = & y\left[K-1\right]x\left[0\right]+y\left[K\right]x\left[1\right]\\ \vdots
+    & \vdots & \vdots\\ w\left[M-K\right] & = & y\left[K-M\right]x\left[0\right]+y\left[K-M+1\right]x\left[1\right]+\cdots+y\left[K\right]x\left[M\right]\\
+    w\left[M-K+1\right] & = & y\left[K-M-1\right]x\left[0\right]+\cdots+y\left[K-1\right]x\left[M\right]\\
+    \vdots & \vdots & \vdots\\ w\left[-1\right] & = & y\left[1\right]x\left[0\right]+y\left[2\right]x\left[1\right]+\cdots+y\left[M+1\right]x\left[M\right]\\
+    w\left[0\right] & = & y\left[0\right]x\left[0\right]+y\left[1\right]x\left[1\right]+\cdots+y\left[M\right]x\left[M\right]\\
+    w\left[1\right] & = & y\left[0\right]x\left[1\right]+y\left[1\right]x\left[2\right]+\cdots+y\left[M-1\right]x\left[M\right]\\
+    w\left[2\right] & = & y\left[0\right]x\left[2\right]+y\left[1\right]x\left[3\right]+\cdots+y\left[M-2\right]x\left[M\right]\\
+    \vdots & \vdots & \vdots\\ w\left[M-1\right] & = & y\left[0\right]x\left[M-1\right]+y\left[1\right]x\left[M\right]\\
+    w\left[M\right] & = & y\left[0\right]x\left[M\right].\end{eqnarray*}
+  prefs: []
+  type: TYPE_NORMAL
+- en: The SciPy function [`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
+    "scipy.signal.correlate") implements this operation. Equivalent flags are available
+    for this operation to return the full \(K+M+1\) length sequence (‘full’) or a
+    sequence with the same size as the largest sequence starting at \(w\left[-K+\left\lfloor
+    \frac{M-1}{2}\right\rfloor \right]\) (‘same’) or a sequence where the values depend
+    on all the values of the smallest sequence (‘valid’). This final option returns
+    the \(K-M+1\) values \(w\left[M-K\right]\) to \(w\left[0\right]\) inclusive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function [`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
+    "scipy.signal.correlate") can also take arbitrary N-D arrays as input and return
+    the N-D convolution of the two arrays on output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When \(N=2,\) [`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
+    "scipy.signal.correlate") and/or [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
+    "scipy.signal.convolve") can be used to construct arbitrary image filters to perform
+    actions such as blurring, enhancing, and edge-detection for an image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays two plots. The first plot is the familiar photo of a
+    raccoon climbing on a palm. The second plot has the FIR filter applied and has
+    the two copies of the photo superimposed due to the twin peaks manually set in
+    the filter kernel definition."](../Images/a031ed887fc96d3573976234c0dfd09c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays two plots. The first plot is the familiar photo of a
+    raccoon climbing on a palm. The second plot has the FIR filter applied and has
+    the two copies of the photo superimposed due to the twin peaks manually set in
+    the filter kernel definition."](../Images/4b0f1c5eb2856c5db5187362206d3d41.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Calculating the convolution in the time domain as above is mainly used for filtering
+    when one of the signals is much smaller than the other ( \(K\gg M\) ), otherwise
+    linear filtering is more efficiently calculated in the frequency domain provided
+    by the function [`fftconvolve`](../reference/generated/scipy.signal.fftconvolve.html#scipy.signal.fftconvolve
+    "scipy.signal.fftconvolve"). By default, [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
+    "scipy.signal.convolve") estimates the fastest method using [`choose_conv_method`](../reference/generated/scipy.signal.choose_conv_method.html#scipy.signal.choose_conv_method
+    "scipy.signal.choose_conv_method").
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the filter function \(w[n,m]\) can be factored according to
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[h[n, m] = h_1[n] h_2[m],\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: convolution can be calculated by means of the function [`sepfir2d`](../reference/generated/scipy.signal.sepfir2d.html#scipy.signal.sepfir2d
+    "scipy.signal.sepfir2d"). As an example, we consider a Gaussian filter [`gaussian`](../reference/generated/scipy.signal.windows.gaussian.html#scipy.signal.windows.gaussian
+    "scipy.signal.windows.gaussian")
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[h[n, m] \propto e^{-x^2-y^2} = e^{-x^2} e^{-y^2},\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: which is often used for blurring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays two plots. The first plot is a grayscale photo of two
+    people climbing a wooden staircase taken from below. The second plot has the 2-D
+    gaussian FIR window applied and appears very blurry. You can still tell it''s
+    a photo but the subject is ambiguous."](../Images/59bdee04f14114a099cb447b708f1ddc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays two plots. The first plot is a grayscale photo of two
+    people climbing a wooden staircase taken from below. The second plot has the 2-D
+    gaussian FIR window applied and appears very blurry. You can still tell it''s
+    a photo but the subject is ambiguous."](../Images/2c9cde3dce93eb73a57f57a70703af7f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Difference-equation filtering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A general class of linear 1-D filters (that includes convolution filters) are
+    filters described by the difference equation
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\sum_{k=0}^{N}a_{k}y\left[n-k\right]=\sum_{k=0}^{M}b_{k}x\left[n-k\right],\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(x\left[n\right]\) is the input sequence and \(y\left[n\right]\) is the
+    output sequence. If we assume initial rest so that \(y\left[n\right]=0\) for \(n<0\),
+    then this kind of filter can be implemented using convolution. However, the convolution
+    filter sequence \(h\left[n\right]\) could be infinite if \(a_{k}\neq0\) for \(k\geq1.\)
+    In addition, this general class of linear filter allows initial conditions to
+    be placed on \(y\left[n\right]\) for \(n<0\) resulting in a filter that cannot
+    be expressed using convolution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The difference equation filter can be thought of as finding \(y\left[n\right]\)
+    recursively in terms of its previous values
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[a_{0}y\left[n\right]=-a_{1}y\left[n-1\right]-\cdots-a_{N}y\left[n-N\right]+\cdots+b_{0}x\left[n\right]+\cdots+b_{M}x\left[n-M\right].\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Often, \(a_{0}=1\) is chosen for normalization. The implementation in SciPy
+    of this general difference equation filter is a little more complicated than would
+    be implied by the previous equation. It is implemented so that only one signal
+    needs to be delayed. The actual implementation equations are (assuming \(a_{0}=1\)
+    ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \begin{eqnarray*} y\left[n\right] & = & b_{0}x\left[n\right]+z_{0}\left[n-1\right]\\
+    z_{0}\left[n\right] & = & b_{1}x\left[n\right]+z_{1}\left[n-1\right]-a_{1}y\left[n\right]\\
+    z_{1}\left[n\right] & = & b_{2}x\left[n\right]+z_{2}\left[n-1\right]-a_{2}y\left[n\right]\\
+    \vdots & \vdots & \vdots\\ z_{K-2}\left[n\right] & = & b_{K-1}x\left[n\right]+z_{K-1}\left[n-1\right]-a_{K-1}y\left[n\right]\\
+    z_{K-1}\left[n\right] & = & b_{K}x\left[n\right]-a_{K}y\left[n\right],\end{eqnarray*}
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(K=\max\left(N,M\right).\) Note that \(b_{K}=0\) if \(K>M\) and \(a_{K}=0\)
+    if \(K>N.\) In this way, the output at time \(n\) depends only on the input at
+    time \(n\) and the value of \(z_{0}\) at the previous time. This can always be
+    calculated as long as the \(K\) values \(z_{0}\left[n-1\right]\ldots z_{K-1}\left[n-1\right]\)
+    are computed and stored at each time step.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The difference-equation filter is called using the command [`lfilter`](../reference/generated/scipy.signal.lfilter.html#scipy.signal.lfilter
+    "scipy.signal.lfilter") in SciPy. This command takes as inputs the vector \(b,\)
+    the vector, \(a,\) a signal \(x\) and returns the vector \(y\) (the same length
+    as \(x\) ) computed using the equation given above. If \(x\) is N-D, then the
+    filter is computed along the axis provided. If desired, initial conditions providing
+    the values of \(z_{0}\left[-1\right]\) to \(z_{K-1}\left[-1\right]\) can be provided
+    or else it will be assumed that they are all zero. If initial conditions are provided,
+    then the final conditions on the intermediate variables are also returned. These
+    could be used, for example, to restart the calculation in the same state.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sometimes, it is more convenient to express the initial conditions in terms
+    of the signals \(x\left[n\right]\) and \(y\left[n\right].\) In other words, perhaps
+    you have the values of \(x\left[-M\right]\) to \(x\left[-1\right]\) and the values
+    of \(y\left[-N\right]\) to \(y\left[-1\right]\) and would like to determine what
+    values of \(z_{m}\left[-1\right]\) should be delivered as initial conditions to
+    the difference-equation filter. It is not difficult to show that, for \(0\leq
+    m<K,\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[z_{m}\left[n\right]=\sum_{p=0}^{K-m-1}\left(b_{m+p+1}x\left[n-p\right]-a_{m+p+1}y\left[n-p\right]\right).\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using this formula, we can find the initial-condition vector \(z_{0}\left[-1\right]\)
+    to \(z_{K-1}\left[-1\right]\) given initial conditions on \(y\) (and \(x\) ).
+    The command [`lfiltic`](../reference/generated/scipy.signal.lfiltic.html#scipy.signal.lfiltic
+    "scipy.signal.lfiltic") performs this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example, consider the following system:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[y[n] = \frac{1}{2} x[n] + \frac{1}{4} x[n-1] + \frac{1}{3} y[n-1]\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code calculates the signal \(y[n]\) for a given signal \(x[n]\); first for
+    initial conditions \(y[-1] = 0\) (default case), then for \(y[-1] = 2\) by means
+    of [`lfiltic`](../reference/generated/scipy.signal.lfiltic.html#scipy.signal.lfiltic
+    "scipy.signal.lfiltic").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the output signal \(y[n]\) has the same length as the length as the
+    input signal \(x[n]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analysis of Linear Systems
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Linear system described a linear-difference equation can be fully described
+    by the coefficient vectors \(a\) and \(b\) as was done above; an alternative representation
+    is to provide a factor \(k\), \(N_z\) zeros \(z_k\) and \(N_p\) poles \(p_k\),
+    respectively, to describe the system by means of its transfer function \(H(z)\),
+    according to
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[H(z) = k \frac{ (z-z_1)(z-z_2)...(z-z_{N_z})}{ (z-p_1)(z-p_2)...(z-p_{N_p})}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: This alternative representation can be obtained with the scipy function [`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
+    "scipy.signal.tf2zpk"); the inverse is provided by [`zpk2tf`](../reference/generated/scipy.signal.zpk2tf.html#scipy.signal.zpk2tf
+    "scipy.signal.zpk2tf").
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the above example we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: i.e., the system has a zero at \(z=-1/2\) and a pole at \(z=1/3\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The scipy function [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
+    "scipy.signal.freqz") allows calculation of the frequency response of a system
+    described by the coefficients \(a_k\) and \(b_k\). See the help of the [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
+    "scipy.signal.freqz") function for a comprehensive example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Filter Design
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Time-discrete filters can be classified into finite response (FIR) filters and
+    infinite response (IIR) filters. FIR filters can provide a linear phase response,
+    whereas IIR filters cannot. SciPy provides functions for designing both types
+    of filters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: FIR Filter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The function [`firwin`](../reference/generated/scipy.signal.firwin.html#scipy.signal.firwin
+    "scipy.signal.firwin") designs filters according to the window method. Depending
+    on the provided arguments, the function returns different filter types (e.g.,
+    low-pass, band-pass…).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example below designs a low-pass and a band-stop filter, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays an X-Y plot with the amplitude response on the Y axis
+    vs frequency on the X axis. The first (low-pass) trace in blue starts with a pass-band
+    at 0 dB and curves down around halfway through with some ripple in the stop-band
+    about 80 dB down. The second (band-stop) trace in red starts and ends at 0 dB,
+    but the middle third is down about 60 dB from the peak with some ripple where
+    the filter would suppress a signal."](../Images/66ab465cd54eb94754df36204b24c4b0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note that [`firwin`](../reference/generated/scipy.signal.firwin.html#scipy.signal.firwin
+    "scipy.signal.firwin") uses, per default, a normalized frequency defined such
+    that the value \(1\) corresponds to the Nyquist frequency, whereas the function
+    [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz "scipy.signal.freqz")
+    is defined such that the value \(\pi\) corresponds to the Nyquist frequency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function [`firwin2`](../reference/generated/scipy.signal.firwin2.html#scipy.signal.firwin2
+    "scipy.signal.firwin2") allows design of almost arbitrary frequency responses
+    by specifying an array of corner frequencies and corresponding gains, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example below designs a filter with such an arbitrary amplitude response.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays an X-Y plot with amplitude response on the Y axis vs
+    frequency on the X axis. A single trace forms a shape similar to a heartbeat signal."](../Images/b7567b74c92211d8eb58a2663a7bb2fa.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note the linear scaling of the y-axis and the different definition of the Nyquist
+    frequency in [`firwin2`](../reference/generated/scipy.signal.firwin2.html#scipy.signal.firwin2
+    "scipy.signal.firwin2") and [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
+    "scipy.signal.freqz") (as explained above).
+  prefs: []
+  type: TYPE_NORMAL
+- en: IIR Filter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: SciPy provides two functions to directly design IIR [`iirdesign`](../reference/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign
+    "scipy.signal.iirdesign") and [`iirfilter`](../reference/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter
+    "scipy.signal.iirfilter"), where the filter type (e.g., elliptic) is passed as
+    an argument and several more filter design functions for specific filter types,
+    e.g., [`ellip`](../reference/generated/scipy.signal.ellip.html#scipy.signal.ellip
+    "scipy.signal.ellip").
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example below designs an elliptic low-pass filter with defined pass-band
+    and stop-band ripple, respectively. Note the much lower filter order (order 4)
+    compared with the FIR filters from the examples above in order to reach the same
+    stop-band attenuation of \(\approx 60\) dB.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code generates an X-Y plot with amplitude response on the Y axis vs
+    Frequency on the X axis. A single trace shows a smooth low-pass filter with the
+    left third passband near 0 dB. The right two-thirds are about 60 dB down with
+    two sharp narrow valleys dipping down to -100 dB."](../Images/61983117829df044b63c4428667f34f3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Filter Coefficients
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Filter coefficients can be stored in several different formats:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ‘ba’ or ‘tf’ = transfer function coefficients
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ‘zpk’ = zeros, poles, and overall gain
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ‘ss’ = state-space system representation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ‘sos’ = transfer function coefficients of second-order sections
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Functions, such as [`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
+    "scipy.signal.tf2zpk") and [`zpk2ss`](../reference/generated/scipy.signal.zpk2ss.html#scipy.signal.zpk2ss
+    "scipy.signal.zpk2ss"), can convert between them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Transfer function representation
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The `ba` or `tf` format is a 2-tuple `(b, a)` representing a transfer function,
+    where *b* is a length `M+1` array of coefficients of the *M*-order numerator polynomial,
+    and *a* is a length `N+1` array of coefficients of the *N*-order denominator,
+    as positive, descending powers of the transfer function variable. So the tuple
+    of \(b = [b_0, b_1, ..., b_M]\) and \(a =[a_0, a_1, ..., a_N]\) can represent
+    an analog filter of the form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[H(s) = \frac {b_0 s^M + b_1 s^{(M-1)} + \cdots + b_M} {a_0 s^N + a_1 s^{(N-1)}
+    + \cdots + a_N} = \frac {\sum_{i=0}^M b_i s^{(M-i)}} {\sum_{i=0}^N a_i s^{(N-i)}}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'or a discrete-time filter of the form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[H(z) = \frac {b_0 z^M + b_1 z^{(M-1)} + \cdots + b_M} {a_0 z^N + a_1 z^{(N-1)}
+    + \cdots + a_N} = \frac {\sum_{i=0}^M b_i z^{(M-i)}} {\sum_{i=0}^N a_i z^{(N-i)}}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This “positive powers” form is found more commonly in controls engineering.
+    If *M* and *N* are equal (which is true for all filters generated by the bilinear
+    transform), then this happens to be equivalent to the “negative powers” discrete-time
+    form preferred in DSP:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[H(z) = \frac {b_0 + b_1 z^{-1} + \cdots + b_M z^{-M}} {a_0 + a_1 z^{-1} +
+    \cdots + a_N z^{-N}} = \frac {\sum_{i=0}^M b_i z^{-i}} {\sum_{i=0}^N a_i z^{-i}}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although this is true for common filters, remember that this is not true in
+    the general case. If *M* and *N* are not equal, the discrete-time transfer function
+    coefficients must first be converted to the “positive powers” form before finding
+    the poles and zeros.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This representation suffers from numerical error at higher orders, so other
+    formats are preferred when possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Zeros and poles representation
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The `zpk` format is a 3-tuple `(z, p, k)`, where *z* is an *M*-length array
+    of the complex zeros of the transfer function \(z = [z_0, z_1, ..., z_{M-1}]\),
+    *p* is an *N*-length array of the complex poles of the transfer function \(p =
+    [p_0, p_1, ..., p_{N-1}]\), and *k* is a scalar gain. These represent the digital
+    transfer function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[H(z) = k \cdot \frac {(z - z_0) (z - z_1) \cdots (z - z_{(M-1)})} {(z - p_0)
+    (z - p_1) \cdots (z - p_{(N-1)})} = k \frac {\prod_{i=0}^{M-1} (z - z_i)} {\prod_{i=0}^{N-1}
+    (z - p_i)}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'or the analog transfer function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[H(s) = k \cdot \frac {(s - z_0) (s - z_1) \cdots (s - z_{(M-1)})} {(s - p_0)
+    (s - p_1) \cdots (s - p_{(N-1)})} = k \frac {\prod_{i=0}^{M-1} (s - z_i)} {\prod_{i=0}^{N-1}
+    (s - p_i)}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Although the sets of roots are stored as ordered NumPy arrays, their ordering
+    does not matter: `([-1, -2], [-3, -4], 1)` is the same filter as `([-2, -1], [-4,
+    -3], 1)`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: State-space system representation
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The `ss` format is a 4-tuple of arrays `(A, B, C, D)` representing the state-space
+    of an *N*-order digital/discrete-time system of the form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\mathbf{x}[k+1] = A \mathbf{x}[k] + B \mathbf{u}[k]\\ \mathbf{y}[k]
+    = C \mathbf{x}[k] + D \mathbf{u}[k]\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'or a continuous/analog system of the form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\dot{\mathbf{x}}(t) = A \mathbf{x}(t) + B \mathbf{u}(t)\\ \mathbf{y}(t)
+    = C \mathbf{x}(t) + D \mathbf{u}(t),\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with *P* inputs, *Q* outputs and *N* state variables, where:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*x* is the state vector'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*y* is the output vector of length *Q*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*u* is the input vector of length *P*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*A* is the state matrix, with shape `(N, N)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*B* is the input matrix with shape `(N, P)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*C* is the output matrix with shape `(Q, N)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*D* is the feedthrough or feedforward matrix with shape `(Q, P)`. (In cases
+    where the system does not have a direct feedthrough, all values in *D* are zero.)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: State-space is the most general representation and the only one that allows
+    for multiple-input, multiple-output (MIMO) systems. There are multiple state-space
+    representations for a given transfer function. Specifically, the “controllable
+    canonical form” and “observable canonical form” have the same coefficients as
+    the `tf` representation, and, therefore, suffer from the same numerical errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Second-order sections representation
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The `sos` format is a single 2-D array of shape `(n_sections, 6)`, representing
+    a sequence of second-order transfer functions which, when cascaded in series,
+    realize a higher-order filter with minimal numerical error. Each row corresponds
+    to a second-order `tf` representation, with the first three columns providing
+    the numerator coefficients and the last three providing the denominator coefficients:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[[b_0, b_1, b_2, a_0, a_1, a_2]\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: The coefficients are typically normalized, such that \(a_0\) is always 1. The
+    section order is usually not important with floating-point computation; the filter
+    output will be the same, regardless of the order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Filter transformations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The IIR filter design functions first generate a prototype analog low-pass
+    filter with a normalized cutoff frequency of 1 rad/sec. This is then transformed
+    into other frequencies and band types using the following substitutions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Type | Transformation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`lp2lp`](../reference/generated/scipy.signal.lp2lp.html#scipy.signal.lp2lp
+    "scipy.signal.lp2lp") | \(s \rightarrow \frac{s}{\omega_0}\) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`lp2hp`](../reference/generated/scipy.signal.lp2hp.html#scipy.signal.lp2hp
+    "scipy.signal.lp2hp") | \(s \rightarrow \frac{\omega_0}{s}\) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`lp2bp`](../reference/generated/scipy.signal.lp2bp.html#scipy.signal.lp2bp
+    "scipy.signal.lp2bp") | \(s \rightarrow \frac{s^2 + {\omega_0}^2}{s \cdot \mathrm{BW}}\)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [`lp2bs`](../reference/generated/scipy.signal.lp2bs.html#scipy.signal.lp2bs
+    "scipy.signal.lp2bs") | \(s \rightarrow \frac{s \cdot \mathrm{BW}}{s^2 + {\omega_0}^2}\)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Here, \(\omega_0\) is the new cutoff or center frequency, and \(\mathrm{BW}\)
+    is the bandwidth. These preserve symmetry on a logarithmic frequency axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To convert the transformed analog filter into a digital filter, the [`bilinear`](../reference/generated/scipy.signal.bilinear.html#scipy.signal.bilinear
+    "scipy.signal.bilinear") transform is used, which makes the following substitution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[s \rightarrow \frac{2}{T} \frac{z - 1}{z + 1},\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where T is the sampling time (the inverse of the sampling frequency).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other filters
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The signal processing package provides many more filters as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Median Filter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A median filter is commonly applied when noise is markedly non-Gaussian or when
+    it is desired to preserve edges. The median filter works by sorting all of the
+    array pixel values in a rectangular region surrounding the point of interest.
+    The sample median of this list of neighborhood pixel values is used as the value
+    for the output array. The sample median is the middle-array value in a sorted
+    list of neighborhood values. If there are an even number of elements in the neighborhood,
+    then the average of the middle two values is used as the median. A general purpose
+    median filter that works on N-D arrays is [`medfilt`](../reference/generated/scipy.signal.medfilt.html#scipy.signal.medfilt
+    "scipy.signal.medfilt"). A specialized version that works only for 2-D arrays
+    is available as [`medfilt2d`](../reference/generated/scipy.signal.medfilt2d.html#scipy.signal.medfilt2d
+    "scipy.signal.medfilt2d").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Order Filter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A median filter is a specific example of a more general class of filters called
+    order filters. To compute the output at a particular pixel, all order filters
+    use the array values in a region surrounding that pixel. These array values are
+    sorted and then one of them is selected as the output value. For the median filter,
+    the sample median of the list of array values is used as the output. A general-order
+    filter allows the user to select which of the sorted values will be used as the
+    output. So, for example, one could choose to pick the maximum in the list or the
+    minimum. The order filter takes an additional argument besides the input array
+    and the region mask that specifies which of the elements in the sorted list of
+    neighbor array values should be used as the output. The command to perform an
+    order filter is [`order_filter`](../reference/generated/scipy.signal.order_filter.html#scipy.signal.order_filter
+    "scipy.signal.order_filter").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wiener filter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The Wiener filter is a simple deblurring filter for denoising images. This is
+    not the Wiener filter commonly described in image-reconstruction problems but,
+    instead, it is a simple, local-mean filter. Let \(x\) be the input signal, then
+    the output is
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}y=\left\{ \begin{array}{cc} \frac{\sigma^{2}}{\sigma_{x}^{2}}m_{x}+\left(1-\frac{\sigma^{2}}{\sigma_{x}^{2}}\right)x
+    & \sigma_{x}^{2}\geq\sigma^{2},\\ m_{x} & \sigma_{x}^{2}<\sigma^{2},\end{array}\right.\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(m_{x}\) is the local estimate of the mean and \(\sigma_{x}^{2}\) is
+    the local estimate of the variance. The window for these estimates is an optional
+    input parameter (default is \(3\times3\) ). The parameter \(\sigma^{2}\) is a
+    threshold noise parameter. If \(\sigma\) is not given, then it is estimated as
+    the average of the local variances.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hilbert filter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The Hilbert transform constructs the complex-valued analytic signal from a real
+    signal. For example, if \(x=\cos\omega n\), then \(y=\textrm{hilbert}\left(x\right)\)
+    would return (except near the edges) \(y=\exp\left(j\omega n\right).\) In the
+    frequency domain, the hilbert transform performs
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[Y=X\cdot H,\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(H\) is \(2\) for positive frequencies, \(0\) for negative frequencies,
+    and \(1\) for zero-frequencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analog Filter Design
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The functions [`iirdesign`](../reference/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign
+    "scipy.signal.iirdesign"), [`iirfilter`](../reference/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter
+    "scipy.signal.iirfilter"), and the filter design functions for specific filter
+    types (e.g., [`ellip`](../reference/generated/scipy.signal.ellip.html#scipy.signal.ellip
+    "scipy.signal.ellip")) all have a flag *analog*, which allows the design of analog
+    filters as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example below designs an analog (IIR) filter, obtains via [`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
+    "scipy.signal.tf2zpk") the poles and zeros and plots them in the complex s-plane.
+    The zeros at \(\omega \approx 150\) and \(\omega \approx 300\) can be clearly
+    seen in the amplitude response.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays two plots. The first plot is an IIR filter response as
+    an X-Y plot with amplitude response on the Y axis vs frequency on the X axis.
+    The low-pass filter shown has a passband from 0 to 100 Hz with 0 dB response and
+    a stop-band from about 175 Hz to 1 KHz about 40 dB down. There are two sharp discontinuities
+    in the filter near 175 Hz and 300 Hz. The second plot is an X-Y showing the transfer
+    function in the complex plane. The Y axis is real-valued an the X axis is complex-valued.
+    The filter has four zeros near [300+0j, 175+0j, -175+0j, -300+0j] shown as blue
+    X markers. The filter also has four poles near [50-30j, -50-30j, 100-8j, -100-8j]
+    shown as red dots."](../Images/ef56198e3fe8c328f78fd995cbf8b28c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays two plots. The first plot is an IIR filter response as
+    an X-Y plot with amplitude response on the Y axis vs frequency on the X axis.
+    The low-pass filter shown has a passband from 0 to 100 Hz with 0 dB response and
+    a stop-band from about 175 Hz to 1 KHz about 40 dB down. There are two sharp discontinuities
+    in the filter near 175 Hz and 300 Hz. The second plot is an X-Y showing the transfer
+    function in the complex plane. The Y axis is real-valued an the X axis is complex-valued.
+    The filter has four zeros near [300+0j, 175+0j, -175+0j, -300+0j] shown as blue
+    X markers. The filter also has four poles near [50-30j, -50-30j, 100-8j, -100-8j]
+    shown as red dots."](../Images/866a45da1ada45b6dc922f9841041db2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Spectral Analysis
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Periodogram Measurements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The scipy function [`periodogram`](../reference/generated/scipy.signal.periodogram.html#scipy.signal.periodogram
+    "scipy.signal.periodogram") provides a method to estimate the spectral density
+    using the periodogram method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example below calculates the periodogram of a sine signal in white Gaussian
+    noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays a single X-Y log-linear plot with the power spectral
+    density on the Y axis vs frequency on the X axis. A single blue trace shows a
+    noise floor with a power level of 1e-3 with a single peak at 1270 Hz up to a power
+    of 1\. The noise floor measurements appear noisy and oscillate down to 1e-7."](../Images/bd13d12026ea7a24dbdb043941cc7cde.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Spectral Analysis using Welch’s Method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: An improved method, especially with respect to noise immunity, is Welch’s method,
+    which is implemented by the scipy function [`welch`](../reference/generated/scipy.signal.welch.html#scipy.signal.welch
+    "scipy.signal.welch").
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example below estimates the spectrum using Welch’s method and uses the same
+    parameters as the example above. Note the much smoother noise floor of the spectrogram.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code displays a single X-Y log-linear plot with the power spectral
+    density on the Y axis vs frequency on the X axis. A single blue trace shows a
+    smooth noise floor at a power level of 6e-2 with a single peak up to a power level
+    of 2 at 1270 Hz."](../Images/70e228d72e7156d89e9a53245321fc30.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Lomb-Scargle Periodograms ([`lombscargle`](../reference/generated/scipy.signal.lombscargle.html#scipy.signal.lombscargle
+    "scipy.signal.lombscargle"))
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Least-squares spectral analysis (LSSA) [[1]](#id11) [[2]](#id12) is a method
+    of estimating a frequency spectrum, based on a least-squares fit of sinusoids
+    to data samples, similar to Fourier analysis. Fourier analysis, the most used
+    spectral method in science, generally boosts long-periodic noise in long-gapped
+    records; LSSA mitigates such problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Lomb-Scargle method performs spectral analysis on unevenly-sampled data
+    and is known to be a powerful way to find, and test the significance of, weak
+    periodic signals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a time series comprising \(N_{t}\) measurements \(X_{j}\equiv X(t_{j})\)
+    sampled at times \(t_{j}\), where \((j = 1, \ldots, N_{t})\), assumed to have
+    been scaled and shifted, such that its mean is zero and its variance is unity,
+    the normalized Lomb-Scargle periodogram at frequency \(f\) is
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[P_{n}(f) = \frac{1}{2}\left\{\frac{\left[\sum_{j}^{N_{t}}X_{j}\cos\omega(t_{j}-\tau)\right]^{2}}{\sum_{j}^{N_{t}}\cos^{2}\omega(t_{j}-\tau)}+\frac{\left[\sum_{j}^{N_{t}}X_{j}\sin\omega(t_{j}-\tau)\right]^{2}}{\sum_{j}^{N_{t}}\sin^{2}\omega(t_{j}-\tau)}\right\}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, \(\omega \equiv 2\pi f\) is the angular frequency. The frequency-dependent
+    time offset \(\tau\) is given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tan 2\omega\tau = \frac{\sum_{j}^{N_{t}}\sin 2\omega t_{j}}{\sum_{j}^{N_{t}}\cos
+    2\omega t_{j}}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`lombscargle`](../reference/generated/scipy.signal.lombscargle.html#scipy.signal.lombscargle
+    "scipy.signal.lombscargle") function calculates the periodogram using a slightly
+    modified algorithm due to Townsend [[3]](#id13), which allows the periodogram
+    to be calculated using only a single pass through the input arrays for each frequency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The equation is refactored as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[P_{n}(f) = \frac{1}{2}\left[\frac{(c_{\tau}XC + s_{\tau}XS)^{2}}{c_{\tau}^{2}CC
+    + 2c_{\tau}s_{\tau}CS + s_{\tau}^{2}SS} + \frac{(c_{\tau}XS - s_{\tau}XC)^{2}}{c_{\tau}^{2}SS
+    - 2c_{\tau}s_{\tau}CS + s_{\tau}^{2}CC}\right]\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: and
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tan 2\omega\tau = \frac{2CS}{CC-SS}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here,
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[c_{\tau} = \cos\omega\tau,\qquad s_{\tau} = \sin\omega\tau,\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: while the sums are
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}XC &= \sum_{j}^{N_{t}} X_{j}\cos\omega t_{j}\\ XS &= \sum_{j}^{N_{t}}
+    X_{j}\sin\omega t_{j}\\ CC &= \sum_{j}^{N_{t}} \cos^{2}\omega t_{j}\\ SS &= \sum_{j}^{N_{t}}
+    \sin^{2}\omega t_{j}\\ CS &= \sum_{j}^{N_{t}} \cos\omega t_{j}\sin\omega t_{j}.\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: This requires \(N_{f}(2N_{t}+3)\) trigonometric function evaluations giving
+    a factor of \(\sim 2\) speed increase over the straightforward implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '\[% LaTeX Macros to make the LaTeX formulas more readable: \newcommand{\IC}{{\mathbb{C}}}
+    % set of complex numbers \newcommand{\IN}{{\mathbb{N}}} % set of natural numbers
+    \newcommand{\IR}{{\mathbb{R}}} % set of real numbers \newcommand{\IZ}{{\mathbb{Z}}}
+    % set of integers \newcommand{\jj}{{\mathbb{j}}} % imaginary unit \newcommand{\e}{\operatorname{e}}
+    % Euler''s number \newcommand{\dd}{\operatorname{d}} % infinitesimal operator
+    \newcommand{\conj}[1]{\overline{#1}} % complex conjugate \newcommand{\conjT}[1]{\overline{#1^T}}
+    % transposed complex conjugate \newcommand{\inv}[1]{\left(#1\right)^{\!-1}} %
+    inverse % Since the physics package is not loaded, we define the macros ourselves:
+    \newcommand{\vb}[1]{\mathbf{#1}} % vectors and matrices are bold\] ## Short-Time
+    Fourier Transform'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This section gives some background information on using the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") class: The short-time Fourier transform (STFT) can
+    be utilized to analyze the spectral properties of signals over time. It divides
+    a signal into overlapping chunks by utilizing a sliding window and calculates
+    the Fourier transform of each chunk. For a continuous-time complex-valued signal
+    \(x(t)\) the STFT is defined [[4]](#id14) as'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[S(f, t) := \int_\IR x(\xi)\, \conj{w(\xi-t)}\,\e^{-\jj2\pi f \xi}\dd\xi\ ,\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(w(t)\) is a complex-valued window function with its complex conjugate
+    being \(\conj{w(t)}\). It can be interpreted as determining the scalar product
+    of \(x\) with the window \(w\) which is translated by the time \(t\) and then
+    modulated (i.e., frequency-shifted) by the frequency \(f\). For working with sampled
+    signals \(x[k] := x(kT)\), \(k\in\IZ\), with sampling interval \(T\) (being the
+    inverse of the sampling frequency [`fs`](../reference/generated/scipy.signal.ShortTimeFFT.fs.html#scipy.signal.ShortTimeFFT.fs
+    "scipy.signal.ShortTimeFFT.fs")), the discrete version, i.e., only evaluating
+    the STFT at discrete grid points \(S[q, p] := S(q \Delta f, p\Delta t)\), \(q,p\in\IZ\),
+    needs to be used. It can be formulated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1)\[S[q,p] = \sum_{k=0}^{N-1} x[k]\,\conj{w[k-p h]}\, \e^{-\jj2\pi q k / N}\
+    , \quad q,p\in\IZ\ ,\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: with *p* representing the time index of \(S\) with time interval \(\Delta t
+    := h T\), \(h\in\IN\) (see [`delta_t`](../reference/generated/scipy.signal.ShortTimeFFT.delta_t.html#scipy.signal.ShortTimeFFT.delta_t
+    "scipy.signal.ShortTimeFFT.delta_t")), which can be expressed as the [`hop`](../reference/generated/scipy.signal.ShortTimeFFT.hop.html#scipy.signal.ShortTimeFFT.hop
+    "scipy.signal.ShortTimeFFT.hop") size of \(h\) samples. \(q\) represents the frequency
+    index of \(S\) with step size \(\Delta f := 1 / (N T)\) (see [`delta_f`](../reference/generated/scipy.signal.ShortTimeFFT.delta_f.html#scipy.signal.ShortTimeFFT.delta_f
+    "scipy.signal.ShortTimeFFT.delta_f")), which makes it FFT compatible. \(w[m] :=
+    w(mT)\), \(m\in\IZ\) is the sampled window function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To be more aligned to the implementation of [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT"), it makes sense to reformulate Eq. [(1)](#equation-eq-dstft)
+    as a two-step process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extract the \(p\)-th slice by windowing with the window \(w[m]\) made up of
+    \(M\) samples (see [`m_num`](../reference/generated/scipy.signal.ShortTimeFFT.m_num.html#scipy.signal.ShortTimeFFT.m_num
+    "scipy.signal.ShortTimeFFT.m_num")) centered at \(t[p] := p \Delta t = h T\) (see
+    [`delta_t`](../reference/generated/scipy.signal.ShortTimeFFT.delta_t.html#scipy.signal.ShortTimeFFT.delta_t
+    "scipy.signal.ShortTimeFFT.delta_t")), i.e.,
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: (2)\[x_p[m] = x\!\big[m - \lfloor M/2\rfloor + h p\big]\, \conj{w[m]}\ , \quad
+    m = 0, \ldots M-1\ ,\]
+  prefs:
+  - PREF_IND
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: where the integer \(\lfloor M/2\rfloor\) represents `M//2`, i.e, it is the mid
+    point of the window ([`m_num_mid`](../reference/generated/scipy.signal.ShortTimeFFT.m_num_mid.html#scipy.signal.ShortTimeFFT.m_num_mid
+    "scipy.signal.ShortTimeFFT.m_num_mid")). For notational convenience, \(x[k]:=0\)
+    for \(k\not\in\{0, 1, \ldots, N-1\}\) is assumed. In the subsection [Sliding Windows](#tutorial-stft-sliding-win)
+    the indexing of the slices is discussed in more detail.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Then perform a discrete Fourier transform (i.e., an [FFT](fft.html#tutorial-fft))
+    of \(x_p[m]\).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: (3)\[S[q, p] = \sum_{m=0}^{M-1} x_p[m] \exp\!\big\{% -2\jj\pi (q + \phi_m)\,
+    m / M\big\}\ .\]
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Note that a linear phase \(\phi_m\) (see [`phase_shift`](../reference/generated/scipy.signal.ShortTimeFFT.phase_shift.html#scipy.signal.ShortTimeFFT.phase_shift
+    "scipy.signal.ShortTimeFFT.phase_shift")) can be specified, which corresponds
+    to shifting the input by \(\phi_m\) samples. The default is \(\phi_m = \lfloor
+    M/2\rfloor\) (corresponds per definition to `phase_shift = 0`), which suppresses
+    linear phase components for unshifted signals. Furthermore, the FFT may be oversampled
+    by padding \(w[m]\) with zeros. This can be achieved by specifying [`mfft`](../reference/generated/scipy.signal.ShortTimeFFT.mfft.html#scipy.signal.ShortTimeFFT.mfft
+    "scipy.signal.ShortTimeFFT.mfft") to be larger than the window length [`m_num`](../reference/generated/scipy.signal.ShortTimeFFT.m_num.html#scipy.signal.ShortTimeFFT.m_num
+    "scipy.signal.ShortTimeFFT.m_num")—this sets \(M\) to [`mfft`](../reference/generated/scipy.signal.ShortTimeFFT.mfft.html#scipy.signal.ShortTimeFFT.mfft
+    "scipy.signal.ShortTimeFFT.mfft") (implying that also \(w[m]:=0\) for \(m\not\in\{0,
+    1, \ldots, M-1\}\) holds).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The inverse short-time Fourier transform ([`istft`](../reference/generated/scipy.signal.ShortTimeFFT.istft.html#scipy.signal.ShortTimeFFT.istft
+    "scipy.signal.ShortTimeFFT.istft")) is implemented by reversing these two steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Perform the inverse discrete Fourier transform, i.e.,
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: \[x_p[m] = \frac{1}{M}\sum_{q=0}^M S[q, p]\, \exp\!\big\{ 2\jj\pi (q + \phi_m)\,
+    m / M\big\}\ .\]
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Sum the shifted slices weighted by \(w_d[m]\) to reconstruct the original signal,
+    i.e.,
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: \[x[k] = \sum_p x_p\!\big[\mu_p(k)\big]\, w_d\!\big[\mu_p(k)\big]\ ,\quad \mu_p(k)
+    = k + \lfloor M/2\rfloor - h p\]
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: for \(k \in [0, \ldots, n-1]\). \(w_d[m]\) is the so-called canonical dual window
+    of \(w[m]\) and is also made up of \(M\) samples.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Note that an inverse STFT does not necessarily exist for all windows and hop
+    sizes. For a given window \(w[m]\) the hop size \(h\) must be small enough to
+    ensure that every sample of \(x[k]\) is touched by a non-zero value of at least
+    one window slice. This is sometimes referred as the “non-zero overlap condition”
+    (see [`check_NOLA`](../reference/generated/scipy.signal.check_NOLA.html#scipy.signal.check_NOLA
+    "scipy.signal.check_NOLA")). Some more details are given in the subsection [Inverse
+    STFT and Dual Windows](#tutorial-stft-dual-win).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### Sliding Windows'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This subsection discusses how the sliding window is indexed in the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") by means of an example: Consider a window of length
+    6 with a [`hop`](../reference/generated/scipy.signal.ShortTimeFFT.hop.html#scipy.signal.ShortTimeFFT.hop
+    "scipy.signal.ShortTimeFFT.hop") interval of two and a sampling interval [`T`](../reference/generated/scipy.signal.ShortTimeFFT.T.html#scipy.signal.ShortTimeFFT.T
+    "scipy.signal.ShortTimeFFT.T") of one, e.g., `ShortTimeFFT (np.ones(6), 2, fs=1)`.
+    The following image schematically depicts the first four window positions also
+    named time slices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[![../_images/tutorial_stft_sliding_win_start.svg](../Images/590d72d6177cc14fc3a3fabdc9c4e8db.png)](../_images/tutorial_stft_sliding_win_start.svg)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The x-axis denotes the time \(t\), which corresponds to the sample index *k*
+    indicated by the bottom row of blue boxes. The y-axis denotes the time slice index
+    \(p\). The signal \(x[k]\) starts at index \(k=0\) and is marked by a light blue
+    background. Per definition the zeroth slice (\(p=0\)) is centered at \(t=0\).
+    The center of each slice ([`m_num_mid`](../reference/generated/scipy.signal.ShortTimeFFT.m_num_mid.html#scipy.signal.ShortTimeFFT.m_num_mid
+    "scipy.signal.ShortTimeFFT.m_num_mid")), here being the sample `6//2=3`, is marked
+    by the text “mid”. By default the [`stft`](../reference/generated/scipy.signal.ShortTimeFFT.stft.html#scipy.signal.ShortTimeFFT.stft
+    "scipy.signal.ShortTimeFFT.stft") calculates all slices which have some overlap
+    with the signal. Hence the first slice is at [`p_min`](../reference/generated/scipy.signal.ShortTimeFFT.p_min.html#scipy.signal.ShortTimeFFT.p_min
+    "scipy.signal.ShortTimeFFT.p_min") = -1 with the lowest sample index being [`k_min`](../reference/generated/scipy.signal.ShortTimeFFT.k_min.html#scipy.signal.ShortTimeFFT.k_min
+    "scipy.signal.ShortTimeFFT.k_min") = -5\. The first sample index unaffected by
+    a slice not sticking out to the left of the signal is \(p_{lb} = 2\) and the first
+    sample index unaffected by border effects is \(k_{lb} = 5\). The property [`lower_border_end`](../reference/generated/scipy.signal.ShortTimeFFT.lower_border_end.html#scipy.signal.ShortTimeFFT.lower_border_end
+    "scipy.signal.ShortTimeFFT.lower_border_end") returns the tuple \((k_{lb}, p_{lb})\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The behavior at the end of the signal is depicted for a signal with \(n=50\)
+    samples below, as indicated by the blue background:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[![../_images/tutorial_stft_sliding_win_stop.svg](../Images/02f510b38185a0f60e9de8ba3c331a6f.png)](../_images/tutorial_stft_sliding_win_stop.svg)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here the last slice has index \(p=26\). Hence, following Python convention
+    of the end index being outside the range, [`p_max`](../reference/generated/scipy.signal.ShortTimeFFT.p_max.html#scipy.signal.ShortTimeFFT.p_max
+    "scipy.signal.ShortTimeFFT.p_max") = 27 indicates the first slice not touching
+    the signal. The corresponding sample index is [`k_max`](../reference/generated/scipy.signal.ShortTimeFFT.k_max.html#scipy.signal.ShortTimeFFT.k_max
+    "scipy.signal.ShortTimeFFT.k_max") = 55\. The first slice, which sticks out to
+    the right is \(p_{ub} = 24\) with its first sample at \(k_{ub}=45\). The function
+    [`upper_border_begin`](../reference/generated/scipy.signal.ShortTimeFFT.upper_border_begin.html#scipy.signal.ShortTimeFFT.upper_border_begin
+    "scipy.signal.ShortTimeFFT.upper_border_begin") returns the tuple \((k_{ub}, p_{ub})\).  ###
+    Inverse STFT and Dual Windows'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The term dual window stems from frame theory [[5]](#id15) where a frame is a
+    series expansion which can represent any function in a given Hilbert space. There
+    the expansions \(\{g_k\}\) and \(\{h_k\}\) are dual frames if for all functions
+    \(f\) in the given Hilbert space \(\mathcal{H}\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[f = \sum_{k\in\IN} \langle f, g_k\rangle h_k = \sum_{k\in\IN} \langle f, h_k\rangle
+    g_k\ , \quad f \in \mathcal{H}\ ,\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: holds, where \(\langle ., .\rangle\) denotes the scalar product of \(\mathcal{H}\).
+    All frames have dual frames [[5]](#id15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An STFT evaluated only at discrete grid points \(S(q \Delta f, p\Delta t)\)
+    is called a “Gabor frame” in literature [[4]](#id14) [[5]](#id15). Since the support
+    of the window \(w[m]\) is limited to a finite interval, the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") falls into the class of the so-called “painless non-orthogonal
+    expansions” [[4]](#id14). In this case the dual windows always have the same support
+    and can be calculated by means of inverting a diagonal matrix. A rough derivation
+    only requiring some understanding of manipulating matrices will be sketched out
+    in the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since the STFT given in Eq. [(1)](#equation-eq-dstft) is a linear mapping in
+    \(x[k]\), it can be expressed in vector-matrix notation. This allows us to express
+    the inverse via the formal solution of the linear least squares method (as in
+    [`lstsq`](../reference/generated/scipy.linalg.lstsq.html#scipy.linalg.lstsq "scipy.linalg.lstsq")),
+    which leads to a beautiful and simple result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We begin by reformulating the windowing of Eq. [(2)](#equation-eq-stft-windowing)
+  prefs: []
+  type: TYPE_NORMAL
+- en: (4)\[\begin{split} \vb{x}_p = \vb{W}_{\!p}\,\vb{x} = \begin{bmatrix} \cdots
+    & 0 & w[0] & 0 & \cdots&&&\\ & \cdots & 0 & w[1] & 0 & \cdots&&\\ & & & & \ddots&&&\\
+    &&\cdots & 0 & 0 & w[M-1] & 0 & \cdots \end{bmatrix}\begin{bmatrix} x[0]\\ x[1]\\
+    \vdots\\ x[N-1] \end{bmatrix}\ ,\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where the \(M\times N\) matrix \(\vb{W}_{\!p}\) has only non-zeros entries on
+    the \((ph)\)-th minor diagonal, i.e.,
+  prefs: []
+  type: TYPE_NORMAL
+- en: (5)\[\begin{split} W_p[m,k] = w[m]\, \delta_{m+ph,k}\ ,\quad \delta_{k,l} &=
+    \begin{cases} 1 & \text{ for } k=l\ ,\\ 0 & \text{ elsewhere ,} \end{cases}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: with \(\delta_{k,l}\) being the Kronecker Delta. Eq. [(3)](#equation-eq-stft-dft)
+    can be expressed as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\vb{s}_p = \vb{F}\,\vb{x}_p \quad\text{with}\quad F[q,m] =\exp\!\big\{-2\jj\pi
+    (q + \phi_m)\, m / M\big\}\ ,\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: which allows the STFT of the \(p\)-th slice to be written as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(6)\[\vb{s}_p = \vb{F}\vb{W}_{\!p}\,\vb{x} =: \vb{G}_p\,\vb{x} \quad\text{with}\quad
+    s_p[q] = S[p,q]\ .\]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that \(\vb{F}\) is unitary, i.e., the inverse equals its conjugate transpose
+    meaning \(\conjT{\vb{F}}\vb{F} = \vb{I}\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To obtain a single vector-matrix equation for the STFT, the slices are stacked
+    into one vector, i.e.,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '\[\begin{split}\vb{s} := \begin{bmatrix} \vb{s}_0\\ \vb{s}_1\\ \vdots\\ \vb{s}_{P-1}
+    \end{bmatrix} = \begin{bmatrix} \vb{G}_0\\ \vb{G}_1\\ \vdots\\ \vb{G}_{P-1} \end{bmatrix}\,
+    \vb{x} =: \vb{G}\, \vb{x}\ ,\end{split}\]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(P\) is the number of columns of the resulting STFT. To invert this equation
+    the Moore-Penrose inverse \(\vb{G}^\dagger\) can be utilized
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(7)\[\vb{x} = \inv{\conjT{\vb{G}}\vb{G}}\, \conjT{\vb{G}} \vb{s} =: \vb{G}^\dagger
+    \vb{s}\ ,\]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: which exists if
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\vb{D} := \conjT{\vb{G}}\vb{G} = \begin{bmatrix} \conjT{\vb{G}_0}&
+    \conjT{\vb{G}_1}& \cdots & \conjT{\vb{G}_{P-1}} \end{bmatrix}^T \begin{bmatrix}
+    \vb{G}_0\\ \vb{G}_1\\ \vdots\\ \vb{G}_{P-1} \end{bmatrix} = \sum_{p=0}^{P-1} \conjT{\vb{G}_p}\vb{G}_p
+    \ .\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: is invertible. Then \(\vb{x} = \vb{G}^\dagger\vb{G}\,\vb{x} = \inv{\conjT{\vb{G}}\vb{G}}\,\conjT{\vb{G}}\vb{G}\,\vb{x}\)
+    obviously holds. \(\vb{D}\) is always a diagonal matrix with non-negative diagonal
+    entries. This becomes clear, when simplifying \(\vb{D}\) further to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(8)\[\vb{D} = \sum_{p=0}^{P-1} \conjT{\vb{G}_p}\vb{G}_p = \sum_{p=0}^{P-1}
+    \conjT{(\vb{F}\,\vb{W}_{\!p})}\, \vb{F}\,\vb{W}_{\!p} = \sum_{p=0}^{P-1} \conjT{\vb{W}_{\!p}}\vb{W}_{\!p}
+    =: \sum_{p=0}^{P-1} \vb{D}_p\]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: due to \(\vb{F}\) being unitary. Furthermore
+  prefs: []
+  type: TYPE_NORMAL
+- en: (9)\[\begin{split}D_p[r,s] &= \sum_{m=0}^{M-1} \conj{W_p^T[r,m]}\,W_p[m,s] =
+    \sum_{m=0}^{M-1} \left(\conj{w[m]}\, \delta_{m+ph,r}\right) \left(w[m]\, \delta_{m+ph,s}\right)\\
+    &= \sum_{m=0}^{M-1} \big|w[m]\big|^2\, \delta_{r,s}\, \delta_{r,m+ph}\ .\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: shows that \(\vb{D}_p\) is a diagonal matrix with non-negative entries. Hence,
+    summing \(\vb{D}_p\) preserves that property. This allows to simplify Eq. [(7)](#equation-eq-stft-moorepenrose)
+    further, i.e,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(10)\[\begin{split}\vb{x} &= \vb{D}^{-1} \conjT{\vb{G}}\vb{s} = \sum_{p=0}^{P-1}
+    \vb{D}^{-1}\conjT{\vb{W}_{\!p}}\, \conjT{\vb{F}}\vb{s}_p = \sum_{p=0}^{P-1} (\conj{\vb{W}_{\!p}\vb{D}^{-1}})^T\,
+    \conjT{\vb{F}}\vb{s}_p\\ &=: \sum_{p=0}^{P-1}\conjT{\vb{U}_p}\,\conjT{\vb{F}}\vb{s}_p\
+    .\end{split}\]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Utilizing Eq. [(5)](#equation-eq-stft-winmatrix1), [(8)](#equation-eq-stft-diagm2),
+    [(9)](#equation-eq-stft-diagm3), \(\vb{U}_p=\vb{W}_{\!p}\vb{D}^{-1}\) can be expressed
+    as
+  prefs: []
+  type: TYPE_NORMAL
+- en: (11)\[\begin{split}U_p[m, k] &= W[m,k]\, D^{-1}[k,k] = \left(w[m] \delta_{m+ph,k}\right)
+    \inv{\sum_{\eta=0}^{P-1} \vb{D}_\eta[k,k]} \delta_{m+ph,k}\\ &= w[m] \inv{\sum_{\eta=0}^{P-1}\sum_{\mu=0}^{M-1}
+    \big|w[\mu]\big|^2\,\delta_{m+ph, \mu+\eta h}} \delta_{m+ph,k}\\ &= w[m] \inv{\sum_{\eta=0}^{P-1}
+    \big|w[m+(p-\eta)h]\big|^2} \delta_{m+ph,k} \ .\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: This shows \(\vb{U}_p\) has the identical structure as \(\vb{W}_p\) in Eq. [(5)](#equation-eq-stft-winmatrix1),
+    i.e., having only non-zero entries on the \((ph)\)-th minor diagonal. The sum
+    term in the inverse can be interpreted as sliding \(|w[\mu]|^2\) over \(w[m]\)
+    (with an incorporated inversion), so only components overlapping with \(w[m]\)
+    have an effect. Hence, all \(U_p[m, k]\) far enough from the border are identical
+    windows. To circumvent border effects, \(x[k]\) is padded with zeros, enlarging
+    \(\vb{U}\) so all slices which touch \(x[k]\) contain the identical dual window
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[w_d[m] = w[m] \inv{\sum_{\eta\in\IZ} \big|w[m + \eta\, h]\big|^2}\ .\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since \(w[m] = 0\) holds for \(m \not\in\{0, \ldots, M-1\}\), it is only required
+    to sum over the indexes \(\eta\) fulfilling \(|\eta| < M/h\). The name dual window
+    can be justified by inserting Eq. [(6)](#equation-eq-stft-slice-p) into Eq. [(10)](#equation-eq-stft-istftm),
+    i.e.,
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\vb{x} = \sum_{p=0}^{P-1} \conjT{\vb{U}_p}\,\conjT{\vb{F}}\, \vb{F}\,\vb{W}_{\!p}\,\vb{x}
+    = \left(\sum_{p=0}^{P-1} \conjT{\vb{U}_p}\,\vb{W}_{\!p}\right)\vb{x}\ ,\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'showing that \(\vb{U}_p\) and \(\vb{W}_{\!p}\) are interchangeable. Hence,
+    \(w_d[m]\) is also a valid window with dual window \(w[m]\). Note that \(w_d[m]\)
+    is not a unique dual window, due to \(\vb{s}\) typically having more entries than
+    \(\vb{x}\). It can be shown, that \(w_d[m]\) has the minimal energy (or \(L_2\)
+    norm) [[4](#id14)], which is the reason for being named the “canonical dual window”.  ###
+    Comparison with Legacy Implementation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The functions [`stft`](../reference/generated/scipy.signal.stft.html#scipy.signal.stft
+    "scipy.signal.stft"), [`istft`](../reference/generated/scipy.signal.istft.html#scipy.signal.istft
+    "scipy.signal.istft"), and the [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") predate the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") implementation. This section discusses the key differences
+    between the older “legacy” and the newer [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") implementations. The main motivation for a rewrite
+    was the insight that integrating [dual windows](#tutorial-stft-dual-win) could
+    not be done in a sane way without breaking compatibility. This opened the opportunity
+    for rethinking the code structure and the parametrization, thus making some implicit
+    behavior more explicit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following example compares the two STFTs of a complex valued chirp signal
+    with a negative slope:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/signal-10.png](../Images/92e6559bfae39d3827d8e9f0d15bc682.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: That the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") produces 3 more time slices than the legacy version
+    is the main difference. As laid out in the [Sliding Windows](#tutorial-stft-sliding-win)
+    section, all slices which touch the signal are incorporated in the new version.
+    This has the advantage that the STFT can be sliced and reassembled as shown in
+    the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") code example. Furthermore, using all touching slices
+    makes the ISTFT more robust in the case of windows that are zero somewhere.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that the slices with identical time stamps produce equal results (up to
+    numerical accuracy), i.e.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Generally, those additional slices contain non-zero values. Due to the large
+    overlap in our example, they are quite small. E.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The ISTFT can be utilized to reconstruct the original signal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the legacy implementation returns a signal which is longer than the
+    original. On the other hand, the new [`istft`](../reference/generated/scipy.signal.ShortTimeFFT.istft.html#scipy.signal.ShortTimeFFT.istft
+    "scipy.signal.ShortTimeFFT.istft") allows to explicitly specify the start index
+    *k0* and the end index *k1* of the reconstructed signal. The length discrepancy
+    in the old implementation is caused by the fact that the signal length is not
+    a multiple of the slices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Further differences between the new and legacy versions in this example are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The parameter `fft_mode='centered'` ensures that the zero frequency is vertically
+    centered for two-sided FFTs in the plot. With the legacy implementation, [`fftshift`](../reference/generated/scipy.fft.fftshift.html#scipy.fft.fftshift
+    "scipy.fft.fftshift") needs to be utilized. `fft_mode='twosided'` produces the
+    same behavior as the old version.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The parameter `phase_shift=None` ensures identical phases of the two versions.
+    [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT")’s default value of `0` produces STFT slices with
+    an additional linear phase term.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'A spectrogram is defined as the absolute square of the STFT [[4]](#id14). The
+    [`spectrogram`](../reference/generated/scipy.signal.ShortTimeFFT.spectrogram.html#scipy.signal.ShortTimeFFT.spectrogram
+    "scipy.signal.ShortTimeFFT.spectrogram") provided by the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") sticks to that definition, i.e.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On the other hand, the legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") provides another STFT implementation with the key
+    difference being the different handling of the signal borders. The following example
+    shows how to use the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") to obtain an identical SFT as produced with the legacy
+    [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The difference from the other STFTs is that the time slices do not start at
+    0 but at `nperseg//2`, i.e.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Furthermore, only slices which do not stick out to the right are returned, centering
+    the last slice at 4.875 s, which makes it shorter than with the default [`stft`](../reference/generated/scipy.signal.ShortTimeFFT.stft.html#scipy.signal.ShortTimeFFT.stft
+    "scipy.signal.ShortTimeFFT.stft") parametrization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the `mode` parameter, the legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") can also return the ‘angle’, ‘phase’, ‘psd’ or the
+    ‘magnitude’. The [`scaling`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
+    "scipy.signal.ShortTimeFFT.scaling") behavior of the legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") is not straightforward, since it depends on the parameters
+    `mode`, `scaling` and `return_onesided`. There is no direct correspondence for
+    all combinations in the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT"), since it provides only ‘magnitude’, ‘psd’ or no
+    [`scaling`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
+    "scipy.signal.ShortTimeFFT.scaling") of the window at all. The following table
+    shows those correspondences:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") |  | [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| mode | scaling | return_onesided |  | [`fft_mode`](../reference/generated/scipy.signal.ShortTimeFFT.fft_mode.html#scipy.signal.ShortTimeFFT.fft_mode
+    "scipy.signal.ShortTimeFFT.fft_mode") | [`scaling`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
+    "scipy.signal.ShortTimeFFT.scaling") |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| psd | density | True |  | onesided2X | psd |'
+  prefs: []
+  type: TYPE_TB
+- en: '| psd | density | False |  | twosided | psd |'
+  prefs: []
+  type: TYPE_TB
+- en: '| magnitude | spectrum | True |  | onesided | magnitude |'
+  prefs: []
+  type: TYPE_TB
+- en: '| magnitude | spectrum | False |  | twosided | magnitude |'
+  prefs: []
+  type: TYPE_TB
+- en: '| complex | spectrum | True |  | onesided | magnitude |'
+  prefs: []
+  type: TYPE_TB
+- en: '| complex | spectrum | False |  | twosided | magnitude |'
+  prefs: []
+  type: TYPE_TB
+- en: '| psd | spectrum | True |  | — | — |'
+  prefs: []
+  type: TYPE_TB
+- en: '| psd | spectrum | False |  | — | — |'
+  prefs: []
+  type: TYPE_TB
+- en: '| complex | density | True |  | — | — |'
+  prefs: []
+  type: TYPE_TB
+- en: '| complex | density | False |  | — | — |'
+  prefs: []
+  type: TYPE_TB
+- en: '| magnitude | density | True |  | — | — |'
+  prefs: []
+  type: TYPE_TB
+- en: '| magnitude | density | False |  | — | — |'
+  prefs: []
+  type: TYPE_TB
+- en: '| — | — | — |  | `*` | `None` |'
+  prefs: []
+  type: TYPE_TB
+- en: When using `onesided` output on complex-valued input signals, the old [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") switches to `two-sided` mode. The [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT") raises a [`TypeError`](https://docs.python.org/3/library/exceptions.html#TypeError
+    "(in Python v3.12)"), since the utilized [`rfft`](../reference/generated/scipy.fft.rfft.html#scipy.fft.rfft
+    "scipy.fft.rfft") function only accepts real-valued inputs. This [comment](https://github.com/scipy/scipy/issues/14903#issuecomment-1100249704)
+    of Github issue [14903](https://github.com/scipy/scipy/issues/14903) discusses
+    variations of the old [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
+    "scipy.signal.spectrogram") parameters for a single cosine input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Detrend
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: SciPy provides the function [`detrend`](../reference/generated/scipy.signal.detrend.html#scipy.signal.detrend
+    "scipy.signal.detrend") to remove a constant or linear trend in a data series
+    in order to see effect of higher order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example below removes the constant and linear trend of a second-order polynomial
+    time series and plots the remaining signal components.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code generates an X-Y plot with no units. A red trace corresponding
+    to the original signal curves from the bottom left to the top right. A blue trace
+    has the constant detrend applied and is below the red trace with zero Y offset.
+    The last black trace has the linear detrend applied and is almost flat from left
+    to right highlighting the curve of the original signal. This last trace has an
+    average slope of zero and looks very different."](../Images/490b1d459a50a325dd605fac2835b18a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some further reading and related software:'
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,271 @@
+- en: Sparse eigenvalue problems with ARPACK
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/tutorial/arpack.html](https://docs.scipy.org/doc/scipy-1.12.0/tutorial/arpack.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: ARPACK [[1]](#id3) is a Fortran package which provides routines for quickly
+    finding a few eigenvalues/eigenvectors of large sparse matrices. In order to find
+    these solutions, it requires only left-multiplication by the matrix in question.
+    This operation is performed through a *reverse-communication* interface. The result
+    of this structure is that ARPACK is able to find eigenvalues and eigenvectors
+    of any linear function mapping a vector to a vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All of the functionality provided in ARPACK is contained within the two high-level
+    interfaces [`scipy.sparse.linalg.eigs`](../reference/generated/scipy.sparse.linalg.eigs.html#scipy.sparse.linalg.eigs
+    "scipy.sparse.linalg.eigs") and [`scipy.sparse.linalg.eigsh`](../reference/generated/scipy.sparse.linalg.eigsh.html#scipy.sparse.linalg.eigsh
+    "scipy.sparse.linalg.eigsh"). [`eigs`](../reference/generated/scipy.sparse.linalg.eigs.html#scipy.sparse.linalg.eigs
+    "scipy.sparse.linalg.eigs") provides interfaces for finding the eigenvalues/vectors
+    of real or complex nonsymmetric square matrices, while [`eigsh`](../reference/generated/scipy.sparse.linalg.eigsh.html#scipy.sparse.linalg.eigsh
+    "scipy.sparse.linalg.eigsh") provides interfaces for real-symmetric or complex-hermitian
+    matrices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Basic functionality
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: ARPACK can solve either standard eigenvalue problems of the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[A \mathbf{x} = \lambda \mathbf{x}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: or general eigenvalue problems of the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[A \mathbf{x} = \lambda M \mathbf{x}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The power of ARPACK is that it can compute only a specified subset of eigenvalue/eigenvector
+    pairs. This is accomplished through the keyword `which`. The following values
+    of `which` are available:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`which = ''LM''` : Eigenvalues with largest magnitude (`eigs`, `eigsh`), that
+    is, largest eigenvalues in the euclidean norm of complex numbers.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`which = ''SM''` : Eigenvalues with smallest magnitude (`eigs`, `eigsh`), that
+    is, smallest eigenvalues in the euclidean norm of complex numbers.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`which = ''LR''` : Eigenvalues with largest real part (`eigs`).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`which = ''SR''` : Eigenvalues with smallest real part (`eigs`).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`which = ''LI''` : Eigenvalues with largest imaginary part (`eigs`).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`which = ''SI''` : Eigenvalues with smallest imaginary part (`eigs`).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`which = ''LA''` : Eigenvalues with largest algebraic value (`eigsh`), that
+    is, largest eigenvalues inclusive of any negative sign.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`which = ''SA''` : Eigenvalues with smallest algebraic value (`eigsh`), that
+    is, smallest eigenvalues inclusive of any negative sign.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`which = ''BE''` : Eigenvalues from both ends of the spectrum (`eigsh`).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note that ARPACK is generally better at finding extremal eigenvalues, that is,
+    eigenvalues with large magnitudes. In particular, using `which = 'SM'` may lead
+    to slow execution time and/or anomalous results. A better approach is to use *shift-invert
+    mode*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Shift-invert mode
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Shift-invert mode relies on the following observation. For the generalized eigenvalue
+    problem
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[A \mathbf{x} = \lambda M \mathbf{x},\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: it can be shown that
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[(A - \sigma M)^{-1} M \mathbf{x} = \nu \mathbf{x},\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\nu = \frac{1}{\lambda - \sigma}.\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Imagine you’d like to find the smallest and largest eigenvalues and the corresponding
+    eigenvectors for a large matrix. ARPACK can handle many forms of input: dense
+    matrices ,such as [`numpy.ndarray`](https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray
+    "(in NumPy v2.0.dev0)") instances, sparse matrices, such as [`scipy.sparse.csr_matrix`](../reference/generated/scipy.sparse.csr_matrix.html#scipy.sparse.csr_matrix
+    "scipy.sparse.csr_matrix"), or a general linear operator derived from [`scipy.sparse.linalg.LinearOperator`](../reference/generated/scipy.sparse.linalg.LinearOperator.html#scipy.sparse.linalg.LinearOperator
+    "scipy.sparse.linalg.LinearOperator"). For this example, for simplicity, we’ll
+    construct a symmetric, positive-definite matrix.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We now have a symmetric matrix `X`, with which to test the routines. First,
+    compute a standard eigenvalue decomposition using `eigh`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As the dimension of `X` grows, this routine becomes very slow. Especially,
+    if only a few eigenvectors and eigenvalues are needed, `ARPACK` can be a better
+    option. First let’s compute the largest eigenvalues (`which = ''LM''`) of `X`
+    and compare them to the known results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The results are as expected. ARPACK recovers the desired eigenvalues and they
+    match the previously known results. Furthermore, the eigenvectors are orthogonal,
+    as we’d expect. Now, let’s attempt to solve for the eigenvalues with smallest
+    magnitude:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Oops. We see that, as mentioned above, `ARPACK` is not quite as adept at finding
+    small eigenvalues. There are a few ways this problem can be addressed. We could
+    increase the tolerance (`tol`) to lead to faster convergence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This works, but we lose the precision in the results. Another option is to
+    increase the maximum number of iterations (`maxiter`) from 1000 to 5000:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the results we’d hoped for, but the computation time is much longer.
+    Fortunately, `ARPACK` contains a mode that allows a quick determination of non-external
+    eigenvalues: *shift-invert mode*. As mentioned above, this mode involves transforming
+    the eigenvalue problem to an equivalent problem with different eigenvalues. In
+    this case, we hope to find eigenvalues near zero, so we’ll choose `sigma = 0`.
+    The transformed eigenvalues will then satisfy \(\nu = 1/(\lambda - \sigma) = 1/\lambda\),
+    so our small eigenvalues \(\lambda\) become large eigenvalues \(\nu\).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: We get the results we were hoping for, with much less computational time. Note
+    that the transformation from \(\nu \to \lambda\) takes place entirely in the background.
+    The user need not worry about the details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The shift-invert mode provides more than just a fast way to obtain a few small
+    eigenvalues. Say, you desire to find internal eigenvalues and eigenvectors, e.g.,
+    those nearest to \(\lambda = 1\). Simply set `sigma = 1` and ARPACK will take
+    care of the rest:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: The eigenvalues come out in a different order, but they’re all there. Note that
+    the shift-invert mode requires the internal solution of a matrix inverse. This
+    is taken care of automatically by `eigsh` and [`eigs`](../reference/generated/scipy.sparse.linalg.eigs.html#scipy.sparse.linalg.eigs
+    "scipy.sparse.linalg.eigs"), but the operation can also be specified by the user.
+    See the docstring of [`scipy.sparse.linalg.eigsh`](../reference/generated/scipy.sparse.linalg.eigsh.html#scipy.sparse.linalg.eigsh
+    "scipy.sparse.linalg.eigsh") and [`scipy.sparse.linalg.eigs`](../reference/generated/scipy.sparse.linalg.eigs.html#scipy.sparse.linalg.eigs
+    "scipy.sparse.linalg.eigs") for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use of LinearOperator
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We consider now the case where you’d like to avoid creating a dense matrix
+    and use [`scipy.sparse.linalg.LinearOperator`](../reference/generated/scipy.sparse.linalg.LinearOperator.html#scipy.sparse.linalg.LinearOperator
+    "scipy.sparse.linalg.LinearOperator") instead. Our first linear operator applies
+    element-wise multiplication between the input vector and a vector \(\mathbf{d}\)
+    provided by the user to the operator itself. This operator mimics a diagonal matrix
+    with the elements of \(\mathbf{d}\) along the main diagonal and it has the main
+    benefit that the forward and adjoint operations are simple element-wise multiplications
+    other than matrix-vector multiplications. For a diagonal matrix, we expect the
+    eigenvalues to be equal to the elements along the main diagonal, in this case
+    \(\mathbf{d}\). The eigenvalues and eigenvectors obtained with `eigsh` are compared
+    to those obtained by using `eigh` when applied to the dense matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, we have created a quick and easy `Diagonal` operator. The external
+    library [PyLops](https://pylops.readthedocs.io) provides similar capabilities
+    in the [Diagonal](https://pylops.readthedocs.io/en/latest/api/generated/pylops.Diagonal.html#pylops.Diagonal)
+    operator, as well as several other operators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, we consider a linear operator that mimics the application of a first-derivative
+    stencil. In this case, the operator is equivalent to a real nonsymmetric matrix.
+    Once again, we compare the estimated eigenvalues and eigenvectors with those from
+    a dense matrix that applies the same first derivative to an input signal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the eigenvalues of this operator are all imaginary. Moreover, the
+    keyword `which='LI'` of [`scipy.sparse.linalg.eigs`](../reference/generated/scipy.sparse.linalg.eigs.html#scipy.sparse.linalg.eigs
+    "scipy.sparse.linalg.eigs") produces the eigenvalues with largest absolute imaginary
+    part (both positive and negative). Again, a more advanced implementation of the
+    first-derivative operator is available in the [PyLops](https://pylops.readthedocs.io)
+    library under the name of [FirstDerivative](https://pylops.readthedocs.io/en/latest/api/generated/pylops.FirstDerivative.html)
+    operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL

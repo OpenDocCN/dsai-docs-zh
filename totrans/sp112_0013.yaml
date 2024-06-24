@@ -1,0 +1,272 @@
+- en: Spatial data structures and algorithms (scipy.spatial)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/tutorial/spatial.html](https://docs.scipy.org/doc/scipy-1.12.0/tutorial/spatial.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[`scipy.spatial`](../reference/spatial.html#module-scipy.spatial "scipy.spatial")
+    can compute triangulations, Voronoi diagrams, and convex hulls of a set of points,
+    by leveraging the [Qhull](http://qhull.org/) library.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moreover, it contains [`KDTree`](../reference/generated/scipy.spatial.KDTree.html#scipy.spatial.KDTree
+    "scipy.spatial.KDTree") implementations for nearest-neighbor point queries, and
+    utilities for distance computations in various metrics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Delaunay triangulations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Delaunay triangulation is a subdivision of a set of points into a non-overlapping
+    set of triangles, such that no point is inside the circumcircle of any triangle.
+    In practice, such triangulations tend to avoid triangles with small angles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Delaunay triangulation can be computed using [`scipy.spatial`](../reference/spatial.html#module-scipy.spatial
+    "scipy.spatial") as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can visualize it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And add some further decorations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code generates an X-Y plot with four green points annotated 0 through
+    3 roughly in the shape of a box. The box is outlined with a diagonal line between
+    points 0 and 3 forming two adjacent triangles. The top triangle is annotated as
+    #1 and the bottom triangle is annotated as #0."](../Images/efe3ae6111fcc5d1261ade4a241a7ae4.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The structure of the triangulation is encoded in the following way: the `simplices`
+    attribute contains the indices of the points in the `points` array that make up
+    the triangle. For instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Moreover, neighboring triangles can also be found:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'What this tells us is that this triangle has triangle #0 as a neighbor, but
+    no other neighbors. Moreover, it tells us that neighbor 0 is opposite the vertex
+    1 of the triangle:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Indeed, from the figure, we see that this is the case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Qhull can also perform tessellations to simplices for higher-dimensional point
+    sets (for instance, subdivision into tetrahedra in 3-D).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Coplanar points
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'It is important to note that not *all* points necessarily appear as vertices
+    of the triangulation, due to numerical precision issues in forming the triangulation.
+    Consider the above with a duplicated point:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Observe that point #4, which is a duplicate, does not occur as a vertex of
+    the triangulation. That this happened is recorded:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: This means that point 4 resides near triangle 0 and vertex 3, but is not included
+    in the triangulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that such degeneracies can occur not only because of duplicated points,
+    but also for more complicated geometrical reasons, even in point sets that at
+    first sight seem well-behaved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, Qhull has the “QJ” option, which instructs it to perturb the input
+    data randomly until degeneracies are resolved:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Two new triangles appeared. However, we see that they are degenerate and have
+    zero area.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convex hulls
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A convex hull is the smallest convex object containing all points in a given
+    point set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These can be computed via the Qhull wrappers in [`scipy.spatial`](../reference/spatial.html#module-scipy.spatial
+    "scipy.spatial") as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The convex hull is represented as a set of N 1-D simplices, which in 2-D means
+    line segments. The storage scheme is exactly the same as for the simplices in
+    the Delaunay triangulation discussed above.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can illustrate the above result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '!["This code generates an X-Y plot with a few dozen random blue markers randomly
+    distributed throughout. A single black line forms a convex hull around the boundary
+    of the markers."](../Images/4644ff52c591af38bc509ce694d46ca1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The same can be achieved with [`scipy.spatial.convex_hull_plot_2d`](../reference/generated/scipy.spatial.convex_hull_plot_2d.html#scipy.spatial.convex_hull_plot_2d
+    "scipy.spatial.convex_hull_plot_2d").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Voronoi diagrams
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A Voronoi diagram is a subdivision of the space into the nearest neighborhoods
+    of a given set of points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two ways to approach this object using [`scipy.spatial`](../reference/spatial.html#module-scipy.spatial
+    "scipy.spatial"). First, one can use the [`KDTree`](../reference/generated/scipy.spatial.KDTree.html#scipy.spatial.KDTree
+    "scipy.spatial.KDTree") to answer the question “which of the points is closest
+    to this one”, and define the regions that way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So the point `(0.1, 0.1)` belongs to region `0`. In color:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![" "](../Images/699be600124eb4b27c351c4151122604.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: This does not, however, give the Voronoi diagram as a geometrical object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The representation in terms of lines and points can be again obtained via the
+    Qhull wrappers in [`scipy.spatial`](../reference/spatial.html#module-scipy.spatial
+    "scipy.spatial"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The Voronoi vertices denote the set of points forming the polygonal edges of
+    the Voronoi regions. In this case, there are 9 different regions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Negative value `-1` again indicates a point at infinity. Indeed, only one of
+    the regions, `[0, 1, 3, 2]`, is bounded. Note here that due to similar numerical
+    precision issues as in Delaunay triangulation above, there may be fewer Voronoi
+    regions than input points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The ridges (lines in 2-D) separating the regions are described as a similar
+    collection of simplices as the convex hull pieces:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: These numbers present the indices of the Voronoi vertices making up the line
+    segments. `-1` is again a point at infinity — only 4 of the 12 lines are a bounded
+    line segment, while others extend to infinity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Voronoi ridges are perpendicular to the lines drawn between the input points.
+    To which two points each ridge corresponds is also recorded:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: This information, taken together, is enough to construct the full diagram.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can plot it as follows. First, the points and the Voronoi vertices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Plotting the finite line segments goes as for the convex hull, but now we have
+    to guard for the infinite edges:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The ridges extending to infinity require a bit more care:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![" "](../Images/db15ab05ee8e254afda9811ffa95768f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: This plot can also be created using [`scipy.spatial.voronoi_plot_2d`](../reference/generated/scipy.spatial.voronoi_plot_2d.html#scipy.spatial.voronoi_plot_2d
+    "scipy.spatial.voronoi_plot_2d").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Voronoi diagrams can be used to create interesting generative art. Try playing
+    with the settings of this `mandala` function to create your own!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![" "](../Images/dfb5ab45b804f39d0027feea66b6b7a9.png)'
+  prefs: []
+  type: TYPE_IMG

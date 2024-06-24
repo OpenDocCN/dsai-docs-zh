@@ -1,0 +1,271 @@
+- en: Interpolate transition guide
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/notebooks/interp_transition_guide.html](https://docs.scipy.org/doc/scipy-1.12.0/notebooks/interp_transition_guide.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'This notebook contains three sets of demonstrations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: lower-level FITPACK replacements for [`scipy.interpolate.interp2d`](../reference/generated/scipy.interpolate.interp2d.html#scipy.interpolate.interp2d
+    "scipy.interpolate.interp2d") for legacy bug-for-bug compatible [`scipy.interpolate.interp2d`](../reference/generated/scipy.interpolate.interp2d.html#scipy.interpolate.interp2d
+    "scipy.interpolate.interp2d") replacements;
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: recommended replacements for [`scipy.interpolate.interp2d`](../reference/generated/scipy.interpolate.interp2d.html#scipy.interpolate.interp2d
+    "scipy.interpolate.interp2d") for use in new code;
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: a demonstration of failure modes of 2D FITPACK-based linear interpolation and
+    recommended replacements.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Note:** Since this notebook shows usage of `interp2d` (which is marked for
+    deprecation), we will silence deprecation warnings for simplicity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 1\. How to transition away from using `interp2d`
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`interp2d` silently switches between interpolation on a 2D regular grid and
+    interpolating 2D scattered data. The switch is based on the lengths of the (raveled)
+    `x`, `y`, and `z` arrays. In short, for regular grid use [`scipy.interpolate.RectBivariateSpline`](../reference/generated/scipy.interpolate.RectBivariateSpline.html#scipy.interpolate.RectBivariateSpline
+    "scipy.interpolate.RectBivariateSpline"); for scattered interpolation, use the
+    `bisprep/bisplev` combo. Below we give examples of the literal point-for-point
+    transition, which should preserve the `interp2d` results exactly.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.1 `interp2d` on a regular grid
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We start from the (slightly modified) docstring example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is the “regular grid” code path, because
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Also, note that `x.size != y.size`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, let’s build a convenience function to construct the interpolator and plot
+    it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Plotting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/a6f3abea0ba271e6f4035d6281ffe144652a162f0ebd30e29cb9d0740d494fff.png](../Images/3f62def8bbd343c8077ac68077132ca9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Replacement: Use `RectBivariateSpline`, the result is identical'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Note the transposes: first, in the constructor, second, you need to transpose
+    the result of the evaluation. This is to undo the transposes `interp2d` does.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/a6f3abea0ba271e6f4035d6281ffe144652a162f0ebd30e29cb9d0740d494fff.png](../Images/3f62def8bbd343c8077ac68077132ca9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 1.2\. `interp2d` with full coordinates of points (scattered interpolation)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Here, we flatten the meshgrid from the previous exercise to illustrate the functionality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that this the “not regular grid” code path, meant for scattered data, with
+    `len(x) == len(y) == len(z)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/53aba3f3f0123bf10bce0a71efe7136a084db809e78386938081de3978489ce0.png](../Images/7882eabdd1a6858139ae96d4bdd59e2f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Replacement: Use [`scipy.interpolate.bisplrep`](../reference/generated/scipy.interpolate.bisplrep.html#scipy.interpolate.bisplrep
+    "scipy.interpolate.bisplrep") / [`scipy.interpolate.bisplev`](../reference/generated/scipy.interpolate.bisplev.html#scipy.interpolate.bisplev
+    "scipy.interpolate.bisplev") directly'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/53aba3f3f0123bf10bce0a71efe7136a084db809e78386938081de3978489ce0.png](../Images/7882eabdd1a6858139ae96d4bdd59e2f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '2\. Alternative to `interp2d`: regular grid'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For new code, the recommended alternative is `RegularGridInterpolator`. It is
+    an independent implementation, not based on FITPACK. Supports nearest, linear
+    interpolation and odd-order tensor product splines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The spline knots are guaranteed to coincide with the data points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that, here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the tuple argument, is `(x, y)`
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`z` array needs a transpose'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: the keyword name is *method*, not *kind*
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`bounds_error` argument is `True` by default.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Evaluation: create a 2D meshgrid. Use indexing=’ij’ and `sparse=True` to save
+    some memory:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Evaluate, note the tuple argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/d696383b98cfc8de08aba65182815dc8bf28b0e0c8a1bf21c5918ba27091f2e8.png](../Images/f1076ae7e631677029302842bdc8bfff.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '3\. Scattered 2D linear interpolation: prefer `LinearNDInterpolator` to `SmoothBivariateSpline`
+    or `bisplrep`'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For 2D scattered linear interpolation, both `SmoothBivariateSpline` and `biplrep`
+    may either emit warnings, or fail to interpolate the data, or produce splines
+    which with knots away from the data points. “Instead, prefer `LinearNDInterpolator`,
+    which is based on triangulating the data via `QHull`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, use the linear interpolation over Qhull-based triangulation of data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result is easy to understand and interpret:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/d038eff6f24f7139130eb7e52f728cb1dd93f7ffd66458503538952c05175d0f.png](../Images/b5cea8b81187fa8322fd8efafad19bdb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note that `bisplrep` does something different! It may place spline knots outside
+    of the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For illustration, consider the same data from the previous example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/1ab43203e3fff183e5c3523edb1d04a6f03cc094fd92b50e652c88a88d8732b3.png](../Images/eebc97c1a7da4543b235dfebc024d60c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Also, `SmoothBivariateSpline` fails to interpolate the data. Again, use the
+    same data from the previous example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![../_images/f10ecb84d4642cd5dd8411eb5a16a59f197c4559b2c21c97d5c7b20503d80bc3.png](../Images/e230b7fca2c0241c4e4fab766caff435.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note that both `SmoothBivariateSpline` and `bisplrep` results have artifacts,
+    unlike the `LinearNDInterpolator`’s. Issues illustrated here were reported for
+    linear interpolation, however the FITPACK knot-selection mechanism does not guarantee
+    to avoid either of these issues for higher-order (e.g. cubic) spline surfaces.
+  prefs: []
+  type: TYPE_NORMAL
