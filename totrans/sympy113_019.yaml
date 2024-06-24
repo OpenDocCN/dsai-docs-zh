@@ -1,0 +1,498 @@
+- en: Biomechanical Model Example
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/tutorials/physics/biomechanics/biomechanical-model-example.html](https://docs.sympy.org/latest/tutorials/physics/biomechanics/biomechanical-model-example.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[`sympy.physics.biomechanics`](../../../modules/physics/biomechanics/index.html#module-sympy.physics.biomechanics
+    "sympy.physics.biomechanics") provides features to enhance models created with
+    [`sympy.physics.mechanics`](../../../modules/physics/mechanics/index.html#module-sympy.physics.mechanics
+    "sympy.physics.mechanics") with force producing elements that model muscles and
+    tendons. In this tutorial, we will introduce the features of this package by adding
+    muscles to a simple model of a human arm that moves a lever.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model Description
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![../../../_images/biomechanics-steerer.svg](../Images/e281b6c0ece454fd1a7dcc419063f375.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Schematic showing the lever \(A\) and the upper \(C\) and lower \(D\) arm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The lever \(A\) can rotate about \(\hat{n}_z\) through angle \(q_1\). Its mass
+    center lies on the rotation axis. The shoulder is located at \(P_2\) and the upper
+    arm \(C\) can extend about \(\hat{n}_y\) through angle \(q_2\) and rotate about
+    \(\hat{b}_z\) through angle \(q_3\). The elbow is located at point \(P_3\). The
+    lower arm can flex about \(\hat{c}_y\) through angle \(q_4\). The hand is located
+    at point \(P_4\). The hand will be constrained to the lever by enforcing \(\mathbf{r}^{P_4/O}
+    = \mathbf{r}^{P_1/O}\). The lever, upper arm, and lower arm will be modeled as
+    thin cylinders for inertial simplicity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will introduce two musculotendon models that represent the biceps and the
+    triceps. Two muscle attachment points \(C_m\) and \(D_m\) are fixed on the upper
+    arm and lower arm, respectively. The biceps muscle will act along a linear path
+    from \(C_m\) to \(D_m\), causing flexion at the elbow when contracted. A circular
+    arc of radius \(r\) is defined with its center at \(P_3\) and normal to \(\hat{c}_y\).
+    The triceps will wrap around the circular arc and also attach at the same points
+    as the biceps, causing elbow extension when contracted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Define Variables
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Introduce the four coordinates \(\mathbf{q} = [q_1, q_2, q_3, q_4]^T\) for the
+    lever angle, shoulder extension, shoulder rotation, and elbow flexion. We will
+    also need generalized speeds \(\mathbf{u} = [u_1,u_2,u_3,u_4]^T\) which we define
+    as \(\mathbf{u} = \dot{\mathbf{q}}\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The necessary constant parameters for the mechanical system are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '\(d_x, l_A\): locates \(P_1\) from \(O\) along the \(\hat{n}_x\) and \(\hat{a}_y\)
+    directions, respectively'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '\(d_y, d_z\): locates \(P_2\) from \(O\) along the \(N\) unit vector directions'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '\(l_C,l_D\) : length of upper and lower arm'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '\(m_A,m_C,m_D\) : mass of lever, upper arm, and lower arm'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '\(g\) : acceleration due to gravity'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '\(k\) : lever linear rotational spring coefficient'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '\(c\) : lever linear rotational damper coefficient'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Define Kinematics
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Define all the reference frames and points shown in [Schematic showing the lever
+    A and the upper C and lower D arm.](#fig-biomechanics-steerer). \(C_o\) and \(D_o\)
+    are the mass centers of the upper and lower arm, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The orientations and angular velocities of the reference frames are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All of the points’ locations and velocities are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There are three holonomic constraint equations needed to keep the hand \(P_4\)
+    on the lever \(P_1\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Define Inertia
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The inertia dyadics and then rigid bodies can be formed assuming the lever,
+    upper arm, and lower arm are thin cylinders:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Define Forces
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We will simulate this system in Earth’s gravitational field:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The lever has inertia but we will also add a linear torsional spring and damper
+    to provide some more resistance for the arm to press against and pull on:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Biceps
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We will model the biceps muscle as an actuator that contracts between the two
+    muscle attachment points \(C_m\) and \(D_m\). This muscle can contract given an
+    excitation specified input and we will assume that the associated tendon is rigid.
+    The musculotendon actuator model will be made up of two components: a pathway
+    on which to act and activation dynamics that define how an excitation input will
+    propagate to activating the muscle. The biceps muscle will act along a [`LinearPathway`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.LinearPathway
+    "sympy.physics.mechanics.pathway.LinearPathway") and will use a specific muscle
+    dynamics implementation derived from [[DeGroote2016]](biomechanics.html#degroote2016).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Start by creating the linear pathway:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can create an activation model that is fully symbolic or create it with
+    the specific tuned numerical parameters from [[DeGroote2016]](biomechanics.html#degroote2016)
+    like so (recommended):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The full musculotendon actuator model is then named and constructed with a
+    matching class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Triceps
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The triceps actuator model will need a custom pathway to manage the wrapped
+    nature of the muscle and tendon around the circular arc of radius \(r\). This
+    pathway is made up of two linear segments that do not change length and a circular
+    arc that changes length as the elbow extends and flexes. The forces acting on
+    the upper and lower arm can be modeled as forces acting on points \(C_m\) and
+    \(D_m\) always parallel to the linear segments and a resultant force at \(P_3\)
+    from the equal and opposite forces acting on the points at the ends of the circular
+    arc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To develop this pathway we need to subclass [`PathwayBase`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.PathwayBase
+    "sympy.physics.mechanics.pathway.PathwayBase") and create methods that compute
+    the pathway length, pathway extension velocity, and the loads acting on the involved
+    bodies. We will develop a class which assumes that there is a pin joint between
+    two rigid bodies, that the two muscle attachment points are fixed on each body,
+    respectively, and that the pin joint point and two attachment points lie in the
+    same plane which is normal to the pin joint axis. We will also assume that the
+    pin joint coordinate is measured as \(q_4\) is in [Schematic showing the lever
+    A and the upper C and lower D arm.](#fig-biomechanics-steerer) and that \(0 \le
+    q_4 \le \pi\)’. The circular arc has a radius \(r\). With these assumptions we
+    can then use the `__init__()` method to collect the necessary information for
+    use in the remaining methods. In `__init__()` we will also calculate some quantities
+    that will be needed in multiple overloaded methods. The length of the pathway
+    is the sum of the lengths of the two linear segments and the circular arc that
+    changes with variation of the pin joint coordinate. The extension velocity is
+    simply the change with respect to time in the arc length. The loads are made up
+    of three forces: two that push an pull on the origin and insertion points along
+    the linear portions of the pathway and the resultant effect on the elbow from
+    the forces pushing and pulling on the ends of the circular arc.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now that we have a custom pathway defined we can create a musculotendon actuator
+    model in the same fashion as the biceps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Lastly, all of the loads can be assembled into one list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Equations of Motion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: With all of the loads now defined the equations of motion of the system can
+    be generated. We have three holonomic constraints, so the system only has one
+    degree of freedom.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: The terms not linear in \(\dot{\mathbf{u}}\) contain the muscle forces which
+    are a function of the activation state variables in addition to the coordinates
+    and generalized speeds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'They also contain new constant parameters associated with the muscle models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Muscle Activation Differential Equations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The activation state of each muscle are new state variables associated with
+    two new first order differential equations. These differential equations are accessed
+    from the muscle actuator models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Store the muscle activation differential equations together in a matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate the System Differential Equations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The complete set of differential equations for this system take the form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\begin{bmatrix} \mathbf{I} & \mathbf{0} & \mathbf{0} \\ \mathbf{0}
+    & \mathbf{M}_d & \mathbf{0} \\ \mathbf{0} & \mathbf{0} & \mathbf{I} \end{bmatrix}
+    \begin{bmatrix} \dot{\mathbf{q}} \\ \dot{\mathbf{u}} \\ \dot{\mathbf{a}} \end{bmatrix}
+    = \begin{bmatrix} \mathbf{u} \\ \mathbf{g}_d(\mathbf{q}, \mathbf{u}, \mathbf{a})
+    \\ \mathbf{g}_a(\mathbf{a}, \mathbf{e}) \end{bmatrix}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this case, only the dynamical differential equations require solving the
+    linear system to put into explicit form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To evaluate the system’s equations we first need to gather up all of the state,
+    input, and constant variables for use with [`lambdify`](../../../modules/utilities/lambdify.html#sympy.utilities.lambdify.lambdify
+    "sympy.utilities.lambdify.lambdify"). The state vector is made up of the coordinates,
+    generalized speeds, and the two muscles’ activation state: \(\mathbf{x}=\begin{bmatrix}\mathbf{q}\\\mathbf{u}\\\mathbf{a}\end{bmatrix}\).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The only specified inputs are the two muscles’ excitation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: The constants are made up of the geometry, mass, local gravitational constant,
+    the lever’s stiffness and damping coefficients, and various parameters of the
+    muscles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now we have all the symbolic components to generate numerical functions to evaluate
+    \(\mathbf{M}_d,\mathbf{g}_d\) and \(\mathbf{g}_a\). With these we can calculate
+    the time derivative of the state. We will also need a numerical function for the
+    holonomic constraints to ensure the configuration is in a valid state.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We need some reasonable numerical values for all the constants:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Due to the three holonomic constraints, three of the coordinates are a function
+    of the remaining one. We can choose the lever angle \(q_1\) to be the independent
+    coordinate and solve for the rest, given guesses of their values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We’ll assume the system is in an initial stationary state:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The muscle excitations will also initially be deactivated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The system equations can be now be numerically evaluated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simulate the Muscle-actuated Motion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Now that the system equations can be evaluated given the state and constant
+    values we can simulate the arm and lever’s motion with excitation of the two muscles.
+    SciPy’s `solve_ivp()` can integrate the differential equations if we provide a
+    function that evaluates them in explicit form, i.e. \(\dot{\mathbf{x}}=\). We
+    will include a function to excite the muscles but set it to zero for the first
+    simulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: The system can now be simulated over 3 seconds provided the initial state \(\mathbf{x}_0\)
+    and our function defined above using SciPy’s `solve_ivp()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The motion can be visualized by plotting the state trajectories over time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([`png`](../../../_downloads/58d46206b7da67ae33fe95e988904d89/biomechanical-model-example-35.png),
+    [`hires.png`](../../../_downloads/c4c3c1a672c7b2a1afadddd5355c0bbc/biomechanical-model-example-35.hires.png),
+    [`pdf`](../../../_downloads/53f951a6065782035628167d02f26410/biomechanical-model-example-35.pdf))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../../../_images/biomechanical-model-example-35.png](../Images/f9457eb039dfb55c8f319ae31f9330d0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Simulation of the arm with an initial lever angle of 5 degrees settling to its
+    equilibrium position with no muscle activation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The simulation shows that the arm settles into equilibrium balanced by the
+    gravitational forces, the lever resistance, and the passive aspects of the musculotendon
+    models. Now we activate the biceps for 1 second with 80% excitation to see the
+    effect on the motion:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([`png`](../../../_downloads/1967f59fde1d68557fd996ab7ab18db2/biomechanical-model-example-38.png),
+    [`hires.png`](../../../_downloads/aa4e03744b4706f902bf02f6876ce3ea/biomechanical-model-example-38.hires.png),
+    [`pdf`](../../../_downloads/be5321e199329605807b665644b38c93/biomechanical-model-example-38.pdf))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../../../_images/biomechanical-model-example-38.png](../Images/757efa60a2e3246067f232ec182a4ef5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Simulation of the arm with an initial lever angle of 5 degrees under the influence
+    of the biceps contracting for 1 second.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first see that the arm tries to settle to equilibrium as before but then
+    the activated biceps pull the lever back towards the shoulder causing the arm
+    to oppose the passive motion. Once the muscle is deactivated, the arm settles
+    as before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here we have shown how to create a mathematical model that represents a musculoskeletal
+    system by constructing a simple and custom muscle-tendon actuation pathway. The
+    model’s motion can be controlled by exciting the muscles and the simulation shows
+    expected behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[DeGroote2016] ([1](#id2),[2](#id3))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: De Groote, F., Kinney, A. L., Rao, A. V., & Fregly, B. J., Evaluation of direct
+    collocation optimal control problem formulations for solving the muscle redundancy
+    problem, Annals of biomedical engineering, 44(10), (2016) pp. 2922-2936
+  prefs: []
+  type: TYPE_NORMAL

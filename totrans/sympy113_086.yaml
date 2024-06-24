@@ -1,0 +1,1706 @@
+- en: Simplify
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/simplify/simplify.html](https://docs.sympy.org/latest/modules/simplify/simplify.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simplifies the given expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simplification is not a well defined term and the exact strategies this function
+    tries can change in the future versions of SymPy. If your algorithm relies on
+    “simplification” (whatever it is), try to determine what you need exactly - is
+    it powsimp()?, radsimp()?, together()?, logcombine()?, or something else? And
+    use this particular function directly, because those are well defined and thus
+    your algorithm will be robust.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Nonetheless, especially for interactive use, or when you do not know anything
+    about the structure of the expression, simplify() tries to apply intelligent heuristics
+    to make the input expression “simpler”. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that we could have obtained the same result by using specific simplification
+    functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In some cases, applying [`simplify()`](#sympy.simplify.simplify.simplify "sympy.simplify.simplify.simplify")
+    may actually result in some more complicated expression. The default `ratio=1.7`
+    prevents more extreme cases: if (result length)/(input length) > ratio, then input
+    is returned unmodified. The `measure` parameter lets you specify the function
+    used to determine how complex an expression is. The function should take a single
+    argument as an expression and return a number such that if expression `a` is more
+    complex than expression `b`, then `measure(a) > measure(b)`. The default measure
+    function is [`count_ops()`](../core.html#sympy.core.function.count_ops "sympy.core.function.count_ops"),
+    which returns the total number of operations in the expression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, if `ratio=1`, `simplify` output cannot be longer than input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Since `simplify(root)` would result in a slightly longer expression, root is
+    returned unchanged instead:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If `ratio=oo`, simplify will be applied anyway:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the shortest expression is not necessary the simplest, so setting
+    `ratio` to 1 may not be a good idea. Heuristically, the default value `ratio=1.7`
+    seems like a reasonable choice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can easily define your own measure function based on what you feel should
+    represent the “size” or “complexity” of the input expression. Note that some choices,
+    such as `lambda expr: len(str(expr))` may appear to be good metrics, but have
+    other problems (in this case, the measure function may slow down simplify too
+    much for very large expressions). If you do not know what a good metric would
+    be, the default, `count_ops`, is a good one.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So you can see that `h` is simpler than `g` using the count_ops metric. However,
+    we may not like how `simplify` (in this case, using `logcombine`) has created
+    the `b**(log(1/a) + 1)` term. A simple way to reduce this would be to give more
+    weight to powers as operations in `count_ops`. We can do this by using the `visual=True`
+    option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that because `simplify()` internally tries many different simplification
+    strategies and then compares them using the measure function, we get a completely
+    different result that is still different from the input expression by doing this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `rational=True`, Floats will be recast as Rationals before simplification.
+    If `rational=None`, Floats will be recast as Rationals but the result will be
+    recast as Floats. If rational=False(default) then nothing will be done to the
+    Floats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `inverse=True`, it will be assumed that a composition of inverse functions,
+    such as sin and asin, can be cancelled in any order. For example, `asin(sin(x))`
+    will yield `x` without checking whether x belongs to the set where this relation
+    is true. The default is False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that `simplify()` automatically calls `doit()` on the final expression.
+    You can avoid this behavior by passing `doit=False` as an argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, it should be noted that simplifying a boolean expression is not well defined.
+    If the expression prefers automatic evaluation (such as [`Eq()`](../core.html#sympy.core.relational.Eq
+    "sympy.core.relational.Eq") or [`Or()`](../logic.html#sympy.logic.boolalg.Or "sympy.logic.boolalg.Or")),
+    simplification will return `True` or `False` if truth value can be determined.
+    If the expression is not evaluated by default (such as [`Predicate()`](../assumptions/assume.html#sympy.assumptions.assume.Predicate
+    "sympy.assumptions.assume.Predicate")), simplification will not reduce it and
+    you should use [`refine()`](../assumptions/refine.html#sympy.assumptions.refine.refine
+    "sympy.assumptions.refine.refine") or [`ask()`](../assumptions/ask.html#sympy.assumptions.ask.ask
+    "sympy.assumptions.ask.ask") function. This inconsistency will be resolved in
+    future version.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.assumptions.refine.refine`](../assumptions/refine.html#sympy.assumptions.refine.refine
+    "sympy.assumptions.refine.refine")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simplification using assumptions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.assumptions.ask.ask`](../assumptions/ask.html#sympy.assumptions.ask.ask
+    "sympy.assumptions.ask.ask")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Query for boolean expressions using assumptions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Separates variables in an expression, if possible. By default, it separates
+    with respect to all symbols in an expression and collects constant coefficients
+    that are independent of symbols.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `dict=True` then the separated terms will be returned in a dictionary keyed
+    to their corresponding symbols. By default, all symbols in the expression will
+    appear as keys; if symbols are provided, then all those symbols will be used as
+    keys, and any terms in the expression containing other symbols or non-symbols
+    will be returned keyed to the string ‘coeff’. (Passing None for symbols will return
+    the expression in a dictionary keyed to ‘coeff’.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `force=True`, then bases of powers will be separated regardless of assumptions
+    on the symbols involved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: The order of the factors is determined by Mul, so that the separated expressions
+    may not necessarily be grouped together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although factoring is necessary to separate variables in some expressions, it
+    is not necessary in all cases, so one should not count on the returned factors
+    being factored.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the expression is not really separable, or is only partially separable, separatevars
+    will do the best it can to separate it by using factoring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the expression is not separable then expr is returned unchanged or (if dict=True)
+    then None is returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute a real nth-root of a sum of surds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : sum of surds'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**n** : integer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**max_len** : maximum number of surds passed as constants to `nsimplify`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithm
+  prefs: []
+  type: TYPE_NORMAL
+- en: First `nsimplify` is used to get a candidate root; if it is not a root the minimal
+    polynomial is computed; the answer is one of its roots.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simplify expressions with KroneckerDelta.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The only simplification currently attempted is to identify multiplicative cancellation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simplify bessel-type functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This routine tries to simplify bessel-type functions. Currently it only works
+    on the Bessel J and I functions, however. It works by looking at all such functions
+    in turn, and eliminating factors of “I” and “-1” (actually their polar equivalents)
+    in front of the argument. Then, functions of half-integer order are rewritten
+    using trigonometric functions and functions of integer order (> 1) are rewritten
+    using functions of low order. Finally, if the expression was changed, compute
+    factorization of the result with factor().
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Given combinatorial term f(k) simplify its consecutive term ratio i.e. f(k+1)/f(k).
+    The input term can be composed of functions and integer sequences which have equivalent
+    representation in terms of gamma special function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The algorithm performs three basic steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rewrite all functions in terms of gamma, if possible.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Rewrite all occurrences of gamma in terms of products of gamma and rising factorial
+    with integer, absolute constant exponent.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Perform simplification of nested fractions, powers and if the resulting expression
+    is a quotient of polynomials, reduce their total degree.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If f(k) is hypergeometric then as result we arrive with a quotient of polynomials
+    of minimal degree. Otherwise None is returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For more information on the implemented algorithm refer to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: W. Koepf, Algorithms for m-fold Hypergeometric Summation, Journal of Symbolic
+    Computation (1995) 20, 399-417
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if `f` and `g` are hyper-similar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarity in hypergeometric sense means that a quotient of f(k) and g(k) is
+    a rational function in `k`. This procedure is useful in solving recurrence relations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more information see hypersimp().
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Find a simple representation for a number or, if there are free symbols or if
+    `rational=True`, then replace Floats with their Rational equivalents. If no change
+    is made and rational is not False then Floats will at least be converted to Rationals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: For numerical expressions, a simple formula that numerically matches the given
+    numerical expression is sought (and the input should be possible to evalf to a
+    precision of at least 30 digits).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Optionally, a list of (rationally independent) constants to include in the formula
+    may be given.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A lower tolerance may be set to find less exact matches. If no tolerance is
+    given then the least precise value will set the tolerance (e.g. Floats default
+    to 15 digits of precision, so would be tolerance=10**-15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: With `full=True`, a more extensive search is performed (this is useful to find
+    simpler numbers when the tolerance is set low).
+  prefs: []
+  type: TYPE_NORMAL
+- en: When converting to rational, if rational_conversion=’base10’ (the default),
+    then convert floats to rationals using their base-10 (string) representation.
+    When rational_conversion=’exact’ it uses the exact, base-2 representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.core.function.nfloat`](../core.html#sympy.core.function.nfloat "sympy.core.function.nfloat")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `eq` (with generic symbols made positive) and a dictionary containing
+    the mapping between the old and new symbols.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any symbol that has positive=None will be replaced with a positive dummy symbol
+    having the same name. This replacement will allow more symbolic processing of
+    expressions, especially those involving powers and logarithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary that can be sent to subs to restore `eq` to its original symbols
+    is also returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is possible to apply the same transformations to an iterable of expressions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Takes logarithms and combines them using the following rules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: log(x) + log(y) == log(x*y) if both are positive
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: a*log(x) == log(x**a) if x is positive and a is real
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `force` is `True` then the assumptions above will be assumed to hold if there
+    is no assumption already in place on a quantity. For example, if `a` is imaginary
+    or the argument negative, force will not perform a combination but if `a` is a
+    symbol with no assumptions the change will take place.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The transformation is limited to factors and/or terms that contain logs, so
+    the result depends on the initial state of expansion:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`posify`](#sympy.simplify.simplify.posify "sympy.simplify.simplify.posify")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: replace all symbols with symbols having positive assumptions
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.core.function.expand_log`](../core.html#sympy.core.function.expand_log
+    "sympy.core.function.expand_log")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: expand the logarithms of products and powers; the opposite of logcombine
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rationalize the denominator by removing square roots.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The expression returned from radsimp must be used with caution since if the
+    denominator contains symbols, it will be possible to make substitutions that violate
+    the assumptions of the simplification process: that for a denominator matching
+    a + b*sqrt(c), a != +/-b*sqrt(c). (If there are no symbols, this assumptions is
+    made valid by collecting terms of sqrt(c) so the match variable `a` does not contain
+    `sqrt(c)`.) If you do not want the simplification to occur for symbolic denominators,
+    set `symbolic` to False.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If there are more than `max_terms` radical terms then the expression is returned
+    unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'No simplification beyond removal of the gcd is done. One might want to polish
+    the result a little, however, by collecting square root terms:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: If radicals in the denominator cannot be removed or there is no denominator,
+    the original expression will be returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Results with symbols will not always be valid for all substitutions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If `symbolic=False`, symbolic denominators will not be transformed (but numeric
+    denominators will still be processed):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rationalize `num/den` by removing square roots in the denominator; num and den
+    are sum of terms whose squares are positive rationals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Collect additive terms of an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function collects additive terms of an expression with respect to a list
+    of expression up to powers with rational exponents. By the term symbol here are
+    meant arbitrary expressions, which can contain powers, products, sums etc. In
+    other words symbol is a pattern which will be searched for in the expression’s
+    terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The input expression is not expanded by [`collect()`](#sympy.simplify.radsimp.collect
+    "sympy.simplify.radsimp.collect"), so user is expected to provide an expression
+    in an appropriate form. This makes [`collect()`](#sympy.simplify.radsimp.collect
+    "sympy.simplify.radsimp.collect") more predictable as there is no magic happening
+    behind the scenes. However, it is important to note, that powers of products are
+    converted to products of powers using the [`expand_power_base()`](../core.html#sympy.core.function.expand_power_base
+    "sympy.core.function.expand_power_base") function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are two possible types of output. First, if `evaluate` flag is set, this
+    function will return an expression with collected terms or else it will return
+    a dictionary with expressions up to rational powers as keys and collected coefficients
+    as values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This function can collect symbolic coefficients in polynomials or rational
+    expressions. It will manage to find all integer or rational powers of collection
+    variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same result can be achieved in dictionary form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also work with multivariate polynomials. However, remember that this
+    function is greedy so it will care only about a single symbol at time, in specification
+    order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Also more complicated expressions can be used as patterns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can use wildcards in the pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is also possible to work with symbolic powers, although it has more complicated
+    behavior, because in this case power’s base and symbolic part of the exponent
+    are treated as a single symbol:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However if you incorporate rationals to the exponents, then you will get well
+    known behavior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note also that all previously stated facts about [`collect()`](#sympy.simplify.radsimp.collect
+    "sympy.simplify.radsimp.collect") function apply to the exponential function,
+    so you can get:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you are interested only in collecting specific powers of some symbols then
+    set `exact` flag to True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you want to collect on any object containing symbols, set `exact` to None:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also apply this function to differential equations, where derivatives
+    of arbitrary order can be collected. Note that if you collect with respect to
+    a function or a derivative of a function, all derivatives of that function will
+    also be collected. Use `exact=True` to prevent this from happening:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or you can even match both derivative order and exponent at the same time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, you can apply a function to each of the collected coefficients. For
+    example you can factorize symbolic coefficients of polynomial:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arguments are expected to be in expanded form, so you might have to call [`expand()`](../core.html#sympy.core.function.expand
+    "sympy.core.function.expand") prior to calling this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`collect_const`](#sympy.simplify.radsimp.collect_const "sympy.simplify.radsimp.collect_const"),
+    [`collect_sqrt`](#sympy.simplify.radsimp.collect_sqrt "sympy.simplify.radsimp.collect_sqrt"),
+    [`rcollect`](#sympy.simplify.radsimp.rcollect "sympy.simplify.radsimp.rcollect")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: Recursively collect sums in an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`collect`](#sympy.simplify.radsimp.collect "sympy.simplify.radsimp.collect"),
+    [`collect_const`](#sympy.simplify.radsimp.collect_const "sympy.simplify.radsimp.collect_const"),
+    [`collect_sqrt`](#sympy.simplify.radsimp.collect_sqrt "sympy.simplify.radsimp.collect_sqrt")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return expr with terms having common square roots collected together. If `evaluate`
+    is False a count indicating the number of sqrt-containing terms will be returned
+    and, if non-zero, the terms of the Add will be returned, else the expression itself
+    will be returned as a single term. If `evaluate` is True, the expression with
+    any collected terms will be returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note: since I = sqrt(-1), it is collected, too.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If evaluate is False then the arguments will be sorted and returned as a list
+    and a count of the number of sqrt-containing terms will be returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`collect`](#sympy.simplify.radsimp.collect "sympy.simplify.radsimp.collect"),
+    [`collect_const`](#sympy.simplify.radsimp.collect_const "sympy.simplify.radsimp.collect_const"),
+    [`rcollect`](#sympy.simplify.radsimp.rcollect "sympy.simplify.radsimp.rcollect")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: A non-greedy collection of terms with similar number coefficients in an Add
+    expr. If `vars` is given then only those constants will be targeted. Although
+    any Number can also be targeted, if this is not desired set `Numbers=False` and
+    no Float or Rational will be collected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : SymPy expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This parameter defines the expression the expression from which terms with similar
+    coefficients are to be collected. A non-Add expression is returned as it is.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**vars** : variable length collection of Numbers, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specifies the constants to target for collection. Can be multiple in number.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**Numbers** : bool'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specifies to target all instance of [`sympy.core.numbers.Number`](../core.html#sympy.core.numbers.Number
+    "sympy.core.numbers.Number") class. If `Numbers=False`, then no Float or Rational
+    will be collected.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns an expression with similar coefficient terms collected.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The collection is sign-sensitive, giving higher precedence to the unsigned
+    values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`collect`](#sympy.simplify.radsimp.collect "sympy.simplify.radsimp.collect"),
+    [`collect_sqrt`](#sympy.simplify.radsimp.collect_sqrt "sympy.simplify.radsimp.collect_sqrt"),
+    [`rcollect`](#sympy.simplify.radsimp.rcollect "sympy.simplify.radsimp.rcollect")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a pair with expression’s numerator and denominator. If the given expression
+    is not a fraction then this function will return the tuple (expr, 1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function will not make any attempt to simplify nested fractions or to do
+    any term rewriting at all.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If only one of the numerator/denominator pair is needed then use numer(expr)
+    or denom(expr) functions respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This function will also work fine with assumptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If we know nothing about sign of some exponent and `exact` flag is unset, then
+    the exponent’s structure will be analyzed and pretty fraction will be returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `exact` flag will also keep any unevaluated Muls from being evaluated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put an expression over a common denominator, cancel and reduce.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simplifies a rational expression `expr` modulo the prime ideal generated by
+    `G`. `G` should be a Groebner basis of the ideal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: If `polynomial` is `False`, the algorithm computes a rational simplification
+    which minimizes the sum of the total degrees of the numerator and the denominator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `polynomial` is `True`, this function just brings numerator and denominator
+    into a canonical form. This is much faster, but has potentially worse results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R855](#id1)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: M. Monagan, R. Pearce, Rational Simplification Modulo a Polynomial Ideal, [https://dl.acm.org/doi/pdf/10.1145/1145768.1145809](https://dl.acm.org/doi/pdf/10.1145/1145768.1145809)
+    (specifically, the second algorithm)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a reduced expression by using known trig identities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**inverse** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If `inverse=True`, it will be assumed that a composition of inverse functions,
+    such as sin and asin, can be cancelled in any order. For example, `asin(sin(x))`
+    will yield `x` without checking whether x belongs to the set where this relation
+    is true. The default is False. Default : True'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**method** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Specifies the method to use. Valid choices are:'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '`''matching''`, default'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''groebner''`'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''combined''`'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''fu''`'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`''old''`'
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: If `'matching'`, simplify the expression recursively by targeting common patterns.
+    If `'groebner'`, apply an experimental groebner basis algorithm. In this case
+    further options are forwarded to `trigsimp_groebner`, please refer to its docstring.
+    If `'combined'`, it first runs the groebner basis algorithm with small default
+    parameters, then runs the `'matching'` algorithm. If `'fu'`, run the collection
+    of trigonometric transformations described by Fu, et al. (see the [`fu()`](fu.html#sympy.simplify.fu.fu
+    "sympy.simplify.fu.fu") docstring). If `'old'`, the original SymPy trig simplification
+    function is run.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**opts :**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Optional keyword arguments passed to the method. See each method’s function
+    docstring for details.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simplification occurs wherever trigonometric functions are located.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using `method='groebner'` (or `method='combined'`) might lead to greater simplification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The old trigsimp routine can be accessed as with method `method='old'`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reduce expression by combining powers with similar bases and exponents.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `deep` is `True` then powsimp() will also simplify arguments of functions.
+    By default `deep` is set to `False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `force` is `True` then bases will be combined without checking for assumptions,
+    e.g. sqrt(x)*sqrt(y) -> sqrt(x*y) which is not true if x and y are both negative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can make powsimp() only combine bases or only combine exponents by changing
+    combine=’base’ or combine=’exp’. By default, combine=’all’, which does both. combine=’base’
+    will only combine:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: and combine=’exp’ will only combine
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: combine=’exp’ will strictly only combine exponents in the way that used to be
+    automatic. Also use deep=True if you need the old behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When combine=’all’, ‘exp’ is evaluated first. Consider the first example below
+    for when there could be an ambiguity relating to this. This is done so things
+    like the second example can be completely combined. If you want ‘base’ combined
+    first, do something like powsimp(powsimp(expr, combine=’base’), combine=’exp’).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: Radicals with Mul bases will be combined if combine=’exp’
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Two radicals are automatically joined through Mul:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But if an integer power of that radical has been autoexpanded then Mul does
+    not join the resulting factors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: Collect exponents on powers as assumptions allow.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given `(bb**be)**e`, this can be simplified as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: if `bb` is positive, or
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`e` is an integer, or'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`|be| < 1` then this simplifies to `bb**(be*e)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Given a product of powers raised to a power, `(bb1**be1 * bb2**be2...)**e`,
+    simplification can be done as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: if e is positive, the gcd of all bei can be joined with e;
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: all non-negative bb can be separated from those that are negative and their
+    gcd can be joined with e; autosimplification already handles this separation.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: integer factors from powers that have integers in the denominator of the exponent
+    can be removed from any term and the gcd of such integers can be joined with e
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Setting `force` to `True` will make symbols that are not explicitly negative
+    behave as though they are positive, resulting in more denesting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Setting `polar` to `True` will do simplifications on the Riemann surface of
+    the logarithm, also resulting in more denestings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When there are sums of logs in exp() then a product of powers may be obtained
+    e.g. `exp(3*(log(a) + 2*log(b)))` - > `a**3*b**6`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Assumptions may prevent expansion:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: No other expansion is done.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But exp() will be denested by moving all non-log terms outside of the function;
+    this may result in the collapsing of the exp to a power with a different base:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If assumptions allow, symbols can also be moved to the outermost exponent:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simplify combinatorial expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function takes as input an expression containing factorials, binomials,
+    Pochhammer symbol and other “combinatorial” functions, and tries to minimize the
+    number of those functions and reduce the size of their arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm works by rewriting all combinatorial functions as gamma functions
+    and applying gammasimp() except simplification steps that may make an integer
+    argument non-integer. See docstring of gammasimp for more information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then it rewrites expression in terms of factorials and binomials by rewriting
+    gammas as factorials and converting (a+b)!/a!b! into binomials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If expression has gamma functions or combinatorial functions with non-integer
+    argument, it is automatically passed to gammasimp.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: Denests sqrts in an expression that contain other square roots if possible,
+    otherwise returns the expr unchanged. This is based on the algorithms of [1].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.solvers.solvers.unrad`](../solvers/solvers.html#sympy.solvers.solvers.unrad
+    "sympy.solvers.solvers.unrad")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R856](#id2)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://web.archive.org/web/20210806201615/https://researcher.watson.ibm.com/researcher/files/us-fagin/symb85.pdf](https://web.archive.org/web/20210806201615/https://researcher.watson.ibm.com/researcher/files/us-fagin/symb85.pdf)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R857](#id3)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: D. J. Jeffrey and A. D. Rich, ‘Symplifying Square Roots of Square Roots by Denesting’
+    (available at [https://www.cybertester.com/data/denest.pdf](https://www.cybertester.com/data/denest.pdf))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: Perform common subexpression elimination on an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**exprs** : list of SymPy expressions, or a single SymPy expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expressions to reduce.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**symbols** : infinite iterator yielding unique Symbols'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The symbols used to label the common subexpressions which are pulled out. The
+    `numbered_symbols` generator is useful. The default is a stream of symbols of
+    the form “x0”, “x1”, etc. This must be an infinite iterator.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**optimizations** : list of (callable, callable) pairs'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The (preprocessor, postprocessor) pairs of external optimization functions.
+    Optionally ‘basic’ can be passed for a set of predefined basic optimizations.
+    Such ‘basic’ optimizations were used by default in old implementation, however
+    they can be really slow on larger expressions. Now, no pre or post optimizations
+    are made by default.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**postprocess** : a function which accepts the two return values of cse and'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'returns the desired form of output from cse, e.g. if you want the replacements
+    reversed the function might be the following lambda: lambda r, e: return reversed(r),
+    e'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**order** : string, ‘none’ or ‘canonical’'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The order by which Mul and Add arguments are processed. If set to ‘canonical’,
+    arguments will be canonically ordered. If set to ‘none’, ordering will be faster
+    but dependent on expressions hashes, thus machine dependent and variable. For
+    large expressions where speed is a concern, use the setting order=’none’.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**ignore** : iterable of Symbols'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Substitutions containing any Symbol from `ignore` will be ignored.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**list** : bool, (default True)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns expression in list or else with same type as input (when False).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**replacements** : list of (Symbol, expression) pairs'
+  prefs: []
+  type: TYPE_NORMAL
+- en: All of the common subexpressions that were replaced. Subexpressions earlier
+    in this list might show up in subexpressions later in this list.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**reduced_exprs** : list of SymPy expressions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The reduced expressions with all of the replacements above.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'List of expressions with recursive substitutions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note: the type and mutability of input matrices is retained.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The user may disallow substitutions containing certain symbols:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The default return value for the reduced expression(s) is a list, even if there
+    is only one expression. The \(list\) flag preserves the type of the input in the
+    output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: Find optimization opportunities in Adds, Muls, Pows and negative coefficient
+    Muls.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**exprs** : list of SymPy expressions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expressions to optimize.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**order** : string, ‘none’ or ‘canonical’'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The order by which Mul and Add arguments are processed. For large expressions
+    where speed is a concern, use the setting order=’none’.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**opt_subs** : dictionary of expression substitutions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expression substitutions which can be useful to optimize CSE.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: Perform raw CSE on expression tree, taking opt_subs into account.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**exprs** : list of SymPy expressions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expressions to reduce.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**symbols** : infinite iterator yielding unique Symbols'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The symbols used to label the common subexpressions which are pulled out.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**opt_subs** : dictionary of expression substitutions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expressions to be substituted before any CSE action is performed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**order** : string, ‘none’ or ‘canonical’'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The order by which Mul and Add arguments are processed. For large expressions
+    where speed is a concern, use the setting order=’none’.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**ignore** : iterable of Symbols'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Substitutions containing any Symbol from `ignore` will be ignored.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: Expand hypergeometric functions. If allow_hyper is True, allow partial simplification
+    (that is a result different from input, but still containing hypergeometric functions).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a G-function has expansions both at zero and at infinity, `place` can be
+    set to `0` or `zoo` to indicate the preferred choice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Non-hyperegeometric parts of the expression and hypergeometric expressions
+    that are not recognised are left unchanged:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: Manipulate expressions using paths.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'EPath grammar in EBNF notation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the docstring of the epath() function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: Modify parts of an expression selected by a path.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: Retrieve parts of an expression selected by a path.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: Manipulate parts of an expression selected by a path.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**path** : str | EPath'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A path as a string or a compiled EPath.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**expr** : Basic | iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An expression or a container of expressions.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**func** : callable (optional)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A callable that will be applied to matching parts.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**args** : tuple (optional)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additional positional arguments to `func`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**kwargs** : dict (optional)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additional keyword arguments to `func`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function allows to manipulate large nested expressions in single line of
+    code, utilizing techniques to those applied in XML processing standards (e.g.
+    XPath).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `func` is `None`, [`epath()`](#sympy.simplify.epathtools.epath "sympy.simplify.epathtools.epath")
+    retrieves elements selected by the `path`. Otherwise it applies `func` to each
+    matching element.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that it is more efficient to create an EPath object and use the select
+    and apply methods of that object, since this will compile the path string only
+    once. This function should only be used as a convenient shortcut for interactive
+    use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is the supported syntax:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'select all: `/*`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Equivalent of `for arg in args:`.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'select slice: `/[0]` or `/[1:5]` or `/[1:5:2]`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Supports standard Python’s slice syntax.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'select by type: `/list` or `/list|tuple`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Emulates `isinstance()`.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'select by attribute: `/__iter__?`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Emulates `hasattr()`.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE

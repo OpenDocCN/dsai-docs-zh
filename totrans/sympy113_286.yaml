@@ -1,0 +1,6046 @@
+- en: Internals of the Polynomial Manipulation Module
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/polys/internals.html](https://docs.sympy.org/latest/modules/polys/internals.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The implementation of the polynomials module is structured internally in “levels”.
+    There are four levels, called L0, L1, L2 and L3\. The levels three and four contain
+    the user-facing functionality and were described in the previous section. This
+    section focuses on levels zero and one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Level zero provides core polynomial manipulation functionality with C-like,
+    low-level interfaces. Level one wraps this low-level functionality into object
+    oriented structures. These are *not* the classes seen by the user, but rather
+    classes used internally throughout the polys module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is one additional complication in the implementation. This comes from
+    the fact that all polynomial manipulations are relative to a *ground domain*.
+    For example, when factoring a polynomial like \(x^{10} - 1\), one has to decide
+    what ring the coefficients are supposed to belong to, or less trivially, what
+    coefficients are allowed to appear in the factorization. This choice of coefficients
+    is called a ground domain. Typical choices include the integers \(\mathbb{Z}\),
+    the rational numbers \(\mathbb{Q}\) or various related rings and fields. But it
+    is perfectly legitimate (although in this case uninteresting) to factorize over
+    polynomial rings such as \(k[Y]\), where \(k\) is some fixed field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Thus the polynomial manipulation algorithms (both complicated ones like factoring,
+    and simpler ones like addition or multiplication) have to rely on other code to
+    manipulate the coefficients. In the polynomial manipulation module, such code
+    is encapsulated in so-called “domains”. A domain is basically a factory object:
+    it takes various representations of data, and converts them into objects with
+    unified interface. Every object created by a domain has to implement the arithmetic
+    operations \(+\), \(-\) and \(\times\). Other operations are accessed through
+    the domain, e.g. as in `ZZ.quo(ZZ(4), ZZ(2))`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that there is some amount of *circularity*: the polynomial ring domains
+    use the level one classes, the level one classes use the level zero functions,
+    and level zero functions use domains. It is possible, in principle, but not in
+    the current implementation, to work in rings like \(k[X][Y]\). This would create
+    even more layers. For this reason, working in the isomorphic ring \(k[X, Y]\)
+    is preferred.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Level Zero
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Level zero contains the bulk code of the polynomial manipulation module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Manipulation of dense, multivariate polynomials
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: These functions can be used to manipulate polynomials in \(K[X_0, \ldots, X_u]\).
+    Functions for manipulating multivariate polynomials in the dense representation
+    have the prefix `dmp_`. Functions which only apply to univariate polynomials (i.e.
+    \(u = 0\)) have the prefix `dup__`. The ground domain \(K\) has to be passed explicitly.
+    For many multivariate polynomial manipulation functions also the level \(u\),
+    i.e. the number of generators minus one, has to be passed. (Note that, in many
+    cases, `dup_` versions of functions are available, which may be slightly more
+    efficient.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Basic manipulation:**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return leading coefficient of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return trailing coefficient of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the ground leading coefficient.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the ground trailing coefficient.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the leading term `c * x_1**n_1 ... x_k**n_k`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the leading degree of `f` in `x_0` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that the degree of 0 is negative infinity (`float('-inf')`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the leading degree of `f` in `x_j` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a list of degrees of `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Remove leading zeros from `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the number of levels in `f` and recursively strip it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Compute `x**n * f(1/x)`, i.e.: reverse `f` in `K[x]`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a new copy of a polynomial `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert \(f\) into a nested tuple of tuples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is needed for hashing. This is similar to dmp_copy().
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: Normalize a multivariate polynomial in the given domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert the ground domain of `f` from `K0` to `K1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert the ground domain of `f` from SymPy to `K`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the `n`-th coefficient of `f` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the ground `n`-th coefficient of `f` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `True` if `f` is zero in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a multivariate zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `True` if `f` is one in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a multivariate one over `K`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return True if `f` is constant in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a multivariate constant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a list of multivariate zeros.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a list of multivariate constants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `True` if `LC(f)` is negative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `True` if `LC(f)` is positive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a `K[X]` polynomial from a `dict`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert a `K[X]` polynomial to a [PRE102].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: Transform `K[..x_i..x_j..]` to `K[..x_j..x_i..]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a polynomial in `K[x_{P(1)},..,x_{P(n)}]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a multivariate value nested `l`-levels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a multivariate polynomial raised `l`-levels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: Map `x_i**m_i` to `y_i` in a polynomial in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: Map `x_i**m_i` to `y_i` in a set of polynomials in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: Map `y_i` to `x_i**k_i` in a polynomial in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: Exclude useless levels from `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the levels excluded, the new excluded `f`, and the new `u`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: Include useless levels in `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert `f` from `K[X][Y]` to `K[X,Y]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert `f` from `K[X,Y]` to `K[X][Y]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: Remove GCD of terms from `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: List all non-zero terms from `f` in the given order `order`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE155]'
+  prefs: []
+  type: TYPE_PRE
+- en: Apply `h` to pairs of coefficients of `f` and `g`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: Take a continuous subsequence of terms of `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE160]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a polynomial of degree `n` with coefficients in `[a, b]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE161]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE162]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Arithmetic operations:**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE163]'
+  prefs: []
+  type: TYPE_PRE
+- en: Add `c(x_2..x_u)*x_0**i` to `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE164]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE165]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE166]'
+  prefs: []
+  type: TYPE_PRE
+- en: Subtract `c(x_2..x_u)*x_0**i` from `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE167]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE168]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE169]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiply `f` by `c(x_2..x_u)*x_0**i` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE170]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE171]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE172]'
+  prefs: []
+  type: TYPE_PRE
+- en: Add an element of the ground domain to `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE173]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE174]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE175]'
+  prefs: []
+  type: TYPE_PRE
+- en: Subtract an element of the ground domain from `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE176]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE177]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE178]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiply `f` by a constant value in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE179]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE180]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE181]'
+  prefs: []
+  type: TYPE_PRE
+- en: Quotient by a constant in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE182]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE183]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE184]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE185]'
+  prefs: []
+  type: TYPE_PRE
+- en: Exact quotient by a constant in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE186]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE187]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE188]'
+  prefs: []
+  type: TYPE_PRE
+- en: Efficiently multiply `f` by `x**n` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE189]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE190]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE191]'
+  prefs: []
+  type: TYPE_PRE
+- en: Efficiently divide `f` by `x**n` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE192]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE193]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE194]'
+  prefs: []
+  type: TYPE_PRE
+- en: Make all coefficients positive in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE195]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE196]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE197]'
+  prefs: []
+  type: TYPE_PRE
+- en: Negate a polynomial in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE198]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE199]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE200]'
+  prefs: []
+  type: TYPE_PRE
+- en: Add dense polynomials in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE201]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE202]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE203]'
+  prefs: []
+  type: TYPE_PRE
+- en: Subtract dense polynomials in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE204]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE205]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE206]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns `f + g*h` where `f, g, h` are in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE207]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE208]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE209]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns `f - g*h` where `f, g, h` are in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE210]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE211]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE212]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiply dense polynomials in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE213]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE214]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE215]'
+  prefs: []
+  type: TYPE_PRE
+- en: Square dense polynomials in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE216]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE217]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE218]'
+  prefs: []
+  type: TYPE_PRE
+- en: Raise `f` to the `n`-th power in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE219]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE220]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE221]'
+  prefs: []
+  type: TYPE_PRE
+- en: Polynomial pseudo-division in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE222]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE223]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE224]'
+  prefs: []
+  type: TYPE_PRE
+- en: Polynomial pseudo-remainder in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE225]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE226]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE227]'
+  prefs: []
+  type: TYPE_PRE
+- en: Polynomial exact pseudo-quotient in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE228]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE229]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE230]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE231]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE232]'
+  prefs: []
+  type: TYPE_PRE
+- en: Polynomial pseudo-quotient in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE233]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE234]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE235]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE236]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE237]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multivariate division with remainder over a ring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE238]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE239]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE240]'
+  prefs: []
+  type: TYPE_PRE
+- en: Polynomial division with remainder over a field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE241]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE242]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE243]'
+  prefs: []
+  type: TYPE_PRE
+- en: Polynomial division with remainder in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE244]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE245]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE246]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE247]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns polynomial remainder in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE248]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE249]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE250]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE251]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns exact polynomial quotient in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE252]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE253]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE254]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE255]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns polynomial quotient in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE256]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE257]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE258]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE259]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE260]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns maximum norm of a polynomial in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE261]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE262]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE263]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns l1 norm of a polynomial in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE264]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE265]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE266]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiply together several polynomials in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE267]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE268]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Further tools:**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE269]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes the indefinite integral of `f` in `x_0` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE270]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE271]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE272]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes the indefinite integral of `f` in `x_j` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE273]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE274]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE275]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`m`-th order derivative in `x_0` of a polynomial in `K[X]`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE276]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE277]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE278]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE279]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`m`-th order derivative in `x_j` of a polynomial in `K[X]`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE280]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE281]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE282]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE283]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate a polynomial at `x_0 = a` in `K[X]` using the Horner scheme.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE284]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE285]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE286]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate a polynomial at `x_j = a` in `K[X]` using the Horner scheme.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE287]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE288]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE289]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE290]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate a polynomial at `x_j = a_j, ...` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE291]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE292]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE293]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE294]'
+  prefs: []
+  type: TYPE_PRE
+- en: Differentiate and evaluate a polynomial in `x_j` at `a` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE295]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE296]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE297]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE298]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reduce a `K[X]` polynomial modulo a polynomial `p` in `K[Y]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE299]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE300]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE301]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE302]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reduce a `K[X]` polynomial modulo a constant `p` in `K`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE303]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE304]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE305]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE306]'
+  prefs: []
+  type: TYPE_PRE
+- en: Divide all coefficients by `LC(f)` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE307]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE308]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE309]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE310]'
+  prefs: []
+  type: TYPE_PRE
+- en: Divide all coefficients by `LC(f)` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE311]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE312]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE313]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE314]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE315]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE316]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the GCD of coefficients of `f` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE317]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE318]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE319]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE320]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE321]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE322]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the GCD of coefficients of `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE323]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE324]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE325]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE326]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE327]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE328]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute content and the primitive form of `f` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE329]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE330]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE331]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE332]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE333]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE334]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute content and the primitive form of `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE335]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE336]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE337]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE338]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE339]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE340]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extract common content from a pair of polynomials in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE341]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE342]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE343]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extract common content from a pair of polynomials in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE344]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE345]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE346]'
+  prefs: []
+  type: TYPE_PRE
+- en: Find `f1` and `f2`, such that `f(x+I*y) = f1(x,y) + f2(x,y)*I`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE347]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE348]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE349]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE350]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate efficiently the composition `f(-x)` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE351]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE352]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE353]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate efficiently composition `f(a*x)` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE354]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE355]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE356]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate efficiently Taylor shift `f(x + a)` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE357]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE358]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE359]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate functional transformation `q**n * f(p/q)` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE360]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE361]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE362]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate functional composition `f(g)` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE363]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE364]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE365]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes functional decomposition of `f` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given a univariate polynomial `f` with coefficients in a field of characteristic
+    zero, returns list `[f_1, f_2, ..., f_n]`, where:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE366]'
+  prefs: []
+  type: TYPE_PRE
+- en: and `f_2, ..., f_n` are monic and homogeneous polynomials of at least second
+    degree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Unlike factorization, complete functional decompositions of polynomials are
+    not unique, consider examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`f o g = f(x + b) o (g - b)`'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`x**n o x**m = x**m o x**n`'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`T_n o T_m = T_m o T_n`'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: where `T_n` and `T_m` are Chebyshev polynomials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE367]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE368]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R784](#id2)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Kozen89]](literature.html#kozen89)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE369]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert algebraic coefficients to integers in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE370]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE371]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE372]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE373]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE374]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the number of sign variations of `f` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE375]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE376]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE377]'
+  prefs: []
+  type: TYPE_PRE
+- en: Clear denominators, i.e. transform `K_0` to `K_1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE378]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE379]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE380]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE381]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute `f**(-1)` mod `x**n` using Newton iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE382]'
+  prefs: []
+  type: TYPE_PRE
+- en: Manipulation of dense, univariate polynomials with finite field coefficients
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Functions in this module carry the prefix `gf_`, referring to the classical
+    name “Galois Fields” for finite fields. Note that many polynomial factorization
+    algorithms work by reduction to the finite field case, so having special implementations
+    for this case is justified both by performance, and by the necessity of certain
+    methods which do not even make sense over general fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE383]'
+  prefs: []
+  type: TYPE_PRE
+- en: Chinese Remainder Theorem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a set of integer residues `u_0,...,u_n` and a set of co-prime integer
+    moduli `m_0,...,m_n`, returns an integer `u`, such that `u = u_i mod m_i` for
+    [PRE384].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider a set of residues `U = [49, 76, 65]` and a set of moduli `M = [99,
+    97, 95]`. Then we have:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE385]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is the correct result because:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE386]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note: this is a low-level routine with no error checking.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.ntheory.modular.crt`](../ntheory.html#sympy.ntheory.modular.crt "sympy.ntheory.modular.crt")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: a higher level crt routine
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.ntheory.modular.solve_congruence`](../ntheory.html#sympy.ntheory.modular.solve_congruence
+    "sympy.ntheory.modular.solve_congruence")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE387]'
+  prefs: []
+  type: TYPE_PRE
+- en: First part of the Chinese Remainder Theorem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE388]'
+  prefs: []
+  type: TYPE_PRE
+- en: The following two codes have the same result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE389]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE390]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, it is faster when we want to fix `M` and compute for multiple U, i.e.
+    the following cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE391]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.ntheory.modular.crt1`](../ntheory.html#sympy.ntheory.modular.crt1 "sympy.ntheory.modular.crt1")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: a higher level crt routine
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.galoistools.gf_crt`](#sympy.polys.galoistools.gf_crt "sympy.polys.galoistools.gf_crt"),
+    [`sympy.polys.galoistools.gf_crt2`](#sympy.polys.galoistools.gf_crt2 "sympy.polys.galoistools.gf_crt2")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE392]'
+  prefs: []
+  type: TYPE_PRE
+- en: Second part of the Chinese Remainder Theorem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See `gf_crt1` for usage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE393]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE394]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE395]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.ntheory.modular.crt2`](../ntheory.html#sympy.ntheory.modular.crt2 "sympy.ntheory.modular.crt2")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: a higher level crt routine
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.galoistools.gf_crt`](#sympy.polys.galoistools.gf_crt "sympy.polys.galoistools.gf_crt"),
+    [`sympy.polys.galoistools.gf_crt1`](#sympy.polys.galoistools.gf_crt1 "sympy.polys.galoistools.gf_crt1")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE396]'
+  prefs: []
+  type: TYPE_PRE
+- en: Coerce `a mod p` to an integer in the range `[-p/2, p/2]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE397]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE398]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE399]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the leading degree of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE400]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE401]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE402]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the leading coefficient of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE403]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE404]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE405]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the trailing coefficient of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE406]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE407]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE408]'
+  prefs: []
+  type: TYPE_PRE
+- en: Remove leading zeros from `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE409]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE410]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE411]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reduce all coefficients modulo `p`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE412]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE413]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE414]'
+  prefs: []
+  type: TYPE_PRE
+- en: Normalize all coefficients in `K`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE415]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE416]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE417]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a `GF(p)[x]` polynomial from a dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE418]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE419]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE420]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert a `GF(p)[x]` polynomial to a dict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE421]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE422]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE423]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a `GF(p)[x]` polynomial from `Z[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE424]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE425]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE426]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert a `GF(p)[x]` polynomial to `Z[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE427]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE428]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE429]'
+  prefs: []
+  type: TYPE_PRE
+- en: Negate a polynomial in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE430]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE431]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE432]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute `f + a` where `f` in `GF(p)[x]` and `a` in `GF(p)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE433]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE434]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE435]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute `f - a` where `f` in `GF(p)[x]` and `a` in `GF(p)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE436]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE437]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE438]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute `f * a` where `f` in `GF(p)[x]` and `a` in `GF(p)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE439]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE440]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE441]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute `f/a` where `f` in `GF(p)[x]` and `a` in `GF(p)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE442]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE443]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE444]'
+  prefs: []
+  type: TYPE_PRE
+- en: Add polynomials in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE445]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE446]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE447]'
+  prefs: []
+  type: TYPE_PRE
+- en: Subtract polynomials in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE448]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE449]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE450]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiply polynomials in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE451]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE452]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE453]'
+  prefs: []
+  type: TYPE_PRE
+- en: Square polynomials in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE454]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE455]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE456]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns `f + g*h` where `f`, `g`, `h` in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE457]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE458]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute `f - g*h` where `f`, `g`, `h` in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE459]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE460]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE461]'
+  prefs: []
+  type: TYPE_PRE
+- en: Expand results of [`factor()`](reference.html#sympy.polys.polytools.factor "sympy.polys.polytools.factor")
+    in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE462]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE463]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE464]'
+  prefs: []
+  type: TYPE_PRE
+- en: Division with remainder in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given univariate polynomials `f` and `g` with coefficients in a finite field
+    with `p` elements, returns polynomials `q` and `r` (quotient and remainder) such
+    that `f = q*g + r`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider polynomials `x**3 + x + 1` and `x**2 + x` in GF(2):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE465]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As result we obtained quotient `x + 1` and remainder `1`, thus:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE466]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R785](#id5)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Monagan93]](literature.html#monagan93)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R786](#id6)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen99]](literature.html#gathen99)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE467]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute polynomial remainder in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE468]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE469]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE470]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute exact quotient in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE471]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE472]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE473]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute polynomial quotient in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE474]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE475]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE476]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE477]'
+  prefs: []
+  type: TYPE_PRE
+- en: Efficiently multiply `f` by `x**n`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE478]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE479]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE480]'
+  prefs: []
+  type: TYPE_PRE
+- en: Efficiently divide `f` by `x**n`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE481]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE482]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE483]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute `f**n` in `GF(p)[x]` using repeated squaring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE484]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE485]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE486]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute `f**n` in `GF(p)[x]/(g)` using repeated squaring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given polynomials `f` and `g` in `GF(p)[x]` and a non-negative integer `n`,
+    efficiently computes `f**n (mod g)` i.e. the remainder of `f**n` from division
+    by `g`, using the repeated squaring algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE487]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE488]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R787](#id8)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen99]](literature.html#gathen99)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE489]'
+  prefs: []
+  type: TYPE_PRE
+- en: Euclidean Algorithm in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE490]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE491]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE492]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute polynomial LCM in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE493]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE494]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE495]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute polynomial GCD and cofactors in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE496]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE497]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE498]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extended Euclidean Algorithm in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given polynomials `f` and `g` in `GF(p)[x]`, computes polynomials `s`, `t` and
+    `h`, such that `h = gcd(f, g)` and `s*f + t*g = h`. The typical application of
+    EEA is solving polynomial diophantine equations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider polynomials `f = (x + 7) (x + 1)`, `g = (x + 7) (x**2 + 1)` in `GF(11)[x]`.
+    Application of Extended Euclidean Algorithm gives:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE499]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As result we obtained polynomials `s = 5*x + 6` and `t = 6`, and additionally
+    `gcd(f, g) = x + 7`. This is correct because:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE500]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R788](#id10)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen99]](literature.html#gathen99)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE501]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute LC and a monic polynomial in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE502]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE503]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE504]'
+  prefs: []
+  type: TYPE_PRE
+- en: Differentiate polynomial in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE505]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE506]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE507]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate `f(a)` in `GF(p)` using Horner scheme.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE508]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE509]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE510]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluate `f(a)` for `a` in `[a_1, ..., a_n]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE511]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE512]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE513]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute polynomial composition `f(g)` in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE514]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE515]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE516]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute polynomial composition `g(h)` in `GF(p)[x]/(f)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE517]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE518]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE519]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute polynomial trace map in `GF(p)[x]/(f)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given a polynomial `f` in `GF(p)[x]`, polynomials `a`, `b`, `c` in the quotient
+    ring `GF(p)[x]/(f)` such that `b = c**t (mod f)` for some positive power `t` of
+    `p`, and a positive integer `n`, returns a mapping:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE520]'
+  prefs: []
+  type: TYPE_PRE
+- en: In factorization context, `b = x**p mod f` and `c = x mod f`. This way we can
+    efficiently compute trace polynomials in equal degree factorization routine, much
+    faster than with other methods, like iterated Frobenius algorithm, for large degrees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE521]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE522]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R789](#id12)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen92]](literature.html#gathen92)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE523]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generate a random polynomial in `GF(p)[x]` of degree `n`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE524]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE525]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generate random irreducible polynomial of degree `n` in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE526]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE527]'
+  prefs: []
+  type: TYPE_PRE
+- en: Test irreducibility of a polynomial `f` in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE528]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE529]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE530]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `True` if `f` is square-free in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE531]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE532]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE533]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return square-free part of a `GF(p)[x]` polynomial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE534]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE535]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE536]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the square-free decomposition of a `GF(p)[x]` polynomial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a polynomial `f` in `GF(p)[x]`, returns the leading coefficient of `f`
+    and a square-free decomposition `f_1**e_1 f_2**e_2 ... f_k**e_k` such that all
+    `f_i` are monic polynomials and `(f_i, f_j)` for `i != j` are co-prime and `e_1
+    ... e_k` are given in increasing order. All trivial terms (i.e. `f_i = 1`) are
+    not included in the output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider polynomial `f = x**11 + 1` over `GF(11)[x]`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE537]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that `f''(x) = 0`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE538]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This phenomenon does not happen in characteristic zero. However we can still
+    compute square-free decomposition of `f` using `gf_sqf()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE539]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We obtained factorization `f = (x + 1)**11`. This is correct because:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE540]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R790](#id14)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Geddes92]](literature.html#geddes92)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE541]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calculate Berlekamp’s `Q` matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE542]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE543]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE544]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE545]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute a basis of the kernel of `Q`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE546]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE547]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE548]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE549]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor a square-free `f` in `GF(p)[x]` for small `p`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE550]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE551]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE552]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor a square-free `f` in `GF(p)[x]` for medium `p`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE553]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE554]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE555]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor a square-free `f` in `GF(p)[x]` for large `p`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE556]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE557]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE558]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor a square-free polynomial `f` in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE559]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE560]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE561]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor (non square-free) polynomials in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given a possibly non square-free polynomial `f` in `GF(p)[x]`, returns its
+    complete factorization into irreducibles:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE562]'
+  prefs: []
+  type: TYPE_PRE
+- en: where each `f_i` is a monic polynomial and `gcd(f_i, f_j) == 1`, for `i != j`.
+    The result is given as a tuple consisting of the leading coefficient of `f` and
+    a list of factors of `f` with their multiplicities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm proceeds by first computing square-free decomposition of `f` and
+    then iteratively factoring each of square-free factors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider a non square-free polynomial `f = (7*x + 1) (x + 2)**2` in `GF(11)[x]`.
+    We obtain its factorization into irreducibles as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE563]'
+  prefs: []
+  type: TYPE_PRE
+- en: We arrived with factorization `f = 5 (x + 2) (x + 8)**2`. We did not recover
+    the exact form of the input polynomial because we requested to get monic factors
+    of `f` and its leading coefficient separately.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Square-free factors of `f` can be factored into irreducibles over `GF(p)` using
+    three very different methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Berlekamp
+  prefs: []
+  type: TYPE_NORMAL
+- en: efficient for very small values of `p` (usually `p < 25`)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cantor-Zassenhaus
+  prefs: []
+  type: TYPE_NORMAL
+- en: efficient on average input and with “typical” `p`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Shoup-Kaltofen-Gathen
+  prefs: []
+  type: TYPE_NORMAL
+- en: efficient with very large inputs and modulus
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you want to use a specific factorization method, instead of the default one,
+    set `GF_FACTOR_METHOD` with one of `berlekamp`, `zassenhaus` or `shoup` values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R791](#id16)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen99]](literature.html#gathen99)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE564]'
+  prefs: []
+  type: TYPE_PRE
+- en: Value of polynomial ‘f’ at ‘a’ in field R.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE565]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE566]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE567]'
+  prefs: []
+  type: TYPE_PRE
+- en: To solve f(x) congruent 0 mod(n).
+  prefs: []
+  type: TYPE_NORMAL
+- en: n is divided into canonical factors and f(x) cong 0 mod(p**e) will be solved
+    for each factor. Applying the Chinese Remainder Theorem to the results returns
+    the final answers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Solve [1, 1, 7] congruent 0 mod(189):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE568]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.ntheory.residue_ntheory.polynomial_congruence`](../ntheory.html#sympy.ntheory.residue_ntheory.polynomial_congruence
+    "sympy.ntheory.residue_ntheory.polynomial_congruence")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: a higher level solving routine
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R792](#id17)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ‘An introduction to the Theory of Numbers’ 5th Edition by Ivan Niven, Zuckerman
+    and Montgomery.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Manipulation of sparse, distributed polynomials and vectors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Dense representations quickly require infeasible amounts of storage and computation
+    time if the number of variables increases. For this reason, there is code to manipulate
+    polynomials in a *sparse* representation. The Ring object and elements are implemented
+    by the classes [`PolyRing`](domainsref.html#sympy.polys.rings.PolyRing "sympy.polys.rings.PolyRing")
+    and [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement").
+  prefs: []
+  type: TYPE_NORMAL
+- en: In commutative algebra, one often studies not only polynomials, but also *modules*
+    over polynomial rings. The polynomial manipulation module provides rudimentary
+    low-level support for finitely generated free modules. This is mainly used for
+    Groebner basis computations (see there), so manipulation functions are only provided
+    to the extend needed. They carry the prefix `sdm_`. Note that in examples, the
+    generators of the free module are called \(f_1, f_2, \ldots\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE569]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiply tuple `X` representing a monomial of \(K[X]\) into the tuple `M` representing
+    a monomial of \(F\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Multiplying \(xy^3\) into \(x f_1\) yields \(x^2 y^3 f_1\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE570]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE571]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the total degree of `M`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, the total degree of \(x^2 y f_5\) is 3:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE572]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE573]'
+  prefs: []
+  type: TYPE_PRE
+- en: Does there exist a (polynomial) monomial X such that XA = B?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Positive examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following examples, the monomial is given in terms of x, y and the generator(s),
+    f_1, f_2 etc. The tuple form of that monomial is used in the call to sdm_monomial_divides.
+    Note: the generator appears last in the expression but first in the tuple and
+    other factors appear in the same order that they appear in the monomial expression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(A = f_1\) divides \(B = f_1\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE574]'
+  prefs: []
+  type: TYPE_PRE
+- en: \(A = f_1\) divides \(B = x^2 y f_1\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE575]'
+  prefs: []
+  type: TYPE_PRE
+- en: \(A = xy f_5\) divides \(B = x^2 y f_5\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE576]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Negative examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(A = f_1\) does not divide \(B = f_2\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE577]'
+  prefs: []
+  type: TYPE_PRE
+- en: \(A = x f_1\) does not divide \(B = f_1\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE578]'
+  prefs: []
+  type: TYPE_PRE
+- en: \(A = xy^2 f_5\) does not divide \(B = y f_5\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE579]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE580]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the leading coefficient of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE581]'
+  prefs: []
+  type: TYPE_PRE
+- en: Make a dictionary from a distributed polynomial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE582]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create an sdm from a dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here `O` is the monomial order to use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE583]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE584]'
+  prefs: []
+  type: TYPE_PRE
+- en: Add two module elements `f`, `g`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Addition is done over the ground field `K`, monomials are ordered according
+    to `O`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: All examples use lexicographic order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \((xy f_1) + (f_2) = f_2 + xy f_1\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE585]'
+  prefs: []
+  type: TYPE_PRE
+- en: \((xy f_1) + (-xy f_1)\) = 0`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE586]'
+  prefs: []
+  type: TYPE_PRE
+- en: \((f_1) + (2f_1) = 3f_1\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE587]'
+  prefs: []
+  type: TYPE_PRE
+- en: \((yf_1) + (xf_1) = xf_1 + yf_1\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE588]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE589]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the leading monomial of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Only valid if \(f \ne 0\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE590]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE591]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the leading term of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Only valid if \(f \ne 0\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE592]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE593]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiply a distributed module element `f` by a (polynomial) term `term`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiplication of coefficients is done over the ground field `K`, and monomials
+    are ordered according to `O`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(0 f_1 = 0\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE594]'
+  prefs: []
+  type: TYPE_PRE
+- en: \(x 0 = 0\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE595]'
+  prefs: []
+  type: TYPE_PRE
+- en: \((x) (f_1) = xf_1\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE596]'
+  prefs: []
+  type: TYPE_PRE
+- en: \((2xy) (3x f_1 + 4y f_2) = 8xy^2 f_2 + 6x^2y f_1\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE597]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE598]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the zero module element.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE599]'
+  prefs: []
+  type: TYPE_PRE
+- en: Degree of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is the maximum of the degrees of all its monomials. Invalid if `f` is zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE600]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE601]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create an sdm from an iterable of expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Coefficients are created in the ground field `K`, and terms are ordered according
+    to monomial order `O`. Named arguments are passed on to the polys conversion code
+    and can be used to specify for example generators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE602]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE603]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert sdm `f` into a list of polynomial expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generators for the polynomial ring are specified via `gens`. The rank of
+    the module is guessed, or passed via `n`. The ground field is assumed to be `K`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE604]'
+  prefs: []
+  type: TYPE_PRE
+- en: Polynomial factorization algorithms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Many variants of Euclid’s algorithm:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Classical remainder sequence
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let \(K\) be a field, and consider the ring \(K[X]\) of polynomials in a single
+    indeterminate \(X\) with coefficients in \(K\). Given two elements \(f\) and \(g\)
+    of \(K[X]\) with \(g\neq 0\) there are unique polynomials \(q\) and \(r\) such
+    that \(f = qg + r\) and \(\deg(r) < \deg(g)\) or \(r = 0\). They are denoted by
+    \(\mathrm{quo}(f,g)\) (*quotient*) and \(\mathrm{rem}(f,g)\) (*remainder*), so
+    we have the *division identity*
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[f = \mathrm{quo}(f,g)g + \mathrm{rem}(f,g).\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: It follows that every ideal \(I\) of \(K[X]\) is a principal ideal, generated
+    by any element \(\neq 0\) of minimum degree (assuming \(I\) non-zero). In fact,
+    if \(g\) is such a polynomial and \(f\) is any element of \(I\), \(\mathrm{rem}(f,g)\)
+    belongs to \(I\) as a linear combination of \(f\) and \(g\), hence must be zero;
+    therefore \(f\) is a multiple of \(g\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using this result it is possible to find a [greatest common divisor](https://en.wikipedia.org/wiki/Greatest_common_divisor)
+    (gcd) of any polynomials \(f,g,\ldots\) in \(K[X]\). If \(I\) is the ideal formed
+    by all linear combinations of the given polynomials with coefficients in \(K[X]\),
+    and \(d\) is its generator, then every common divisor of the polynomials also
+    divides \(d\). On the other hand, the given polynomials are multiples of the generator
+    \(d\); hence \(d\) is a gcd of the polynomials, denoted \(\mathrm{gcd}(f,g,\ldots)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: An algorithm for the gcd of two polynomials \(f\) and \(g\) in \(K[X]\) can
+    now be obtained as follows. By the division identity, \(r = \mathrm{rem}(f,g)\)
+    is in the ideal generated by \(f\) and \(g\), as well as \(f\) is in the ideal
+    generated by \(g\) and \(r\). Hence the ideals generated by the pairs \((f,g)\)
+    and \((g,r)\) are the same. Set \(f_0 = f\), \(f_1 = g\), and define recursively
+    \(f_i = \mathrm{rem}(f_{i-2},f_{i-1})\) for \(i\ge 2\). The recursion ends after
+    a finite number of steps with \(f_{k+1}=0\), since the degrees of the polynomials
+    are strictly decreasing. By the above remark, all the pairs \((f_{i-1},f_i)\)
+    generate the same ideal. In particular, the ideal generated by \(f\) and \(g\)
+    is generated by \(f_k\) alone as \(f_{k+1} = 0\). Hence \(d = f_k\) is a gcd of
+    \(f\) and \(g\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sequence of polynomials \(f_0\), \(f_1,\ldots, f_k\) is called the *Euclidean
+    polynomial remainder sequence* determined by \((f,g)\) because of the analogy
+    with the classical [Euclidean algorithm](https://en.wikipedia.org/wiki/Euclidean_algorithm)
+    for the gcd of natural numbers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm may be extended to obtain an expression for \(d\) in terms of
+    \(f\) and \(g\) by using the full division identities to write recursively each
+    \(f_i\) as a linear combination of \(f\) and \(g\). This leads to an equation
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[d = uf + vg\qquad (u,v \in K[X])\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: analogous to [Bézout’s identity](https://en.wikipedia.org/wiki/B%C3%A9zout%27s_identity)
+    in the case of integers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE605]'
+  prefs: []
+  type: TYPE_PRE
+- en: Half extended Euclidean algorithm in \(F[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE606]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE607]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extended Euclidean algorithm in \(F[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE608]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE609]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute multiplicative inverse of \(f\) modulo \(g\) in \(F[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE610]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE611]'
+  prefs: []
+  type: TYPE_PRE
+- en: Euclidean polynomial remainder sequence (PRS) in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE612]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simplified remainder sequences
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Assume, as is usual, that the coefficient field \(K\) is the field of fractions
+    of an integral domain \(A\). In this case the coefficients (numerators and denominators)
+    of the polynomials in the Euclidean remainder sequence tend to grow very fast.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If \(A\) is a unique factorization domain, the coefficients may be reduced
+    by cancelling common factors of numerators and denominators. Further reduction
+    is possible noting that a gcd of polynomials in \(K[X]\) is not unique: it may
+    be multiplied by any (non-zero) constant factor.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any polynomial \(f\) in \(K[X]\) can be simplified by extracting the denominators
+    and common factors of the numerators of its coefficients. This yields the representation
+    \(f = cF\) where \(c\in K\) is the *content* of \(f\) and \(F\) is a *primitive*
+    polynomial, i.e., a polynomial in \(A[X]\) with coprime coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is possible to start the algorithm by replacing the given polynomials \(f\)
+    and \(g\) with their primitive parts. This will only modify \(\mathrm{rem}(f,g)\)
+    by a constant factor. Replacing it with its primitive part and continuing recursively
+    we obtain all the primitive parts of the polynomials in the Euclidean remainder
+    sequence, including the primitive \(\mathrm{gcd}(f,g)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This sequence is the *primitive polynomial remainder sequence*. It is an example
+    of *general polynomial remainder sequences* where the computed remainders are
+    modified by constant multipliers (or divisors) in order to simplify the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE613]'
+  prefs: []
+  type: TYPE_PRE
+- en: Primitive polynomial remainder sequence (PRS) in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE614]'
+  prefs: []
+  type: TYPE_PRE
+- en: Subresultant sequence
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The coefficients of the primitive polynomial sequence do not grow exceedingly,
+    but the computation of the primitive parts requires extra processing effort. Besides,
+    the method only works with fraction fields of unique factorization domains, excluding,
+    for example, the general number fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Collins [Collins67] realized that the so-called *subresultant polynomials* of
+    a pair of polynomials also form a generalized remainder sequence. The coefficients
+    of these polynomials are expressible as determinants in the coefficients of the
+    given polynomials. Hence (the logarithm of) their size only grows linearly. In
+    addition, if the coefficients of the given polynomials are in the subdomain \(A\),
+    so are those of the subresultant polynomials. This means that the subresultant
+    sequence is comparable to the primitive remainder sequence without relying on
+    unique factorization in \(A\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To see how subresultants are associated with remainder sequences recall that
+    all polynomials \(h\) in the sequence are linear combinations of the given polynomials
+    \(f\) and \(g\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[h = uf+vg\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: with polynomials \(u\) and \(v\) in \(K[X]\). Moreover, as is seen from the
+    extended Euclidean algorithm, the degrees of \(u\) and \(v\) are relatively low,
+    with limited growth from step to step.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let \(n = \deg(f)\), and \(m = \deg(g)\), and assume \(n\ge m\). If \(\deg(h)
+    = j < m\), the coefficients of the powers \(X^k\) (\(k > j\)) in the products
+    \(uf\) and \(vg\) cancel each other. In particular, the products must have the
+    same degree, say, \(l\). Then \(\deg(u) = l - n\) and \(\deg(v) = l - m\) with
+    a total of \(2l -n - m + 2\) coefficients to be determined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other hand, the equality \(h = uf + vg\) implies that \(l - j\) linear
+    combinations of the coefficients are zero, those associated with the powers \(X^i\)
+    (\(j < i \leq l\)), and one has a given non-zero value, namely the leading coefficient
+    of \(h\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To satisfy these \(l - j + 1\) linear equations the total number of coefficients
+    to be determined cannot be lower than \(l - j + 1\), in general. This leads to
+    the inequality \(l \ge n + m - j - 1\). Taking \(l = n + m - j - 1\), we obtain
+    \(\deg(u) = m - j - 1\) and \(\deg(v) = n - j - 1\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case \(j = 0\) the matrix of the resulting system of linear equations
+    is the [Sylvester matrix](https://en.wikipedia.org/wiki/Sylvester_matrix) \(S(f,g)\)
+    associated to \(f\) and \(g\), an \((n+m)\times (n+m)\) matrix with coefficients
+    of \(f\) and \(g\) as entries. Its determinant is the [resultant](https://en.wikipedia.org/wiki/Resultant)
+    \(\mathrm{res}(f,g)\) of the pair \((f,g)\). It is non-zero if and only if \(f\)
+    and \(g\) are relatively prime.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For any \(j\) in the interval from \(0\) to \(m\) the matrix of the linear system
+    is an \((n+m-2j)\times (n+m-2j)\) submatrix of the Sylvester matrix. Its determinant
+    \(s_j(f,g)\) is called the \(j\) th *scalar subresultant* of \(f\) and \(g\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If \(s_j(f,g)\) is not zero, the associated equation \(h = uf + vg\) has a unique
+    solution where \(\deg(h) = j\) and the leading coefficient of \(h\) has any given
+    value; the one with leading coefficient \(s_j(f,g)\) is the \(j\) th *subresultant
+    polynomial* or, briefly, *subresultant* of the pair \((f,g)\), and denoted \(S_j(f,g)\).
+    This choice guarantees that the remainining coefficients are also certain subdeterminants
+    of the Sylvester matrix. In particular, if \(f\) and \(g\) are in \(A[X]\), so
+    is \(S_j(f,g)\) as well. This construction of subresultants applies to any \(j\)
+    between \(0\) and \(m\) regardless of the value of \(s_j(f,g)\); if it is zero,
+    then \(\deg(S_j(f,g)) < j\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The properties of subresultants are as follows. Let \(n_0 = \deg(f)\), \(n_1
+    = \deg(g)\), \(n_2, \ldots, n_k\) be the decreasing sequence of degrees of polynomials
+    in a remainder sequence. Let \(0 \le j \le n_1\); then
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(s_j(f,g)\ne 0\) if and only if \(j = n_i\) for some \(i\).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(S_j(f,g)\ne 0\) if and only if \(j = n_i\) or \(j = n_i - 1\) for some \(i\).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Normally, \(n_{i-1} - n_i = 1\) for \(1 < i \le k\). If \(n_{i-1} - n_i > 1\)
+    for some \(i\) (the *abnormal* case), then \(S_{n_{i-1}-1}(f,g)\) and \(S_{n_i}(f,g)\)
+    are constant multiples of each other. Hence either one could be included in the
+    polynomial remainder sequence. The former is given by smaller determinants, so
+    it is expected to have smaller coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Collins defined the *subresultant remainder sequence* by setting
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[f_i = S_{n_{i-1}-1}(f,g) \qquad (2\le i \le k).\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the normal case, these are the same as the \(S_{n_i}(f,g)\). He also derived
+    expressions for the constants \(\gamma_i\) in the remainder formulas
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\gamma_i f_i = \mathrm{rem}(f_{i-2},f_{i-1})\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: in terms of the leading coefficients of \(f_1,\ldots,f_{i-1}\), working in the
+    field \(K\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Brown and Traub [BrownTraub71] later developed a recursive procedure for computing
+    the coefficients \(\gamma_i\). Their algorithm deals with elements of the domain
+    \(A\) exclusively (assuming \(f,g\in A[X]\)). However, in the abnormal case there
+    was a problem, a division in \(A\) which could only be conjectured to be exact.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This was subsequently justified by Brown [Brown78] who showed that the result
+    of the division is, in fact, a scalar subresultant. More specifically, the constant
+    appearing in the computation of \(f_i\) is \(s_{n_{i-2}}(f,g)\) (Theorem 3). The
+    implication of this discovery is that the scalar subresultants are computed as
+    by-products of the algorithm, all but \(s_{n_k}(f,g)\) which is not needed after
+    finding \(f_{k+1} = 0\). Completing the last step we obtain all non-zero scalar
+    subresultants, including the last one which is the resultant if this does not
+    vanish.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE615]'
+  prefs: []
+  type: TYPE_PRE
+- en: Subresultant PRS algorithm in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE616]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE617]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE618]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE619]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE620]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE621]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes subresultant PRS of two polynomials in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE622]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE623]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE624]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE625]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE626]'
+  prefs: []
+  type: TYPE_PRE
+- en: Resultant algorithm in \(K[X]\) using subresultant PRS.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE627]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE628]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE629]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE630]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE631]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE632]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute resultant of \(f\) and \(g\) modulo a prime \(p\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE633]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE634]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE635]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE636]'
+  prefs: []
+  type: TYPE_PRE
+- en: Collins’s modular resultant algorithm in \(Z[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE637]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE638]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE639]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE640]'
+  prefs: []
+  type: TYPE_PRE
+- en: Collins’s modular resultant algorithm in \(Q[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE641]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE642]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE643]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE644]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes resultant of two polynomials in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE645]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE646]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE647]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE648]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes discriminant of a polynomial in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE649]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE650]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE651]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes polynomial GCD using subresultants over a ring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns `(h, cff, cfg)` such that `a = gcd(f, g)`, `cff = quo(f, h)`, and `cfg
+    = quo(g, h)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE652]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE653]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE654]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE655]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes polynomial GCD using subresultants over a field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns `(h, cff, cfg)` such that `a = gcd(f, g)`, `cff = quo(f, h)`, and `cfg
+    = quo(g, h)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE656]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE657]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE658]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE659]'
+  prefs: []
+  type: TYPE_PRE
+- en: Heuristic polynomial GCD in \(Z[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given univariate polynomials \(f\) and \(g\) in \(Z[X]\), returns their GCD
+    and cofactors, i.e. polynomials `h`, `cff` and `cfg` such that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE660]'
+  prefs: []
+  type: TYPE_PRE
+- en: The algorithm is purely heuristic which means it may fail to compute the GCD.
+    This will be signaled by raising an exception. In this case you will need to switch
+    to another GCD method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm computes the polynomial GCD by evaluating polynomials f and g
+    at certain points and computing (fast) integer GCD of those evaluations. The polynomial
+    GCD is recovered from the integer image by interpolation. The evaluation process
+    reduces f and g variable by variable into a large integer. The final step is to
+    verify if the interpolated polynomial is the correct GCD. This gives cofactors
+    of the input polynomials as a side effect.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE661]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE662]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE663]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R793](#id19)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Liao95]](literature.html#liao95)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE664]'
+  prefs: []
+  type: TYPE_PRE
+- en: Heuristic polynomial GCD in \(Q[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns `(h, cff, cfg)` such that `a = gcd(f, g)`, `cff = quo(f, h)`, and `cfg
+    = quo(g, h)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE665]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE666]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE667]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE668]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes polynomial GCD and cofactors of \(f\) and \(g\) in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns `(h, cff, cfg)` such that `a = gcd(f, g)`, `cff = quo(f, h)`, and `cfg
+    = quo(g, h)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE669]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE670]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE671]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE672]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes polynomial GCD of \(f\) and \(g\) in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE673]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE674]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE675]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE676]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes polynomial LCM of \(f\) and \(g\) in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE677]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE678]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE679]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE680]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns GCD of multivariate coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE681]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE682]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE683]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns multivariate content and a primitive polynomial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE684]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE685]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE686]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cancel common factors in a rational function \(f/g\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE687]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE688]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Polynomial factorization in characteristic zero:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE689]'
+  prefs: []
+  type: TYPE_PRE
+- en: Determine multiplicities of factors for a univariate polynomial using trial
+    division.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An error will be raised if any factor does not divide `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE690]'
+  prefs: []
+  type: TYPE_PRE
+- en: Determine multiplicities of factors for a multivariate polynomial using trial
+    division.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An error will be raised if any factor does not divide `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE691]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Knuth-Cohen variant of Mignotte bound for univariate polynomials in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE692]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE693]'
+  prefs: []
+  type: TYPE_PRE
+- en: By checking `factor(f)` we can see that max coeff is 8
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also consider a case that `f` is irreducible for example `f = 2*x**2 + 3*x +
+    4`. To avoid a bug for these cases, we return the bound plus the max coefficient
+    of `f`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE694]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Lastly, to see the difference between the new and the old Mignotte bound consider
+    the irreducible polynomial:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE695]'
+  prefs: []
+  type: TYPE_PRE
+- en: The new Mignotte bound is 744 whereas the old one (SymPy 1.5.1) is 1937664.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: ..[1] [[Abbott13]](literature.html#abbott13)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE696]'
+  prefs: []
+  type: TYPE_PRE
+- en: Mignotte bound for multivariate polynomials in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE697]'
+  prefs: []
+  type: TYPE_PRE
+- en: One step in Hensel lifting in \(Z[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given positive integer \(m\) and \(Z[x]\) polynomials \(f\), \(g\), \(h\),
+    \(s\) and \(t\) such that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE698]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'returns polynomials \(G\), \(H\), \(S\) and \(T\), such that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE699]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R794](#id22)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen99]](literature.html#gathen99)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE700]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multifactor Hensel lifting in \(Z[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given a prime \(p\), polynomial \(f\) over \(Z[x]\) such that \(lc(f)\) is
+    a unit modulo \(p\), monic pair-wise coprime polynomials \(f_i\) over \(Z[x]\)
+    satisfying:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE701]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and a positive integer \(l\), returns a list of monic polynomials \(F_1,\ F_2,\
+    \dots,\ F_r\) satisfying:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE702]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R795](#id24)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen99]](literature.html#gathen99)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE703]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor primitive square-free polynomials in \(Z[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE704]'
+  prefs: []
+  type: TYPE_PRE
+- en: Test irreducibility using Eisenstein’s criterion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE705]'
+  prefs: []
+  type: TYPE_PRE
+- en: Efficiently test if `f` is a cyclotomic polynomial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE706]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE707]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE708]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bradford, Russell J., and James H. Davenport. “Effective tests for cyclotomic
+    polynomials.” In International Symposium on Symbolic and Algebraic Computation,
+    pp. 244-251\. Springer, Berlin, Heidelberg, 1988.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE709]'
+  prefs: []
+  type: TYPE_PRE
+- en: Efficiently generate n-th cyclotomic polynomial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE710]'
+  prefs: []
+  type: TYPE_PRE
+- en: Efficiently factor polynomials \(x**n - 1\) and \(x**n + 1\) in \(Z[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a univariate polynomial \(f\) in \(Z[x]\) returns a list of factors of
+    \(f\), provided that \(f\) is in the form \(x**n - 1\) or \(x**n + 1\) for \(n
+    >= 1\). Otherwise returns None.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Factorization is performed using cyclotomic decomposition of \(f\), which makes
+    this method much faster that any other direct factorization approach (e.g. Zassenhaus’s).
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R796](#id26)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Weisstein09]](literature.html#weisstein09)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE711]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor square-free (non-primitive) polynomials in \(Z[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE712]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor (non square-free) polynomials in \(Z[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given a univariate polynomial \(f\) in \(Z[x]\) computes its complete factorization
+    \(f_1, ..., f_n\) into irreducibles over integers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE713]'
+  prefs: []
+  type: TYPE_PRE
+- en: The factorization is computed by reducing the input polynomial into a primitive
+    square-free polynomial and factoring it using Zassenhaus algorithm. Trial division
+    is used to recover the multiplicities of factors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The result is returned as a tuple consisting of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE714]'
+  prefs: []
+  type: TYPE_PRE
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider the polynomial \(f = 2*x**4 - 2\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE715]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In result we got the following factorization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE716]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that this is a complete factorization over integers, however over Gaussian
+    integers we can factor the last term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, polynomials \(x**n - 1\) and \(x**n + 1\) are factored using cyclotomic
+    decomposition to speedup computations. To disable this behaviour set cyclotomic=False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R797](#id28)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen99]](literature.html#gathen99)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE717]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Wang/EEZ: Compute a set of valid divisors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE718]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Wang/EEZ: Test evaluation points for suitability.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE719]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Wang/EEZ: Compute correct leading coefficients.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE720]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Wang/EEZ: Solve univariate Diophantine equations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE721]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Wang/EEZ: Solve multivariate Diophantine equations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE722]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Wang/EEZ: Parallel Hensel lifting algorithm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE723]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor primitive square-free polynomials in \(Z[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a multivariate polynomial \(f\) in \(Z[x_1,...,x_n]\), which is primitive
+    and square-free in \(x_1\), computes factorization of \(f\) into irreducibles
+    over integers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The procedure is based on Wang’s Enhanced Extended Zassenhaus algorithm. The
+    algorithm works by viewing \(f\) as a univariate polynomial in \(Z[x_2,...,x_n][x_1]\),
+    for which an evaluation mapping is computed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE724]'
+  prefs: []
+  type: TYPE_PRE
+- en: where \(a_i\), for \(i = 2, \dots, n\), are carefully chosen integers. The mapping
+    is used to transform \(f\) into a univariate polynomial in \(Z[x_1]\), which can
+    be factored efficiently using Zassenhaus algorithm. The last step is to lift univariate
+    factors to obtain true multivariate factors. For this purpose a parallel Hensel
+    lifting procedure is used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The parameter `seed` is passed to _randint and can be used to seed randint (when
+    an integer) or (for testing purposes) can be a sequence of numbers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R798](#id31)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Wang78]](literature.html#wang78)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R799](#id32)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Geddes92]](literature.html#geddes92)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE725]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor (non square-free) polynomials in \(Z[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given a multivariate polynomial \(f\) in \(Z[x]\) computes its complete factorization
+    \(f_1, \dots, f_n\) into irreducibles over integers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE726]'
+  prefs: []
+  type: TYPE_PRE
+- en: The factorization is computed by reducing the input polynomial into a primitive
+    square-free polynomial and factoring it using Enhanced Extended Zassenhaus (EEZ)
+    algorithm. Trial division is used to recover the multiplicities of factors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The result is returned as a tuple consisting of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE727]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Consider polynomial \(f = 2*(x**2 - y**2)\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE728]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In result we got the following factorization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE729]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R800](#id34)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Gathen99]](literature.html#gathen99)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE730]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor univariate polynomials into irreducibles in \(QQ_I[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE731]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor univariate polynomials into irreducibles in \(ZZ_I[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE732]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor multivariate polynomials into irreducibles in \(QQ_I[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE733]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor multivariate polynomials into irreducibles in \(ZZ_I[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE734]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor univariate polynomials over algebraic number fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The domain \(K\) must be an algebraic number field \(k(a)\) (see [QQ<a>](domainsref.html#qq-a)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First define the algebraic number field \(K = \mathbb{Q}(\sqrt{2})\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE735]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can now factorise the polynomial \(x^2 - 2\) over \(K\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE736]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Usually this would be done at a higher level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE737]'
+  prefs: []
+  type: TYPE_PRE
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uses Trager’s algorithm. In particular this function is algorithm `alg_factor`
+    from [[Trager76]](literature.html#trager76).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If \(f\) is a polynomial in \(k(a)[x]\) then its norm \(g(x)\) is a polynomial
+    in \(k[x]\). If \(g(x)\) is square-free and has irreducible factors \(g_1(x)\),
+    \(g_2(x)\), \(\cdots\) then the irreducible factors of \(f\) in \(k(a)[x]\) are
+    given by \(f_i(x) = \gcd(f(x), g_i(x))\) where the GCD is computed in \(k(a)[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first step in Trager’s algorithm is to find an integer shift \(s\) so that
+    \(f(x-sa)\) has square-free norm. Then the norm is factorized in \(k[x]\) and
+    the GCD of (shifted) \(f\) with each factor gives the shifted factors of \(f\).
+    At the end the shift is undone to recover the unshifted factors of \(f\) in \(k(a)[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm reduces the problem of factorization in \(k(a)[x]\) to factorization
+    in \(k[x]\) with the main additional steps being to compute the norm (a resultant
+    calculation in \(k[x,y]\)) and some polynomial GCDs in \(k(a)[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice in SymPy the base field \(k\) will be the rationals [QQ](domainsref.html#qq)
+    and this function factorizes a polynomial with coefficients in an algebraic number
+    field like \(\mathbb{Q}(\sqrt{2})\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dmp_ext_factor`](#sympy.polys.factortools.dmp_ext_factor "sympy.polys.factortools.dmp_ext_factor")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analogous function for multivariate polynomials over `k(a)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dup_sqf_norm`](#sympy.polys.sqfreetools.dup_sqf_norm "sympy.polys.sqfreetools.dup_sqf_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subroutine `sqfr_norm` also from [[Trager76]](literature.html#trager76).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.factor`](reference.html#sympy.polys.polytools.factor
+    "sympy.polys.polytools.factor")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The high-level function that ultimately uses this function as needed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE738]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor multivariate polynomials over algebraic number fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The domain \(K\) must be an algebraic number field \(k(a)\) (see [QQ<a>](domainsref.html#qq-a)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First define the algebraic number field \(K = \mathbb{Q}(\sqrt{2})\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE739]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can now factorise the polynomial \(x^2 y^2 - 2\) over \(K\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE740]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Usually this would be done at a higher level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE741]'
+  prefs: []
+  type: TYPE_PRE
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is Trager’s algorithm for multivariate polynomials. In particular this
+    function is algorithm `alg_factor` from [[Trager76]](literature.html#trager76).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [`dup_ext_factor()`](#sympy.polys.factortools.dup_ext_factor "sympy.polys.factortools.dup_ext_factor")
+    for explanation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dup_ext_factor`](#sympy.polys.factortools.dup_ext_factor "sympy.polys.factortools.dup_ext_factor")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analogous function for univariate polynomials over `k(a)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dmp_sqf_norm`](#sympy.polys.sqfreetools.dmp_sqf_norm "sympy.polys.sqfreetools.dmp_sqf_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multivariate version of subroutine `sqfr_norm` also from [[Trager76]](literature.html#trager76).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.factor`](reference.html#sympy.polys.polytools.factor
+    "sympy.polys.polytools.factor")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The high-level function that ultimately uses this function as needed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE742]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor univariate polynomials over finite fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE743]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor multivariate polynomials over finite fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE744]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor univariate polynomials into irreducibles in \(K[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE745]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor univariate polynomials into irreducibles in \(K[x]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE746]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor multivariate polynomials into irreducibles in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE747]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factor multivariate polynomials into irreducibles in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE748]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns `True` if a univariate polynomial `f` has no factors over its domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE749]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns `True` if a multivariate polynomial `f` has no factors over its domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Square-free factorization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE750]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `True` if `f` is a square-free polynomial in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE751]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE752]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE753]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `True` if `f` is a square-free polynomial in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE754]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE755]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE756]'
+  prefs: []
+  type: TYPE_PRE
+- en: Find a shift of \(f\) in \(K[x]\) that has square-free norm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The domain \(K\) must be an algebraic number field \(k(a)\) (see [QQ<a>](domainsref.html#qq-a)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns \((s,g,r)\), such that \(g(x)=f(x-sa)\), \(r(x)=\text{Norm}(g(x))\)
+    and \(r\) is a square-free polynomial over \(k\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first create the algebraic number field \(K=k(a)=\mathbb{Q}(\sqrt{3})\)
+    and rings \(K[x]\) and \(k[x]\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE757]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE758]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can now find a square free norm for a shift of \(f\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE759]'
+  prefs: []
+  type: TYPE_PRE
+- en: The choice of shift \(s\) is arbitrary and the particular values returned for
+    \(g\) and \(r\) are determined by \(s\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE760]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The invariants are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE761]'
+  prefs: []
+  type: TYPE_PRE
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is part of Trager’s algorithm for factorizing polynomials over algebraic
+    number fields. In particular this function is algorithm `sqfr_norm` from [[Trager76]](literature.html#trager76).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dmp_sqf_norm`](#sympy.polys.sqfreetools.dmp_sqf_norm "sympy.polys.sqfreetools.dmp_sqf_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analogous function for multivariate polynomials over `k(a)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dmp_norm`](#sympy.polys.sqfreetools.dmp_norm "sympy.polys.sqfreetools.dmp_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Computes the norm of \(f\) directly without any shift.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dup_ext_factor`](#sympy.polys.factortools.dup_ext_factor "sympy.polys.factortools.dup_ext_factor")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Function implementing Trager’s algorithm that uses this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.sqf_norm`](reference.html#sympy.polys.polytools.sqf_norm
+    "sympy.polys.polytools.sqf_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: High-level interface for using this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE762]'
+  prefs: []
+  type: TYPE_PRE
+- en: Find a shift of `f` in `K[X]` that has square-free norm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The domain \(K\) must be an algebraic number field \(k(a)\) (see [QQ<a>](domainsref.html#qq-a)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns \((s,g,r)\), such that \(g(x_1,x_2,\cdots)=f(x_1-s_1 a, x_2 - s_2 a,
+    \cdots)\), \(r(x)=\text{Norm}(g(x))\) and \(r\) is a square-free polynomial over
+    \(k\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first create the algebraic number field \(K=k(a)=\mathbb{Q}(i)\) and rings
+    \(K[x,y]\) and \(k[x,y]\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE763]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE764]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can now find a square free norm for a shift of \(f\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE765]'
+  prefs: []
+  type: TYPE_PRE
+- en: The choice of shifts `s` is arbitrary and the particular values returned for
+    `g` and `r` are determined by `s`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE766]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The required invariants are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE767]'
+  prefs: []
+  type: TYPE_PRE
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is part of Trager’s algorithm for factorizing polynomials over algebraic
+    number fields. In particular this function is a multivariate generalization of
+    algorithm `sqfr_norm` from [[Trager76]](literature.html#trager76).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dup_sqf_norm`](#sympy.polys.sqfreetools.dup_sqf_norm "sympy.polys.sqfreetools.dup_sqf_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analogous function for univariate polynomials over `k(a)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dmp_norm`](#sympy.polys.sqfreetools.dmp_norm "sympy.polys.sqfreetools.dmp_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Computes the norm of \(f\) directly without any shift.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dmp_ext_factor`](#sympy.polys.factortools.dmp_ext_factor "sympy.polys.factortools.dmp_ext_factor")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Function implementing Trager’s algorithm that uses this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.sqf_norm`](reference.html#sympy.polys.polytools.sqf_norm
+    "sympy.polys.polytools.sqf_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: High-level interface for using this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE768]'
+  prefs: []
+  type: TYPE_PRE
+- en: Norm of `f` in `K[X]`, often not square-free.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The domain \(K\) must be an algebraic number field \(k(a)\) (see [QQ<a>](domainsref.html#qq-a)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first define the algebraic number field \(K = k(a) = \mathbb{Q}(\sqrt{2})\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE769]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can now compute the norm of a polynomial \(p\) in \(K[x,y]\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE770]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In higher level functions that is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE771]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is equal to the product of the expressions \(x + y + a_i\) where the \(a_i\)
+    are the conjugates of \(a\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE772]'
+  prefs: []
+  type: TYPE_PRE
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given an algebraic number field \(K = k(a)\) any element \(b\) of \(K\) can
+    be represented as polynomial function \(b=g(a)\) where \(g\) is in \(k[x]\). If
+    the minimal polynomial of \(a\) over \(k\) is \(p_a\) then the roots \(a_1\),
+    \(a_2\), \(\cdots\) of \(p_a(x)\) are the conjugates of \(a\). The norm of \(b\)
+    is the product \(g(a1) \times g(a2) \times \cdots\) and is an element of \(k\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: As in [[Trager76]](literature.html#trager76) we extend this norm to multivariate
+    polynomials over \(K\). If \(b(x)\) is a polynomial in \(k(a)[X]\) then we can
+    think of \(b\) as being alternately a function \(g_X(a)\) where \(g_X\) is an
+    element of \(k[X][y]\) i.e. a polynomial function with coefficients that are elements
+    of \(k[X]\). Then the norm of \(b\) is the product \(g_X(a1) \times g_X(a2) \times
+    \cdots\) and will be an element of \(k[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dmp_sqf_norm`](#sympy.polys.sqfreetools.dmp_sqf_norm "sympy.polys.sqfreetools.dmp_sqf_norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compute a shift of \(f\) so that the \(\text{Norm}(f)\) is square-free.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.Poly.norm`](reference.html#sympy.polys.polytools.Poly.norm
+    "sympy.polys.polytools.Poly.norm")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Higher-level function that calls this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE773]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute square-free part of `f` in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE774]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute square-free part of `f` in `GF(p)[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE775]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns square-free part of a polynomial in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE776]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE777]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.Poly.sqf_part`](reference.html#sympy.polys.polytools.Poly.sqf_part
+    "sympy.polys.polytools.Poly.sqf_part")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE778]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns square-free part of a polynomial in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE779]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE780]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE781]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute square-free decomposition of `f` in `GF(p)[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE782]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute square-free decomposition of `f` in `GF(p)[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE783]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return square-free decomposition of a polynomial in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uses Yun’s algorithm from [[Yun76]](literature.html#yun76).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE784]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE785]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE786]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dmp_sqf_list`](#sympy.polys.sqfreetools.dmp_sqf_list "sympy.polys.sqfreetools.dmp_sqf_list")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Corresponding function for multivariate polynomials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.sqf_list`](reference.html#sympy.polys.polytools.sqf_list
+    "sympy.polys.polytools.sqf_list")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: High-level function for square-free factorization of expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.Poly.sqf_list`](reference.html#sympy.polys.polytools.Poly.sqf_list
+    "sympy.polys.polytools.Poly.sqf_list")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analogous method on [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly").
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Yun76]](literature.html#yun76)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE787]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return square-free decomposition of a polynomial in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE788]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE789]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE790]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE791]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return square-free decomposition of a polynomial in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE792]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE793]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE794]'
+  prefs: []
+  type: TYPE_PRE
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uses Yun’s algorithm for univariate polynomials from [[Yun76]](literature.html#yun76)
+    recrusively. The multivariate polynomial is treated as a univariate polynomial
+    in its leading variable. Then Yun’s algorithm computes the square-free factorization
+    of the primitive and the content is factored recursively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It would be better to use a dedicated algorithm for multivariate polynomials
+    instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dup_sqf_list`](#sympy.polys.sqfreetools.dup_sqf_list "sympy.polys.sqfreetools.dup_sqf_list")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Corresponding function for univariate polynomials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.sqf_list`](reference.html#sympy.polys.polytools.sqf_list
+    "sympy.polys.polytools.sqf_list")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: High-level function for square-free factorization of expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.polys.polytools.Poly.sqf_list`](reference.html#sympy.polys.polytools.Poly.sqf_list
+    "sympy.polys.polytools.Poly.sqf_list")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analogous method on [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE795]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return square-free decomposition of a polynomial in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE796]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE797]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE798]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE799]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute greatest factorial factorization of `f` in `K[x]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE800]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE801]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE802]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute greatest factorial factorization of `f` in `K[X]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE803]'
+  prefs: []
+  type: TYPE_PRE
+- en: Groebner basis algorithms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Groebner bases can be used to answer many problems in computational commutative
+    algebra. Their computation in rather complicated, and very performance-sensitive.
+    We present here various low-level implementations of Groebner basis computation
+    algorithms; please see the previous section of the manual for usage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE804]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes Groebner basis for a set of polynomials in \(K[X]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wrapper around the (default) improved Buchberger and the other algorithms for
+    computing Groebner bases. The choice of algorithm can be changed via `method`
+    argument or [`sympy.polys.polyconfig.setup()`](#sympy.polys.polyconfig.setup "sympy.polys.polyconfig.setup"),
+    where `method` can be either `buchberger` or `f5b`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE805]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute LCM(LM(p1), LM(p2))/LM(p1)*p1 - LCM(LM(p1), LM(p2))/LM(p2)*p2 This is
+    the S-poly provided p1 and p2 are monic
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE806]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute reduced Groebner basis, from BeckerWeispfenning93, p. 216
+  prefs: []
+  type: TYPE_NORMAL
+- en: Selects a subset of generators, that already generate the ideal and computes
+    a reduced Groebner basis for them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE807]'
+  prefs: []
+  type: TYPE_PRE
+- en: Check if G is a Groebner basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE808]'
+  prefs: []
+  type: TYPE_PRE
+- en: Checks if G is a minimal Groebner basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE809]'
+  prefs: []
+  type: TYPE_PRE
+- en: Checks if G is a reduced Groebner basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE810]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts the reduced Groebner basis `F` of a zero-dimensional ideal w.r.t. `O_from`
+    to a reduced Groebner basis w.r.t. `O_to`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R801](#id45)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: J.C. Faugere, P. Gianni, D. Lazard, T. Mora (1994). Efficient Computation of
+    Zero-dimensional Groebner Bases by Change of Ordering
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Groebner basis algorithms for modules are also provided:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE811]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the generalized s-polynomial of `f` and `g`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ground field is assumed to be `K`, and monomials ordered according to `O`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is invalid if either of `f` or `g` is zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the leading terms of \(f\) and \(g\) involve different basis elements of
+    \(F\), their s-poly is defined to be zero. Otherwise it is a certain linear combination
+    of \(f\) and \(g\) in which the leading terms cancel. See [SCA, defn 2.3.6] for
+    details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `phantom` is not `None`, it should be a pair of module elements on which
+    to perform the same operation(s) as on `f` and `g`. The in this case both results
+    are returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE812]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE813]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the ecart of `f`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is defined to be the difference of the total degree of \(f\) and the total
+    degree of the leading monomial of \(f\) [SCA, defn 2.3.7].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Invalid if f is zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE814]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE815]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute a weak normal form of `f` with respect to `G` and order `O`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ground field is assumed to be `K`, and monomials ordered according to `O`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Weak normal forms are defined in [SCA, defn 2.3.3]. They are not unique. This
+    function deterministically computes a weak normal form, depending on the order
+    of \(G\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The most important property of a weak normal form is the following: if \(R\)
+    is the ring associated with the monomial ordering (if the ordering is global,
+    we just have \(R = K[x_1, \ldots, x_n]\), otherwise it is a certain localization
+    thereof), \(I\) any ideal of \(R\) and \(G\) a standard basis for \(I\), then
+    for any \(f \in R\), we have \(f \in I\) if and only if \(NF(f | G) = 0\).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is the generalized Mora algorithm for computing weak normal forms with
+    respect to arbitrary monomial orders [SCA, algorithm 2.3.9].
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `phantom` is not `None`, it should be a pair of “phantom” arguments on which
+    to perform the same computations as on `f`, `G`, both results are then returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE816]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute a minimal standard basis of `G` with respect to order `O`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm uses a normal form `NF`, for example `sdm_nf_mora`. The ground
+    field is assumed to be `K`, and monomials ordered according to `O`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let \(N\) denote the submodule generated by elements of \(G\). A standard basis
+    for \(N\) is a subset \(S\) of \(N\), such that \(in(S) = in(N)\), where for any
+    subset \(X\) of \(F\), \(in(X)\) denotes the submodule generated by the initial
+    forms of elements of \(X\). [SCA, defn 2.3.2]
+  prefs: []
+  type: TYPE_NORMAL
+- en: A standard basis is called minimal if no subset of it is a standard basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One may show that standard bases are always generating sets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Minimal standard bases are not unique. This algorithm computes a deterministic
+    result, depending on the particular order of \(G\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `extended=True`, also compute the transition matrix from the initial generators
+    to the groebner basis. That is, return a list of coefficient vectors, expressing
+    the elements of the groebner basis in terms of the elements of `G`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This functions implements the “sugar” strategy, see
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Giovini et al: “One sugar cube, please” OR Selection strategies in Buchberger
+    algorithm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Options'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Options manager for [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    and public API functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE817]'
+  prefs: []
+  type: TYPE_PRE
+- en: Options manager for polynomial manipulation module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE818]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE819]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE820]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE821]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Options**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expand — boolean option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gens — option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wrt — option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sort — option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Order — option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Field — boolean option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Greedy — boolean option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Domain — option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Split — boolean option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gaussian — boolean option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Extension — option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Modulus — option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Symmetric — boolean option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Strict — boolean option
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Flags**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Auto — boolean flag
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Frac — boolean flag
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Formal — boolean flag
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Polys — boolean flag
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Include — boolean flag
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All — boolean flag
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gen — flag
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Series — boolean flag
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE822]'
+  prefs: []
+  type: TYPE_PRE
+- en: Clone `self` and update specified options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE823]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Construct options from keyword arguments or … options.  ## Configuration'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Configuration utilities for polynomial manipulation algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE824]'
+  prefs: []
+  type: TYPE_PRE
+- en: Assign a value to (or reset) a configuration item.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exceptions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: These are exceptions defined by the polynomials module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: TODO sort and explain
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE825]'
+  prefs: []
+  type: TYPE_PRE
+- en: Base class for polynomial related exceptions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE826]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE827]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE828]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE829]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE830]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE831]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE832]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE833]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE834]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE835]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE836]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE837]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE838]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE839]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE840]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE841]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE842]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE843]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE844]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE845]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE846]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE847]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE848]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reference
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Modular GCD
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE849]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes the GCD of two polynomials in \(\mathbb{Z}[x]\) using a modular algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm computes the GCD of two univariate integer polynomials \(f\) and
+    \(g\) by computing the GCD in \(\mathbb{Z}_p[x]\) for suitable primes \(p\) and
+    then reconstructing the coefficients with the Chinese Remainder Theorem. Trial
+    division is only made for candidates which are very likely the desired GCD.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**f** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: univariate integer polynomial
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**g** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: univariate integer polynomial
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**h** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: GCD of the polynomials \(f\) and \(g\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cff** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cofactor of \(f\), i.e. \(\frac{f}{h}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cfg** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cofactor of \(g\), i.e. \(\frac{g}{h}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE850]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE851]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE852]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE853]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE854]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE855]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE856]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE857]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Monagan00]](literature.html#monagan00)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE858]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes the GCD of two polynomials in \(\mathbb{Z}[x, y]\) using a modular
+    algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm computes the GCD of two bivariate integer polynomials \(f\) and
+    \(g\) by calculating the GCD in \(\mathbb{Z}_p[x, y]\) for suitable primes \(p\)
+    and then reconstructing the coefficients with the Chinese Remainder Theorem. To
+    compute the bivariate GCD over \(\mathbb{Z}_p\), the polynomials \(f \; \mathrm{mod}
+    \, p\) and \(g \; \mathrm{mod} \, p\) are evaluated at \(y = a\) for certain \(a
+    \in \mathbb{Z}_p\) and then their univariate GCD in \(\mathbb{Z}_p[x]\) is computed.
+    Interpolating those yields the bivariate GCD in \(\mathbb{Z}_p[x, y]\). To verify
+    the result in \(\mathbb{Z}[x, y]\), trial division is done, but only for candidates
+    which are very likely the desired GCD.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**f** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: bivariate integer polynomial
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**g** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: bivariate integer polynomial
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**h** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: GCD of the polynomials \(f\) and \(g\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cff** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cofactor of \(f\), i.e. \(\frac{f}{h}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cfg** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cofactor of \(g\), i.e. \(\frac{g}{h}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE859]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE860]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE861]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE862]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE863]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE864]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE865]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE866]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Monagan00]](literature.html#monagan00)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE867]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the GCD of two polynomials in \(\mathbb{Z}[x_0, \ldots, x_{k-1}]\) using
+    a modular algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm computes the GCD of two multivariate integer polynomials \(f\)
+    and \(g\) by calculating the GCD in \(\mathbb{Z}_p[x_0, \ldots, x_{k-1}]\) for
+    suitable primes \(p\) and then reconstructing the coefficients with the Chinese
+    Remainder Theorem. To compute the multivariate GCD over \(\mathbb{Z}_p\) the recursive
+    subroutine [`_modgcd_multivariate_p()`](#sympy.polys.modulargcd._modgcd_multivariate_p
+    "sympy.polys.modulargcd._modgcd_multivariate_p") is used. To verify the result
+    in \(\mathbb{Z}[x_0, \ldots, x_{k-1}]\), trial division is done, but only for
+    candidates which are very likely the desired GCD.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**f** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: multivariate integer polynomial
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**g** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: multivariate integer polynomial
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**h** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: GCD of the polynomials \(f\) and \(g\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cff** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cofactor of \(f\), i.e. \(\frac{f}{h}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cfg** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cofactor of \(g\), i.e. \(\frac{g}{h}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE868]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE869]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE870]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE871]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE872]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE873]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE874]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE875]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE876]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`_modgcd_multivariate_p`](#sympy.polys.modulargcd._modgcd_multivariate_p "sympy.polys.modulargcd._modgcd_multivariate_p")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Monagan00]](literature.html#monagan00)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[[Brown71]](literature.html#brown71)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE877]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the GCD of two polynomials in \(\mathbb{Z}_p[x_0, \ldots, x_{k-1}]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm reduces the problem step by step by evaluating the polynomials
+    \(f\) and \(g\) at \(x_{k-1} = a\) for suitable \(a \in \mathbb{Z}_p\) and then
+    calls itself recursively to compute the GCD in \(\mathbb{Z}_p[x_0, \ldots, x_{k-2}]\).
+    If these recursive calls are successful for enough evaluation points, the GCD
+    in \(k\) variables is interpolated, otherwise the algorithm returns `None`. Every
+    time a GCD or a content is computed, their degrees are compared with the bounds.
+    If a degree greater then the bound is encountered, then the current call returns
+    `None` and a new evaluation point has to be chosen. If at some point the degree
+    is smaller, the correspondent bound is updated and the algorithm fails.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**f** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: multivariate integer polynomial with coefficients in \(\mathbb{Z}_p\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**g** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: multivariate integer polynomial with coefficients in \(\mathbb{Z}_p\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**p** : Integer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: prime number, modulus of \(f\) and \(g\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**degbound** : list of Integer objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`degbound[i]` is an upper bound for the degree of the GCD of \(f\) and \(g\)
+    in the variable \(x_i\)'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contbound** : list of Integer objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`contbound[i]` is an upper bound for the degree of the content of the GCD in
+    \(\mathbb{Z}_p[x_i][x_0, \ldots, x_{i-1}]\), `contbound[0]` is not used can therefore
+    be chosen arbitrarily.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**h** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: GCD of the polynomials \(f\) and \(g\) or `None`
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Monagan00]](literature.html#monagan00)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[[Brown71]](literature.html#brown71)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE878]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the GCD of two polynomials \(f\) and \(g\) in \(\mathbb Q(\alpha)[x_0,
+    \ldots, x_{n-1}]\) using a modular algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm first computes the primitive associate \(\check m_{\alpha}(z)\)
+    of the minimal polynomial \(m_{\alpha}\) in \(\mathbb{Z}[z]\) and the primitive
+    associates of \(f\) and \(g\) in \(\mathbb{Z}[x_1, \ldots, x_{n-1}][z]/(\check
+    m_{\alpha})[x_0]\). Then it computes the GCD in \(\mathbb Q(x_1, \ldots, x_{n-1})[z]/(m_{\alpha}(z))[x_0]\).
+    This is done by calculating the GCD in \(\mathbb{Z}_p(x_1, \ldots, x_{n-1})[z]/(\check
+    m_{\alpha}(z))[x_0]\) for suitable primes \(p\) and then reconstructing the coefficients
+    with the Chinese Remainder Theorem and Rational Reconstuction. The GCD over \(\mathbb{Z}_p(x_1,
+    \ldots, x_{n-1})[z]/(\check m_{\alpha}(z))[x_0]\) is computed with a recursive
+    subroutine, which evaluates the polynomials at \(x_{n-1} = a\) for suitable evaluation
+    points \(a \in \mathbb Z_p\) and then calls itself recursively until the ground
+    domain does no longer contain any parameters. For \(\mathbb{Z}_p[z]/(\check m_{\alpha}(z))[x_0]\)
+    the Euclidean Algorithm is used. The results of those recursive calls are then
+    interpolated and Rational Function Reconstruction is used to obtain the correct
+    coefficients. The results, both in \(\mathbb Q(x_1, \ldots, x_{n-1})[z]/(m_{\alpha}(z))[x_0]\)
+    and \(\mathbb{Z}_p(x_1, \ldots, x_{n-1})[z]/(\check m_{\alpha}(z))[x_0]\), are
+    verified by a fraction free trial division.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Apart from the above GCD computation some GCDs in \(\mathbb Q(\alpha)[x_1, \ldots,
+    x_{n-1}]\) have to be calculated, because treating the polynomials as univariate
+    ones can result in a spurious content of the GCD. For this `func_field_modgcd`
+    is called recursively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**f, g** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: polynomials in \(\mathbb Q(\alpha)[x_0, \ldots, x_{n-1}]\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**h** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: monic GCD of the polynomials \(f\) and \(g\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cff** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cofactor of \(f\), i.e. \(\frac f h\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cfg** : PolyElement'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cofactor of \(g\), i.e. \(\frac g h\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE879]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE880]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE881]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE882]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE883]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE884]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE885]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE886]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE887]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE888]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE889]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE890]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[Hoeij04]](literature.html#hoeij04)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Undocumented
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Many parts of the polys module are still undocumented, and even where there
+    is documentation it is scarce. Please contribute!
+  prefs: []
+  type: TYPE_NORMAL

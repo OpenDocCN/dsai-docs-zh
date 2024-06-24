@@ -1,0 +1,1113 @@
+- en: Codegen
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/utilities/codegen.html](https://docs.sympy.org/latest/modules/utilities/codegen.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This module provides functionality to generate directly compilable code from
+    SymPy expressions. The `codegen` function is the user interface to the code generation
+    functionality in SymPy. Some details of the implementation is given below for
+    advanced users that may want to use the framework directly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `codegen` callable is not in the sympy namespace automatically, to use it
+    you must first execute
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Implementation Details
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here we present the most important pieces of the internal structure, as advanced
+    users may want to use it directly, for instance by subclassing a code generator
+    for a specialized application. **It is very likely that you would prefer to use
+    the codegen() function documented above.**
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Basic assumptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A generic Routine data structure describes the routine that must be translated
+    into C/Fortran/… code. This data structure covers all features present in one
+    or more of the supported languages.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Descendants from the CodeGen class transform multiple Routine instances into
+    compilable code. Each derived class translates into a specific language.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In many cases, one wants a simple workflow. The friendly functions in the last
+    part are a simple api on top of the Routine/CodeGen stuff. They are easier to
+    use, but are less powerful.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Routine
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Routine class is a very important piece of the codegen module. Viewing the
+    codegen utility as a translator of mathematical expressions into a set of statements
+    in a programming language, the Routine instances are responsible for extracting
+    and storing information about how the math can be encapsulated in a function call.
+    Thus, it is the Routine constructor that decides what arguments the routine will
+    need and if there should be a return value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## API Reference'
+  prefs: []
+  type: TYPE_NORMAL
+- en: module for generating C, C++, Fortran77, Fortran90, Julia, Rust and Octave/Matlab
+    routines that evaluate SymPy expressions. This module is work in progress. Only
+    the milestones with a ‘+’ character in the list below have been completed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: — How is sympy.utilities.codegen different from sympy.printing.ccode? —
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We considered the idea to extend the printing routines for SymPy functions
+    in such a way that it prints complete compilable code, but this leads to a few
+    unsurmountable issues that can only be tackled with dedicated code generator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For C, one needs both a code and a header file, while the printing routines
+    generate just one string. This code generator can be extended to support .pyf
+    files for f2py.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SymPy functions are not concerned with programming-technical issues, such as
+    input, output and input-output arguments. Other examples are contiguous or non-contiguous
+    arrays, including headers of other libraries such as gsl or others.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It is highly interesting to evaluate several SymPy functions in one C routine,
+    eventually sharing common intermediate results with the help of the cse routine.
+    This is more than just printing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: From the programming perspective, expressions with constants should be evaluated
+    in the code generator as much as possible. This is different for printing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: — Basic assumptions —
+  prefs: []
+  type: TYPE_NORMAL
+- en: A generic Routine data structure describes the routine that must be translated
+    into C/Fortran/… code. This data structure covers all features present in one
+    or more of the supported languages.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Descendants from the CodeGen class transform multiple Routine instances into
+    compilable code. Each derived class translates into a specific language.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In many cases, one wants a simple workflow. The friendly functions in the last
+    part are a simple api on top of the Routine/CodeGen stuff. They are easier to
+    use, but are less powerful.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: — Milestones —
+  prefs: []
+  type: TYPE_NORMAL
+- en: First working version with scalar input arguments, generating C code, tests
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Friendly functions that are easier to use than the rigorous Routine/CodeGen
+    workflow.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Integer and Real numbers as input and output
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Output arguments
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: InputOutput arguments
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sort input/output arguments properly
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Contiguous array arguments (numpy matrices)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Also generate .pyf code for f2py (in autowrap module)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Isolate constants and evaluate them beforehand in double precision
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fortran 90
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Octave/Matlab
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Common Subexpression Elimination
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: User defined comments in the generated code
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Optional extra include lines for libraries/objects that can eval special functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Test other C compilers and libraries: gcc, tcc, libtcc, gcc+gsl, …'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Contiguous array arguments (SymPy matrices)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Non-contiguous array arguments (SymPy matrices)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ccode must raise an error when it encounters something that cannot be translated
+    into c. ccode(integrate(sin(x)/x, x)) does not make sense.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Complex numbers as input and output
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A default complex datatype
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Include extra information in the header: date, user, hostname, sha1 hash, …'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fortran 77
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C++
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Python
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Julia
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rust
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: …
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An abstract Argument data structure: a name and a data type.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This structure is refined in the descendants below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generator for C code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The .write() method inherited from CodeGen will output a code file and an interface
+    file, <prefix>.c and <prefix>.h respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Write the code by calling language specific methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generated file contains all the definitions of the routines in low-level
+    code and refers to the header file if appropriate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**f** : file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to write the file.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to refer to the proper header file. Only the basename
+    of the prefix is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Writes the C header file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This file contains all the function declarations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**f** : file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to write the file.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to construct the include guards. Only the basename
+    of the prefix is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a string for the function prototype of the routine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the routine has multiple result objects, an CodeGenError is raised.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'See: [https://en.wikipedia.org/wiki/Function_prototype](https://en.wikipedia.org/wiki/Function_prototype)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Abstract class for the code generators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Write the code by calling language specific methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generated file contains all the definitions of the routines in low-level
+    code and refers to the header file if appropriate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**f** : file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to write the file.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to refer to the proper header file. Only the basename
+    of the prefix is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates an Routine object that is appropriate for this language.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This implementation is appropriate for at least C/Fortran. Subclasses can override
+    this if necessary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, we assume at most one return value (the l-value) which must be scalar.
+    Additional outputs are OutputArguments (e.g., pointers on right-hand-side or pass-by-reference).
+    Matrices are always returned via OutputArguments. If `argument_sequence` is None,
+    arguments will be ordered alphabetically, but with all InputArguments first, and
+    then OutputArgument and InOutArguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Writes all the source code files for the given routines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generated source is returned as a list of (filename, contents) tuples, or
+    is written to files (see below). Each filename consists of the given prefix, appended
+    with an appropriate extension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances to be written
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The prefix for the output files
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**to_files** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, the output is written to files. Otherwise, a list of (filename,
+    contents) tuples is returned. [default: False]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default:
+    True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default:
+    True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Holds strings for a certain datatype in different languages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generator for Fortran 95 code
+  prefs: []
+  type: TYPE_NORMAL
+- en: The .write() method inherited from CodeGen will output a code file and an interface
+    file, <prefix>.f90 and <prefix>.h respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Write the code by calling language specific methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generated file contains all the definitions of the routines in low-level
+    code and refers to the header file if appropriate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**f** : file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to write the file.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to refer to the proper header file. Only the basename
+    of the prefix is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Writes the interface to a header file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This file contains all the function declarations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**f** : file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to write the file.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a string for the function interface.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The routine should have a single result object, which can be None. If the routine
+    has multiple result objects, a CodeGenError is raised.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'See: [https://en.wikipedia.org/wiki/Function_prototype](https://en.wikipedia.org/wiki/Function_prototype)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generator for Julia code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The .write() method inherited from CodeGen will output a code file <prefix>.jl.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Write the code by calling language specific methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generated file contains all the definitions of the routines in low-level
+    code and refers to the header file if appropriate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**f** : file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to write the file.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to refer to the proper header file. Only the basename
+    of the prefix is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Specialized Routine creation for Julia.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generator for Octave code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The .write() method inherited from CodeGen will output a code file <prefix>.m.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Octave .m files usually contain one function. That function name should match
+    the filename (`prefix`). If you pass multiple `name_expr` pairs, the latter ones
+    are presumed to be private functions accessed by the primary function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You should only pass inputs to `argument_sequence`: outputs are ordered according
+    to their order in `name_expr`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Write the code by calling language specific methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generated file contains all the definitions of the routines in low-level
+    code and refers to the header file if appropriate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**f** : file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to write the file.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to refer to the proper header file. Only the basename
+    of the prefix is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Specialized Routine creation for Octave.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: OutputArgument are always initialized in the routine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: An expression for a return value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The name result is used to avoid conflicts with the reserved word “return” in
+    the Python language. It is also shorter than ReturnValue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: These may or may not need a name in the destination (e.g., “return(x*y)” might
+    return a value without ever naming it).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generic description of evaluation routine for set of expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A CodeGen class can translate instances of this class into code in a particular
+    language. The routine specification covers all the features present in these languages.
+    The CodeGen part must raise an exception when certain features are not present
+    in the target language. For example, multiple return values are possible in Python,
+    but not in C or Fortran. Another example: Fortran and Python support complex numbers,
+    while C does not.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a list of OutputArgument, InOutArgument and Result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If return values are present, they are at the end of the list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a set of all variables possibly used in the routine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For routines with unnamed return values, the dummies that may or may not be
+    used will be included in the set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generator for Rust code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The .write() method inherited from CodeGen will output a code file <prefix>.rs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Write the code by calling language specific methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generated file contains all the definitions of the routines in low-level
+    code and refers to the header file if appropriate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**routines** : list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of Routine instances.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**f** : file-like'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to write the file.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to refer to the proper header file. Only the basename
+    of the prefix is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header comment is included on top of each source file. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are included to structure the source files. [default
+    : True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a string for the function prototype of the routine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the routine has multiple result objects, an CodeGenError is raised.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'See: [https://en.wikipedia.org/wiki/Function_prototype](https://en.wikipedia.org/wiki/Function_prototype)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Specialized Routine creation for Rust.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generate source code for expressions in a given language.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name_expr** : tuple, or list of tuples'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A single (name, expression) tuple or a list of (name, expression) tuples. Each
+    tuple corresponds to a routine. If the expression is an equality (an instance
+    of class Equality) the left hand side is considered an output argument. If expression
+    is an iterable, then the routine will have multiple outputs.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**language** : string,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A string that indicates the source code language. This is case insensitive.
+    Currently, ‘C’, ‘F95’ and ‘Octave’ are supported. ‘Octave’ generates code compatible
+    with both Octave and Matlab.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A prefix for the names of the files that contain the source code. Language-dependent
+    suffixes will be appended. If omitted, the name of the first name_expr tuple is
+    used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**project** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A project name, used for making unique preprocessor instructions. [default:
+    “project”]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**to_files** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, the code will be written to one or more files with the given prefix,
+    otherwise strings with the names and contents of these files are returned. [default:
+    False]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**header** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, a header is written on top of each source file. [default: True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**empty** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When True, empty lines are used to structure the code. [default: True]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**argument_sequence** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence of arguments for the routine in a preferred order. A CodeGenError is
+    raised if required arguments are missing. Redundant arguments are used without
+    warning. If omitted, arguments will be ordered alphabetically, but with all input
+    arguments first, and then output or in-out arguments.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**global_vars** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence of global variables used by the routine. Variables listed here will
+    not show up as function arguments.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**standard** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**code_gen** : CodeGen instance, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An instance of a CodeGen subclass. Overrides `language`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**printer** : Printer instance, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An instance of a Printer subclass.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Another example using Equality objects to give named outputs. Here the filename
+    (prefix) is taken from the first (name, expr) pair.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the generated function(s) will be part of a larger project where various
+    global variables have been defined, the ‘global_vars’ option can be used to remove
+    the specified variables from the function signature
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Derives an appropriate datatype based on the expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: A factory that makes an appropriate Routine from an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The name of this routine in the generated code.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**expr** : expression or list/tuple of expressions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression that the Routine instance will represent. If given a list
+    or tuple of expressions, the routine will be considered to have multiple return
+    values and/or output arguments.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**argument_sequence** : list or tuple, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: List arguments for the routine in a preferred order. If omitted, the results
+    are language dependent, for example, alphabetical order or in the same order as
+    the given expressions.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**global_vars** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence of global variables used by the routine. Variables listed here will
+    not show up as function arguments.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**language** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Specify a target language. The Routine itself should be language-agnostic but
+    the precise way one is created, error checking, etc depend on the language. [default:
+    “F95”].'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: A decision about whether to use output arguments or return values is made depending
+    on both the language and the particular mathematical expressions. For an expression
+    of type Equality, the left hand side is typically made into an OutputArgument
+    (or perhaps an InOutArgument if appropriate). Otherwise, typically, the calculated
+    expression is made a return values of the routine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Another more complicated example with a mixture of specified and automatically-assigned
+    names. Also has Matrix output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can examine the various arguments more closely:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE

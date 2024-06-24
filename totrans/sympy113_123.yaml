@@ -1,0 +1,174 @@
+- en: Methods
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/tensor/index_methods.html](https://docs.sympy.org/latest/modules/tensor/index_methods.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Module with functions operating on IndexedBase, Indexed and Idx objects
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check shape conformance
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Determine indices in resulting expression
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: etc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Methods in this module could be implemented by calling methods on Expr objects
+    instead. When things stabilize this could be a useful refactoring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Determine dummy indices of `expr` and describe its structure
+  prefs: []
+  type: TYPE_NORMAL
+- en: By *dummy* we mean indices that are summation indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The structure of the expression is determined and described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A conforming summation of Indexed objects is described with a dict where the
+    keys are summation indices and the corresponding values are sets containing all
+    terms for which the summation applies. All Add objects in the SymPy expression
+    tree are described like this.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'For all nodes in the SymPy expression tree that are *not* of type Add, the
+    following applies:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If a node discovers contractions in one of its arguments, the node itself will
+    be stored as a key in the dict. For that key, the corresponding value is a list
+    of dicts, each of which is the result of a recursive call to get_contraction_structure().
+    The list contains only dicts for the non-trivial deeper contractions, omitting
+    dicts with None as the one and only key.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The presence of expressions among the dictionary keys indicates multiple levels
+    of index contractions. A nested dict displays nested contractions and may itself
+    contain dicts from a deeper level. In practical calculations the summation in
+    the deepest nested level must be calculated first so that the outer expression
+    can access the resulting indexed object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: A multiplication of contracted factors results in nested dicts representing
+    the internal contractions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this case, the product has no contractions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Factors are contracted “first”:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: A parenthesized Add object is also returned as a nested dictionary. The term
+    containing the parenthesis is a Mul with a contraction among the arguments, so
+    it will be found as a key in the result. It stores the dictionary resulting from
+    a recursive call on the Add expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Powers with contractions in either base or exponent will also be found as keys
+    in the dictionary, mapping to a list of results from recursive calls:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The description of the contraction structure may appear complicated when represented
+    with a string in the above examples, but it is easy to iterate over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Determine the outer indices of expression `expr`
+  prefs: []
+  type: TYPE_NORMAL
+- en: By *outer* we mean indices that are not summation indices. Returns a set and
+    a dict. The set contains outer indices and the dict contains information about
+    index symmetries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The indices of the total expression is determined, Repeated indices imply a
+    summation, for instance the trace of a matrix A:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the case of many terms, the terms are required to have identical outer indices.
+    Else an IndexConformanceException is raised.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Exceptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An IndexConformanceException means that the terms ar not compatible, e.g.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Warning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The concept of *outer* indices applies recursively, starting on the deepest
+    level. This implies that dummies inside parenthesis are assumed to be summed first,
+    so that the following expression is handled gracefully:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is correct and may appear convenient, but you need to be careful with this
+    as SymPy will happily .expand() the product, if requested. The resulting expression
+    would mix the outer `j` with the dummies inside the parenthesis, which makes it
+    a different expression. To be on the safe side, it is best to avoid such ambiguities
+    by using unique indices for all contractions that should be held separate.
+  prefs: []
+  type: TYPE_NORMAL

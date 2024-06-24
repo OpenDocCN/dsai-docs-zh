@@ -1,0 +1,1143 @@
+- en: Assumptions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/guides/assumptions.html](https://docs.sympy.org/latest/guides/assumptions.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This page outlines the core assumptions system in SymPy. It explains what the
+    core assumptions system is, how the assumptions system is used and what the different
+    assumptions predicates mean.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: This page describes the core assumptions system also often referred to as the
+    “old assumptions” system. There is also a “new assumptions” system which is described
+    elsewhere. Note that the system described here is actually the system that is
+    widely used in SymPy. The “new assumptions” system is not really used anywhere
+    in SymPy yet and the “old assumptions” system will not be removed. At the time
+    of writing (SymPy 1.7) it is still recommended for users to use the old assumption
+    system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Firstly we consider what happens when taking the square root of the square
+    of a concrete integer such as \(2\) or \(-2\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: What these examples demonstrate is that for a positive number \(x\) we have
+    \(\sqrt{x^2} = x\) whereas for a negative number we would instead have \(\sqrt{x^2}
+    = -x\). That may seem obvious but the situation can be more surprising when working
+    with a symbol rather then an explicit number. For example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It might look as if that should simplify to `x` but it does not even if [`simplify()`](../modules/simplify/simplify.html#sympy.simplify.simplify.simplify
+    "sympy.simplify.simplify.simplify") is used:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is because SymPy will refuse to simplify this expression if the simplification
+    is not valid for *every* possible value of `x`. By default the symbol `x` is considered
+    only to represent something roughly like an arbitrary complex number and the obvious
+    simplification here is only valid for positive real numbers. Since `x` is not
+    known to be positive or even real no simplification of this expression is possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can tell SymPy that a symbol represents a positive real number when creating
+    the symbol and then the simplification will happen automatically:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is what is meant by “assumptions” in SymPy. If the symbol `y` is created
+    with `positive=True` then SymPy will *assume* that it represents a positive real
+    number rather than an arbitrary complex or possibly infinite number. That *assumption*
+    can make it possible to simplify expressions or might allow other manipulations
+    to work. It is usually a good idea to be as precise as possible about the assumptions
+    on a symbol when creating it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The (old) assumptions system
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are two sides to the assumptions system. The first side is that we can
+    declare assumptions on a symbol when creating the symbol. The other side is that
+    we can query the assumptions on any expression using the corresponding `is_*`
+    attribute. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can query assumptions on any expression not just a symbol:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The values given in an assumptions query use three-valued “fuzzy” logic. Any
+    query can return `True`, `False`, or `None` where `None` should be interpreted
+    as meaning that the result is *unknown*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need to use `print` in the above examples because the special value `None`
+    does not display by default in the Python interpreter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are several reasons why an assumptions query might give `None`. It is
+    possible that the query is *unknowable* as in the case of `x` above. Since `x`
+    does not have any assumptions declared it roughly represents an arbitrary complex
+    number. An arbitrary complex number *might* be a positive real number but it also
+    might *not* be. Without further information there is no way to resolve the query
+    `x.is_positive`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another reason why an assumptions query might give `None` is that there does
+    in many cases the problem of determining whether an expression is e.g. positive
+    is *undecidable*. That means that there does not exist an algorithm for answering
+    the query in general. For some cases an algorithm or at least a simple check would
+    be possible but has not yet been implemented although it could be added to SymPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The final reason that an assumptions query might give `None` is just that the
+    assumptions system does not try very hard to answer complicated queries. The system
+    is intended to be fast and uses simple heuristic methods to conclude a `True`
+    or `False` answer in common cases. For example any sum of positive terms is positive
+    so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The last example is particularly simple so the assumptions system is able to
+    give a definite answer. If the sum involved a mix of positive or negative terms
+    it would be a harder query:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Ideally that last example would give `True` rather than `None` because the
+    expression is always positive for any real value of `x` (and `x` has been assumed
+    real). The assumptions system is intended to be efficient though: it is expected
+    many more complex queries will not be fully resolved. This is because assumptions
+    queries are primarily used internally by SymPy as part of low-level calculations.
+    Making the system more comprehensive would slow SymPy down.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that in fuzzy logic giving an indeterminate result `None` is never a contradiction.
+    If it is possible to infer a definite `True` or `False` result when resolving
+    a query then that is better than returning `None`. However a result of `None`
+    is not a *bug*. Any code that uses the assumptions system needs to be prepared
+    to handle all three cases for any query and should not presume that a definite
+    answer will always be given.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The assumptions system is not just for symbols or for complex expressions.
+    It can also be used for plain SymPy integers and other objects. The assumptions
+    predicates are available on any instance of [`Basic`](../modules/core.html#sympy.core.basic.Basic
+    "sympy.core.basic.Basic") which is the superclass for most classes of SymPy objects.
+    A plain Python `int` is not a [`Basic`](../modules/core.html#sympy.core.basic.Basic
+    "sympy.core.basic.Basic") instance and can not be used to query assumptions predicates.
+    We can “sympify” regular Python objects to become SymPy objects with [`sympify()`](../modules/core.html#sympy.core.sympify.sympify
+    "sympy.core.sympify.sympify") or `S` ([`SingletonRegistry`](../modules/core.html#sympy.core.singleton.SingletonRegistry
+    "sympy.core.singleton.SingletonRegistry")) and then the assumptions system can
+    be used:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Gotcha: symbols with different assumptions'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In SymPy it is possible to declare two symbols with different names and they
+    will implicitly be considered equal under *structural equality*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However if the symbols have different assumptions then they will be considered
+    to represent distinct symbols:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'One way to simplify an expression is to use the [`posify()`](../modules/simplify/simplify.html#sympy.simplify.simplify.posify
+    "sympy.simplify.simplify.posify") function which will replace all symbols in an
+    expression with symbols that have the assumption `positive=True` (unless that
+    contradicts any existing assumptions for the symbol):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`posify()`](../modules/simplify/simplify.html#sympy.simplify.simplify.posify
+    "sympy.simplify.simplify.posify") function returns the expression with all symbols
+    replaced (which might lead to simplifications) and also a dict which maps the
+    new symbols to the old that can be used with [`subs()`](../modules/core.html#sympy.core.basic.Basic.subs
+    "sympy.core.basic.Basic.subs"). This is useful because otherwise the new expression
+    with the new symbols having the `positive=True` assumption will not compare equal
+    to the old:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Applying assumptions to string inputs
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We have seen how to set assumptions when [`Symbol`](../modules/core.html#sympy.core.symbol.Symbol
+    "sympy.core.symbol.Symbol") or [`symbols()`](../modules/core.html#sympy.core.symbol.symbols
+    "sympy.core.symbol.symbols") explicitly. A natural question to ask is in what
+    other situations can we assign assumptions to an object?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is common for users to use strings as input to SymPy functions (although
+    the general feeling among SymPy developers is that this should be discouraged)
+    e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When creating symbols explicitly it would be possible to assign assumptions
+    that would affect the behaviour of [`solve()`](../modules/solvers/solvers.html#sympy.solvers.solvers.solve
+    "sympy.solvers.solvers.solve"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When using string input SymPy will create the expression and create all of
+    the symbolc implicitly so the question arises how can the assumptions be specified?
+    The answer is that rather than depending on implicit string conversion it is better
+    to use the [`parse_expr()`](../modules/parsing.html#sympy.parsing.sympy_parser.parse_expr
+    "sympy.parsing.sympy_parser.parse_expr") function explicitly and then it is possible
+    to provide assumptions for the symbols e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`solve()`](../modules/solvers/solvers.html#sympy.solvers.solvers.solve
+    "sympy.solvers.solvers.solve") function is unusual as a high level API in that
+    it actually checks the assumptions on any input symbols (the unknowns) and uses
+    that to tailor its output. The assumptions system otherwise affects low-level
+    evaluation but is not necessarily handled explicitly by high-level APIs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Predicates
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are many different predicates that can be assumed for a symbol or can
+    be queried for an expression. It is possible to combine multiple predicates when
+    creating a symbol. Predicates are logically combined using *and* so if a symbol
+    is declared with `positive=True` and also with `integer=True` then it is both
+    positive *and* integer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The full set of known predicates for a symbol can be accessed using the [`assumptions0`](../modules/core.html#sympy.core.basic.Basic.assumptions0
+    "sympy.core.basic.Basic.assumptions0") attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can see that there are many more predicates listed than the two that were
+    used to create `x`. This is because the assumptions system can infer some predicates
+    from combinations of other predicates. For example if a symbol is declared with
+    `positive=True` then it is possible to infer that it should have `negative=False`
+    because a positive number can never be negative. Similarly if a symbol is created
+    with `integer=True` then it is possible to infer that is should have `rational=True`
+    because every integer is a rational number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A full table of the possible predicates and their definitions is given below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assumptions predicates for the (old) assumptions
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Predicate | Definition | Implications |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `commutative` | A commutative expression. A `commutative` expression commutes
+    with all other expressions under multiplication. If an expression `a` has `commutative=True`
+    then `a * b == b * a` for any other expression `b` (even if `b` is not `commutative`).
+    Unlike all other assumptions predicates `commutative` must always be `True` or
+    `False` and can never be `None`. Also unlike all other predicates `commutative`
+    defaults to `True` in e.g. `Symbol(''x'')`. [[commutative]](#commutative) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `infinite` | An infinite expression such as `oo`, `-oo` or `zoo`. [[infinite]](#infinite)
+    | `== !finite` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `finite` | A finite expression. Any expression that is not `infinite` is
+    considered `finite`. [[infinite]](#infinite) | `== !infinite` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `hermitian` | An element of the field of Hermitian operators. [[antihermitian]](#antihermitian)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `antihermitian` | An element of the field of antihermitian operators. [[antihermitian]](#antihermitian)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `complex` | A complex number, \(z\in\mathbb{C}\). Any number of the form
+    \(x + iy\) where \(x\) and \(y\) are `real` and \(i = \sqrt{-1}\). All `complex`
+    numbers are `finite`. Includes all `real` numbers. [[complex]](#complex) | `->
+    commutative``-> finite` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `algebraic` | An algebraic number, \(z\in\overline{\mathbb{Q}}\). Any number
+    that is a root of a non-zero polynomial \(p(z)\in\mathbb{Q}[z]\) having rational
+    coefficients. All `algebraic` numbers are `complex`. An `algebraic` number may
+    or may not be `real`. Includes all `rational` numbers. [[algebraic]](#algebraic)
+    | `-> complex` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `transcendental` | A complex number that is not algebraic, \(z\in\mathbb{C}-\overline{\mathbb{Q}}\).
+    All `transcendental` numbers are `complex`. A `transcendental` number may or may
+    not be `real` but can never be `rational`. [[transcendental]](#transcendental)
+    | `== (complex & !algebraic)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `extended_real` | An element of the extended real number line, \(x\in\overline{\mathbb{R}}\)
+    where \(\overline{\mathbb{R}}=\mathbb{R}\cup\{-\infty,+\infty\}\). An `extended_real`
+    number is either `real` or \(\pm\infty\). The relational operators `<`, `<=`,
+    `>=` and `>` are defined only for expressions that are `extended_real`. [[extended_real]](#extended-real)
+    | `-> commutative` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `real` | A real number, \(x\in\mathbb{R}\). All `real` numbers are `finite`
+    and `complex` (the set of reals is a subset of the set of complex numbers). Includes
+    all `rational` numbers. A `real` number is either `negative`, `zero` or `positive`.
+    [[real]](#real) | `-> complex``== (extended_real & finite)``== (negative &#124;
+    zero &#124; positive)``-> hermitian` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `imaginary` | An imaginary number, \(z\in\mathbb{I}-\{0\}\). A number of
+    the form \(z=yi\) where \(y\) is real, \(y\ne 0\) and \(i=\sqrt{-1}\). All `imaginary`
+    numbers are `complex` and not `real`. Note in particular that `zero` is \(not\)
+    considered `imaginary` in SymPy. [[imaginary]](#imaginary) | `-> complex``-> antihermitian``->
+    !extended_real` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `rational` | A rational number, \(q\in\mathbb{Q}\). Any number of the form
+    \(\frac{a}{b}\) where \(a\) and \(b\) are integers and \(b \ne 0\). All `rational`
+    numbers are `real` and `algebraic`. Includes all `integer` numbers. [[rational]](#rational)
+    | `-> real``-> algebraic` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `irrational` | A real number that is not rational, \(x\in\mathbb{R}-\mathbb{Q}\).
+    [[irrational]](#irrational) | `== (real & !rational)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `integer` | An integer, \(a\in\mathbb{Z}\). All integers are `rational`.
+    Includes `zero` and all `prime`, `composite`, `even` and `odd` numbers. [[integer]](#integer)
+    | `-> rational` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `noninteger` | An extended real number that is not an integer, \(x\in\overline{\mathbb{R}}-\mathbb{Z}\).
+    | `== (extended_real & !integer)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `even` | An even number, \(e\in\{2k: k\in\mathbb{Z}\}\). All `even` numbers
+    are `integer` numbers. Includes `zero`. [[parity]](#parity) | `-> integer``->
+    !odd` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `odd` | An odd number, \(o\in\{2k + 1: k\in\mathbb{Z}\}\). All `odd` numbers
+    are `integer` numbers. [[parity]](#parity) | `-> integer``-> !even` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `prime` | A prime number, \(p\in\mathbb{P}\). All `prime` numbers are `positive`
+    and `integer`. [[prime]](#prime) | `-> integer``-> positive` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `composite` | A composite number, \(c\in\mathbb{N}-(\mathbb{P}\cup\{1\})\).
+    A positive integer that is the product of two or more primes. A `composite` number
+    is always a `positive` `integer` and is not `prime`. [[composite]](#composite)
+    | `-> (integer & positive & !prime)``!composite -> (!positive &#124; !even &#124;
+    prime)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `zero` | The number \(0\). An expression with `zero=True` represents the
+    number `0` which is an `integer`. [[zero]](#zero) | `-> even & finite``== (extended_nonnegative
+    & extended_nonpositive)``== (nonnegative & nonpositive)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `nonzero` | A nonzero real number, \(x\in\mathbb{R}-\{0\}\). A `nonzero`
+    number is always `real` and can not be `zero`. | `-> real``== (extended_nonzero
+    & finite)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `extended_nonzero` | A member of the extended reals that is not zero, \(x\in\overline{\mathbb{R}}-\{0\}\).
+    | `== (extended_real & !zero)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `positive` | A positive real number, \(x\in\mathbb{R}, x>0\). All `positive`
+    numbers are `finite` so `oo` is not `positive`. [[positive]](#positive) | `==
+    (nonnegative & nonzero)``== (extended_positive & finite)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `nonnegative` | A nonnegative real number, \(x\in\mathbb{R}, x\ge 0\). All
+    `nonnegative` numbers are `finite` so `oo` is not `nonnegative`. [[positive]](#positive)
+    | `== (real & !negative)``== (extended_nonnegative & finite)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `negative` | A negative real number, \(x\in\mathbb{R}, x<0\). All `negative`
+    numbers are `finite` so `-oo` is not `negative`. [[negative]](#negative) | `==
+    (nonpositive & nonzero)``== (extended_negative & finite)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `nonpositive` | A nonpositive real number, \(x\in\mathbb{R}, x\le 0\). All
+    `nonpositive` numbers are `finite` so `-oo` is not `nonpositive`. [[negative]](#negative)
+    | `== (real & !positive)``== (extended_nonpositive & finite)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `extended_positive` | A positive extended real number, \(x\in\overline{\mathbb{R}},
+    x>0\). An `extended_positive` number is either `positive` or `oo`. [[extended_real]](#extended-real)
+    | `== (extended_nonnegative & extended_nonzero)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `extended_nonnegative` | A nonnegative extended real number, \(x\in\overline{\mathbb{R}},
+    x\ge 0\). An `extended_nonnegative` number is either `nonnegative` or `oo`. [[extended_real]](#extended-real)
+    | `== (extended_real & !extended_negative)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `extended_negative` | A negative extended real number, \(x\in\overline{\mathbb{R}},
+    x<0\). An `extended_negative` number is either `negative` or `-oo`. [[extended_real]](#extended-real)
+    | `== (extended_nonpositive & extended_nonzero)` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `extended_nonpositive` | A nonpositive extended real number, \(x\in\overline{\mathbb{R}},
+    x\le 0\). An `extended_nonpositive` number is either `nonpositive` or `-oo`. [[extended_real]](#extended-real)
+    | `== (extended_real & !extended_positive)` |'
+  prefs: []
+  type: TYPE_TB
+- en: References for the above definitions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[[commutative](#id1)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Commutative_property](https://en.wikipedia.org/wiki/Commutative_property)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[infinite] ([1](#id2),[2](#id3))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Infinity](https://en.wikipedia.org/wiki/Infinity)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[antihermitian] ([1](#id4),[2](#id5))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Skew-Hermitian_matrix](https://en.wikipedia.org/wiki/Skew-Hermitian_matrix)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[complex](#id6)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Complex_number](https://en.wikipedia.org/wiki/Complex_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[algebraic](#id7)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Algebraic_number](https://en.wikipedia.org/wiki/Algebraic_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[transcendental](#id8)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Transcendental_number](https://en.wikipedia.org/wiki/Transcendental_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[extended_real] ([1](#id9),[2](#id24),[3](#id25),[4](#id26),[5](#id27))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Extended_real_number_line](https://en.wikipedia.org/wiki/Extended_real_number_line)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[real](#id10)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Real_number](https://en.wikipedia.org/wiki/Real_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[imaginary](#id11)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Imaginary_number](https://en.wikipedia.org/wiki/Imaginary_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[rational](#id12)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Rational_number](https://en.wikipedia.org/wiki/Rational_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[irrational](#id13)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Irrational_number](https://en.wikipedia.org/wiki/Irrational_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[integer](#id14)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Integer](https://en.wikipedia.org/wiki/Integer)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[parity] ([1](#id15),[2](#id16))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Parity_%28mathematics%29](https://en.wikipedia.org/wiki/Parity_%28mathematics%29)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[prime](#id17)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Prime_number](https://en.wikipedia.org/wiki/Prime_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[composite](#id18)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Composite_number](https://en.wikipedia.org/wiki/Composite_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[zero](#id19)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/0](https://en.wikipedia.org/wiki/0)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[positive] ([1](#id20),[2](#id21))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Positive_real_numbers](https://en.wikipedia.org/wiki/Positive_real_numbers)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[negative] ([1](#id22),[2](#id23))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Negative_number](https://en.wikipedia.org/wiki/Negative_number)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implications
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The assumptions system uses the inference rules to infer new predicates beyond
+    those immediately specified when creating a symbol:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Although `x` was not explicitly declared `positive` it can be inferred from
+    the predicates that were given explicitly. Specifically one of the inference rules
+    is `real == negative | zero | positive` so if `real` is `True` and both `negative`
+    and `zero` are `False` then `positive` must be `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In practice the assumption inference rules mean that it is not necessary to
+    include redundant predicates for example a positive real number can be simply
+    be declared as positive:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Combining predicates that are inconsistent will give an error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Interpretation of the predicates
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Although the predicates are defined in the table above it is worth taking some
+    time to think about how to interpret them. Firstly many of the concepts referred
+    to by the predicate names like “zero”, “prime”, “rational” etc have a basic meaning
+    in mathematics but can also have more general meanings. For example when dealing
+    with matrices a matrix of all zeros might be referred to as “zero”. The predicates
+    in the assumptions system do not allow any generalizations such as this. The predicate
+    `zero` is strictly reserved for the plain number \(0\). Instead matrices have
+    an [`is_zero_matrix()`](../modules/matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.is_zero_matrix
+    "sympy.matrices.matrixbase.MatrixBase.is_zero_matrix") property for this purpose
+    (although that property is not strictly part of the assumptions system):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Similarly there are generalisations of the integers such as the Gaussian integers
+    which have a different notion of prime number. The `prime` predicate in the assumptions
+    system does not include those and strictly refers only to the standard prime numbers
+    \(\mathbb{P} = \{2, 3, 5, 7, 11, \cdots\}\). Likewise `integer` only means the
+    standard concept of the integers \(\mathbb{Z} = \{0, \pm 1, \pm 2, \cdots\}\),
+    `rational` only means the standard concept of the rational numbers \(\mathbb{Q}\)
+    and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The predicates set up schemes of subsets such as the chain beginning with the
+    complex numbers which are considered as a superset of the reals which are in turn
+    a superset of the rationals and so on. The chain of subsets
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\mathbb{Z} \subset \mathbb{Q} \subset \mathbb{R} \subset \mathbb{C}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: corresponds to the chain of implications in the assumptions system
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A “vanilla” symbol with no assumptions explicitly attached is not known to
+    belong to any of these sets and is not even known to be finite:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is hard for SymPy to know what it can do with such a symbol that is not even
+    known to be finite or complex so it is generally better to give some assumptions
+    to the symbol explicitly. Many parts of SymPy will implicitly treat such a symbol
+    as complex and in some cases SymPy will permit manipulations that would not strictly
+    be valid given that `x` is not known to be finite. In a formal sense though very
+    little is known about a vanilla symbol which makes manipulations involving it
+    difficult.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Defining *something* about a symbol can make a big difference. For example
+    if we declare the symbol to be an integer then this implies a suite of other predicates
+    that will help in further manipulations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'These assumptions can lead to very significant simplifications e.g. `integer=True`
+    gives:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacing a whole expression with \(0\) is about as good as simplification can
+    get!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is normally advisable to set as many assumptions as possible on any symbols
+    so that expressions can be simplified as much as possible. A common misunderstanding
+    leads to defining a symbol with a `False` predicate e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the intention is to say that `x` is a real number that is not positive then
+    that needs to be explicitly stated. In the context that the symbol is known to
+    be real, the predicate `positive=False` becomes much more meaningful:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: A symbol declared as `Symbol('x', real=True, negative=False)` is equivalent
+    to a symbol declared as `Symbol('x', nonnegative=True)`. Simply declaring a symbol
+    as `Symbol('x', positive=False)` does not allow the assumptions system to conclude
+    much about it because a vanilla symbol is not known to be finite or even complex.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A related confusion arises with `Symbol('x', complex=True)` and `Symbol('x',
+    real=False)`. Often when either of these is used neither is what is actually wanted.
+    The first thing to understand is that all real numbers are complex so a symbol
+    created with `real=True` will also have `complex=True` and a symbol created with
+    `complex=True` will not have `real=False`. If the intention was to create a complex
+    number that is not a real number then it should be `Symbol('x', complex=True,
+    real=False)`. On the other hand declaring `real=False` alone is not sufficient
+    to conclude that `complex=True` because knowing that it is not a real number does
+    not tell us whether it is finite or whether or not it is some completely different
+    kind of object from a complex number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A vanilla symbol is defined by not knowing whether it is `finite` etc but there
+    is no clear definition of what it *should* actually represent. It is tempting
+    to think of it as an “arbitrary complex number or possibly one of the infinities”
+    but there is no way to query an arbitrary (non-symbol) expression in order to
+    determine if it meets those criteria. It is important to bear in mind that within
+    the SymPy codebase and potentially in downstream libraries many other kinds of
+    mathematical objects can be found that might also have `commutative=True` while
+    being something very different from an ordinary number (in this context even SymPy’s
+    standard infinities are considered “ordinary”).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The only predicate that is applied by default for a symbol is `commutative`.
+    We can also declare a symbol to be *noncommutative* e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note here that since `x` and `y` are both noncommutative `x` and `y` do not
+    commute so `x*y != y*x`. On the other hand since `z` is commutative `x` and `z`
+    commute and `x*z == z*x` even though `x` is noncommutative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The interpretation of what a vanilla symbol represents is unclear but the interpretation
+    of an expression with `commutative=False` is entirely obscure. Such an expression
+    is necessarily not a complex number or an extended real or any of the standard
+    infinities (even `zoo` is commutative). We are left with very little that we can
+    say about what such an expression *does* represent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Other is_* properties'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are many properties and attributes in SymPy that that have names beginning
+    with `is_` that look similar to the properties used in the (old) assumptions system
+    but are not in fact part of the assumptions system. Some of these have a similar
+    meaning and usage as those of the assumptions system such as the [`is_zero_matrix()`](../modules/matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.is_zero_matrix
+    "sympy.matrices.matrixbase.MatrixBase.is_zero_matrix") property shown above. Another
+    example is the `is_empty` property of sets:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `is_empty` property gives a fuzzy-bool indicating whether or not a [`Set`](../modules/sets.html#sympy.sets.sets.Set
+    "sympy.sets.sets.Set") is the empty set. In the example of `S2` it is not possible
+    to know whether or not the set is empty without knowing whether or not `x` is
+    equal to `1` so `S2.is_empty` gives `None`. The `is_empty` property for sets plays
+    a similar role to the `is_zero` property for numbers in the assumptions system:
+    `is_empty` is normally only `True` for the [`EmptySet`](../modules/sets.html#sympy.sets.sets.EmptySet
+    "sympy.sets.sets.EmptySet") object but it is still useful to be able to distinguish
+    between the cases where `is_empty=False` and `is_empty=None`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although `is_zero_matrix` and `is_empty` are used for similar purposes to the
+    assumptions properties such as `is_zero` they are not part of the (old) assumptions
+    system. There are no associated inference rules connecting e.g. `Set.is_empty`
+    and `Set.is_finite_set` because the inference rules are part of the (old) assumptions
+    system which only deals with the predicates listed in the table above. It is not
+    possible to declare a [`MatrixSymbol`](../modules/matrices/expressions.html#sympy.matrices.expressions.MatrixSymbol
+    "sympy.matrices.expressions.MatrixSymbol") with e.g. `zero_matrix=False` and there
+    is no `SetSymbol` class but if there was it would not have a system for understanding
+    predicates like `empty=False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The properties [`is_zero_matrix()`](../modules/matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.is_zero_matrix
+    "sympy.matrices.matrixbase.MatrixBase.is_zero_matrix") and `is_empty` are similar
+    to those of the assumptions system because they concern *semantic* aspects of
+    an expression. There are a large number of other properties that focus on *structural*
+    aspects such as `is_Number`, [`is_number()`](../modules/core.html#sympy.core.expr.Expr.is_number
+    "sympy.core.expr.Expr.is_number"), [`is_comparable()`](../modules/core.html#sympy.core.basic.Basic.is_comparable
+    "sympy.core.basic.Basic.is_comparable"). Since these properties refer to structural
+    aspects of an expression they will always give `True` or `False` rather than a
+    fuzzy bool that also has the possibility of being `None`. Capitalised properties
+    such as `is_Number` are usually shorthand for `isinstance` checks e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`Number`](../modules/core.html#sympy.core.numbers.Number "sympy.core.numbers.Number")
+    class is the superclass for [`Integer`](../modules/core.html#sympy.core.numbers.Integer
+    "sympy.core.numbers.Integer"), [`Rational`](../modules/core.html#sympy.core.numbers.Rational
+    "sympy.core.numbers.Rational") and [`Float`](../modules/core.html#sympy.core.numbers.Float
+    "sympy.core.numbers.Float") so any instance of [`Number`](../modules/core.html#sympy.core.numbers.Number
+    "sympy.core.numbers.Number") represents a concrete number with a known value.
+    A symbol such as `y` that is declared with `rational=True` might represent the
+    same value as `x` but it is not a concrete number with a known value so this is
+    a structural rather than a semantic distinction. Properties like `is_Number` are
+    sometimes used in SymPy in place of e.g. `isinstance(obj, Number)` because they
+    do not have problems with circular imports and checking `x.is_Number` can be faster
+    than a call to `isinstance`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [`is_number`](../modules/core.html#sympy.core.expr.Expr.is_number "sympy.core.expr.Expr.is_number")
+    (lower-case) property is very different from `is_Number`. The [`is_number`](../modules/core.html#sympy.core.expr.Expr.is_number
+    "sympy.core.expr.Expr.is_number") property is `True` for any expression that can
+    be numerically evaluated to a floating point complex number with [`evalf()`](../modules/core.html#sympy.core.evalf.EvalfMixin.evalf
+    "sympy.core.evalf.EvalfMixin.evalf"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: The primary reason for checking `expr.is_number` is to predict whether a call
+    to [`evalf()`](../modules/core.html#sympy.core.evalf.EvalfMixin.evalf "sympy.core.evalf.EvalfMixin.evalf")
+    will fully evaluate. The [`is_comparable()`](../modules/core.html#sympy.core.basic.Basic.is_comparable
+    "sympy.core.basic.Basic.is_comparable") property is similar to [`is_number()`](../modules/core.html#sympy.core.expr.Expr.is_number
+    "sympy.core.expr.Expr.is_number") except that if `is_comparable` gives `True`
+    then the expression is guaranteed to numerically evaluate to a *real* [`Float`](../modules/core.html#sympy.core.numbers.Float
+    "sympy.core.numbers.Float"). When `a.is_comparable` and `b.is_comparable` the
+    inequality `a < b` should be resolvable as something like `a.evalf() < b.evalf()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The full set of `is_*` properties, attributes and methods in SymPy is large.
+    It is important to be clear though that only those that are listed in the table
+    of predicates above are actually part of the assumptions system. It is only those
+    properties that are involved in the *mechanism* that implements the assumptions
+    system which is explained below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implementing assumptions handlers
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We will now work through an example of how to implement a SymPy symbolic function
+    so that we can see how the old assumptions are used internally. SymPy already
+    has an `exp` function which is defined for all complex numbers but we will define
+    an `expreal` function which is restricted to real arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `Function.eval` method is used to pick up on special values of the function
+    so that we can return a different object if it would be a simplification. When
+    `expreal(x)` is called the `expreal.__new__` class method (defined in the superclass
+    `Function`) will call `expreal.eval(x)`. If `expreal.eval` returns something other
+    than `None` then that will be returned instead of an unevaluated `expreal(x)`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the `expreal.eval` method does not compare the argument using `==`.
+    The special values are verified using the assumptions system to query the properties
+    of the argument. That means that the `expreal` method can also evaluate for different
+    forms of expression that have matching properties e.g.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Of course the assumptions system can only resolve a limited number of special
+    values so most `eval` methods will also check against some special values with
+    `==` but it is preferable to check e.g. `x.is_zero` rather than `x==0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note also that the `expreal.eval` method validates that the argument is real.
+    We want to allow \(\pm\infty\) as arguments to `expreal` so we check for `extended_real`
+    rather than `real`. If the argument is not extended real then we raise an error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Importantly we check `x.is_extended_real is False` rather than `not x.is_extended_real`
+    which means that we only reject the argument if it is *definitely* not extended
+    real: if `x.is_extended_real` gives `None` then the argument will not be rejected.
+    The first reason for allowing `x.is_extended_real=None` is so that a vanilla symbol
+    can be used with `expreal`. The second reason is that an assumptions query can
+    always give `None` even in cases where an argument is definitely real e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Validating the argument in `expreal.eval` does mean that it will not be validated
+    when `evaluate=False` is passed but there is not really a better place to perform
+    the validation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `extended_nonnegative` class attribute and the `_eval_is_*` methods on
+    the `expreal` class implement queries in the assumptions system for instances
+    of `expreal`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: The assumptions system resolves queries like `expreal(2).is_finite` using the
+    corresponding handler `expreal._eval_is_finite` and *also* the implication rules.
+    For example it is known that `expreal(2).is_rational` is `False` because `expreal(2)._eval_is_algebraic`
+    returns `False` and there is an implication rule `rational -> algebraic`. This
+    means that an `is_rational` query can be resolved in this case by the `_eval_is_algebraic`
+    handler. It is actually better not to implement assumptions handlers for every
+    possible predicate but rather to try and identify a minimal set of handlers that
+    can resolve as many queries as possible with as few checks as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another point to note is that the `_eval_is_*` methods only make assumptions
+    queries on the argument `x` and do not make any assumptions queries on `self`.
+    Recursive assumptions queries on the same object will interfere with the assumptions
+    implications resolver potentially leading to non-deterministic behaviour so they
+    should not be used (there are examples of this in the SymPy codebase but they
+    should be removed).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many of the `expreal` methods implicitly return `None`. This is a common pattern
+    in the assumptions system. The `eval` method and the `_eval_is_*` methods can
+    all return `None` and often will. A Python function that ends without reaching
+    a `return` statement will implicitly return `None`. We take advantage of this
+    by leaving out many of the `else` clauses from the `if` statements and allowing
+    `None` to be returned implicitly. When following the control flow of these methods
+    it is important to bear in mind firstly that any queried property can give `True`,
+    `False` or `None` and also that any function will implicitly return `None` if
+    all of the conditionals fail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mechanism of the assumptions system
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: This section describes internal details that could change in a future SymPy
+    version.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This section will explain the inner workings of the assumptions system. It is
+    important to understand that these inner workings are implementation details and
+    could change from one SymPy version to another. This explanation is written as
+    of SymPy 1.7\. Although the (old) assumptions system has many limitations (discussed
+    in the next section) it is a mature system that is used extensively in SymPy and
+    has been well optimised for its current usage. The assumptions system is used
+    implicitly in most SymPy operations to control evaluation of elementary expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are several stages in the implementation of the assumptions system within
+    a SymPy process that lead up to the evaluation of a single query in the assumptions
+    system. Briefly these are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: At import time the assumptions rules defined in `sympy/core/assumptions.py`
+    are processed into a canonical form ready for efficiently applying the implication
+    rules. This happens once when SymPy is imported before even the [`Basic`](../modules/core.html#sympy.core.basic.Basic
+    "sympy.core.basic.Basic") class is defined.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The `Basic.__init_subclass__` method will post-process every [`Basic`](../modules/core.html#sympy.core.basic.Basic
+    "sympy.core.basic.Basic") subclass to add the relevant properties needed for assumptions
+    queries. This also adds the `default_assumptions` attribute to the class. This
+    happens each time a [`Basic`](../modules/core.html#sympy.core.basic.Basic "sympy.core.basic.Basic")
+    subclass is defined (when its containing module is imported).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Every [`Basic`](../modules/core.html#sympy.core.basic.Basic "sympy.core.basic.Basic")
+    instance initially uses the `default_assumptions` class attribute. When an assumptions
+    query is made on a [`Basic`](../modules/core.html#sympy.core.basic.Basic "sympy.core.basic.Basic")
+    instance in the first instance the query will be answered from the `default_assumptions`
+    for the class.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If there is no cached value for the assumptions query in the `default_assumptions`
+    for the class then the default assumptions will be copied to make an assumptions
+    cache for the instance. Then the `_ask()` function is called to resolve the query
+    which will firstly call the relevant instance handler `_eval_is` method. If the
+    handler returns non-None then the result will be cached and returned.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the handler does not exist or gives None then the implications resolver is
+    tried. This will enumerate (in a randomised order) all possible combinations of
+    predicates that could potentially be used to resolve the query under the implication
+    rules. In each case the handler `_eval_is` method will be called to see if it
+    gives non-None. If any combination of handlers and implication rules leads to
+    a definitive result for the query then that result is cached in the instance cache
+    and returned.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Finally if the implications resolver failed to resolve the query then the query
+    is considered unresolvable. The value of `None` for the query is cached in the
+    instance cache and returned.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The assumptions rules defined in `sympy/core/assumptions.py` are given in forms
+    like `real ==  negative | zero | positive`. When this module is imported these
+    are converted into a `FactRules` instance called `_assume_rules`. This preprocesses
+    the implication rules into the form of “A” and “B” rules that can be used for
+    the implications resolver. This is explained in the code in `sympy/core/facts.py`.
+    We can access this internal object directly like (full output omitted):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `Basic.__init_subclass__` method will inspect the attributes of each `Basic`
+    class to see if any assumptions related attributes are defined. An example of
+    these is the `is_extended_nonnegative = True` attribute defined in the `expreal`
+    class. The implications of any such attributes will be used to precompute any
+    statically knowable assumptions. For example `is_extended_nonnegative=True` implies
+    `real=True` etc. A `StdFactKB` instance is created for the class which stores
+    those assumptions whose values are known at this stage. The `StdFactKB` instance
+    is assigned as the class attribute `default_assumptions`. We can see this with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Although only `is_positive` was defined in the class `A` it also has attributes
+    such as `is_real` which are inferred from `is_positive`. The set of all such assumptions
+    for class `A` can be seen in `default_assumptions` which looks like a `dict` but
+    is in fact a `StdFactKB` instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: When an instance of any [`Basic`](../modules/core.html#sympy.core.basic.Basic
+    "sympy.core.basic.Basic") subclass is created `Basic.__new__` will assign its
+    `_assumptions` attribute which will initially be a reference to `cls.default_assumptions`
+    shared amongst all instances of the same class. The instance will use this to
+    resolve any assumptions queries until that fails to give a definitive result at
+    which point a copy of `cls.default_assumptions` will be created and assigned to
+    the instance’s `_assumptions` attribute. The copy will be used as a cache to store
+    any results computed for the instance by its `_eval_is` handlers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the `_assumptions` attribute fails to give the relevant result it is time
+    to call the `_eval_is` handlers. At this point the `_ask()` function is called.
+    The `_ask()` function will initially try to resolve a query such as `is_rational`
+    by calling the corresponding method i.e. `_eval_is_rational`. If that gives non-None
+    then the result is stored in `_assumptions` and any implications of that result
+    are computed and stored as well. At that point the query is resolved and the value
+    returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: If e.g. `_eval_is_rational` does not exist or gives `None` then `_ask()` will
+    try all possibilities to use the implication rules and any other handler methods
+    such as `_eval_is_integer`, `_eval_is_algebraic` etc that might possibly be able
+    to give an answer to the original query. If any method leads to a definite result
+    being known for the original query then that is returned. Otherwise once all possibilities
+    for using a handler and the implication rules to resolve the query are exhausted
+    `None` will be cached and returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the `_ask()` function the handlers are called in a randomised order which
+    can mean that execution at this point is non-deterministic. Provided all of the
+    different handler methods are consistent (i.e. there are no bugs) then the end
+    result will still be deterministic. However a bug where two handlers are inconsistent
+    can manifest in non-deterministic behaviour because this randomisation might lead
+    to the handlers being called in different orders when the same program is run
+    multiple times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limitations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Combining predicates with or
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In the old assumptions we can easily combine predicates with *and* when creating
+    a Symbol e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can also easily query whether two conditions are jointly satisfied with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: However there is no way in the old assumptions to create a [`Symbol`](../modules/core.html#sympy.core.symbol.Symbol
+    "sympy.core.symbol.Symbol") with assumptions predicates combined with *or*. For
+    example if we wanted to say that “x is positive or x is an integer” then it is
+    not possible to create a [`Symbol`](../modules/core.html#sympy.core.symbol.Symbol
+    "sympy.core.symbol.Symbol") with those assumptions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is also not possible to ask an assumptions query based on *or* e.g. “is expr
+    an expression that is positive or an integer”. We can use e.g.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: However if all that is known about `x` is that it is possibly positive or otherwise
+    a negative integer then both queries `x.is_positive` and `x.is_integer` will resolve
+    to `None`. That means that the query becomes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: which then also gives `None`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Relations between different symbols
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A fundamental limitation of the old assumptions system is that all explicit
+    assumptions are properties of an individual symbol. There is no way in this system
+    to make an assumption about the *relationship* between two symbols. One of the
+    most common requests is the ability to assume something like `x < y` but there
+    is no way to even specify that in the old assumptions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The new assumptions have the theoretical capability that relational assumptions
+    can be specified. However the algorithms to make use of that information are not
+    yet implemented and the exact API for specifying relational assumptions has not
+    been decided upon.
+  prefs: []
+  type: TYPE_NORMAL

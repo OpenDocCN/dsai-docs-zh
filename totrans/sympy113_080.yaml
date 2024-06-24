@@ -1,0 +1,828 @@
+- en: Series Expansions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/series/series.html](https://docs.sympy.org/latest/modules/series/series.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## Limits'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main purpose of this module is the computation of limits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes the limit of `e(z)` at the point `z0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**e** : expression, the limit of which is to be taken'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**z** : symbol representing the variable in the limit.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other symbols are treated as constants. Multivariate limits are not supported.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**z0** : the value toward which `z` tends. Can be any expression,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: including `oo` and `-oo`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dir** : string, optional (default: “+”)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The limit is bi-directional if `dir="+-"`, from the right (z->z0+) if `dir="+"`,
+    and from the left (z->z0-) if `dir="-"`. For infinite `z0` (`oo` or `-oo`), the
+    `dir` argument is determined from the direction of the infinity (i.e., `dir="-"`
+    for `oo`).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: First we try some heuristics for easy and frequent cases like “x”, “1/x”, “x**2”
+    and similar, so that it’s fast. For all other cases, we use the Gruntz algorithm
+    (see the gruntz() function).
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`limit_seq`](limitseq.html#sympy.series.limitseq.limit_seq "sympy.series.limitseq.limit_seq")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: returns the limit of a sequence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents an unevaluated limit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluates the limit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**deep** : bool, optional (default: True)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Invoke the `doit` method of the expressions involved before taking the limit.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**hints** : optional keyword arguments'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To be passed to `doit` methods; only used if deep is True.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: As is explained above, the workhorse for limit computations is the function
+    gruntz() which implements Gruntz’ algorithm for computing limits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Gruntz Algorithm
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section explains the basics of the algorithm used for computing limits.
+    Most of the time the limit() function should just work. However it is still useful
+    to keep in mind how it is implemented in case something does not work as expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First we define an ordering on functions. Suppose \(f(x)\) and \(g(x)\) are
+    two real-valued functions such that \(\lim_{x \to \infty} f(x) = \infty\) and
+    similarly \(\lim_{x \to \infty} g(x) = \infty\). We shall say that \(f(x)\) *dominates*
+    \(g(x)\), written \(f(x) \succ g(x)\), if for all \(a, b \in \mathbb{R}_{>0}\)
+    we have \(\lim_{x \to \infty} \frac{f(x)^a}{g(x)^b} = \infty\). We also say that
+    \(f(x)\) and \(g(x)\) are *of the same comparability class* if neither \(f(x)
+    \succ g(x)\) nor \(g(x) \succ f(x)\) and shall denote it as \(f(x) \asymp g(x)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that whenever \(a, b \in \mathbb{R}_{>0}\) then \(a f(x)^b \asymp f(x)\),
+    and we shall use this to extend the definition of \(\succ\) to all functions which
+    tend to \(0\) or \(\pm \infty\) as \(x \to \infty\). Thus we declare that \(f(x)
+    \asymp 1/f(x)\) and \(f(x) \asymp -f(x)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is easy to show the following examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(e^x \succ x^m\)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(e^{x^2} \succ e^{mx}\)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(e^{e^x} \succ e^{x^m}\)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(x^m \asymp x^n\)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(e^{x + \frac{1}{x}} \asymp e^{x + \log{x}} \asymp e^x\).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'From the above definition, it is possible to prove the following property:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Suppose \(\omega\), \(g_1, g_2, \ldots\) are functions of \(x\), \(\lim_{x \to
+    \infty} \omega = 0\) and \(\omega \succ g_i\) for all \(i\). Let \(c_1, c_2, \ldots
+    \in \mathbb{R}\) with \(c_1 < c_2 < \cdots\).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Then \(\lim_{x \to \infty} \sum_i g_i \omega^{c_i} = \lim_{x \to \infty} g_1
+    \omega^{c_1}\).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'For \(g_1 = g\) and \(\omega\) as above we also have the following easy result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(\lim_{x \to \infty} g \omega^c = 0\) for \(c > 0\)
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: \(\lim_{x \to \infty} g \omega^c = \pm \infty\) for \(c < 0\), where the sign
+    is determined by the (eventual) sign of \(g\)
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: \(\lim_{x \to \infty} g \omega^0 = \lim_{x \to \infty} g\).
+  prefs:
+  - PREF_BQ
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Using these results yields the following strategy for computing \(\lim_{x \to
+    \infty} f(x)\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Find the set of *most rapidly varying subexpressions* (MRV set) of \(f(x)\).
+    That is, from the set of all subexpressions of \(f(x)\), find the elements that
+    are maximal under the relation \(\succ\).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Choose a function \(\omega\) that is in the same comparability class as the
+    elements in the MRV set, such that \(\lim_{x \to \infty} \omega = 0\).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Expand \(f(x)\) as a series in \(\omega\) in such a way that the antecedents
+    of the above theorem are satisfied.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Apply the theorem and conclude the computation of \(\lim_{x \to \infty} f(x)\),
+    possibly by recursively working on \(g_1(x)\).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Notes
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This exposition glossed over several details. Many are described in the file
+    gruntz.py, and all can be found in Gruntz’ very readable thesis. The most important
+    points that have not been explained are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given f(x) and g(x), how do we determine if \(f(x) \succ g(x)\), \(g(x) \succ
+    f(x)\) or \(g(x) \asymp f(x)\)?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do we find the MRV set of an expression?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do we compute series expansions?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Why does the algorithm terminate?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If you are interested, be sure to take a look at [Gruntz Thesis](https://www.cybertester.com/data/gruntz.pdf).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reference
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the limit of e(z) at the point z0 using the Gruntz algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`z0` can be any expression, including oo and -oo.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For `dir="+"` (default) it calculates the limit from the right (z->z0+) and
+    for `dir="-"` the limit from the left (z->z0-). For infinite z0 (oo or -oo), the
+    dir argument does not matter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This algorithm is fully described in the module docstring in the gruntz.py file.
+    It relies heavily on the series expansion. Most frequently, gruntz() is only used
+    if the faster limit() function (which uses heuristics) fails.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns “<” if a<b, “=” for a == b, “>” for a>b
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: e(x) … the function Omega … the mrv set wsym … the symbol which is going to
+    be used for w
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns the rewritten e in terms of w and log(w). See test_rewrite1() for examples
+    and correct results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Helper function for rewrite.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We need to sort Omega (mrv set) so that we replace an expression before we
+    replace any expression in terms of which it has to be rewritten:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here we can do e1, e2, e3, e4 or e1, e2, e4, e3. To do this we assemble the
+    nodes into a tree, and sort them by height.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function builds the tree, rewrites then sorts the nodes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns (c0, e0) for e.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calculates at least one term of the series of `e` in `x`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is a place that fails most often, so it is in its own function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Limit e(x) for x-> oo.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a sign of an expression e(x) for x->oo.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The result of this function is currently undefined if e changes sign arbitrarily
+    often for arbitrarily large x (e.g. sin(x)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that this returns zero only if e is *constantly* zero for x sufficiently
+    large. [If e is constant, of course, this is just the same thing as the sign of
+    e.]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a SubsSet of most rapidly varying (mrv) subexpressions of ‘e’, and e
+    rewritten in terms of these
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes the maximum of two sets of expressions f and g, which are in the same
+    comparability class, i.e. mrv_max1() compares (two elements of) f and g and returns
+    the set, which is in the higher comparability class of the union of both, if they
+    have the same order of variation. Also returns exps, with the appropriate substitutions
+    made.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes the maximum of two sets of expressions f and g, which are in the same
+    comparability class, i.e. max() compares (two elements of) f and g and returns
+    either (f, expsf) [if f is larger], (g, expsg) [if g is larger] or (union, expsboth)
+    [if f, g are of the same class].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Stores (expr, dummy) pairs, and how to rewrite expr-s.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The gruntz algorithm needs to rewrite certain expressions in term of a new
+    variable w. We cannot use subs, because it is just too smart for us. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: is really not what we want!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So we do it the hard way and keep track of all the things we potentially want
+    to substitute by dummy variables. Consider the expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The mrv set is {exp(x), exp(-x), exp(x - exp(-x))}. We introduce corresponding
+    dummy variables d1, d2, d3 and rewrite:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This class first of all keeps track of the mapping expr->variable, i.e. will
+    at this stage be a dictionary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[It turns out to be more convenient this way round.] But sometimes expressions
+    in the mrv set have other expressions from the mrv set as subexpressions, and
+    we need to keep track of that as well. In this case, d3 is really exp(x - d2),
+    so rewrites at this stage is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The function rewrite uses all this information to correctly rewrite our expression
+    in terms of w. In this case w can be chosen to be exp(-x), i.e. d2\. The correct
+    rewriting then is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a shallow copy of SubsSet
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Substitute the variables with expressions
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tell whether or not self and s2 have non-empty intersection
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the union of self and s2, adjusting exps
+  prefs: []
+  type: TYPE_NORMAL
+- en: More Intuitive Series Expansion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This is achieved by creating a wrapper around Basic.series(). This allows for
+    the use of series(x*cos(x),x), which is possibly more intuitive than (x*cos(x)).series(x).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reference
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Series expansion of expr around point \(x = x0\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expression whose series is to be expanded.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**x** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is the variable of the expression to be calculated.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**x0** : Value'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The value around which `x` is calculated. Can be any value from `-oo` to `oo`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**n** : Value'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The number of terms upto which the series is to be expanded.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dir** : String, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The series-expansion can be bi-directional. If `dir="+"`, then (x->x0+). If
+    `dir="-"`, then (x->x0-). For infinite `x0` (`oo` or `-oo`), the `dir` argument
+    is determined from the direction of the infinity (i.e., `dir="-"` for `oo`).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expr
+  prefs: []
+  type: TYPE_NORMAL
+- en: Series expansion of the expression about x0
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.core.expr.Expr.series`](../core.html#sympy.core.expr.Expr.series "sympy.core.expr.Expr.series")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the docstring of Expr.series() for complete details of this wrapper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Order Terms
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This module also implements automatic keeping track of the order of your expansion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reference
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the limiting behavior of some function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The order of a function characterizes the function based on the limiting behavior
+    of the function as it goes to some limit. Only taking the limit point to be a
+    number is currently supported. This is expressed in big O notation [[R835]](#r835).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The formal definition for the order of a function \(g(x)\) about a point \(a\)
+    is such that \(g(x) = O(f(x))\) as \(x \rightarrow a\) if and only if there exists
+    a \(\delta > 0\) and an \(M > 0\) such that \(|g(x)| \leq M|f(x)|\) for \(|x-a|
+    < \delta\). This is equivalent to \(\limsup_{x \rightarrow a} |g(x)/f(x)| < \infty\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s illustrate it on the following example by taking the expansion of \(\sin(x)\)
+    about 0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\sin(x) = x - x^3/3! + O(x^5)\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'where in this case \(O(x^5) = x^5/5! - x^7/7! + \cdots\). By the definition
+    of \(O\), there is a \(\delta > 0\) and an \(M\) such that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[|x^5/5! - x^7/7! + ....| <= M|x^5| \text{ for } |x| < \delta\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'or by the alternate definition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\lim_{x \rightarrow 0} | (x^5/5! - x^7/7! + ....) / x^5| < \infty\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: which surely is true, because
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\lim_{x \rightarrow 0} | (x^5/5! - x^7/7! + ....) / x^5| = 1/5!\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: As it is usually used, the order of a function can be intuitively thought of
+    representing all terms of powers greater than the one specified. For example,
+    \(O(x^3)\) corresponds to any terms proportional to \(x^3, x^4,\ldots\) and any
+    higher power. For a polynomial, this leaves terms proportional to \(x^2\), \(x\)
+    and constants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: In `O(f(x), x)` the expression `f(x)` is assumed to have a leading term. `O(f(x),
+    x)` is automatically transformed to `O(f(x).as_leading_term(x),x)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`O(expr*f(x), x)` is `O(f(x), x)`'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '`O(expr, x)` is `O(1)`'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '`O(0, x)` is 0.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Multivariate O is also supported:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`O(f(x, y), x, y)` is transformed to `O(f(x, y).as_leading_term(x,y).as_leading_term(y),
+    x, y)`'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: In the multivariate case, it is assumed the limits w.r.t. the various symbols
+    commute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If no symbols are passed then all symbols in the expression are used and the
+    limit point is assumed to be zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[R835] ([1](#id5),[2](#id6))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Big O notation](https://en.wikipedia.org/wiki/Big_O_notation)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return True if expr belongs to Order(self.expr, *self.variables). Return False
+    if self belongs to expr. Return None if the inclusion relation cannot be determined
+    (e.g. when self and expr have different symbols).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Series Acceleration
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: TODO
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reference
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calculate an approximation for lim k->oo A(k) using Richardson extrapolation
+    with the terms A(n), A(n+1), …, A(n+N+1). Choosing N ~= 2*n often gives good results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A simple example is to calculate exp(1) using the limit definition. This limit
+    converges slowly; n = 100 only produces two accurate digits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Richardson extrapolation with 11 appropriately chosen terms gives a value that
+    is accurate to the indicated precision:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Another useful application is to speed up convergence of series. Computing
+    100 terms of the zeta(2) series 1/k**2 yields only two accurate digits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Richardson extrapolation performs much better:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calculate an approximation for lim k->oo A(k) using the n-term Shanks transformation
+    S(A)(n). With m > 1, calculate the m-fold recursive Shanks transformation S(S(…S(A)…))(n).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Shanks transformation is useful for summing Taylor series that converge
+    slowly near a pole or singularity, e.g. for log(2):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: The correct value is 0.6931471805599453094172321215.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Residues
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: TODO
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reference
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finds the residue of `expr` at the point x=x0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The residue is defined as the coefficient of `1/(x-x0)` in the power series
+    expansion about `x=x0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function is essential for the Residue Theorem [1].
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R836](#id9)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Residue_theorem](https://en.wikipedia.org/wiki/Residue_theorem)'
+  prefs: []
+  type: TYPE_NORMAL

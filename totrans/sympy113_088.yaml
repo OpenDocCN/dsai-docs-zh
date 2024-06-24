@@ -1,0 +1,763 @@
+- en: Hongguang Fu’s Trigonometric Simplification
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/simplify/fu.html](https://docs.sympy.org/latest/modules/simplify/fu.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Implementation of the trigsimp algorithm by Fu et al.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The idea behind the Fu algorithm is to use a sequence of rules that students
+    learn during their pre-calculus courses. The rules are applied heuristically and
+    it uses a greedy algorithm to apply multiple rules simultaneously and choose the
+    result with the least leaf counts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are transform rules in which a single rule is applied to the expression
+    tree. The following are just mnemonic in nature; see the docstrings for examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`TR0()`](#sympy.simplify.fu.TR0 "sympy.simplify.fu.TR0") - simplify expression'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR1()`](#sympy.simplify.fu.TR1 "sympy.simplify.fu.TR1") - sec-csc to cos-sin'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR2()`](#sympy.simplify.fu.TR2 "sympy.simplify.fu.TR2") - tan-cot to sin-cos
+    ratio'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR2i()`](#sympy.simplify.fu.TR2i "sympy.simplify.fu.TR2i") - sin-cos ratio
+    to tan'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR3()`](#sympy.simplify.fu.TR3 "sympy.simplify.fu.TR3") - angle canonicalization'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR4()`](#sympy.simplify.fu.TR4 "sympy.simplify.fu.TR4") - functions at special
+    angles'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR5()`](#sympy.simplify.fu.TR5 "sympy.simplify.fu.TR5") - powers of sin to
+    powers of cos'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR6()`](#sympy.simplify.fu.TR6 "sympy.simplify.fu.TR6") - powers of cos to
+    powers of sin'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR7()`](#sympy.simplify.fu.TR7 "sympy.simplify.fu.TR7") - reduce cos power
+    (increase angle)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR8()`](#sympy.simplify.fu.TR8 "sympy.simplify.fu.TR8") - expand products
+    of sin-cos to sums'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR9()`](#sympy.simplify.fu.TR9 "sympy.simplify.fu.TR9") - contract sums of
+    sin-cos to products'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR10()`](#sympy.simplify.fu.TR10 "sympy.simplify.fu.TR10") - separate sin-cos
+    arguments'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR10i()`](#sympy.simplify.fu.TR10i "sympy.simplify.fu.TR10i") - collect sin-cos
+    arguments'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR11()`](#sympy.simplify.fu.TR11 "sympy.simplify.fu.TR11") - reduce double
+    angles'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR12()`](#sympy.simplify.fu.TR12 "sympy.simplify.fu.TR12") - separate tan
+    arguments'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR12i()`](#sympy.simplify.fu.TR12i "sympy.simplify.fu.TR12i") - collect tan
+    arguments'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR13()`](#sympy.simplify.fu.TR13 "sympy.simplify.fu.TR13") - expand product
+    of tan-cot'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TRmorrie()`](#sympy.simplify.fu.TRmorrie "sympy.simplify.fu.TRmorrie") -
+    prod(cos(x*2**i), (i, 0, k - 1)) -> sin(2**k*x)/(2**k*sin(x))'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR14()`](#sympy.simplify.fu.TR14 "sympy.simplify.fu.TR14") - factored powers
+    of sin or cos to cos or sin power'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR15()`](#sympy.simplify.fu.TR15 "sympy.simplify.fu.TR15") - negative powers
+    of sin to cot power'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR16()`](#sympy.simplify.fu.TR16 "sympy.simplify.fu.TR16") - negative powers
+    of cos to tan power'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR22()`](#sympy.simplify.fu.TR22 "sympy.simplify.fu.TR22") - tan-cot powers
+    to negative powers of sec-csc functions'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`TR111()`](#sympy.simplify.fu.TR111 "sympy.simplify.fu.TR111") - negative
+    sin-cos-tan powers to csc-sec-cot'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are 4 combination transforms (CTR1 - CTR4) in which a sequence of transformations
+    are applied and the simplest expression is selected from a few options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, there are the 2 rule lists (RL1 and RL2), which apply a sequence of
+    transformations and combined transformations, and the `fu` algorithm itself, which
+    applies rules and rule lists and selects the best expressions. There is also a
+    function `L` which counts the number of trigonometric functions that appear in
+    the expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other than TR0, re-writing of expressions is not done by the transformations.
+    e.g. TR10i finds pairs of terms in a sum that are in the form like `cos(x)*cos(y)
+    + sin(x)*sin(y)`. Such expression are targeted in a bottom-up traversal of the
+    expression, but no manipulation to make them appear is attempted. For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Set-up for examples below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the expression is put in “normal” form (with a common denominator) then
+    the transformation is successful:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: TR11’s behavior is similar. It rewrites double angles as smaller angles but
+    doesn’t do any simplification of the result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The temptation is to try make these TR rules “smarter” but that should really
+    be done at a higher level; the TR rules should try maintain the “do one thing
+    well” principle. There is one exception, however. In TR10i and TR9 terms are recognized
+    even when they are each multiplied by a common factor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Factoring with `factor_terms` is used but it is “JIT”-like, being delayed until
+    it is deemed necessary. Furthermore, if the factoring does not help with the simplification,
+    it is not retained, so `a*cos(x)*cos(y) + a*sin(x)*sin(z)` does not become a factored
+    (but unsimplified in the trigonometric sense) expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In some cases factoring might be a good idea, but the user is left to make
+    that decision. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the expanded state, there are nearly 1000 trig functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the expression were factored first, this would take time but the resulting
+    expression would be transformed very quickly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the unexpanded expression is used, the transformation takes longer but not
+    as long as it took to factor it and then transform it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So neither expansion nor factoring is used in `TR10i`: if the expression is
+    already factored (or partially factored) then expansion with `trig=True` would
+    destroy what is already known and take longer; if the expression is expanded,
+    factoring may take longer than simply applying the transformation itself.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Although the algorithms should be canonical, always giving the same result,
+    they may not yield the best result. This, in general, is the nature of simplification
+    where searching all possible transformation paths is very expensive. Here is a
+    simple example. There are 6 terms in the following sum:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Serendipitously, fu gives the best result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But if different terms were combined, a less-optimal result might be obtained,
+    requiring some additional work to get better simplification, but still less than
+    optimal. The following shows an alternative form of `expr` that resists optimal
+    simplification once a given step is taken since it leads to a dead end:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here is a smaller expression that exhibits the same behavior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Without getting lucky or trying all possible pairings of arguments, the final
+    result may be less than optimal and impossible to find without better heuristics
+    or brute force trial of all possibilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rules
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Simplification of rational polynomials, trying to simplify the expression, e.g.
+    combine things like 3*x + 2*x, etc….
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace sec, csc with 1/cos, 1/sin
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace tan and cot with sin/cos and cos/sin
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Converts ratios involving sin and cos as follows::'
+  prefs: []
+  type: TYPE_NORMAL
+- en: sin(x)/cos(x) -> tan(x) sin(x)/(cos(x) + 1) -> tan(x/2) if half=True
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Powers of the numerator and denominator are also recognized
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: The transformation does not take place unless assumptions allow (i.e. the base
+    must be positive or the exponent must be an integer for both numerator and denominator)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Induced formula: example sin(-a) = -sin(a)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Identify values of special angles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A= 0 Pi/6 Pi/4 Pi/3 Pi/2
+  prefs: []
+  type: TYPE_NORMAL
+- en: sin(a) 0 1/2 sqrt(2)/2 sqrt(3)/2 1 cos(a) 1 sqrt(3)/2 sqrt(2)/2 1/2 0 tan(a)
+    0 sqt(3)/3 1 sqrt(3) –
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacement of sin**2 with 1 - cos(x)**2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See _TR56 docstring for advanced use of `max` and `pow`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replacement of cos**2 with 1 - sin(x)**2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See _TR56 docstring for advanced use of `max` and `pow`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Lowering the degree of cos(x)**2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converting products of `cos` and/or `sin` to a sum or difference of `cos` and
+    or `sin` terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sum of `cos` or `sin` terms as a product of `cos` or `sin`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If no change is made by TR9, no re-arrangement of the expression will be made.
+    For example, though factoring of common term is attempted, if the factored expression
+    was not changed, the original expression will be returned:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Separate sums in `cos` and `sin`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sum of products to function of sum.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: Function of double angle to product. The `base` argument can be used to indicate
+    what is the un-doubled argument, e.g. if 3*pi/7 is the base then cosine and sine
+    functions with argument 6*pi/7 will be replaced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the arguments are simply integers, no change is made unless a base is provided:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is a subtle issue here in that autosimplification will convert some higher
+    angles to lower angles
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The 6*pi/7 angle is now pi/7 but can be targeted with TR11 by supplying the
+    3*pi/7 base:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Separate sums in `tan`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: Combine tan arguments as (tan(y) + tan(x))/(tan(x)*tan(y) - 1) -> -tan(x + y).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: Change products of `tan` or `cot`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns cos(x)*cos(2*x)*…*cos(2**(k-1)*x) -> sin(2**k*x)/(2**k*sin(x))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sometimes autosimplification will cause a power to be not recognized. e.g.
+    in the following, cos(4*pi/7) automatically simplifies to -cos(3*pi/7) so only
+    2 of the 3 terms are recognized:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: A touch by TR8 resolves the expression to a Rational
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this case, if eq is unsimplified, the answer is obtained directly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But if angles are made canonical with TR3 then the answer is not simplified
+    without further work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The original expression would have resolve to 1/16 directly with TR8, however:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R852](#id1)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Morrie%27s_law](https://en.wikipedia.org/wiki/Morrie%27s_law)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert factored powers of sin and cos identities into simpler expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert sin(x)**-2 to 1 + cot(x)**2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See _TR56 docstring for advanced use of `max` and `pow`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert cos(x)**-2 to 1 + tan(x)**2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See _TR56 docstring for advanced use of `max` and `pow`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Convert f(x)**-i to g(x)**i where either `i` is an integer or the base is positive
+    and f, g are: tan, cot; sin, csc; or cos, sec.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert tan(x)**2 to sec(x)**2 - 1 and cot(x)**2 to csc(x)**2 - 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See _TR56 docstring for advanced use of `max` and `pow`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert sin(x)**n and cos(x)**n with positive n to sums.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R853](#id2)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/List_of_trigonometric_identities#Power-reduction_formulae](https://en.wikipedia.org/wiki/List_of_trigonometric_identities#Power-reduction_formulae)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: Attempt to simplify expression by using transformation rules given in the algorithm
+    by Fu et al.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`fu()`](#sympy.simplify.fu.fu "sympy.simplify.fu.fu") will try to minimize
+    the objective function `measure`. By default this first minimizes the number of
+    trig terms and then minimizes the number of total operations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: CTR1 example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: CTR2 example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: CTR3 example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: CTR4 example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: Example 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Example 2
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: Example 3
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Objective function example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R854](#id3)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://www.sciencedirect.com/science/article/pii/S0895717706001609](https://www.sciencedirect.com/science/article/pii/S0895717706001609)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This work was started by Dimitar Vlahovski at the Technological School “Electronic
+    systems” (30.11.2011).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Beyond TR13, other rules are not from the original paper, but extended in SymPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL

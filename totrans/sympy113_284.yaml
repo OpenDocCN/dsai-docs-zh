@@ -1,0 +1,1249 @@
+- en: Introducing the Domains of the poly module
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/polys/domainsintro.html](https://docs.sympy.org/latest/modules/polys/domainsintro.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This page introduces the idea of the “domains” that are used in SymPy’s [`sympy.polys`](reference.html#module-sympy.polys
+    "sympy.polys") module. The emphasis is on introducing how to use the domains directly
+    and on understanding how they are used internally as part of the [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") class. This is a relatively advanced topic so for
+    a more introductory understanding of the [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") class and the [`sympy.polys`](reference.html#module-sympy.polys
+    "sympy.polys") module it is recommended to read [Basic functionality of the module](basics.html#polys-basics)
+    instead. The reference documentation for the domain classes is in [Reference docs
+    for the Poly Domains](domainsref.html#polys-domainsref). Internal functions that
+    make use of the domains are documented in [Internals of the Polynomial Manipulation
+    Module](internals.html#polys-internals).
+  prefs: []
+  type: TYPE_NORMAL
+- en: What are the domains?
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'For most users the domains are only really noticeable in the printed output
+    of a [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: We see here that one [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    has domain [ZZ](domainsref.html#zz) representing the integers and the other has
+    domain [QQ](domainsref.html#qq) representing the rationals. These indicate the
+    “domain” from which the coefficients of the polynomial are drawn.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From a high-level the domains represent formal concepts such as the set of integers
+    \(\mathbb{Z}\) or rationals \(\mathbb{Q}\). The word “domain” here is a reference
+    to the mathematical concept of an [integral domain](https://en.wikipedia.org/wiki/Integral_domain).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Internally the domains correspond to different computational implementations
+    and representations of the expressions that the polynomials correspond to. The
+    [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    object itself has an internal representation as a `list` of coefficients and a
+    [`domain`](reference.html#sympy.polys.polytools.Poly.domain "sympy.polys.polytools.Poly.domain")
+    attribute representing the implementation of those coefficients:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here the domain is [QQ](domainsref.html#qq) which represents the implementation
+    of the rational numbers in the domain system. The [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") instance itself has a [`Poly.domain`](reference.html#sympy.polys.polytools.Poly.domain
+    "sympy.polys.polytools.Poly.domain") attribute [QQ](domainsref.html#qq) and then
+    a list of [`PythonMPQ`](domainsref.html#sympy.external.pythonmpq.PythonMPQ "sympy.external.pythonmpq.PythonMPQ")
+    coefficients where [`PythonMPQ`](domainsref.html#sympy.external.pythonmpq.PythonMPQ
+    "sympy.external.pythonmpq.PythonMPQ") is the class that implements the elements
+    of the [QQ](domainsref.html#qq) domain. The list of coefficients `[1, 1/2, 0]`
+    gives a standardised low-level representation of the polynomial expression `(1)*x**2
+    + (1/2)*x + (0)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This page looks at the different domains that are defined in SymPy, how they
+    are implemented and how they can be used. It introduces how to use the domains
+    and domain elements directly and explains how they are used internally as part
+    of [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    objects. This information is more relevant for development in SymPy than it is
+    for users of the [`sympy.polys`](reference.html#module-sympy.polys "sympy.polys")
+    module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Representing expressions symbolically
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are many different ways that a mathematical expression can be represented
+    symbolically. The purpose of the polynomial domains is to provide suitable implementations
+    for different classes of expressions. This section considers the basic approaches
+    to the symbolic representation of mathematical expressions: “tree”, “dense polynomial”
+    and “sparse polynomial”.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tree representation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The most general representation of symbolic expressions is as a [tree](https://en.wikipedia.org/wiki/Tree_(data_structure))
+    and this is the representation used for most ordinary SymPy expressions which
+    are instances of [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr")
+    (a subclass of [`Basic`](../core.html#sympy.core.basic.Basic "sympy.core.basic.Basic")).
+    We can see this representation using the [`srepr()`](../printing.html#sympy.printing.repr.srepr
+    "sympy.printing.repr.srepr") function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here the expression `e` is represented as an [`Add`](../core.html#sympy.core.add.Add
+    "sympy.core.add.Add") node which has two children `1` and `1/(x**2 + 2)`. The
+    child `1` is represented as an [`Integer`](../core.html#sympy.core.numbers.Integer
+    "sympy.core.numbers.Integer") and the other child is represented as a [`Pow`](../core.html#sympy.core.power.Pow
+    "sympy.core.power.Pow") with base `x**2 + 2` and exponent `1`. Then `x**2 + 2`
+    is represented as an [`Add`](../core.html#sympy.core.add.Add "sympy.core.add.Add")
+    with children `x**2` and `2` and so on. In this way the expression is represented
+    as a tree where the internal nodes are operations like [`Add`](../core.html#sympy.core.add.Add
+    "sympy.core.add.Add"), [`Mul`](../core.html#sympy.core.mul.Mul "sympy.core.mul.Mul"),
+    [`Pow`](../core.html#sympy.core.power.Pow "sympy.core.power.Pow") and so on and
+    the leaf nodes are atomic expression types like [`Integer`](../core.html#sympy.core.numbers.Integer
+    "sympy.core.numbers.Integer") and [`Symbol`](../core.html#sympy.core.symbol.Symbol
+    "sympy.core.symbol.Symbol"). See [Advanced Expression Manipulation](../../tutorials/intro-tutorial/manipulation.html#tutorial-manipulation)
+    for more about this representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The tree representation is core to the architecture of [`Expr`](../core.html#sympy.core.expr.Expr
+    "sympy.core.expr.Expr") in SymPy. It is a highly flexible representation that
+    can represent a very wide range of possible expressions. It can also represent
+    equivalent expressions in different ways e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'These two expression although equivalent have different tree representations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Being able to represent the same expression in different ways is both a strength
+    and a weakness. It is useful to be able to convert an expression in to different
+    forms for different tasks but having non-unique representations makes it hard
+    to tell when two expressions are equivalent which is in fact very important for
+    many computational algorithms. The most important task is being able to tell when
+    an expression is equal to zero which is undecidable in general ([Richardon’s theorem](https://en.wikipedia.org/wiki/Richardson%27s_theorem))
+    but is decidable in many important special cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### DUP representation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Restricting the set of allowed expressions to special cases allows for much
+    more efficient symbolic representations. As we already saw [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") can represent a polynomial as a list of coefficients.
+    This means that an expression like `x**4 + x + 1` could be represented simply
+    as `[1, 0, 0, 1, 1]`. This list of coefficients representation of a polynomial
+    expression is known as the “dense univariate polynomial” (DUP) representation.
+    Working within that representation algorithms for multiplication, addition and
+    crucially zero-testing can be much more efficient than with the corresponding
+    tree representations. We can see this representation from a [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") instance by looking it its `rep.rep` attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the DUP representation it is not possible to represent the same expression
+    in different ways. There is no distinction between `x*(x + 1)` and `x**2 + x`
+    because both are just `[1, 1, 0]`. This means that comparing two expressions is
+    easy: they are equal if and only if all of their coefficients are equal. Zero-testing
+    is particularly easy: the polynomial is zero if and only if all coefficients are
+    zero (of course we need to have easy zero-testing for the coefficients themselves).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can make functions that operate on the DUP representation much more efficiently
+    than functions that operate on the tree representation. Many operations with standard
+    sympy expressions are in fact computed by converting to a polynomial representation
+    and then performing the calculation. An example is the [`factor()`](reference.html#sympy.polys.polytools.factor
+    "sympy.polys.polytools.factor") function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Internally [`factor()`](reference.html#sympy.polys.polytools.factor "sympy.polys.polytools.factor")
+    will convert the expression from the tree representation into the DUP representation
+    and then use the function `dup_factor_list`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There are many more examples of functions with `dup_*` names for operating
+    on the DUP representation that are documented in [Internals of the Polynomial
+    Manipulation Module](internals.html#polys-internals). There are also functions
+    with the `dmp_*` prefix for operating on multivariate polynomials.  ### DMP representation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A multivariate polynomial (a polynomial in multiple variables) can be represented
+    as a polynomial with coefficients that are themselves polynomials. For example
+    `x**2*y + x**2 + x*y + y + 1` can be represented as polynomial in `x` where the
+    coefficients are themselves polynomials in `y` i.e.: `(y + 1)*x**2 + (y)*x + (y+1)`.
+    Since we can represent a polynomial with a list of coefficients a multivariate
+    polynomial can be represented with a list of lists of coefficients:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This list of lists of (lists of…) coefficients representation is known as the
+    “dense multivariate polynomial” (DMP) representation.  ### Sparse polynomial representation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead of lists we can use a dict mapping nonzero monomial terms to their
+    coefficients. This is known as the “sparse polynomial” representation. We can
+    see what this would look like using the [`as_dict()`](reference.html#sympy.polys.polytools.Poly.as_dict
+    "sympy.polys.polytools.Poly.as_dict") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The keys of this dict are the exponents of the powers of `x` and the values
+    are the coefficients so e.g. `7*x**20` becomes `(20,): 7` in the dict. The key
+    is a tuple so that in the multivariate case something like `4*x**2*y**3` can be
+    represented as `(2, 3): 4`. The sparse representation can be more efficient as
+    it avoids the need to store and manipulate the zero coefficients. With a large
+    number of generators (variables) the dense representation becomes particularly
+    inefficient and it is better to use the sparse representation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The dict representation shown in the last output maps from the monomial which
+    is represented as a tuple of powers (`(1, 1, 1, ...)` i.e. `x0**1 * x1**1, ...`)
+    to the coefficient `1`. Compared to the [DMP representation](#dmp-representation)
+    we have a much more flattened data structure: it is a `dict` with only one key
+    and value. Algorithms for working with sparse representations would likely be
+    much more efficient than dense algorithms for this particular example polynomial.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SymPy’s polynomial module has implementations of polynomial expressions based
+    on both the dense and sparse representations. There are also other implementations
+    of different special classes of expressions that can be used as the coefficients
+    of those polynomials. The rest of this page discusses what those representations
+    are and how to use them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Basic usage of domains
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Several domains are predefined and ready to be used such as [ZZ](domainsref.html#zz)
+    and [QQ](domainsref.html#qq) which represent the ring of integers \(\mathbb{Z}\)
+    and the field of rationals \(\mathbb{Q}\). The [`Domain`](domainsref.html#sympy.polys.domains.domain.Domain
+    "sympy.polys.domains.domain.Domain") object is used to construct elements which
+    can then be used in ordinary arithmetic operations.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The basic operations `+`, `-`, and `*` for addition, subtraction and multiplication
+    will work for the elements of any domain and will produce new domain elements.
+    Division with `/` (Python’s “true division” operator) is not possible for all
+    domains and should not be used with domain elements unless the domain is known
+    to be a field. For example dividing two elements of [ZZ](domainsref.html#zz) might
+    give a `float` which is not an element of [ZZ](domainsref.html#zz):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The behaviour of `/` for non-fields can also differ for different implementations
+    of the ground types of the domain. For example with `SYMPY_GROUND_TYPES=flint`
+    dividing two elements of [ZZ](domainsref.html#zz) will raise an error rather than
+    return a float:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Most domains representing non-field rings allow floor and modulo division (remainder)
+    with Python’s floor division `//` and modulo division `%` operators. For example
+    with [ZZ](domainsref.html#zz):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [QQ](domainsref.html#qq) domain represents the field of rational numbers
+    and does allow division:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In general code that is expected to work with elements of an arbitrary domain
+    should not use the division operators `/`, `//` and `%`. Only the operators `+`,
+    `-`, `*` and `**` (with nonnegative integer exponent) should be assumed to work
+    with arbitrary domain elements. All other operations should be accessed as functions
+    from the [`Domain`](domainsref.html#sympy.polys.domains.domain.Domain "sympy.polys.domains.domain.Domain")
+    object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`exquo()`](domainsref.html#sympy.polys.domains.domain.Domain.exquo "sympy.polys.domains.domain.Domain.exquo")
+    function is used to compute an exact quotient. This is the analogue of `a / b`
+    but where the division is expected to be exact (with no remainder) or an error
+    will be raised:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The exact methods and attributes of the domain elements are not guaranteed
+    in general beyond the basic arithmetic operations. It should not be presumed that
+    e.g. [ZZ](domainsref.html#zz) will always be of type `int`. If `gmpy` or `gmpy2`
+    is installed then the `mpz` or `mpq` types are used instead for [ZZ](domainsref.html#zz)
+    and [QQ](domainsref.html#qq):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `mpz` type is faster than Python’s standard `int` type for operations with
+    large integers although for smaller integers the difference is not so significant.
+    The `mpq` type representing rational numbers is implemented in C rather than Python
+    and is many times faster than the pure Python implementation of [QQ](domainsref.html#qq)
+    that is used when gmpy is not installed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In general the Python type used for the elements of a domain can be checked
+    from the [`dtype`](domainsref.html#sympy.polys.domains.domain.Domain.dtype "sympy.polys.domains.domain.Domain.dtype")
+    attribute of the domain. When gmpy is installed the dtype for [ZZ](domainsref.html#zz)
+    is \(mpz\) which is not an actual type and can not be used with \(isinstance\).
+    For this reason the [`of_type()`](domainsref.html#sympy.polys.domains.domain.Domain.of_type
+    "sympy.polys.domains.domain.Domain.of_type") method can be used to check if an
+    object is an element of [`dtype`](domainsref.html#sympy.polys.domains.domain.Domain.dtype
+    "sympy.polys.domains.domain.Domain.dtype").:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Domain elements vs sympy expressions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Note that domain elements are not of the same type as ordinary sympy expressions
+    which are subclasses of [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr")
+    such as [`Integer`](../core.html#sympy.core.numbers.Integer "sympy.core.numbers.Integer").
+    Ordinary sympy expressions are created with the [`sympify()`](../core.html#sympy.core.sympify.sympify
+    "sympy.core.sympify.sympify") function.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is important when working with the domains not to mix sympy expressions
+    with domain elements even though it will sometimes work in simple cases. Each
+    domain object has the methods [`to_sympy()`](domainsref.html#sympy.polys.domains.domain.Domain.to_sympy
+    "sympy.polys.domains.domain.Domain.to_sympy") and [`from_sympy()`](domainsref.html#sympy.polys.domains.domain.Domain.from_sympy
+    "sympy.polys.domains.domain.Domain.from_sympy") for converting back and forth
+    between sympy expressions and domain elements:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Any particular domain will only be able to represent some sympy expressions
+    so conversion will fail if the expression can not be represented in the domain:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: We have already seen that in some cases we can use the domain object itself
+    as a constructor e.g. `QQ(2)`. This will generally work provided the arguments
+    given are valid for the [`dtype`](domainsref.html#sympy.polys.domains.domain.Domain.dtype
+    "sympy.polys.domains.domain.Domain.dtype") of the domain. Although it is convenient
+    to use this in interactive sessions and in demonstrations it is generally better
+    to use the [`from_sympy()`](domainsref.html#sympy.polys.domains.domain.Domain.from_sympy
+    "sympy.polys.domains.domain.Domain.from_sympy") method for constructing domain
+    elements from sympy expressions (or from objects that can be sympified to sympy
+    expressions).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is important not to mix domain elements with other Python types such as `int`,
+    `float`, as well as standard sympy [`Expr`](../core.html#sympy.core.expr.Expr
+    "sympy.core.expr.Expr") expressions. When working in a domain, care should be
+    taken as some Python operations will do this implicitly. for example the `sum`
+    function will use the regular `int` value of zero so that `sum([a, b])` is effectively
+    evaluated as `(0 + a) + b` where `0` is of type `int`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Every domain is at least a ring if not a field and as such is guaranteed to
+    have two elements in particular corresponding to \(1\) and \(0\). The domain object
+    provides domain elements for these as the attributes [`one`](domainsref.html#sympy.polys.domains.domain.Domain.one
+    "sympy.polys.domains.domain.Domain.one") and [`zero`](domainsref.html#sympy.polys.domains.domain.Domain.zero
+    "sympy.polys.domains.domain.Domain.zero"). These are useful for something like
+    Python’s `sum` function which allows to provide an alternative object as the “zero”:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A standard pattern then for performing calculations in a domain is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start with sympy [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr")
+    instances representing expressions.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Choose an appropriate domain that can represent the expressions.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Convert all expressions to domain elements using [`from_sympy()`](domainsref.html#sympy.polys.domains.domain.Domain.from_sympy
+    "sympy.polys.domains.domain.Domain.from_sympy").
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Perform the calculation with the domain elements.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Convert back to [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr")
+    with [`to_sympy()`](domainsref.html#sympy.polys.domains.domain.Domain.to_sympy
+    "sympy.polys.domains.domain.Domain.to_sympy").
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Here is an implementation of the `sum` function that illustrates these steps
+    and sums some integers but performs the calculation using the domain elements
+    rather than standard sympy expressions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Gaussian integers and Gaussian rationals
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The two example domains that we have seen so far are [ZZ](domainsref.html#zz)
+    and [QQ](domainsref.html#qq) representing the integers and the rationals respectively.
+    There are other simple domains such as [ZZ_I](domainsref.html#zz-i) and [QQ_I](domainsref.html#qq-i)
+    representing the [Gaussian integers](https://en.wikipedia.org/wiki/Gaussian_integer)
+    and [Gaussian rationals](https://en.wikipedia.org/wiki/Gaussian_rational). The
+    Gaussian integers are numbers of the form \(a\sqrt{-1} + b\) where \(a\) and \(b\)
+    are integers. The Gaussian rationals are defined similarly except that \(a\) and
+    \(b\) can be rationals. We can use the Gaussian domains like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note the contrast with the way this calculation works in the tree representation
+    where [`expand()`](../core.html#sympy.core.function.expand "sympy.core.function.expand")
+    is needed to get the reduced form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [ZZ_I](domainsref.html#zz-i) and [QQ_I](domainsref.html#qq-i) domains are
+    implemented by the classes [`GaussianIntegerRing`](domainsref.html#sympy.polys.domains.gaussiandomains.GaussianIntegerRing
+    "sympy.polys.domains.gaussiandomains.GaussianIntegerRing") and [`GaussianRationalField`](domainsref.html#sympy.polys.domains.gaussiandomains.GaussianRationalField
+    "sympy.polys.domains.gaussiandomains.GaussianRationalField") and their elements
+    by [`GaussianInteger`](domainsref.html#sympy.polys.domains.gaussiandomains.GaussianInteger
+    "sympy.polys.domains.gaussiandomains.GaussianInteger") and [`GaussianRational`](domainsref.html#sympy.polys.domains.gaussiandomains.GaussianRational
+    "sympy.polys.domains.gaussiandomains.GaussianRational") respectively. The internal
+    representation for an element of [ZZ_I](domainsref.html#zz-i) or [QQ_I](domainsref.html#qq-i)
+    is simply as a pair `(a, b)` of elements of [ZZ](domainsref.html#zz) or [QQ](domainsref.html#qq)
+    respectively. The domain [ZZ_I](domainsref.html#zz-i) is a ring with similar properties
+    to [ZZ](domainsref.html#zz) whereas [QQ_I](domainsref.html#qq-i) is a field much
+    like [QQ](domainsref.html#qq):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Since [QQ_I](domainsref.html#qq-i) is a field division by nonzero elements
+    is always possible whereas in [ZZ_I](domainsref.html#zz-i) we have the important
+    concept of the greatest common divisor (GCD):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finite fields
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'So far we have seen the domains [ZZ](domainsref.html#zz), [QQ](domainsref.html#qq),
+    [ZZ_I](domainsref.html#zz-i), and [QQ_I](domainsref.html#qq-i). There are also
+    domains representing the [Finite fields](https://en.wikipedia.org/wiki/Finite_field)
+    although the implementation of these is incomplete. A finite field [GF(p)](domainsref.html#gf-p)
+    of *prime* order can be constructed with `FF` or `GF`. A domain for the finite
+    field of prime order \(p\) can be constructed with [GF(p)](domainsref.html#gf-p):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is also `FF` as an alias for `GF` (standing for “finite field” and “Galois
+    field” respectively). These are equivalent and both `FF(n)` and `GF(n)` will create
+    a domain which is an instance of [`FiniteField`](domainsref.html#sympy.polys.domains.FiniteField
+    "sympy.polys.domains.FiniteField"). The associated domain elements will be instances
+    of [`PythonFiniteField`](domainsref.html#sympy.polys.domains.PythonFiniteField
+    "sympy.polys.domains.PythonFiniteField") or [`GMPYFiniteField`](domainsref.html#sympy.polys.domains.GMPYFiniteField
+    "sympy.polys.domains.GMPYFiniteField") depending on whether or not `gmpy` is installed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finite fields of order \(p^n\) where \(n \ne 1\) are not implemented. It is
+    possible to use e.g. `GF(6)` or `GF(9)` but the resulting domain is *not* a field.
+    It is just the integers modulo `6` or `9` and therefore has zero divisors and
+    non-invertible elements:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: It would be good to have a proper implementation of prime-power order finite
+    fields but this is not yet available in SymPy (contributions welcome!).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Real and complex fields
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The fields [RR](domainsref.html#rr) and [CC](domainsref.html#cc) are intended
+    mathematically to correspond to the [reals](https://en.wikipedia.org/wiki/Real_number)
+    and the [complex numbers](https://en.wikipedia.org/wiki/Complex_number), \(\mathbb{R}\)
+    and \(\mathbb{C}\) respectively. The implementation of these uses floating point
+    arithmetic. In practice this means that these are the domains that are used to
+    represent expressions containing floats. Elements of [RR](domainsref.html#rr)
+    are instances of the class [`RealElement`](domainsref.html#sympy.polys.domains.mpelements.RealElement
+    "sympy.polys.domains.mpelements.RealElement") and have an `mpf` tuple which is
+    used to represent a float in `mpmath`. Elements of [CC](domainsref.html#cc) are
+    instances of [`ComplexElement`](domainsref.html#sympy.polys.domains.mpelements.ComplexElement
+    "sympy.polys.domains.mpelements.ComplexElement") and have an `mpc` tuple which
+    is a pair of `mpf` tuples representing the real and imaginary parts. See the [mpmath
+    docs](https://mpmath.org/doc/current/technical.html#representation-of-numbers)
+    for more about how floating point numbers are represented:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The use of approximate floating point arithmetic in these domains comes with
+    all of the usual pitfalls. Many algorithms in the [`sympy.polys`](reference.html#module-sympy.polys
+    "sympy.polys") module are fundamentally designed for exact arithmetic making the
+    use of these domains potentially problematic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Since these are implemented using `mpmath` which is a multiprecision library
+    it is possible to create different domains with different working precisions.
+    The default domains [RR](domainsref.html#rr) and [CC](domainsref.html#cc) use
+    53 binary digits of precision much like standard [double precision](https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
+    floating point which corresponds to approximately 15 decimal digits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There is however a bug in the implementation of this so that actually a global
+    precision setting is used by all [`RealElement`](domainsref.html#sympy.polys.domains.mpelements.RealElement
+    "sympy.polys.domains.mpelements.RealElement"). This means that just creating `RR100`
+    above has altered the global precision and we will need to restore it in the doctest
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: (Obviously that should be fixed!)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algebraic number fields
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: An [algebraic extension](https://en.wikipedia.org/wiki/Algebraic_extension)
+    of the rationals \(\mathbb{Q}\) is known as an [algebraic number field](https://en.wikipedia.org/wiki/Algebraic_number_field)
+    and these are implemented in sympy as [QQ<a>](domainsref.html#qq-a). The natural
+    syntax for these would be something like `QQ(sqrt(2))` however `QQ()` is already
+    overloaded as the constructor for elements of [QQ](domainsref.html#qq). These
+    domains are instead created using the [`algebraic_field()`](domainsref.html#sympy.polys.domains.domain.Domain.algebraic_field
+    "sympy.polys.domains.domain.Domain.algebraic_field") method e.g. `QQ.algebraic_field(sqrt(2))`.
+    The resulting domain will be an instance of [`AlgebraicField`](domainsref.html#sympy.polys.domains.AlgebraicField
+    "sympy.polys.domains.AlgebraicField") with elements that are instances of [`ANP`](domainsref.html#sympy.polys.polyclasses.ANP
+    "sympy.polys.polyclasses.ANP").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The printing support for these is less developed but we can use [`to_sympy()`](domainsref.html#sympy.polys.domains.domain.Domain.to_sympy
+    "sympy.polys.domains.domain.Domain.to_sympy") to take advantage of the corresponding
+    [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr") printing support:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The raw printed display immediately shows the internal representation of the
+    elements as [`ANP`](domainsref.html#sympy.polys.polyclasses.ANP "sympy.polys.polyclasses.ANP")
+    instances. The field \(\mathbb{Q}(\sqrt{2})\) consists of numbers of the form
+    \(a\sqrt{2}+b\) where \(a\) and \(b\) are rational numbers. Consequently every
+    number in this field can be represented as a pair `(a, b)` of elements of [QQ](domainsref.html#qq).
+    The domain element stores these two in a list and also stores a list representation
+    of the *minimal polynomial* for the extension element \(\sqrt{2}\). There is a
+    sympy function [`minpoly()`](numberfields.html#sympy.polys.numberfields.minpoly.minpoly
+    "sympy.polys.numberfields.minpoly.minpoly") that can compute the minimal polynomial
+    of any algebraic expression over the rationals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the dense polynomial representation as a list of coefficients this polynomial
+    is represented as `[1, 0, -2]` as seen in the [`ANP`](domainsref.html#sympy.polys.polyclasses.ANP
+    "sympy.polys.polyclasses.ANP") display for the elements of `QQ<sqrt(2)>` above.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is also possible to create an algebraic number field with multiple generators
+    such as \(\mathbb{Q}(\sqrt{2},\sqrt{3})\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here the algebraic extension \(\mathbb{Q}(\sqrt{2},\sqrt{3})\) is converted
+    to the (isomorphic) \(\mathbb{Q}(\sqrt{2}+\sqrt{3})\) with a single generator
+    \(\sqrt{2}+\sqrt{3}\). It is always possible to find a single generator like this
+    due to the [primitive element theorem](https://en.wikipedia.org/wiki/Primitive_element_theorem).
+    There is a sympy function [`primitive_element()`](numberfields.html#sympy.polys.numberfields.subfield.primitive_element
+    "sympy.polys.numberfields.subfield.primitive_element") that can compute the minimal
+    polynomial for a primitive element of an extension:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: The minimal polynomial `x**4 - 10*x**2 + 1` has the dense list representation
+    `[1, 0, -10, 0, 1]` as seen in the [`ANP`](domainsref.html#sympy.polys.polyclasses.ANP
+    "sympy.polys.polyclasses.ANP") output above. What the primitive element theorem
+    means is that all algebraic number fields can be represented as an extension of
+    the rationals by a single generator with some minimal polynomial. Calculations
+    over the algebraic number field only need to take advantage of the minimal polynomial
+    and that makes it possible to compute all arithmetic operations and also to carry
+    out higher level operations like factorisation of polynomials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Polynomial ring domains
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are also domains implemented to represent a polynomial ring like [K[x]](domainsref.html#k-x)
+    which is the domain of polynomials in the generator `x` with coefficients over
+    another domain `K`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All the operations discussed before will work with elements of a polynomial
+    ring:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The internal representation of elements of `K[x]` is different from the way
+    that ordinary sympy ([`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr"))
+    expressions are represented. The [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr")
+    representation of any expression is as a tree e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here the expression is a tree where the top node is an [`Add`](../core.html#sympy.core.add.Add
+    "sympy.core.add.Add") and its children nodes are [`Pow`](../core.html#sympy.core.power.Pow
+    "sympy.core.power.Pow") etc. This tree representation makes it possible to represent
+    equivalent expressions in different ways e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By contrast the domain `ZZ[x]` represents only polynomials and does so by simply
+    storing the non-zero coefficients of the expanded polynomial (the “sparse” polynomial
+    representation). In particular elements of `ZZ[x]` are represented as a Python
+    `dict`. Their type is [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement
+    "sympy.polys.rings.PolyElement") which is a subclass of `dict`. Converting to
+    a normal dict shows the internal representation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This internal form makes it impossible to represent unexpanded multiplications
+    so any multiplication of elements of `ZZ[x]` will always be expanded:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'These same considerations apply to powers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can also construct multivariate polynomial rings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is also possible to construct nested polynomial rings (although it is less
+    efficient). The ring `K[x][y]` is formally equivalent to `K[x,y]` although their
+    implementations in sympy are different:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here the coefficients like `x**2` are instances of [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement
+    "sympy.polys.rings.PolyElement") as well so this is a `dict` where the values
+    are also dicts. The full representation is more like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The multivariate ring domain `ZZ[x,y]` has a more efficient representation
+    as a single flattened `dict`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: The difference in efficiency between these representations grows as the number
+    of generators increases i.e. `ZZ[x,y,z,t,...]` vs `ZZ[x][y][z][t]...`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Old (dense) polynomial rings
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In the last section we saw that the domain representation of a polynomial ring
+    like [K[x]](domainsref.html#k-x) uses a sparse representation of a polynomial
+    as a dict mapping monomial exponents to coefficients. There is also an older version
+    of [K[x]](domainsref.html#k-x) that uses the dense [DMP representation](#dmp-representation).
+    We can create these two versions of [K[x]](domainsref.html#k-x) using [`poly_ring()`](domainsref.html#sympy.polys.domains.domain.Domain.poly_ring
+    "sympy.polys.domains.domain.Domain.poly_ring") and [`old_poly_ring()`](domainsref.html#sympy.polys.domains.domain.Domain.old_poly_ring
+    "sympy.polys.domains.domain.Domain.old_poly_ring") where the syntax `K[x]` is
+    equivalent to `K.poly_ring(x)`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The internal representation of the old polynomial ring domain is the [`DMP`](domainsref.html#sympy.polys.polyclasses.DMP
+    "sympy.polys.polyclasses.DMP") representation as a list of (lists of) coefficients:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: The most notable use of the [`DMP`](domainsref.html#sympy.polys.polyclasses.DMP
+    "sympy.polys.polyclasses.DMP") representation of polynomials is as the internal
+    representation used by [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    (this is discussed later in this page of the docs).
+  prefs: []
+  type: TYPE_NORMAL
+- en: PolyRing vs PolynomialRing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You might just want to perform calculations in some particular polynomial ring
+    without being concerned with implementing something that works for arbitrary domains.
+    In that case you can construct the ring more directly with the [`ring()`](domainsref.html#sympy.polys.rings.ring
+    "sympy.polys.rings.ring") function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: The object `K` here represents the ring and is an instance of [`PolyRing`](domainsref.html#sympy.polys.rings.PolyRing
+    "sympy.polys.rings.PolyRing") but is not a **polys domain** (it is not an instance
+    of a subclass of [`Domain`](domainsref.html#sympy.polys.domains.domain.Domain
+    "sympy.polys.domains.domain.Domain") so it can not be used with [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly")). In this way the implementation of polynomial rings
+    that is used in the domain system can be used independently of the domain system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The purpose of the domain system is to provide a unified interface for working
+    with and converting between different representations of expressions. To make
+    the [`PolyRing`](domainsref.html#sympy.polys.rings.PolyRing "sympy.polys.rings.PolyRing")
+    implementation usable in that context the [`PolynomialRing`](domainsref.html#sympy.polys.domains.PolynomialRing
+    "sympy.polys.domains.PolynomialRing") class is a wrapper around the [`PolyRing`](domainsref.html#sympy.polys.rings.PolyRing
+    "sympy.polys.rings.PolyRing") class that provides the interface expected in the
+    domain system. That makes this implementation of polynomial rings usable as part
+    of the broader codebase that is designed to work with expressions from different
+    domains. The domain for polynomial rings is a distinct object from the ring returned
+    by [`ring()`](domainsref.html#sympy.polys.rings.ring "sympy.polys.rings.ring")
+    although both have the same elements:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rational function fields
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Some domains are classified as fields and others are not. The principal difference
+    between a field and a non-field domain is that in a field it is always possible
+    to divide any element by any nonzero element. It is usually possible to convert
+    any domain to a field that contains that domain with the [`get_field()`](domainsref.html#sympy.polys.domains.domain.Domain.get_field
+    "sympy.polys.domains.domain.Domain.get_field") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: This introduces a new kind of domain [K(x)](domainsref.html#id11) representing
+    a rational function field in the generator `x` over another domain `K`. It is
+    not possible to construct the domain `QQ(x)` with the `()` syntax so the easiest
+    ways to create it are using the domain methods [`frac_field()`](domainsref.html#sympy.polys.domains.domain.Domain.frac_field
+    "sympy.polys.domains.domain.Domain.frac_field") (`QQ.frac_field(x)`) or [`get_field()`](domainsref.html#sympy.polys.domains.domain.Domain.get_field
+    "sympy.polys.domains.domain.Domain.get_field") (`QQ[x].get_field()`). The [`frac_field()`](domainsref.html#sympy.polys.domains.domain.Domain.frac_field
+    "sympy.polys.domains.domain.Domain.frac_field") method is the more direct approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The rational function field [K(x)](domainsref.html#id11) is an instance of
+    [`RationalField`](domainsref.html#sympy.polys.domains.RationalField "sympy.polys.domains.RationalField").
+    This domain represents functions of the form \(p(x) / q(x)\) for polynomials \(p\)
+    and \(q\). The domain elements are represented as a pair of polynomials in [K[x]](domainsref.html#k-x):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Cancellation between the numerator and denominator is automatic in this field:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computing this cancellation can be slow which makes rational function fields
+    potentially slower than polynomial rings or algebraic fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Just like in the case of polynomial rings there is both a new (sparse) and
+    old (dense) version of fraction fields:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Also just like in the case of polynomials rings the implementation of rational
+    function fields can be used independently of the domain system:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here `K` is an instance of [`FracField`](domainsref.html#sympy.polys.fields.FracField
+    "sympy.polys.fields.FracField") rather than [`RationalField`](domainsref.html#sympy.polys.domains.RationalField
+    "sympy.polys.domains.RationalField") as it would be for the domain `ZZ(x,y)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expression domain
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The final domain to consider is the “expression domain” which is known as [EX](domainsref.html#ex).
+    Expressions that can not be represented using the other domains can be always
+    represented using the expression domain. An element of [EX](domainsref.html#ex)
+    is actually just a wrapper around a [`Expr`](../core.html#sympy.core.expr.Expr
+    "sympy.core.expr.Expr") instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: For other domains the domain representation of expressions is usually more efficient
+    than the tree representation used by [`Expr`](../core.html#sympy.core.expr.Expr
+    "sympy.core.expr.Expr"). In [EX](domainsref.html#ex) the internal representation
+    is [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr") so it is
+    clearly not more efficient. The purpose of the [EX](domainsref.html#ex) domain
+    is to be able to wrap up arbitrary expressions in an interface that is consistent
+    with the other domains. The [EX](domainsref.html#ex) domain is used as a fallback
+    when an appropriate domain can not be found. Although this does not offer any
+    particular efficiency it does allow the algorithms that are implemented to work
+    over arbitrary domains to be usable when working with expressions that do not
+    have an appropriate domain representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Choosing a domain
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In the workflow described above the idea is to start with some sympy expressions,
+    choose a domain and convert all the expressions into that domain in order to perform
+    some calculation. The obvious question that arises is how to choose an appropriate
+    domain to represent some sympy expressions. For this there is a function [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain") which takes a list of expressions
+    and will choose a domain and convert all of the expressions to that domain:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example we see that the two integers `3` and `2` can be represented
+    in the domain [ZZ](domainsref.html#zz). The expressions have been converted to
+    elements of that domain which in this case means the `int` type rather than instances
+    of [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr"). It is not
+    necessary to explicitly create [`Expr`](../core.html#sympy.core.expr.Expr "sympy.core.expr.Expr")
+    instances when the inputs can be sympified so e.g. `construct_domain([3, 2])`
+    would give the same output as above.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given more complicated inputs [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain") will choose more complicated domains:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: If any noninteger rational numbers are found in the inputs then the ground domain
+    will be [QQ](domainsref.html#qq) rather than [ZZ](domainsref.html#zz). If any
+    symbol is found in the inputs then a [`PolynomialRing`](domainsref.html#sympy.polys.domains.PolynomialRing
+    "sympy.polys.domains.PolynomialRing") will be created. A multivariate polynomial
+    ring such as `QQ[x,y]` can also be created if there are multiple symbols in the
+    inputs. If any symbols appear in the denominators then a [`RationalField`](domainsref.html#sympy.polys.domains.RationalField
+    "sympy.polys.domains.RationalField") like `QQ(x)` will be created instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some of the domains above are fields and others are (non-field) rings. In some
+    contexts it is necessary to have a field domain so that division is possible and
+    for this [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain") has an option `field=True` which will
+    force the construction of a field domain even if the expressions can all be represented
+    in a non-field ring:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain") will not construct an algebraic extension
+    field and will instead use the [EX](domainsref.html#ex) domain ([`ExpressionDomain`](domainsref.html#sympy.polys.domains.ExpressionDomain
+    "sympy.polys.domains.ExpressionDomain")). The keyword argument `extension=True`
+    can be used to construct an [`AlgebraicField`](domainsref.html#sympy.polys.domains.AlgebraicField
+    "sympy.polys.domains.AlgebraicField") if the inputs are irrational but algebraic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When there are algebraically independent transcendentals in the inputs a [`PolynomialRing`](domainsref.html#sympy.polys.domains.PolynomialRing
+    "sympy.polys.domains.PolynomialRing") or [`RationalField`](domainsref.html#sympy.polys.domains.RationalField
+    "sympy.polys.domains.RationalField") will be constructed treating those transcendentals
+    as generators:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However if there is a possibility that the inputs are not algebraically independent
+    then the domain will be [EX](domainsref.html#ex):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here `sin(x)` and `cos(x)` are not algebraically independent since `sin(x)**2
+    + cos(x)**2 = 1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Converting elements between different domains
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'It is often useful to combine calculations performed over different domains.
+    However just as it is important to avoid mixing domain elements with normal sympy
+    expressions and other Python types it is also important to avoid mixing elements
+    from different domains. The [`convert_from()`](domainsref.html#sympy.polys.domains.domain.Domain.convert_from
+    "sympy.polys.domains.domain.Domain.convert_from") method is used to convert elements
+    from one domain into elements of another domain:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The [`convert()`](domainsref.html#sympy.polys.domains.domain.Domain.convert
+    "sympy.polys.domains.domain.Domain.convert") method can be called without specifying
+    the source domain as the second argument e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This works because [`convert()`](domainsref.html#sympy.polys.domains.domain.Domain.convert
+    "sympy.polys.domains.domain.Domain.convert") can check the type of `ZZ(2)` and
+    can try to work out what domain ([ZZ](domainsref.html#zz)) it is an element of.
+    Certain domains like [ZZ](domainsref.html#zz) and [QQ](domainsref.html#qq) are
+    treated as special cases to make this work. Elements of more complicated domains
+    are instances of subclasses of [`DomainElement`](domainsref.html#sympy.polys.domains.domainelement.DomainElement
+    "sympy.polys.domains.domainelement.DomainElement") which has a [`parent()`](domainsref.html#sympy.polys.domains.domainelement.DomainElement.parent
+    "sympy.polys.domains.domainelement.DomainElement.parent") method that can identify
+    the domain that the element belongs to. For example in the polynomial ring `ZZ[x]`
+    we have:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is more efficient though to call [`convert_from()`](domainsref.html#sympy.polys.domains.domain.Domain.convert_from
+    "sympy.polys.domains.domain.Domain.convert_from") with the source domain specified
+    as the second argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Unifying domains
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When we want to combine elements from two different domains and perform mixed
+    calculations with them we need to
+  prefs: []
+  type: TYPE_NORMAL
+- en: Choose a new domain that can represent all elements of both.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Convert all elements to the new domain.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Perform the calculation in the new domain.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The key question arising from point 1\. is how to choose a domain that can
+    represent the elements of both domains. For this there is the [`unify()`](domainsref.html#sympy.polys.domains.domain.Domain.unify
+    "sympy.polys.domains.domain.Domain.unify") method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`unify()`](domainsref.html#sympy.polys.domains.domain.Domain.unify "sympy.polys.domains.domain.Domain.unify")
+    method will find a domain that encompasses both domains so in this example `ZZ.unify(QQ)`
+    gives [QQ](domainsref.html#qq) because every element of [ZZ](domainsref.html#zz)
+    can be represented as an element of [QQ](domainsref.html#qq). This means that
+    all inputs (`x1` and `y2`) can be converted to the elements of the common domain
+    `K3` (as `x3` and `y3`). Once in the common domain we can safely use arithmetic
+    operations like `+`. In this example one domain is a superset of the other and
+    we see that `K1.unify(K2) == K2` so it is not actually necessary to convert `y2`.
+    In general though `K1.unify(K2)` can give a new domain that is not equal to either
+    `K1` or `K2`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The [`unify()`](domainsref.html#sympy.polys.domains.domain.Domain.unify "sympy.polys.domains.domain.Domain.unify")
+    method understands how to combine different polynomial ring domains and how to
+    unify the base domain:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is also possible to unify algebraic fields and rational function fields
+    as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: Internals of a Poly
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We are now in a position to understand how the [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") class works internally. This is the public interface
+    of [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is the internal implementation of [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: The internal representation of a [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") instance is an instance of [`DMP`](domainsref.html#sympy.polys.polyclasses.DMP
+    "sympy.polys.polyclasses.DMP") which is the class used for domain elements in
+    the old polynomial ring domain [`old_poly_ring()`](domainsref.html#sympy.polys.domains.domain.Domain.old_poly_ring
+    "sympy.polys.domains.domain.Domain.old_poly_ring"). This represents the polynomial
+    as a list of coefficients which are themselves elements of a domain and keeps
+    a reference to their domain ([ZZ](domainsref.html#zz) in this example).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Choosing a domain for a Poly
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'If the domain is not specified for the [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") constructor then it is inferred using [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain"). Arguments like `field=True` are passed
+    along to [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is also possible to use the extension argument to specify generators of
+    an extension even if no extension is required to represent the coefficients although
+    this does not work when using [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain") directly. A list of extension elements
+    will be passed to [`primitive_element()`](numberfields.html#sympy.polys.numberfields.subfield.primitive_element
+    "sympy.polys.numberfields.subfield.primitive_element") to create an appropriate
+    [`AlgebraicField`](domainsref.html#sympy.polys.domains.AlgebraicField "sympy.polys.domains.AlgebraicField")
+    domain:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: (Perhaps [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain") should do the same as [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") here…)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Choosing generators
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'If there are symbols other than the generators then a polynomial ring or rational
+    function field domain will be created. The domain used for the coefficients in
+    this case is the sparse (“new”) polynomial ring:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: What we have here is a strange hybrid of dense and sparse implementations. The
+    [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    instance considers itself to be an univariate polynomial in the generator `x`
+    but with coefficients from the domain `ZZ[y,z]`. The internal representation of
+    the [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    is a list of coefficients in the “dense univariate polynomial” (DUP) format. However
+    each coefficient is implemented as a sparse polynomial in `y` and `z`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we make `x`, `y` and `z` all be generators for the [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") then we get a fully dense DMP list of lists of lists
+    representation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On the other hand we can make a [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") with a fully sparse representation by choosing a
+    generator that is not in the expression at all:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If no generators are provided to the [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") constructor then it will attempt to choose generators
+    so that the expression is polynomial in those. In the common case that the expression
+    is a polynomial expression in some symbols then those symbols will be taken as
+    generators. However other non-symbol expressions can also be taken as generators:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Algebraically dependent generators
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Taking `exp(x)` or `pi` as generators for a [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly") or for its polynomial ring domain is mathematically
+    valid because these objects are transcendental and so the ring extension containing
+    them is isomorphic to a polynomial ring. Since `x` and `exp(x)` are algebraically
+    independent it is also valid to use both as generators for the same [`Poly`](reference.html#sympy.polys.polytools.Poly
+    "sympy.polys.polytools.Poly"). However some other combinations of generators are
+    invalid such as `x` and `sqrt(x)` or `sin(x)` and `cos(x)`. These examples are
+    invalid because the generators are not algebraically independent (e.g. `sqrt(x)**2
+    = x` and `sin(x)**2 + cos(x)**2 = 1`). The implementation is not able to detect
+    these algebraic relationships though:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Calculations with a [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    such as this are unreliable because zero-testing will not work properly in this
+    implementation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This aspect of [`Poly`](reference.html#sympy.polys.polytools.Poly "sympy.polys.polytools.Poly")
+    could be improved by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expanding the domain system with new domains that can represent more classes
+    of algebraic extension.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Improving the detection of algebraic dependencies in [`construct_domain()`](reference.html#sympy.polys.constructor.construct_domain
+    "sympy.polys.constructor.construct_domain").
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Improving the automatic selection of generators.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Examples of the above are that it would be useful to have a domain that can
+    represent more general algebraic extensions ([`AlgebraicField`](domainsref.html#sympy.polys.domains.AlgebraicField
+    "sympy.polys.domains.AlgebraicField") is only for extensions of [QQ](domainsref.html#qq)).
+    Improving the detection of algebraic dependencies is harder but at least common
+    cases like `sin(x)` and `cos(x)` could be handled. When choosing generators it
+    should be possible to recognise that `sqrt(x)` can be the only generator for `x
+    + sqrt(x)`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE

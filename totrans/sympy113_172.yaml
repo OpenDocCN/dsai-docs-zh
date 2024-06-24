@@ -1,0 +1,358 @@
+- en: Linearization in Physics/Mechanics
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/physics/mechanics/linearize.html](https://docs.sympy.org/latest/modules/physics/mechanics/linearize.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics "sympy.physics.mechanics")
+    includes methods for linearizing the generated equations of motion (EOM) about
+    an operating point (also known as the trim condition). Note that this operating
+    point doesn’t have to be an equilibrium position, it just needs to satisfy the
+    equations of motion.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linearization is accomplished by taking the first order Taylor expansion of
+    the EOM about the operating point. When there are no dependent coordinates or
+    speeds this is simply the jacobian of the right hand side about \(q\) and \(u\).
+    However, in the presence of constraints more care needs to be taken. The linearization
+    methods provided here handle these constraints correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Background
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In [`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics "sympy.physics.mechanics")
+    we assume all systems can be represented in the following general form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}f_{c}(q, t) &= 0_{l \times 1}\\ f_{v}(q, u, t) &= 0_{m \times
+    1}\\ f_{a}(q, \dot{q}, u, \dot{u}, t) &= 0_{m \times 1}\\ f_{0}(q, \dot{q}, t)
+    + f_{1}(q, u, t) &= 0_{n \times 1}\\ f_{2}(q, u, \dot{u}, t) + f_{3}(q, \dot{q},
+    u, r, t) + f_{4}(q, \lambda, t) &= 0_{(o-m+k) \times 1}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}q, \dot{q} & \in \mathbb{R}^n\\ u, \dot{u} & \in \mathbb{R}^o\\
+    r & \in \mathbb{R}^s\\ \lambda & \in \mathbb{R}^k\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this form,
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(f_{c}\) represents the configuration constraint equations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(f_{v}\) represents the velocity constraint equations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(f_{a}\) represents the acceleration constraint equations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(f_{0}\) and \(f_{1}\) form the kinematic differential equations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(f_{2}\), \(f_{3}\), and \(f_{4}\) form the dynamic differential equations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(q\) and \(\dot{q}\) are the generalized coordinates and their derivatives
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(u\) and \(\dot{u}\) are the generalized speeds and their derivatives
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(r\) is the system inputs
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(\lambda\) is the Lagrange multipliers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This generalized form is held inside the `Linearizer` class, which performs
+    the actual linearization. Both `KanesMethod` and `LagrangesMethod` objects have
+    methods for forming the linearizer using the `to_linearizer` class method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once the system is coerced into the generalized form, the linearized EOM can
+    be solved for. The methods provided in [`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics
+    "sympy.physics.mechanics") allow for two different forms of the linearized EOM:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(M\), \(A\), and \(B\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this form, the forcing matrix is linearized into two separate matrices \(A\)
+    and \(B\). This is the default form of the linearized EOM. The resulting equations
+    are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}M \begin{bmatrix} \delta \dot{q} \\ \delta \dot{u} \\ \delta
+    \lambda \end{bmatrix} = A \begin{bmatrix} \delta q_i \\ \delta u_i \end{bmatrix}
+    + B \begin{bmatrix} \delta r \end{bmatrix}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}M &\in \mathbb{R}^{(n+o+k) \times (n+o+k)}\\ A &\in \mathbb{R}^{(n+o+k)
+    \times (n-l+o-m)}\\ B &\in \mathbb{R}^{(n+o+k) \times s}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that \(q_i\) and \(u_i\) are just the independent coordinates and speeds,
+    while \(q\) and \(u\) contains both the independent and dependent coordinates
+    and speeds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(A\) and \(B\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this form, the linearized EOM are brought into explicit first order form,
+    in terms of just the independent coordinates and speeds. This form is often used
+    in stability analysis or control theory. The resulting equations are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\begin{bmatrix} \delta \dot{q_i} \\ \delta \dot{u_i} \end{bmatrix}
+    = A \begin{bmatrix} \delta q_i \\ \delta u_i \end{bmatrix} + B \begin{bmatrix}
+    \delta r \end{bmatrix}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}A &\in \mathbb{R}^{(n-l+o-m) \times (n-l+o-m)}\\ B &\in \mathbb{R}^{(n-l+o-m)
+    \times s}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use this form set `A_and_B=True` in the `linearize` class method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linearizing Kane’s Equations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'After initializing the `KanesMethod` object and forming \(F_r\) and \(F_r^*\)
+    using the `kanes_equations` class method, linearization can be accomplished in
+    a couple ways. The different methods will be demonstrated with a simple pendulum
+    system:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '1\. Using the `Linearizer` class directly:'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A linearizer object can be created using the `to_linearizer` class method. This
+    coerces the representation found in the `KanesMethod` object into the generalized
+    form described above. As the independent and dependent coordinates and speeds
+    are specified upon creation of the KanesMethod object, there is no need to specify
+    them here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The linearized EOM can then be formed with the `linearize` method of the `Linearizer`
+    object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Alternatively, the \(A\) and \(B\) form can be generated instead by specifying
+    `A_and_B=True`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An operating point can also be specified as a dictionary or an iterable of
+    dictionaries. This will evaluate the linearized form at the specified point before
+    returning the matrices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that the same effect can be had by applying `msubs` to the matrices generated
+    without the `op_point` kwarg:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sometimes the returned matrices may not be in the most simplified form. Simplification
+    can be performed after the fact, or the `Linearizer` object can be made to perform
+    simplification internally by setting the `simplify` kwarg to `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2\. Using the `linearize` class method:'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The `linearize` method of the `KanesMethod` class is provided as a nice wrapper
+    that calls `to_linearizer` internally, performs the linearization, and returns
+    the result. Note that all the kwargs available in the `linearize` method described
+    above are also available here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The additional output `inp_vec` is a vector containing all found `dynamicsymbols`
+    not included in the generalized coordinate or speed vectors. These are assumed
+    to be inputs to the system, forming the \(r\) vector described in the background
+    above. In this example there are no inputs, so the vector is empty:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Linearizing Lagrange’s Equations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Linearization of Lagrange’s equations proceeds much the same as that of Kane’s
+    equations. As before, the process will be demonstrated with a simple pendulum
+    system:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '1\. Using the `Linearizer` class directly:'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A `Linearizer` object can be formed from a `LagrangesMethod` object using the
+    `to_linearizer` class method. The only difference between this process and that
+    of the `KanesMethod` class is that the `LagrangesMethod` object doesn’t already
+    have its independent and dependent coordinates and speeds specified internally.
+    These must be specified in the call to `to_linearizer`. In this example there
+    are no dependent coordinates and speeds, but if there were they would be included
+    in the `q_dep` and `qd_dep` kwargs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once in this form, everything is the same as it was before with the `KanesMethod`
+    example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '2\. Using the `linearize` class method:'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Similar to `KanesMethod`, the `LagrangesMethod` class also provides a `linearize`
+    method as a nice wrapper that calls `to_linearizer` internally, performs the linearization,
+    and returns the result. As before, the only difference is that the independent
+    and dependent coordinates and speeds must be specified in the call as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Potential Issues
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: While the `Linearizer` class *should* be able to linearize all systems, there
+    are some potential issues that could occur. These are discussed below, along with
+    some troubleshooting tips for solving them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Symbolic linearization with `A_and_B=True` is slow
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'This could be due to a number of things, but the most likely one is that solving
+    a large linear system symbolically is an expensive operation. Specifying an operating
+    point will reduce the expression size and speed this up. If a purely symbolic
+    solution is desired though (for application of many operating points at a later
+    period, for example) a way to get around this is to evaluate with `A_and_B=False`,
+    and then solve manually after applying the operating point:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: The fewer symbols in `A` and `M` before solving, the faster this solution will
+    be. Thus, for large expressions, it may be to your benefit to delay conversion
+    to the \(A\) and \(B\) form until most symbols are subbed in for their numeric
+    values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2\. The linearized form has `nan`, `zoo`, or `oo` as matrix elements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are two potential causes for this. The first (and the one you should check
+    first) is that some choices of dependent coordinates will result in singularities
+    at certain operating points. Coordinate partitioning in a systemic manner to avoid
+    this is beyond the scope of this guide; see [[Blajer1994]](reference.html#blajer1994)
+    for more information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The other potential cause for this is that the matrices may not have been in
+    the most reduced form before the operating point was substituted in. A simple
+    example of this behavior is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that if this expression was simplified before substitution, the correct
+    value results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: A good way of avoiding this hasn’t been found yet. For expressions of reasonable
+    size, using `msubs` with `smart=True` will apply an algorithm that tries to avoid
+    these conditions. For large expressions though this is extremely time consuming.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Further Examples
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The pendulum example used above was simple, but didn’t include any dependent
+    coordinates or speeds. For a more thorough example, the same pendulum was linearized
+    with dependent coordinates using both Kane’s and Lagrange’s methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Nonminimal Coordinates Pendulum](examples/lin_pend_nonmin_example.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Kane’s Method](examples/lin_pend_nonmin_example.html#kane-s-method)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Lagrange’s Method](examples/lin_pend_nonmin_example.html#lagrange-s-method)'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL

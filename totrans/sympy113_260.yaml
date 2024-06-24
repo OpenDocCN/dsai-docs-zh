@@ -1,0 +1,3530 @@
+- en: Printing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/printing.html](https://docs.sympy.org/latest/modules/printing.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: See the [Printing](../tutorials/intro-tutorial/printing.html#tutorial-printing)
+    section in tutorial for introduction into printing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This guide documents the printing system in SymPy and how it works internally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Printer Class'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Printing subsystem driver
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'SymPy’s printing system works the following way: Any expression can be passed
+    to a designated Printer who then is responsible to return an adequate representation
+    of that expression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The basic concept is the following:**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let the object print itself if it knows how.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Take the best fitting method defined in the printer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As fall-back use the emptyPrinter method for the printer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Which Method is Responsible for Printing?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The whole printing process is started by calling `.doprint(expr)` on the printer
+    which you want to use. This method looks for an appropriate method which can print
+    the given expression in the given style that the printer defines. While looking
+    for the method, it follows these steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Let the object print itself if it knows how.**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The printer looks for a specific method in every object. The name of that method
+    depends on the specific printer and is defined under `Printer.printmethod`. For
+    example, StrPrinter calls `_sympystr` and LatexPrinter calls `_latex`. Look at
+    the documentation of the printer that you want to use. The name of the method
+    is specified there.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: This was the original way of doing printing in sympy. Every class had its own
+    latex, mathml, str and repr methods, but it turned out that it is hard to produce
+    a high quality printer, if all the methods are spread out that far. Therefore
+    all printing code was combined into the different printers, which works great
+    for built-in SymPy objects, but not that good for user defined classes where it
+    is inconvenient to patch the printers.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**Take the best fitting method defined in the printer.**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The printer loops through expr classes (class + its bases), and tries to dispatch
+    the work to `_print_<EXPR_CLASS>`
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'e.g., suppose we have the following class hierarchy:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'then, for `expr=Rational(...)`, the Printer will try to call printer methods
+    in the order as shown in the figure below:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: if `._print_Rational` method exists in the printer, then it is called, and the
+    result is returned back. Otherwise, the printer tries to call `._print_Number`
+    and so on.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**As a fall-back use the emptyPrinter method for the printer.**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As fall-back `self.emptyPrinter` will be called with the expression. If not
+    defined in the Printer subclass this will be the same as `str(expr)`.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '### Example of Custom Printer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the example below, we have a printer which prints the derivative of a function
+    in a shorter form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output of the code above is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]  ### Example of Custom Printing Method'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the example below, the latex printing of the modulo operator is modified.
+    This is done by overriding the method `_latex` of `Mod`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Comparing the output of our custom operator to the builtin one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Common mistakes
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'It’s important to always use `self._print(obj)` to print subcomponents of an
+    expression when customizing a printer. Mistakes include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using `self.doprint(obj)` instead:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This fails when the `mode` argument is passed to the printer:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Using `str(obj)` instead:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This fails on nested objects:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Using `LatexPrinter()._print(obj)` instead.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This causes all the settings to be discarded in the subobjects. As an example,
+    the `full_prec` setting which shows floats to full precision is ignored:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The main class responsible for printing is `Printer` (see also its [source
+    code](https://github.com/sympy/sympy/blob/master/sympy/printing/printer.py)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generic printer
+  prefs: []
+  type: TYPE_NORMAL
+- en: Its job is to provide infrastructure for implementing new printers easily.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you want to define your custom Printer or your custom printing method for
+    your custom class then see the example above: [printer_example](#printer-example)
+    .'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Internal dispatcher
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Tries the following concepts to print an expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let the object print itself if it knows how.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Take the best fitting method defined in the printer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As fall-back use the emptyPrinter method for the printer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns printer’s representation for expr (as a string)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Set system-wide printing settings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PrettyPrinter Class
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The pretty printing subsystem is implemented in `sympy.printing.pretty.pretty`
+    by the `PrettyPrinter` class deriving from `Printer`. It relies on the modules
+    `sympy.printing.pretty.stringPict`, and `sympy.printing.pretty.pretty_symbology`
+    for rendering nice-looking formulas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The module `stringPict` provides a base class `stringPict` and a derived class
+    `prettyForm` that ease the creation and manipulation of formulas that span across
+    multiple lines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The module `pretty_symbology` provides primitives to construct 2D shapes (hline,
+    vline, etc) together with a technique to use unicode automatically when possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Printer, which converts an expression into 2D ASCII-art figure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a string containing the prettified form of expr.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For information on keyword arguments see pretty_print function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints expr in pretty form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: pprint is just a shortcut for this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expression to print.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**wrap_line** : bool, optional (default=True)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Line wrapping enabled/disabled.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**num_columns** : int or None, optional (default=None)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Number of columns before line breaking (default to None which reads the terminal
+    width), useful when using SymPy without terminal.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**use_unicode** : bool or None, optional (default=None)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use unicode characters, such as the Greek letter pi instead of the string pi.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**full_prec** : bool or string, optional (default=”auto”)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use full precision.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**order** : bool or string, optional (default=None)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Set to ‘none’ for long expressions if slow; default is None.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**use_unicode_sqrt_char** : bool, optional (default=True)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use compact single-character square root symbol (when unambiguous).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**root_notation** : bool, optional (default=True)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Set to ‘False’ for printing exponents of the form 1/n in fractional form. By
+    default exponent is printed in root form.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**mat_symbol_style** : string, optional (default=”plain”)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Set to “bold” for printing MatrixSymbols using a bold mathematical symbol face.
+    By default the standard face is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**imaginary_unit** : string, optional (default=”i”)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Letter to use for imaginary unit when use_unicode is True. Can be “i” (default)
+    or “j”.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## C code printers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This class implements C code printing, i.e. it converts Python expressions to
+    strings of C code (see also `C89CodePrinter`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Usage:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: A printer to convert Python expressions to strings of C code
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accepts a string of code or a list of code lines
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts an expr to a string of c code
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When given, the argument is used as the name of the variable to which the expression
+    is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
+    is helpful in case of line-wrapping, or for expressions that generate multi-line
+    statements.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**standard** : str, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: String specifying the standard. If your compiler supports a more modern standard
+    you may set this to ‘c99’ to allow the printer to use more math functions. [default=’c89’].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The precision for numbers such as pi [default=17].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**user_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where the keys are string representations of either `FunctionClass`
+    or `UndefinedFunction` instances and the values are their desired C string representations.
+    Alternatively, the dictionary value can be a list of tuples i.e. [(argument_test,
+    cfunction_string)] or [(argument_test, cfunction_formater)]. See below for examples.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dereference** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An iterable of symbols that should be dereferenced in the printed code expression.
+    These would be values passed by address to the function. For example, if `dereference=[a]`,
+    the resulting code would print `(*a)` instead of `a`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**human** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, the result is a single string that may contain some constant declarations
+    for the number symbols. If False, the same information is returned in a tuple
+    of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contract: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
+    the corresponding nested loops over indices are generated. Setting contract=False
+    will not generate loops, instead the user is responsible to provide values for
+    the indices in the code. [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Simple custom printing can be defined for certain types by passing a dictionary
+    of {“type” : “function”} to the `user_functions` kwarg. Alternatively, the dictionary
+    value can be a list of tuples i.e. [(argument_test, cfunction_string)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or if the C-function takes a subset of the original arguments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
+    variable is provided an if statement is created, otherwise the ternary operator
+    is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
+    True)` then an error will be thrown. This is to prevent generating an expression
+    that may not evaluate to anything.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Support for loops is provided through `Indexed` types. With `contract=True`
+    these expressions will be turned into loops, whereas `contract=False` will just
+    print the assignment expression that should be looped over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
+    be provided to `assign_to`. Note that any expression that can be generated normally
+    can also exist inside a Matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Prints C representation of the given expression.  ## C++ code printers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This module contains printers for C++ code, i.e. functions to convert SymPy
+    expressions to strings of C++ code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Usage:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'C++ equivalent of [`ccode()`](#sympy.printing.c.ccode "sympy.printing.c.ccode").  ##
+    RCodePrinter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This class implements R code printing (i.e. it converts Python expressions to
+    strings of R code).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Usage:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: A printer to convert SymPy expressions to strings of R code
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accepts a string of code or a list of code lines
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts an expr to a string of r code
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When given, the argument is used as the name of the variable to which the expression
+    is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
+    is helpful in case of line-wrapping, or for expressions that generate multi-line
+    statements.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The precision for numbers such as pi [default=15].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**user_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where the keys are string representations of either `FunctionClass`
+    or `UndefinedFunction` instances and the values are their desired R string representations.
+    Alternatively, the dictionary value can be a list of tuples i.e. [(argument_test,
+    rfunction_string)] or [(argument_test, rfunction_formater)]. See below for examples.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**human** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, the result is a single string that may contain some constant declarations
+    for the number symbols. If False, the same information is returned in a tuple
+    of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contract: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
+    the corresponding nested loops over indices are generated. Setting contract=False
+    will not generate loops, instead the user is responsible to provide values for
+    the indices in the code. [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Simple custom printing can be defined for certain types by passing a dictionary
+    of {“type” : “function”} to the `user_functions` kwarg. Alternatively, the dictionary
+    value can be a list of tuples i.e. [(argument_test, cfunction_string)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'or if the R-function takes a subset of the original arguments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
+    variable is provided an if statement is created, otherwise the ternary operator
+    is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
+    True)` then an error will be thrown. This is to prevent generating an expression
+    that may not evaluate to anything.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Support for loops is provided through `Indexed` types. With `contract=True`
+    these expressions will be turned into loops, whereas `contract=False` will just
+    print the assignment expression that should be looped over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
+    be provided to `assign_to`. Note that any expression that can be generated normally
+    can also exist inside a Matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints R representation of the given expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fortran Printing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `fcode` function translates a sympy expression into Fortran code. The main
+    purpose is to take away the burden of manually translating long mathematical expressions.
+    Therefore the resulting expression should also require no (or very little) manual
+    tweaking to make it compilable. The optional arguments of `fcode` can be used
+    to fine-tune the behavior of `fcode` in such a way that manual changes in the
+    result are no longer needed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts an expr to a string of fortran code
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When given, the argument is used as the name of the variable to which the expression
+    is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
+    is helpful in case of line-wrapping, or for expressions that generate multi-line
+    statements.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: DEPRECATED. Use type_mappings instead. The precision for numbers such as pi
+    [default=17].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**user_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `FunctionClass` instances and values are their string
+    representations. Alternatively, the dictionary value can be a list of tuples i.e.
+    [(argument_test, cfunction_string)]. See below for examples.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**human** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, the result is a single string that may contain some constant declarations
+    for the number symbols. If False, the same information is returned in a tuple
+    of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contract: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
+    the corresponding nested loops over indices are generated. Setting contract=False
+    will not generate loops, instead the user is responsible to provide values for
+    the indices in the code. [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**source_format** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The source format can be either ‘fixed’ or ‘free’. [default=’fixed’]
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**standard** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Fortran standard to be followed. This is specified as an integer. Acceptable
+    standards are 66, 77, 90, 95, 2003, and 2008\. Default is 77. Note that currently
+    the only distinction internally is between standards before 95, and those 95 and
+    after. This may change later as more features are added.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**name_mangling** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, then the variables that would become identical in case-insensitive
+    Fortran are mangled by appending different number of `_` at the end. If False,
+    SymPy Will not interfere with naming of variables. [default=True]
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Custom printing can be defined for certain types by passing a dictionary of
+    “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
+    value can be a list of tuples i.e. [(argument_test, cfunction_string)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
+    variable is provided an if statement is created, otherwise the ternary operator
+    is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
+    True)` then an error will be thrown. This is to prevent generating an expression
+    that may not evaluate to anything.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Support for loops is provided through `Indexed` types. With `contract=True`
+    these expressions will be turned into loops, whereas `contract=False` will just
+    print the assignment expression that should be looped over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
+    be provided to `assign_to`. Note that any expression that can be generated normally
+    can also exist inside a Matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints the Fortran representation of the given expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See fcode for the meaning of the optional arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: A printer to convert SymPy expressions to strings of Fortran code
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accepts a string of code or a list of code lines
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Two basic examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An example where line wrapping is required:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: In case of line wrapping, it is handy to include the assignment so that lines
+    are wrapped properly when the assignment part is added.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For piecewise functions, the `assign_to` option is mandatory:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that by default only top-level piecewise functions are supported due to
+    the lack of a conditional operator in Fortran 77\. Inline conditionals can be
+    supported using the `merge` function introduced in Fortran 95 by setting of the
+    kwarg `standard=95`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: Loops are generated if there are Indexed objects in the expression. This also
+    requires use of the assign_to option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: Repeated indices in an expression with Indexed objects are interpreted as summation.
+    For instance, code for the trace of a matrix can be generated with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, number symbols such as `pi` and `E` are detected and defined as
+    Fortran parameters. The precision of the constants can be tuned with the precision
+    argument. Parameter definitions are easily avoided using the `N` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: When some functions are not part of the Fortran standard, it might be desirable
+    to introduce the names of user-defined functions in the Fortran expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, when the user_functions argument is not provided, `fcode` will by
+    default raise an Exception, but if the user intends to provide a function with
+    the same name, code can still be generated, by passing the option `strict=False`.
+    The code then contains a comment informing the user of the issue:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The printer can be configured to omit these comments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By default the output is human readable code, ready for copy and paste. With
+    the option `human=False`, the return value is suitable for post-processing with
+    source code generators that write routines with multiple instructions. The return
+    value is a three-tuple containing: (i) a set of number symbols that must be defined
+    as ‘Fortran parameters’, (ii) a list functions that cannot be translated in pure
+    Fortran and (iii) a string of Fortran code. A few examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## SMT-Lib printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts `expr` to a string of smtlib code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr | List[Expr]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression or system to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**auto_assert** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If false, do not modify expr and produce only the S-Expression equivalent of
+    expr. If true, assume expr is a system and assert each boolean element.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**auto_declare** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If false, do not produce declarations for the symbols used in expr. If true,
+    prepend all necessary declarations for variables used in expr based on symbol_table.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `evalf(..)` precision for numbers such as pi.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**symbol_table** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `Symbol` or `Function` instances and values are
+    their Python type i.e. `bool`, `int`, `float`, or `Callable[...]`. If incomplete,
+    an attempt will be made to infer types from `expr`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**known_types: dict, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `bool`, `int`, `float` etc. and values are their
+    corresponding SMT type names. If not given, a partial listing compatible with
+    several solvers will be used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**known_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `Function`, `Relational`, `BooleanFunction`, or
+    `Expr` instances and values are their SMT string representations. If not given,
+    a partial listing optimized for dReal solver (but compatible with others) will
+    be used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**known_constants: dict, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `NumberSymbol` instances and values are their SMT
+    variable names. When using this feature, extra caution must be taken to avoid
+    naming collisions between user symbols and listed constants. If not given, constants
+    will be expanded inline i.e. `3.14159` instead of `MY_SMT_VARIABLE_FOR_PI`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**prefix_expressions: list, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of lists of `str` and/or expressions to convert into SMTLib and prefix
+    to the output.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**suffix_expressions: list, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of lists of `str` and/or expressions to convert into SMTLib and postfix
+    to the output.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**log_warn: lambda function, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function to record all warnings during potentially risky operations. Soundness
+    is a core value in SMT solving, so it is good to log all assumptions made.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are implemented with `ite` expressions by default.
+    Note that if the `Piecewise` lacks a default term, represented by `(expr, True)`
+    then an error will be thrown. This is to prevent generating an expression that
+    may not evaluate to anything.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Custom printing can be defined for certain types by passing a dictionary of
+    PythonType : “SMT Name” to the `known_types`, `known_constants`, and `known_functions`
+    kwargs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]  ## Mathematica code printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: A printer to convert Python expressions to strings of the Wolfram’s Mathematica
+    code
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts an expr to a string of the Wolfram Mathematica code
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]  ## Maple code printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: Printer which converts a SymPy expression into a maple code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts `expr` to a string of Maple code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When given, the argument is used as the name of the variable to which the expression
+    is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
+    can be helpful for expressions that generate multi-line statements.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The precision for numbers such as pi [default=16].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**user_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `FunctionClass` instances and values are their string
+    representations. Alternatively, the dictionary value can be a list of tuples i.e.
+    [(argument_test, cfunction_string)]. See below for examples.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**human** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, the result is a single string that may contain some constant declarations
+    for the number symbols. If False, the same information is returned in a tuple
+    of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contract: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
+    the corresponding nested loops over indices are generated. Setting contract=False
+    will not generate loops, instead the user is responsible to provide values for
+    the indices in the code. [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**inline: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, we try to create single-statement code instead of multiple statements.
+    [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints the Maple representation of the given expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See [`maple_code()`](#sympy.printing.maple.maple_code "sympy.printing.maple.maple_code")
+    for the meaning of the optional arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]  ## Javascript Code printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: “A Printer to convert Python expressions to strings of JavaScript code
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accepts a string of code or a list of code lines
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts an expr to a string of javascript code
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When given, the argument is used as the name of the variable to which the expression
+    is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
+    is helpful in case of line-wrapping, or for expressions that generate multi-line
+    statements.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The precision for numbers such as pi [default=15].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**user_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `FunctionClass` instances and values are their string
+    representations. Alternatively, the dictionary value can be a list of tuples i.e.
+    [(argument_test, js_function_string)]. See below for examples.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**human** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, the result is a single string that may contain some constant declarations
+    for the number symbols. If False, the same information is returned in a tuple
+    of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contract: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
+    the corresponding nested loops over indices are generated. Setting contract=False
+    will not generate loops, instead the user is responsible to provide values for
+    the indices in the code. [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Custom printing can be defined for certain types by passing a dictionary of
+    “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
+    value can be a list of tuples i.e. [(argument_test, js_function_string)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
+    variable is provided an if statement is created, otherwise the ternary operator
+    is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
+    True)` then an error will be thrown. This is to prevent generating an expression
+    that may not evaluate to anything.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Support for loops is provided through `Indexed` types. With `contract=True`
+    these expressions will be turned into loops, whereas `contract=False` will just
+    print the assignment expression that should be looped over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
+    be provided to `assign_to`. Note that any expression that can be generated normally
+    can also exist inside a Matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]  ## Julia code printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: Built-in mutable sequence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If no argument is given, the constructor creates a new empty list. The argument
+    must be an iterable if specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: A printer to convert expressions to strings of Julia code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accepts a string of code or a list of code lines
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts \(expr\) to a string of Julia code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When given, the argument is used as the name of the variable to which the expression
+    is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
+    can be helpful for expressions that generate multi-line statements.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The precision for numbers such as pi [default=16].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**user_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `FunctionClass` instances and values are their string
+    representations. Alternatively, the dictionary value can be a list of tuples i.e.
+    [(argument_test, cfunction_string)]. See below for examples.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**human** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, the result is a single string that may contain some constant declarations
+    for the number symbols. If False, the same information is returned in a tuple
+    of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contract: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
+    the corresponding nested loops over indices are generated. Setting contract=False
+    will not generate loops, instead the user is responsible to provide values for
+    the indices in the code. [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**inline: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, we try to create single-statement code instead of multiple statements.
+    [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that element-wise (Hadamard) operations are used by default between symbols.
+    This is because its possible in Julia to write “vectorized” code. It is harmless
+    if the values are scalars.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you need a matrix product “*” or matrix power “^”, you can specify the symbol
+    as a `MatrixSymbol`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This class uses several rules to decide which symbol to use a product. Pure
+    numbers use “*”, Symbols use “.*” and MatrixSymbols use “*”. A HadamardProduct
+    can be used to specify componentwise multiplication “.*” of two MatrixSymbols.
+    There is currently there is no easy way to specify scalar symbols, so sometimes
+    the code might have some minor cosmetic issues. For example, suppose x and y are
+    scalars and A is a Matrix, then while a human programmer might write “(x^2*y)*A^3”,
+    we generate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: Matrices are supported using Julia inline notation. When using `assign_to` with
+    matrices, the name can be specified either as a string or as a `MatrixSymbol`.
+    The dimensions must align in the latter case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are implemented with logical masking by default. Alternatively,
+    you can pass “inline=False” to use if-else conditionals. Note that if the `Piecewise`
+    lacks a default term, represented by `(expr, True)` then an error will be thrown.
+    This is to prevent generating an expression that may not evaluate to anything.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that any expression that can be generated normally can also exist inside
+    a Matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Custom printing can be defined for certain types by passing a dictionary of
+    “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
+    value can be a list of tuples i.e., [(argument_test, cfunction_string)]. This
+    can be used to call a custom Julia function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Support for loops is provided through `Indexed` types. With `contract=True`
+    these expressions will be turned into loops, whereas `contract=False` will just
+    print the assignment expression that should be looped over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]  ## Octave (and Matlab) Code printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: Built-in mutable sequence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If no argument is given, the constructor creates a new empty list. The argument
+    must be an iterable if specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: A printer to convert expressions to strings of Octave/Matlab code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accepts a string of code or a list of code lines
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts \(expr\) to a string of Octave (or Matlab) code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The string uses a subset of the Octave language for Matlab compatibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When given, the argument is used as the name of the variable to which the expression
+    is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
+    can be helpful for expressions that generate multi-line statements.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The precision for numbers such as pi [default=16].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**user_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where keys are `FunctionClass` instances and values are their string
+    representations. Alternatively, the dictionary value can be a list of tuples i.e.
+    [(argument_test, cfunction_string)]. See below for examples.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**human** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, the result is a single string that may contain some constant declarations
+    for the number symbols. If False, the same information is returned in a tuple
+    of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contract: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
+    the corresponding nested loops over indices are generated. Setting contract=False
+    will not generate loops, instead the user is responsible to provide values for
+    the indices in the code. [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**inline: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, we try to create single-statement code instead of multiple statements.
+    [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that element-wise (Hadamard) operations are used by default between symbols.
+    This is because its very common in Octave to write “vectorized” code. It is harmless
+    if the values are scalars.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you need a matrix product “*” or matrix power “^”, you can specify the symbol
+    as a `MatrixSymbol`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This class uses several rules to decide which symbol to use a product. Pure
+    numbers use “*”, Symbols use “.*” and MatrixSymbols use “*”. A HadamardProduct
+    can be used to specify componentwise multiplication “.*” of two MatrixSymbols.
+    There is currently there is no easy way to specify scalar symbols, so sometimes
+    the code might have some minor cosmetic issues. For example, suppose x and y are
+    scalars and A is a Matrix, then while a human programmer might write “(x^2*y)*A^3”,
+    we generate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: Matrices are supported using Octave inline notation. When using `assign_to`
+    with matrices, the name can be specified either as a string or as a `MatrixSymbol`.
+    The dimensions must align in the latter case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are implemented with logical masking by default. Alternatively,
+    you can pass “inline=False” to use if-else conditionals. Note that if the `Piecewise`
+    lacks a default term, represented by `(expr, True)` then an error will be thrown.
+    This is to prevent generating an expression that may not evaluate to anything.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that any expression that can be generated normally can also exist inside
+    a Matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Custom printing can be defined for certain types by passing a dictionary of
+    “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
+    value can be a list of tuples i.e., [(argument_test, cfunction_string)]. This
+    can be used to call a custom Octave function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Support for loops is provided through `Indexed` types. With `contract=True`
+    these expressions will be turned into loops, whereas `contract=False` will just
+    print the assignment expression that should be looped over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]  ## Rust code printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: A printer to convert SymPy expressions to strings of Rust code
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: Accepts a string of code or a list of code lines
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts an expr to a string of Rust code
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression to be converted.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When given, the argument is used as the name of the variable to which the expression
+    is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
+    is helpful in case of line-wrapping, or for expressions that generate multi-line
+    statements.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**precision** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The precision for numbers such as pi [default=15].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**user_functions** : dict, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary where the keys are string representations of either `FunctionClass`
+    or `UndefinedFunction` instances and the values are their desired C string representations.
+    Alternatively, the dictionary value can be a list of tuples i.e. [(argument_test,
+    cfunction_string)]. See below for examples.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dereference** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An iterable of symbols that should be dereferenced in the printed code expression.
+    These would be values passed by address to the function. For example, if `dereference=[a]`,
+    the resulting code would print `(*a)` instead of `a`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**human** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, the result is a single string that may contain some constant declarations
+    for the number symbols. If False, the same information is returned in a tuple
+    of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**contract: bool, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
+    the corresponding nested loops over indices are generated. Setting contract=False
+    will not generate loops, instead the user is responsible to provide values for
+    the indices in the code. [default=True].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Simple custom printing can be defined for certain types by passing a dictionary
+    of {“type” : “function”} to the `user_functions` kwarg. Alternatively, the dictionary
+    value can be a list of tuples i.e. [(argument_test, cfunction_string)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
+    variable is provided an if statement is created, otherwise the ternary operator
+    is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
+    True)` then an error will be thrown. This is to prevent generating an expression
+    that may not evaluate to anything.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Support for loops is provided through `Indexed` types. With `contract=True`
+    these expressions will be turned into loops, whereas `contract=False` will just
+    print the assignment expression that should be looped over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
+    be provided to `assign_to`. Note that any expression that can be generated normally
+    can also exist inside a Matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE148]  ## Aesara Code printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: Code printer which creates Aesara symbolic expression graphs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**cache** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Cache dictionary to use. If None (default) will use the global cache. To create
+    a printer which does not depend on or alter global state pass an empty dictionary.
+    Note: the dictionary is not copied on initialization of the printer and will be
+    updated in-place, so using the same dict object when creating multiple printers
+    or making multiple calls to [`aesara_code()`](#sympy.printing.aesaracode.aesara_code
+    "sympy.printing.aesaracode.aesara_code") or [`aesara_function()`](#sympy.printing.aesaracode.aesara_function
+    "sympy.printing.aesaracode.aesara_function") means the cache is shared between
+    all these applications.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Attributes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| cache | (dict) A cache of Aesara variables which have been created for SymPy
+    symbol-like objects (e.g. [`sympy.core.symbol.Symbol`](core.html#sympy.core.symbol.Symbol
+    "sympy.core.symbol.Symbol") or [`sympy.matrices.expressions.MatrixSymbol`](matrices/expressions.html#sympy.matrices.expressions.MatrixSymbol
+    "sympy.matrices.expressions.MatrixSymbol")). This is used to ensure that all references
+    to a given symbol in an expression (or multiple expressions) are printed as the
+    same Aesara variable, which is created only once. Symbols are differentiated only
+    by name and type. The format of the cache’s contents should be considered opaque
+    to the user. |'
+  prefs: []
+  type: TYPE_TB
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert a SymPy expression to a Aesara graph variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `dtypes` and `broadcastables` arguments are used to specify the data type,
+    dimension, and broadcasting behavior of the Aesara variables corresponding to
+    the free symbols in `expr`. Each is a mapping from SymPy symbols to the value
+    of the corresponding argument to `aesara.tensor.var.TensorVariable`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the corresponding [documentation page](https://aesara.readthedocs.io/en/latest/reference/tensor/shapes.html#broadcasting)
+    for more information on broadcasting in Aesara.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : sympy.core.expr.Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SymPy expression to print.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dtypes** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mapping from SymPy symbols to Aesara datatypes to use when creating new Aesara
+    variables for those symbols. Corresponds to the `dtype` argument to `aesara.tensor.var.TensorVariable`.
+    Defaults to `'floatX'` for symbols not included in the mapping.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**broadcastables** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mapping from SymPy symbols to the value of the `broadcastable` argument to `aesara.tensor.var.TensorVariable`
+    to use when creating Aesara variables for those symbols. Defaults to the empty
+    tuple for symbols not included in the mapping (resulting in a scalar).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: aesara.graph.basic.Variable
+  prefs: []
+  type: TYPE_NORMAL
+- en: A variable corresponding to the expression’s value in a Aesara symbolic expression
+    graph.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert a SymPy expression into a Aesara graph variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : sympy.core.expr.Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SymPy expression object to convert.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cache** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cached Aesara variables (see [`AesaraPrinter.cache`](#sympy.printing.aesaracode.AesaraPrinter
+    "sympy.printing.aesaracode.AesaraPrinter")). Defaults to the module-level global
+    cache.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dtypes** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passed to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**broadcastables** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passed to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: aesara.graph.basic.Variable
+  prefs: []
+  type: TYPE_NORMAL
+- en: A variable corresponding to the expression’s value in a Aesara symbolic expression
+    graph.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a Aesara function from SymPy expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The inputs and outputs are converted to Aesara variables using [`aesara_code()`](#sympy.printing.aesaracode.aesara_code
+    "sympy.printing.aesaracode.aesara_code") and then passed to `aesara.function`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**inputs**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence of symbols which constitute the inputs of the function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**outputs**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence of expressions which constitute the outputs(s) of the function. The
+    free symbols of each expression must be a subset of `inputs`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**scalar** : bool'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convert 0-dimensional arrays in output to scalars. This will return a Python
+    wrapper function around the Aesara function object.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cache** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cached Aesara variables (see [`AesaraPrinter.cache`](#sympy.printing.aesaracode.AesaraPrinter
+    "sympy.printing.aesaracode.AesaraPrinter")). Defaults to the module-level global
+    cache.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dtypes** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passed to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**broadcastables** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passed to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dims** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternative to `broadcastables` argument. Mapping from elements of `inputs`
+    to integers indicating the dimension of their associated arrays/tensors. Overrides
+    `broadcastables` argument if given.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dim** : int'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another alternative to the `broadcastables` argument. Common number of dimensions
+    to use for all arrays/tensors. `aesara_function([x, y], [...], dim=2)` is equivalent
+    to using `broadcastables={x: (False, False), y: (False, False)}`.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: callable
+  prefs: []
+  type: TYPE_NORMAL
+- en: A callable object which takes values of `inputs` as positional arguments and
+    returns an output array for each of the expressions in `outputs`. If `outputs`
+    is a single expression the function will return a Numpy array, if it is a list
+    of multiple expressions the function will return a list of arrays. See description
+    of the `squeeze` argument above for the behavior when a single output is passed
+    in a list. The returned object will either be an instance of `aesara.compile.function.types.Function`
+    or a Python wrapper function around one. In both cases, the returned value will
+    have a `aesara_function` attribute which points to the return value of `aesara.function`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A simple function with one input and one output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE155]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A function with multiple inputs and one output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A function with multiple inputs and multiple outputs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`dim_handling`](#sympy.printing.aesaracode.dim_handling "sympy.printing.aesaracode.dim_handling")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: Get value of `broadcastables` argument to [`aesara_code()`](#sympy.printing.aesaracode.aesara_code
+    "sympy.printing.aesaracode.aesara_code") from keyword arguments to [`aesara_function()`](#sympy.printing.aesaracode.aesara_function
+    "sympy.printing.aesaracode.aesara_function").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Included for backwards compatibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**inputs**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence of input symbols.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dim** : int'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Common number of dimensions for all inputs. Overrides other arguments if given.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**dims** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mapping from input symbols to number of dimensions. Overrides `broadcastables`
+    argument if given.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**broadcastables** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explicit value of `broadcastables` argument to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint"). If not None function will
+    return this value unchanged.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: dict
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Dictionary mapping elements of `inputs` to their “broadcastable” values (tuple
+    of `bool`s).  ## Gtk'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: You can print to a gtkmathview widget using the function `print_gtk` located
+    in `sympy.printing.gtk` (it requires to have installed gtkmathview and libgtkmathview-bin
+    in some systems).
+  prefs: []
+  type: TYPE_NORMAL
+- en: GtkMathView accepts MathML, so this rendering depends on the MathML representation
+    of the expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Usage:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE160]'
+  prefs: []
+  type: TYPE_PRE
+- en: Print to Gtkmathview, a gtk widget capable of rendering MathML.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Needs libgtkmathview-bin  ## LambdaPrinter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This classes implements printing to strings that can be used by the [`sympy.utilities.lambdify.lambdify()`](utilities/lambdify.html#sympy.utilities.lambdify.lambdify
+    "sympy.utilities.lambdify.lambdify") function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE161]'
+  prefs: []
+  type: TYPE_PRE
+- en: This printer converts expressions into strings that can be used by lambdify.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE162]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE163]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Returns a string usable for lambdifying.  ## LatexPrinter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This class implements LaTeX printing. See `sympy.printing.latex`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE164]'
+  prefs: []
+  type: TYPE_PRE
+- en: Built-in mutable sequence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If no argument is given, the constructor creates a new empty list. The argument
+    must be an iterable if specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE165]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE166]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE167]'
+  prefs: []
+  type: TYPE_PRE
+- en: Protect superscripts in s
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the parenthesize_super option is set, protect with parentheses, else wrap
+    in braces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE168]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convert the given expression to LaTeX string representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**full_prec: boolean, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If set to True, a floating point number is printed with full precision.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**fold_frac_powers** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Emit `^{p/q}` instead of `^{\frac{p}{q}}` for fractional powers.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**fold_func_brackets** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fold function brackets where applicable.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**fold_short_frac** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Emit `p / q` instead of `\frac{p}{q}` when the denominator is simple enough
+    (at most two terms and no powers). The default value is `True` for inline mode,
+    `False` otherwise.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**inv_trig_style** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How inverse trig functions should be displayed. Can be one of `'abbreviated'`,
+    `'full'`, or `'power'`. Defaults to `'abbreviated'`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**itex** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specifies if itex-specific syntax is used, including emitting `$$...$$`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**ln_notation** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If set to `True`, `\ln` is used instead of default `\log`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**long_frac_ratio** : float or None, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The allowed ratio of the width of the numerator to the width of the denominator
+    before the printer breaks off long fractions. If `None` (the default value), long
+    fractions are not broken up.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**mat_delim** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The delimiter to wrap around matrices. Can be one of `'['`, `'('`, or the empty
+    string `''`. Defaults to `'['`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**mat_str** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Which matrix environment string to emit. `'smallmatrix'`, `'matrix'`, `'array'`,
+    etc. Defaults to `'smallmatrix'` for inline mode, `'matrix'` for matrices of no
+    more than 10 columns, and `'array'` otherwise.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**mode: string, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specifies how the generated code will be delimited. `mode` can be one of `'plain'`,
+    `'inline'`, `'equation'` or `'equation*'`. If `mode` is set to `'plain'`, then
+    the resulting code will not be delimited at all (this is the default). If `mode`
+    is set to `'inline'` then inline LaTeX `$...$` will be used. If `mode` is set
+    to `'equation'` or `'equation*'`, the resulting code will be enclosed in the `equation`
+    or `equation*` environment (remember to import `amsmath` for `equation*`), unless
+    the `itex` option is set. In the latter case, the `$$...$$` syntax is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**mul_symbol** : string or None, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The symbol to use for multiplication. Can be one of `None`, `'ldot'`, `'dot'`,
+    or `'times'`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**order: string, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any of the supported monomial orderings (currently `'lex'`, `'grlex'`, or `'grevlex'`),
+    `'old'`, and `'none'`. This parameter does nothing for \(~.Mul\) objects. Setting
+    order to `'old'` uses the compatibility ordering for `~.Add` defined in Printer.
+    For very large expressions, set the `order` keyword to `'none'` if speed is a
+    concern.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**symbol_names** : dictionary of strings mapped to symbols, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dictionary of symbols and the custom strings they should be emitted as.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**root_notation** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If set to `False`, exponents of the form 1/n are printed in fractonal form.
+    Default is `True`, to print exponent in root form.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**mat_symbol_style** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Can be either `'plain'` (default) or `'bold'`. If set to `'bold'`, a \(~.MatrixSymbol\)
+    A will be printed as `\mathbf{A}`, otherwise as `A`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**imaginary_unit** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: String to use for the imaginary unit. Defined options are `'i'` (default) and
+    `'j'`. Adding `r` or `t` in front gives `\mathrm` or `\text`, so `'ri'` leads
+    to `\mathrm{i}` which gives \(\mathrm{i}\).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**gothic_re_im** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If set to `True`, \(\Re\) and \(\Im\) is used for `re` and `im`, respectively.
+    The default is `False` leading to \(\operatorname{re}\) and \(\operatorname{im}\).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**decimal_separator** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specifies what separator to use to separate the whole and fractional parts of
+    a floating point number as in \(2.5\) for the default, `period` or \(2{,}5\) when
+    `comma` is specified. Lists, sets, and tuple are printed with semicolon separating
+    the elements when `comma` is chosen. For example, [1; 2; 3] when `comma` is chosen
+    and [1,2,3] for when `period` is chosen.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**parenthesize_super** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If set to `False`, superscripted expressions will not be parenthesized when
+    powered. Default is `True`, which parenthesizes the expression when powered.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**min: Integer or None, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sets the lower bound for the exponent to print floating point numbers in fixed-point
+    format.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**max: Integer or None, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sets the upper bound for the exponent to print floating point numbers in fixed-point
+    format.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**diff_operator: string, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: String to use for differential operator. Default is `'d'`, to print in italic
+    form. `'rd'`, `'td'` are shortcuts for `\mathrm{d}` and `\text{d}`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**adjoint_style: string, optional**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: String to use for the adjoint symbol. Defined options are `'dagger'` (default),``’star’[PRE169].
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: Not using a print statement for printing, results in double backslashes for
+    latex commands since that’s the way Python escapes backslashes in strings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE170]'
+  prefs: []
+  type: TYPE_PRE
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE171]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Basic usage:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE172]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`mode` and `itex` options:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE173]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Fraction options:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE174]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Multiplication options:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE175]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Trig options:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE176]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Matrix options:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE177]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Custom printing of symbols:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE178]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Logarithms:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE179]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`latex()` also supports the builtin container types `list`, `tuple`, and `dict`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE180]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Unsupported types are rendered as monospaced plaintext:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE181]'
+  prefs: []
+  type: TYPE_PRE
+- en: See [Example of Custom Printing Method](#printer-method-example) for an example
+    of how to override this behavior for your own types by implementing `_latex`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Changed in version 1.7.0: Unsupported types no longer have their `str` representation
+    treated as valid latex.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE182]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Prints LaTeX representation of the given expression. Takes the same settings
+    as `latex()`.  ## MathMLPrinter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This class is responsible for MathML printing. See `sympy.printing.mathml`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More info on mathml : [https://www.w3.org/TR/MathML2](https://www.w3.org/TR/MathML2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE183]'
+  prefs: []
+  type: TYPE_PRE
+- en: Contains common code required for MathMLContentPrinter and MathMLPresentationPrinter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE184]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints the expression as MathML.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE185]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints an expression to the Content MathML markup language.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'References: [https://www.w3.org/TR/MathML2/chapter4.html](https://www.w3.org/TR/MathML2/chapter4.html)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE186]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE187]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the MathML tag for an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE188]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints an expression to the Presentation MathML markup language.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'References: [https://www.w3.org/TR/MathML2/chapter3.html](https://www.w3.org/TR/MathML2/chapter3.html)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE189]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE190]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the MathML tag for an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE191]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the MathML representation of expr. If printer is presentation then prints
+    Presentation MathML else prints content MathML.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE192]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints a pretty representation of the MathML code for expr. If printer is presentation
+    then prints Presentation MathML else prints content MathML.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE193]  ## PythonCodePrinter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python code printers
+  prefs: []
+  type: TYPE_NORMAL
+- en: This module contains Python code printers for plain Python as well as NumPy
+    & SciPy enabled code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE194]'
+  prefs: []
+  type: TYPE_PRE
+- en: Lambda printer for mpmath which maintains precision for floats
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE195]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts an expr to a string of Python code
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**fully_qualified_modules** : bool'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Whether or not to write out full module names of functions (`math.sin` vs.
+    `sin`). default: `True`.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**standard** : str or None, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Only ‘python3’ (default) is supported. This parameter may be removed in the
+    future.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE196]  ## PythonPrinter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This class implements Python printing. Usage:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE197]  ## srepr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This printer generates executable code. This code satisfies the identity `eval(srepr(expr))
+    == expr`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`srepr()` gives more low level textual output than `repr()`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE198]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`srepr()` gives the `repr` form, which is what `repr()` would normally give
+    but for SymPy we don’t actually use `srepr()` for `__repr__` because it’s is so
+    verbose, it is unlikely that anyone would want it called by default. Another reason
+    is that lists call repr on their elements, like `print([a, b, c])` calls `repr(a)`,
+    `repr(b)`, `repr(c)`. So if we used srepr for `__repr__` any list with SymPy objects
+    would include the srepr form, even if we used `str()` or `print()`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE199]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE200]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE201]'
+  prefs: []
+  type: TYPE_PRE
+- en: The fallback printer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE202]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints each item in \(args\) and joins them with \(sep\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE203]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'return expr in repr form  ## StrPrinter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This module generates readable representations of SymPy expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE204]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE205]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE206]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the expression as a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For large expressions where speed is a concern, use the setting order=’none’.
+    If abbrev=True setting is used then units are printed in abbreviated form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE207]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE208]'
+  prefs: []
+  type: TYPE_PRE
+- en: return expr in mixed str/repr form
+  prefs: []
+  type: TYPE_NORMAL
+- en: i.e. strings are returned in repr form with quotes, and everything else is returned
+    in str form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This function could be useful for hooking into sys.displayhook  ## Tree Printing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The functions in this module create a representation of an expression as a tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE209]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prettyprints systems of nodes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE210]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE211]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns information about the “node”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This includes class name, string representation and assumptions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**assumptions** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the `assumptions` keyword in `tree`
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE212]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a tree representation of “node” as a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It uses print_node() together with pprint_nodes() on node.args recursively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**asssumptions** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The flag to decide whether to print out all the assumption data (such as [PRE213])
+    associated with the expression or not.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Enabling the flag makes the result verbose, and the printed result may not be
+    determinisitic because of the randomness used in backtracing the assumptions.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`print_tree`](#sympy.printing.tree.print_tree "sympy.printing.tree.print_tree")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE214]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints a tree representation of “node”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**asssumptions** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The flag to decide whether to print out all the assumption data (such as [PRE215])
+    associated with the expression or not.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Enabling the flag makes the result verbose, and the printed result may not be
+    determinisitic because of the randomness used in backtracing the assumptions.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE216]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Printing with full assumptions information:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE217]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Hiding the assumptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE218]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`tree`](#sympy.printing.tree.tree "sympy.printing.tree.tree")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preview
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'A useful function is `preview`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE219]'
+  prefs: []
+  type: TYPE_PRE
+- en: View expression or LaTeX markup in PNG, DVI, PostScript or PDF form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the expr argument is an expression, it will be exported to LaTeX and then
+    compiled using the available TeX distribution. The first argument, ‘expr’, may
+    also be a LaTeX string. The function will then run the appropriate viewer for
+    the given output format or use the user defined one. By default png output is
+    generated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default pretty Euler fonts are used for typesetting (they were used to typeset
+    the well known “Concrete Mathematics” book). For that to work, you need the ‘eulervm.sty’
+    LaTeX style (in Debian/Ubuntu, install the texlive-fonts-extra package). If you
+    prefer default AMS fonts or your system lacks ‘eulervm’ LaTeX package then unset
+    the ‘euler’ keyword argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use viewer auto-detection, lets say for ‘png’ output, issue
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE220]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE221]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will choose ‘pyglet’ by default. To select a different one, do
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE222]'
+  prefs: []
+  type: TYPE_PRE
+- en: The ‘png’ format is considered special. For all other formats the rules are
+    slightly different. As an example we will take ‘dvi’ output format. If you would
+    run
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE223]'
+  prefs: []
+  type: TYPE_PRE
+- en: then ‘view’ will look for available ‘dvi’ viewers on your system (predefined
+    in the function, so it will try evince, first, then kdvi and xdvi). If nothing
+    is found, it will fall back to using a system file association (via `open` and
+    `xdg-open`). To always use your system file association without searching for
+    the above readers, use
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE224]'
+  prefs: []
+  type: TYPE_PRE
+- en: If this still does not find the viewer you want, it can be set explicitly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE225]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will skip auto-detection and will run user specified ‘superior-dvi-viewer’.
+    If `view` fails to find it on your system it will gracefully raise an exception.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may also enter `'file'` for the viewer argument. Doing so will cause this
+    function to return a file object in read-only mode, if `filename` is unset. However,
+    if it was set, then ‘preview’ writes the generated file to this filename instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is also support for writing to a `io.BytesIO` like object, which needs
+    to be passed to the `outputbuffer` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE226]'
+  prefs: []
+  type: TYPE_PRE
+- en: The LaTeX preamble can be customized by setting the ‘preamble’ keyword argument.
+    This can be used, e.g., to set a different font size, use a custom documentclass
+    or import certain set of LaTeX packages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE227]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is also possible to use the standard preamble and provide additional information
+    to the preamble using the `extra_preamble` keyword argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE228]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the value of ‘output’ is different from ‘dvi’ then command line options can
+    be set (‘dvioptions’ argument) for the execution of the ‘dvi’+output conversion
+    tool. These options have to be in the form of a list of strings (see `subprocess.Popen`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additional keyword args will be passed to the [`latex()`](#sympy.printing.latex.latex
+    "sympy.printing.latex.latex") call, e.g., the `symbol_names` flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE229]'
+  prefs: []
+  type: TYPE_PRE
+- en: For post-processing the generated TeX File can be written to a file by passing
+    the desired filename to the ‘outputTexFile’ keyword argument. To write the TeX
+    code to a file named `"sample.tex"` and run the default png viewer to display
+    the resulting bitmap, do
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE230]'
+  prefs: []
+  type: TYPE_PRE
+- en: '## Implementation - Helper Classes/Functions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE231]'
+  prefs: []
+  type: TYPE_PRE
+- en: Split a symbol name into a name, superscripts and subscripts
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first part of the symbol name is considered to be its actual ‘name’, followed
+    by super- and subscripts. Each superscript is preceded with a “^” character or
+    by “__”. Each subscript is preceded by a “_” character. The three return values
+    are the actual name, a list with superscripts and a list with subscripts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE232]'
+  prefs: []
+  type: TYPE_PRE
+- en: '### CodePrinter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This class is a base class for other classes that implement code-printing functionality,
+    and additionally lists a number of functions that cannot be easily translated
+    to C or Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE233]'
+  prefs: []
+  type: TYPE_PRE
+- en: The base class for code-printing subclasses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE234]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE235]'
+  prefs: []
+  type: TYPE_PRE
+- en: Print the expression as code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expression to be printed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**assign_to** : Symbol, string, MatrixSymbol, list of strings or Symbols (optional)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If provided, the printed code will set the expression to a variable or multiple
+    variables with the name or names given in `assign_to`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE236]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Raised if an assignment variable for a loop is missing.  ### Precedence'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE237]'
+  prefs: []
+  type: TYPE_PRE
+- en: Default precedence values for some basic types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE238]'
+  prefs: []
+  type: TYPE_PRE
+- en: A dictionary assigning precedence values to certain classes. These values are
+    treated like they were inherited, so not every single class has to be named here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE239]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sometimes it’s not enough to assign a fixed precedence value to a class. Then
+    a function can be inserted in this dictionary that takes an instance of this class
+    as argument and returns the appropriate precedence value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE240]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the precedence of a given object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is the precedence for StrPrinter.  ## Pretty-Printing Implementation Helpers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE241]'
+  prefs: []
+  type: TYPE_PRE
+- en: Get a unicode character by name or, None if not found.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This exists because older versions of Python use older unicode databases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE242]'
+  prefs: []
+  type: TYPE_PRE
+- en: Set whether pretty-printer should use unicode by default
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE243]'
+  prefs: []
+  type: TYPE_PRE
+- en: See if unicode output is available and leverage it if possible
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE244]'
+  prefs: []
+  type: TYPE_PRE
+- en: The following two functions return the Unicode version of the inputted Greek
+    letter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE245]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE246]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE247]'
+  prefs: []
+  type: TYPE_PRE
+- en: Built-in mutable sequence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If no argument is given, the constructor creates a new empty list. The argument
+    must be an iterable if specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE248]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE249]'
+  prefs: []
+  type: TYPE_PRE
+- en: The following functions return the Unicode subscript/superscript version of
+    the character.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE250]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE251]'
+  prefs: []
+  type: TYPE_PRE
+- en: The following functions return Unicode vertical objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE252]'
+  prefs: []
+  type: TYPE_PRE
+- en: Construct spatial object of given length.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'return: [] of equal-length strings'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE253]'
+  prefs: []
+  type: TYPE_PRE
+- en: Construct vertical object of a given height
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'see: xobj'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE254]'
+  prefs: []
+  type: TYPE_PRE
+- en: Construct horizontal object of a given width
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'see: xobj'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following constants are for rendering roots and fractions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE255]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE256]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE257]'
+  prefs: []
+  type: TYPE_PRE
+- en: The following constants/functions are for rendering atoms and symbols.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE258]'
+  prefs: []
+  type: TYPE_PRE
+- en: get symbology for a ‘character’
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE259]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE260]'
+  prefs: []
+  type: TYPE_PRE
+- en: return pretty representation of an atom
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE261]'
+  prefs: []
+  type: TYPE_PRE
+- en: return pretty representation of a symbol
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE262]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a stylised drawing of the letter `letter`, together with information
+    on how to put annotations (super- and subscripts to the left and to the right)
+    on it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See pretty.py functions _print_meijerg, _print_hyper on how to use this information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Prettyprinter by Jurjen Bos. (I hate spammers: mail me at pietjepuk314 at the
+    reverse of ku.oc.oohay). All objects have a method that create a “stringPict”,
+    that can be used in the str method for pretty printing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Updates by Jason Gedge (email <my last name> at cs mun ca)
+  prefs: []
+  type: TYPE_NORMAL
+- en: terminal_string() method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: minor fixes and changes (mostly to prettyForm)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'TODO:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Allow left/center/right alignment options for above/below and top/center/bottom
+    alignment options for left/right
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE263]'
+  prefs: []
+  type: TYPE_PRE
+- en: An ASCII picture. The pictures are represented as a list of equal length strings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE264]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put pictures above this picture. Returns string, baseline arguments for stringPict.
+    Baseline is baseline of bottom picture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE265]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put pictures under this picture. Returns string, baseline arguments for stringPict.
+    Baseline is baseline of top picture
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE266]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE267]'
+  prefs: []
+  type: TYPE_PRE
+- en: The height of the picture in characters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE268]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put pictures (left to right) at left. Returns string, baseline arguments for
+    stringPict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE269]'
+  prefs: []
+  type: TYPE_PRE
+- en: Precede object by a slash of the proper size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE270]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put a string of stringPicts next to each other. Returns string, baseline arguments
+    for stringPict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE271]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put parentheses around self. Returns string, baseline arguments for stringPict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: left or right can be None or empty string which means ‘no paren from that side’
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE272]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the string form of self.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unless the argument line_break is set to False, it will break the expression
+    in a form that can be printed on the terminal without being broken up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE273]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put pictures next to this one. Returns string, baseline arguments for stringPict.
+    (Multiline) strings are allowed, and are given a baseline of 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE274]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE275]'
+  prefs: []
+  type: TYPE_PRE
+- en: Produce a nice root symbol. Produces ugly results for big n inserts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE276]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put pictures on top of each other, from top to bottom. Returns string, baseline
+    arguments for stringPict. The baseline is the baseline of the second picture.
+    Everything is centered. Baseline is the baseline of the second picture. Strings
+    are allowed. The special value stringPict.LINE is a row of ‘-’ extended to the
+    width.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE277]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the terminal width if possible, otherwise return 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE278]'
+  prefs: []
+  type: TYPE_PRE
+- en: The width of the picture in characters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE279]'
+  prefs: []
+  type: TYPE_PRE
+- en: Extension of the stringPict class that knows about basic math applications,
+    optimizing double minus signs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '“Binding” is interpreted as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE280]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE281]'
+  prefs: []
+  type: TYPE_PRE
+- en: Functions of one or more variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: dotprint
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE282]'
+  prefs: []
+  type: TYPE_PRE
+- en: DOT description of a SymPy expression tree
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**styles** : list of lists composed of (Class, mapping), optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Styles for different classes.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The default is
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE283]'
+  prefs:
+  - PREF_BQ
+  type: TYPE_PRE
+- en: '**atom** : function, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Function used to determine if an arg is an atom.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'A good choice is `lambda x: not x.args`.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'The default is `lambda x: not isinstance(x, Basic)`.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**maxdepth** : integer, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The maximum depth.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The default is `None`, meaning no limit.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**repeat** : boolean, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether to use different nodes for common subexpressions.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The default is `True`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: For example, for `x + x*y` with `repeat=True`, it will have two nodes for `x`;
+    with `repeat=False`, it will have one node.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Warning
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Even if a node appears twice in the same object like `x` in `Pow(x, x)`, it
+    will still only appear once. Hence, with `repeat=False`, the number of arrows
+    out of an object might not equal the number of args it has.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**labelfunc** : function, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A function to create a label for a given leaf node.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The default is `str`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Another good option is `srepr`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: For example with `str`, the leaf nodes of `x + 1` are labeled, `x` and `1`.
+    With `srepr`, they are labeled `Symbol('x')` and `Integer(1)`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '****kwargs** : optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additional keyword arguments are included as styles for the graph.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE284]'
+  prefs: []
+  type: TYPE_PRE

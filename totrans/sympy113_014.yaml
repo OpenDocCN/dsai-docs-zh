@@ -1,0 +1,487 @@
+- en: Advanced Expression Manipulation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/tutorials/intro-tutorial/manipulation.html](https://docs.sympy.org/latest/tutorials/intro-tutorial/manipulation.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: In this section, we discuss some ways that we can perform advanced manipulation
+    of expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Understanding Expression Trees'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we can do this, we need to understand how expressions are represented
+    in SymPy. A mathematical expression is represented as a tree. Let us take the
+    expression \(x^2 + xy\), i.e., `x**2 + x*y`. We can see what this expression looks
+    like internally by using `srepr`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The easiest way to tear this apart is to look at a diagram of the expression
+    tree:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'digraph{ # Graph style "ordering"="out" "rankdir"="TD" ######### # Nodes #
+    ######### "Add(Pow(Symbol(''x''), Integer(2)), Mul(Symbol(''x''), Symbol(''y'')))_()"
+    ["color"="black", "label"="Add", "shape"="ellipse"]; "Pow(Symbol(''x''), Integer(2))_(0,)"
+    ["color"="black", "label"="Pow", "shape"="ellipse"]; "Symbol(''x'')_(0, 0)" ["color"="black",
+    "label"="Symbol(''x'')", "shape"="ellipse"]; "Integer(2)_(0, 1)" ["color"="black",
+    "label"="Integer(2)", "shape"="ellipse"]; "Mul(Symbol(''x''), Symbol(''y''))_(1,)"
+    ["color"="black", "label"="Mul", "shape"="ellipse"]; "Symbol(''x'')_(1, 0)" ["color"="black",
+    "label"="Symbol(''x'')", "shape"="ellipse"]; "Symbol(''y'')_(1, 1)" ["color"="black",
+    "label"="Symbol(''y'')", "shape"="ellipse"]; ######### # Edges # ######### "Add(Pow(Symbol(''x''),
+    Integer(2)), Mul(Symbol(''x''), Symbol(''y'')))_()" -> "Pow(Symbol(''x''), Integer(2))_(0,)";
+    "Add(Pow(Symbol(''x''), Integer(2)), Mul(Symbol(''x''), Symbol(''y'')))_()" ->
+    "Mul(Symbol(''x''), Symbol(''y''))_(1,)"; "Pow(Symbol(''x''), Integer(2))_(0,)"
+    -> "Symbol(''x'')_(0, 0)"; "Pow(Symbol(''x''), Integer(2))_(0,)" -> "Integer(2)_(0,
+    1)"; "Mul(Symbol(''x''), Symbol(''y''))_(1,)" -> "Symbol(''x'')_(1, 0)"; "Mul(Symbol(''x''),
+    Symbol(''y''))_(1,)" -> "Symbol(''y'')_(1, 1)"; }'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The above diagram was made using [Graphviz](https://www.graphviz.org/) and the
+    [`dotprint`](../../modules/printing.html#sympy.printing.dot.dotprint "sympy.printing.dot.dotprint")
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, let’s look at the leaves of this tree. Symbols are instances of the class
+    Symbol. While we have been doing
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: we could have also done
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either way, we get a Symbol with the name “x” [[1]](#symbols-fn). For the number
+    in the expression, 2, we got `Integer(2)`. `Integer` is the SymPy class for integers.
+    It is similar to the Python built-in type `int`, except that `Integer` plays nicely
+    with other SymPy types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When we write `x**2`, this creates a `Pow` object. `Pow` is short for “power”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: We could have created the same object by calling `Pow(x, 2)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that in the `srepr` output, we see `Integer(2)`, the SymPy version of integers,
+    even though technically, we input `2`, a Python int. In general, whenever you
+    combine a SymPy object with a non-SymPy object via some function or operation,
+    the non-SymPy object will be converted into a SymPy object. The function that
+    does this is `sympify` [[2]](#sympify-fn).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: We have seen that `x**2` is represented as `Pow(x, 2)`. What about `x*y`? As
+    we might expect, this is the multiplication of `x` and `y`. The SymPy class for
+    multiplication is `Mul`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Thus, we could have created the same object by writing `Mul(x, y)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now we get to our final expression, `x**2 + x*y`. This is the addition of our
+    last two objects, `Pow(x, 2)`, and `Mul(x, y)`. The SymPy class for addition is
+    `Add`, so, as you might expect, to create this object, we use `Add(Pow(x, 2),
+    Mul(x, y))`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: SymPy expression trees can have many branches, and can be quite deep or quite
+    broad. Here is a more complicated example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here is a diagram
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'digraph{ # Graph style "rankdir"="TD" ######### # Nodes # ######### "Half()_(0,
+    0)" ["color"="black", "label"="Rational(1, 2)", "shape"="ellipse"]; "Symbol(y)_(2,
+    0)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "Symbol(x)_(1,
+    1, 0)" ["color"="black", "label"="Symbol(''x'')", "shape"="ellipse"]; "Integer(2)_(1,
+    1, 1)" ["color"="black", "label"="Integer(2)", "shape"="ellipse"]; "NegativeOne()_(2,
+    1)" ["color"="black", "label"="Integer(-1)", "shape"="ellipse"]; "NegativeOne()_(1,
+    0)" ["color"="black", "label"="Integer(-1)", "shape"="ellipse"]; "Symbol(y)_(0,
+    1, 0, 1)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "Symbol(x)_(0,
+    1, 0, 0)" ["color"="black", "label"="Symbol(''x'')", "shape"="ellipse"]; "Pow(Symbol(x),
+    Integer(2))_(1, 1)" ["color"="black", "label"="Pow", "shape"="ellipse"]; "Pow(Symbol(y),
+    NegativeOne())_(2,)" ["color"="black", "label"="Pow", "shape"="ellipse"]; "Mul(Symbol(x),
+    Symbol(y))_(0, 1, 0)" ["color"="black", "label"="Mul", "shape"="ellipse"]; "sin(Mul(Symbol(x),
+    Symbol(y)))_(0, 1)" ["color"="black", "label"="sin", "shape"="ellipse"]; "Mul(Half(),
+    sin(Mul(Symbol(x), Symbol(y))))_(0,)" ["color"="black", "label"="Mul", "shape"="ellipse"];
+    "Mul(NegativeOne(), Pow(Symbol(x), Integer(2)))_(1,)" ["color"="black", "label"="Mul",
+    "shape"="ellipse"]; "Add(Mul(Half(), sin(Mul(Symbol(x), Symbol(y)))), Mul(NegativeOne(),
+    Pow(Symbol(x), Integer(2))), Pow(Symbol(y), NegativeOne()))_()" ["color"="black",
+    "label"="Add", "shape"="ellipse"]; ######### # Edges # ######### "Pow(Symbol(y),
+    NegativeOne())_(2,)" -> "Symbol(y)_(2, 0)"; "Pow(Symbol(x), Integer(2))_(1, 1)"
+    -> "Symbol(x)_(1, 1, 0)"; "Pow(Symbol(x), Integer(2))_(1, 1)" -> "Integer(2)_(1,
+    1, 1)"; "Pow(Symbol(y), NegativeOne())_(2,)" -> "NegativeOne()_(2, 1)"; "Mul(Symbol(x),
+    Symbol(y))_(0, 1, 0)" -> "Symbol(x)_(0, 1, 0, 0)"; "Mul(Symbol(x), Symbol(y))_(0,
+    1, 0)" -> "Symbol(y)_(0, 1, 0, 1)"; "Mul(Half(), sin(Mul(Symbol(x), Symbol(y))))_(0,)"
+    -> "Half()_(0, 0)"; "Mul(NegativeOne(), Pow(Symbol(x), Integer(2)))_(1,)" -> "NegativeOne()_(1,
+    0)"; "sin(Mul(Symbol(x), Symbol(y)))_(0, 1)" -> "Mul(Symbol(x), Symbol(y))_(0,
+    1, 0)"; "Mul(NegativeOne(), Pow(Symbol(x), Integer(2)))_(1,)" -> "Pow(Symbol(x),
+    Integer(2))_(1, 1)"; "Mul(Half(), sin(Mul(Symbol(x), Symbol(y))))_(0,)" -> "sin(Mul(Symbol(x),
+    Symbol(y)))_(0, 1)"; "Add(Mul(Half(), sin(Mul(Symbol(x), Symbol(y)))), Mul(NegativeOne(),
+    Pow(Symbol(x), Integer(2))), Pow(Symbol(y), NegativeOne()))_()" -> "Pow(Symbol(y),
+    NegativeOne())_(2,)"; "Add(Mul(Half(), sin(Mul(Symbol(x), Symbol(y)))), Mul(NegativeOne(),
+    Pow(Symbol(x), Integer(2))), Pow(Symbol(y), NegativeOne()))_()" -> "Mul(Half(),
+    sin(Mul(Symbol(x), Symbol(y))))_(0,)"; "Add(Mul(Half(), sin(Mul(Symbol(x), Symbol(y)))),
+    Mul(NegativeOne(), Pow(Symbol(x), Integer(2))), Pow(Symbol(y), NegativeOne()))_()"
+    -> "Mul(NegativeOne(), Pow(Symbol(x), Integer(2)))_(1,)"; }'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This expression reveals some interesting things about SymPy expression trees.
+    Let’s go through them one by one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s first look at the term `x**2`. As we expected, we see `Pow(x, 2)`. One
+    level up, we see we have `Mul(-1, Pow(x, 2))`. There is no subtraction class in
+    SymPy. `x - y` is represented as `x + -y`, or, more completely, `x + -1*y`, i.e.,
+    `Add(x, Mul(-1, y))`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'digraph{ # Graph style "rankdir"="TD" ######### # Nodes # ######### "Symbol(x)_(1,)"
+    ["color"="black", "label"="Symbol(''x'')", "shape"="ellipse"]; "Symbol(y)_(0,
+    1)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "NegativeOne()_(0,
+    0)" ["color"="black", "label"="Integer(-1)", "shape"="ellipse"]; "Mul(NegativeOne(),
+    Symbol(y))_(0,)" ["color"="black", "label"="Mul", "shape"="ellipse"]; "Add(Mul(NegativeOne(),
+    Symbol(y)), Symbol(x))_()" ["color"="black", "label"="Add", "shape"="ellipse"];
+    ######### # Edges # ######### "Mul(NegativeOne(), Symbol(y))_(0,)" -> "Symbol(y)_(0,
+    1)"; "Mul(NegativeOne(), Symbol(y))_(0,)" -> "NegativeOne()_(0, 0)"; "Add(Mul(NegativeOne(),
+    Symbol(y)), Symbol(x))_()" -> "Symbol(x)_(1,)"; "Add(Mul(NegativeOne(), Symbol(y)),
+    Symbol(x))_()" -> "Mul(NegativeOne(), Symbol(y))_(0,)"; }'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, look at `1/y`. We might expect to see something like `Div(1, y)`, but
+    similar to subtraction, there is no class in SymPy for division. Rather, division
+    is represented by a power of -1\. Hence, we have `Pow(y, -1)`. What if we had
+    divided something other than 1 by `y`, like `x/y`? Let’s see.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'digraph{ # Graph style "rankdir"="TD" ######### # Nodes # ######### "Symbol(x)_(0,)"
+    ["color"="black", "label"="Symbol(''x'')", "shape"="ellipse"]; "Symbol(y)_(1,
+    0)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "NegativeOne()_(1,
+    1)" ["color"="black", "label"="Integer(-1)", "shape"="ellipse"]; "Pow(Symbol(y),
+    NegativeOne())_(1,)" ["color"="black", "label"="Pow", "shape"="ellipse"]; "Mul(Symbol(x),
+    Pow(Symbol(y), NegativeOne()))_()" ["color"="black", "label"="Mul", "shape"="ellipse"];
+    ######### # Edges # ######### "Pow(Symbol(y), NegativeOne())_(1,)" -> "Symbol(y)_(1,
+    0)"; "Pow(Symbol(y), NegativeOne())_(1,)" -> "NegativeOne()_(1, 1)"; "Mul(Symbol(x),
+    Pow(Symbol(y), NegativeOne()))_()" -> "Symbol(x)_(0,)"; "Mul(Symbol(x), Pow(Symbol(y),
+    NegativeOne()))_()" -> "Pow(Symbol(y), NegativeOne())_(1,)"; }'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We see that `x/y` is represented as `x*y**-1`, i.e., `Mul(x, Pow(y, -1))`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, let’s look at the `sin(x*y)/2` term. Following the pattern of the previous
+    example, we might expect to see `Mul(sin(x*y), Pow(Integer(2), -1))`. But instead,
+    we have `Mul(Rational(1, 2), sin(x*y))`. Rational numbers are always combined
+    into a single term in a multiplication, so that when we divide by 2, it is represented
+    as multiplying by 1/2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, one last note. You may have noticed that the order we entered our expression
+    and the order that it came out from `srepr` or in the graph were different. You
+    may have also noticed this phenomenon earlier in the tutorial. For example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: This because in SymPy, the arguments of the commutative operations `Add` and
+    `Mul` are stored in an arbitrary (but consistent!) order, which is independent
+    of the order inputted (if you’re worried about noncommutative multiplication,
+    don’t be. In SymPy, you can create noncommutative Symbols using `Symbol('A', commutative=False)`,
+    and the order of multiplication for noncommutative Symbols is kept the same as
+    the input). Furthermore, as we shall see in the next section, the printing order
+    and the order in which things are stored internally need not be the same either.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In general, an important thing to keep in mind when working with SymPy expression
+    trees is this: the internal representation of an expression and the way it is
+    printed need not be the same. The same is true for the input form. If some expression
+    manipulation algorithm is not working in the way you expected it to, chances are,
+    the internal representation of the object is different from what you thought it
+    was.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recursing through an Expression Tree
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Now that you know how expression trees work in SymPy, let’s look at how to dig
+    our way through an expression tree. Every object in SymPy has two very important
+    attributes, `func`, and `args`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: func
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`func` is the head of the object. For example, `(x*y).func` is `Mul`. Usually
+    it is the same as the class of the object (though there are exceptions to this
+    rule).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Two notes about `func`. First, the class of an object need not be the same as
+    the one used to create it. For example
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: We created `Add(x, x)`, so we might expect `expr.func` to be `Add`, but instead
+    we got `Mul`. Why is that? Let’s take a closer look at `expr`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Add(x, x)`, i.e., `x + x`, was automatically converted into `Mul(2, x)`, i.e.,
+    `2*x`, which is a `Mul`. SymPy classes make heavy use of the `__new__` class constructor,
+    which, unlike `__init__`, allows a different class to be returned from the constructor.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Second, some classes are special-cased, usually for efficiency reasons [[3]](#singleton-fn).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: For the most part, these issues will not bother us. The special classes `Zero`,
+    `One`, `NegativeOne`, and so on are subclasses of `Integer`, so as long as you
+    use `isinstance`, it will not be an issue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: args
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`args` are the top-level arguments of the object. `(x*y).args` would be `(x,
+    y)`. Let’s look at some examples'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: From this, we can see that `expr == Mul(3, y**2, x)`. In fact, we can see that
+    we can completely reconstruct `expr` from its `func` and its `args`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that although we entered `3*y**2*x`, the `args` are `(3, x, y**2)`. In
+    a `Mul`, the Rational coefficient will come first in the `args`, but other than
+    that, the order of everything else follows no special pattern. To be sure, though,
+    there is an order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Mul’s `args` are sorted, so that the same `Mul` will have the same `args`. But
+    the sorting is based on some criteria designed to make the sorting unique and
+    efficient that has no mathematical significance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `srepr` form of our `expr` is `Mul(3, x, Pow(y, 2))`. What if we want to
+    get at the `args` of `Pow(y, 2)`. Notice that the `y**2` is in the third slot
+    of `expr.args`, i.e., `expr.args[2]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: So to get the `args` of this, we call `expr.args[2].args`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now what if we try to go deeper. What are the args of `y`. Or `2`. Let’s see.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: They both have empty `args`. In SymPy, empty `args` signal that we have hit
+    a leaf of the expression tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So there are two possibilities for a SymPy expression. Either it has empty `args`,
+    in which case it is a leaf node in any expression tree, or it has `args`, in which
+    case, it is a branch node of any expression tree. When it has `args`, it can be
+    completely rebuilt from its `func` and its `args`. This is expressed in the key
+    invariant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (Recall that in Python if `a` is a tuple, then `f(*a)` means to call `f` with
+    arguments from the elements of `a`, e.g., `f(*(1, 2, 3))` is the same as `f(1,
+    2, 3)`.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: This key invariant allows us to write simple algorithms that walk expression
+    trees, change them, and rebuild them into new expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Walking the Tree
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: With this knowledge, let’s look at how we can recurse through an expression
+    tree. The nested nature of `args` is a perfect fit for recursive functions. The
+    base case will be empty `args`. Let’s write a simple function that goes through
+    an expression and prints all the `args` at each level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: See how nice it is that `()` signals leaves in the expression tree. We don’t
+    even have to write a base case for our recursion; it is handled automatically
+    by the for loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s test our function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Can you guess why we called our function `pre`? We just wrote a pre-order traversal
+    function for our expression tree. See if you can write a post-order traversal
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Such traversals are so common in SymPy that the generator functions `preorder_traversal`
+    and `postorder_traversal` are provided to make such traversals easy. We could
+    have also written our algorithm as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prevent expression evaluation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are generally two ways to prevent the evaluation, either pass an `evaluate=False`
+    parameter while constructing the expression, or create an evaluation stopper by
+    wrapping the expression with `UnevaluatedExpr`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you don’t remember the class corresponding to the expression you want to
+    build (operator overloading usually assumes `evaluate=True`), just use `sympify`
+    and pass a string:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note that `evaluate=False` won’t prevent future evaluation in later usages
+    of the expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'That’s why the class `UnevaluatedExpr` comes handy. `UnevaluatedExpr` is a
+    method provided by SymPy which lets the user keep an expression unevaluated. By
+    *unevaluated* it is meant that the value inside of it will not interact with the
+    expressions outside of it to give simplified outputs. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The \(x\) remaining alone is the \(x\) wrapped by `UnevaluatedExpr`. To release
+    it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Other examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A point to be noted is that `UnevaluatedExpr` cannot prevent the evaluation
+    of an expression which is given as argument. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Remember that `expr2` will be evaluated if included into another expression.
+    Combine both of the methods to prevent both inside and outside evaluations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`UnevaluatedExpr` is supported by SymPy printers and can be used to print the
+    result in different output forms. For example'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In order to release the expression and get the evaluated LaTeX form, just use
+    `.doit()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Footnotes
+  prefs: []
+  type: TYPE_NORMAL

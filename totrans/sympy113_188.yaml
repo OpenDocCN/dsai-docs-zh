@@ -1,0 +1,772 @@
+- en: Kane’s Method & Lagrange’s Method (Docstrings)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/physics/mechanics/api/kane_lagrange.html](https://docs.sympy.org/latest/modules/physics/mechanics/api/kane_lagrange.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Kane’s method object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**frame** : ReferenceFrame'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The inertial reference frame for the system.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**q_ind** : iterable of dynamicsymbols'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Independent generalized coordinates.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**u_ind** : iterable of dynamicsymbols'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Independent generalized speeds.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**kd_eqs** : iterable of Expr, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Kinematic differential equations, which linearly relate the generalized speeds
+    to the time-derivatives of the generalized coordinates.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**q_dependent** : iterable of dynamicsymbols, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dependent generalized coordinates.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**configuration_constraints** : iterable of Expr, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Constraints on the system’s configuration, i.e. holonomic constraints.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**u_dependent** : iterable of dynamicsymbols, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dependent generalized speeds.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**velocity_constraints** : iterable of Expr, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Constraints on the system’s velocity, i.e. the combination of the nonholonomic
+    constraints and the time-derivative of the holonomic constraints.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**acceleration_constraints** : iterable of Expr, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Constraints on the system’s acceleration, by default these are the time-derivative
+    of the velocity constraints.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**u_auxiliary** : iterable of dynamicsymbols, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Auxiliary generalized speeds.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**bodies** : iterable of Particle and/or RigidBody, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The particles and rigid bodies in the system.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**forcelist** : iterable of tuple[Point | ReferenceFrame, Vector], optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Forces and torques applied on the system.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**explicit_kinematics** : bool'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Boolean whether the mass matrices and forcing vectors should use the explicit
+    form (default) or implicit form for kinematics. See the notes for more details.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**kd_eqs_solver** : str, callable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method used to solve the kinematic differential equations. If a string is supplied,
+    it should be a valid method that can be used with the [`sympy.matrices.matrixbase.MatrixBase.solve()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.solve
+    "sympy.matrices.matrixbase.MatrixBase.solve"). If a callable is supplied, it should
+    have the format `f(A, rhs)`, where it solves the equations and returns the solution.
+    The default utilizes LU solve. See the notes for more information.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**constraint_solver** : str, callable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method used to solve the velocity constraints. If a string is supplied, it should
+    be a valid method that can be used with the [`sympy.matrices.matrixbase.MatrixBase.solve()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.solve
+    "sympy.matrices.matrixbase.MatrixBase.solve"). If a callable is supplied, it should
+    have the format `f(A, rhs)`, where it solves the equations and returns the solution.
+    The default utilizes LU solve. See the notes for more information.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This object is used to do the “book-keeping” as you go through and form equations
+    of motion in the way Kane presents in: Kane, T., Levinson, D. Dynamics Theory
+    and Applications. 1985 McGraw-Hill'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The attributes are for equations in the form [M] udot = forcing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: The mass matrices and forcing vectors related to kinematic equations are given
+    in the explicit form by default. In other words, the kinematic mass matrix is
+    \(\mathbf{k_{k\dot{q}}} = \mathbf{I}\). In order to get the implicit form of those
+    matrices/vectors, you can set the `explicit_kinematics` attribute to `False`.
+    So \(\mathbf{k_{k\dot{q}}}\) is not necessarily an identity matrix. This can provide
+    more compact equations for non-simple kinematics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Two linear solvers can be supplied to `KanesMethod`: one for solving the kinematic
+    differential equations and one to solve the velocity constraints. Both of these
+    sets of equations can be expressed as a linear system `Ax = rhs`, which have to
+    be solved in order to obtain the equations of motion.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The default solver `'LU'`, which stands for LU solve, results relatively low
+    number of operations. The weakness of this method is that it can result in zero
+    division errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If zero divisions are encountered, a possible solver which may solve the problem
+    is `"CRAMER"`. This method uses Cramer’s rule to solve the system. This method
+    is slower and results in more operations than the default solver. However it only
+    uses a single division by default per entry of the solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While a valid list of solvers can be found at [`sympy.matrices.matrixbase.MatrixBase.solve()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.solve
+    "sympy.matrices.matrixbase.MatrixBase.solve"), it is also possible to supply a
+    \(callable\). This way it is possible to use a different solver routine. If the
+    kinematic differential equations are not too complex it can be worth it to simplify
+    the solution by using `lambda A, b: simplify(Matrix.LUsolve(A, b))`. Another option
+    solver one may use is [`sympy.solvers.solveset.linsolve()`](../../../solvers/solveset.html#sympy.solvers.solveset.linsolve
+    "sympy.solvers.solveset.linsolve"). This can be done using \(lambda A, b: tuple(linsolve((A,
+    b)))[0]\), where we select the first solution as our system should have only one
+    unique solution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is a simple example for a one degree of freedom translational spring-mass-damper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, we first need to do the kinematics. This involves creating
+    generalized speeds and coordinates and their derivatives. Then we create a point
+    and set its velocity in a frame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Next we need to arrange/store information in the way that KanesMethod requires.
+    The kinematic differential equations should be an iterable of expressions. A list
+    of forces/torques must be constructed, where each entry in the list is a (Point,
+    Vector) or (ReferenceFrame, Vector) tuple, where the Vectors represent the Force
+    or Torque. Next a particle needs to be created, and it needs to have a point and
+    mass assigned to it. Finally, a list of all bodies and particles needs to be created.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally we can generate the equations of motion. First we create the KanesMethod
+    object and supply an inertial frame, coordinates, generalized speeds, and the
+    kinematic differential equations. Additional quantities such as configuration
+    and motion constraints, dependent coordinates and speeds, and auxiliary speeds
+    are also supplied here (see the online documentation). Next we form FR* and FR
+    to complete: Fr + Fr* = 0. We have the equations of motion at this point. It makes
+    sense to rearrange them though, so we calculate the mass matrix and the forcing
+    terms, for E.o.M. in the form: [MM] udot = forcing, where MM is the mass matrix,
+    udot is a vector of the time derivatives of the generalized speeds, and forcing
+    is a vector representing “forcing” terms.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Please look at the documentation pages for more information on how to perform
+    linearization and how to deal with dependent coordinates & speeds, and how do
+    deal with bringing non-contributing forces into evidence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Attributes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| q, u | (Matrix) Matrices of the generalized coordinates and speeds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| bodies | (iterable) Iterable of Particle and RigidBody objects in the system.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loads | (iterable) Iterable of (Point, vector) or (ReferenceFrame, vector)
+    tuples describing the forces on the system. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| auxiliary_eqs | (Matrix) If applicable, the set of auxiliary Kane’s equations
+    used to solve for non-contributing forces. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| mass_matrix | (Matrix) The system’s dynamics mass matrix: [k_d; k_dnh] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| forcing | (Matrix) The system’s dynamics forcing vector: -[f_d; f_dnh] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| mass_matrix_kin | (Matrix) The “mass matrix” for kinematic differential equations:
+    k_kqdot |'
+  prefs: []
+  type: TYPE_TB
+- en: '| forcing_kin | (Matrix) The forcing vector for kinematic differential equations:
+    -(k_ku*u + f_k) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| mass_matrix_full | (Matrix) The “mass matrix” for the u’s and q’s with dynamics
+    and kinematics |'
+  prefs: []
+  type: TYPE_TB
+- en: '| forcing_full | (Matrix) The “forcing vector” for the u’s and q’s with dynamics
+    and kinematics |'
+  prefs: []
+  type: TYPE_TB
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: A matrix containing the auxiliary equations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The forcing vector of the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The forcing vector of the system, augmented by the kinematic differential equations
+    in explicit or implicit form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: The kinematic “forcing vector” of the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Method to form Kane’s equations, Fr + Fr* = 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**bodies** : iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An iterable of all RigidBody’s and Particle’s in the system. A system must have
+    at least one body.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**loads** : iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Takes in an iterable of (Particle, Vector) or (ReferenceFrame, Vector) tuples
+    which represent the force at a point or torque on a frame. Must be either a non-empty
+    iterable of tuples or None which corresponds to a system with no constraints.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns (Fr, Fr*). In the case where auxiliary generalized speeds are present
+    (say, s auxiliary speeds, o generalized speeds, and m motion constraints) the
+    length of the returned vectors will be o - m + s in length. The first o - m equations
+    will be the constrained Kane’s equations, then the s auxiliary Kane’s equations.
+    These auxiliary equations can be accessed with the auxiliary_eqs property.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a dictionary mapping q’ to u.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Linearize the equations of motion about a symbolic operating point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**new_method**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deprecated, does nothing and will be removed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**linear_solver** : str, callable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method used to solve the several symbolic linear systems of the form `A*x=b`
+    in the linearization process. If a string is supplied, it should be a valid method
+    that can be used with the [`sympy.matrices.matrixbase.MatrixBase.solve()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.solve
+    "sympy.matrices.matrixbase.MatrixBase.solve"). If a callable is supplied, it should
+    have the format `x = f(A, b)`, where it solves the equations and returns the solution.
+    The default is `'LU'` which corresponds to SymPy’s `A.LUsolve(b)`. `LUsolve()`
+    is fast to compute but will often result in divide-by-zero and thus `nan` results.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '****kwargs**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extra keyword arguments are passed to [`sympy.physics.mechanics.linearize.Linearizer.linearize()`](linearize.html#sympy.physics.mechanics.linearize.Linearizer.linearize
+    "sympy.physics.mechanics.linearize.Linearizer.linearize").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: If kwarg A_and_B is False (default), returns M, A, B, r for the linearized form,
+    M*[q’, u’]^T = A*[q_ind, u_ind]^T + B*r.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If kwarg A_and_B is True, returns A, B, r for the linearized form dx = A*x +
+    B*r, where x = [q_ind, u_ind]^T. Note that this is computationally intensive if
+    there are many symbolic parameters. For this reason, it may be more desirable
+    to use the default A_and_B=False, returning M, A, and B. Values may then be substituted
+    in to these matrices, and the state space form found as A = P.T*M.inv()*A, B =
+    P.T*M.inv()*B, where P = Linearizer.perm_mat.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In both cases, r is found as all dynamicsymbols in the equations of motion that
+    are not part of q, u, q’, or u’. They are sorted in canonical form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The operating points may be also entered using the `op_point` kwarg. This takes
+    a dictionary of {symbol: value}, or a an iterable of such dictionaries. The values
+    may be numeric or symbolic. The more values you can specify beforehand, the faster
+    this computation will run.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more documentation, please see the `Linearizer` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: The mass matrix of the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: The mass matrix of the system, augmented by the kinematic differential equations
+    in explicit or implicit form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: The kinematic “mass matrix” \(\mathbf{k_{k\dot{q}}}\) of the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Returns the system’s equations of motion in first order form. The output is
+    the right hand side of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: The right hand side is what is needed by most numerical ODE integrators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**inv_method** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The specific sympy inverse matrix calculation method to use. For a list of valid
+    methods, see [`inv()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.inv
+    "sympy.matrices.matrixbase.MatrixBase.inv")
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns an instance of the Linearizer class, initiated from the data in the
+    KanesMethod class. This may be more desirable than using the linearize class method,
+    as the Linearizer object will allow more efficient recalculation (i.e. about varying
+    operating points).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**linear_solver** : str, callable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method used to solve the several symbolic linear systems of the form `A*x=b`
+    in the linearization process. If a string is supplied, it should be a valid method
+    that can be used with the [`sympy.matrices.matrixbase.MatrixBase.solve()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.solve
+    "sympy.matrices.matrixbase.MatrixBase.solve"). If a callable is supplied, it should
+    have the format `x = f(A, b)`, where it solves the equations and returns the solution.
+    The default is `'LU'` which corresponds to SymPy’s `A.LUsolve(b)`. `LUsolve()`
+    is fast to compute but will often result in divide-by-zero and thus `nan` results.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linearizer
+  prefs: []
+  type: TYPE_NORMAL
+- en: An instantiated [`sympy.physics.mechanics.linearize.Linearizer`](linearize.html#sympy.physics.mechanics.linearize.Linearizer
+    "sympy.physics.mechanics.linearize.Linearizer").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Lagrange’s method object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This object generates the equations of motion in a two step procedure. The first
+    step involves the initialization of LagrangesMethod by supplying the Lagrangian
+    and the generalized coordinates, at the bare minimum. If there are any constraint
+    equations, they can be supplied as keyword arguments. The Lagrange multipliers
+    are automatically generated and are equal in number to the constraint equations.
+    Similarly any non-conservative forces can be supplied in an iterable (as described
+    below and also shown in the example) along with a ReferenceFrame. This is also
+    discussed further in the __init__ method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is a simple example for a one degree of freedom translational spring-mass-damper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, we first need to do the kinematics. This involves creating
+    generalized coordinates and their derivatives. Then we create a point and set
+    its velocity in a frame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: We need to then prepare the information as required by LagrangesMethod to generate
+    equations of motion. First we create the Particle, which has a point attached
+    to it. Following this the lagrangian is created from the kinetic and potential
+    energies. Then, an iterable of nonconservative forces/torques must be constructed,
+    where each item is a (Point, Vector) or (ReferenceFrame, Vector) tuple, with the
+    Vectors representing the nonconservative forces or torques.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally we can generate the equations of motion. First we create the LagrangesMethod
+    object. To do this one must supply the Lagrangian, and the generalized coordinates.
+    The constraint equations, the forcelist, and the inertial frame may also be provided,
+    if relevant. Next we generate Lagrange’s equations of motion, such that: Lagrange’s
+    equations of motion = 0. We have the equations of motion at this point.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can also solve for the states using the ‘rhs’ method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Please refer to the docstrings on each method for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Attributes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| q, u | (Matrix) Matrices of the generalized coordinates and speeds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loads | (iterable) Iterable of (Point, vector) or (ReferenceFrame, vector)
+    tuples describing the forces on the system. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| bodies | (iterable) Iterable containing the rigid bodies and particles of
+    the system. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| mass_matrix | (Matrix) The system’s mass matrix |'
+  prefs: []
+  type: TYPE_TB
+- en: '| forcing | (Matrix) The system’s forcing vector |'
+  prefs: []
+  type: TYPE_TB
+- en: '| mass_matrix_full | (Matrix) The “mass matrix” for the qdot’s, qdoubledot’s,
+    and the lagrange multipliers (lam) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| forcing_full | (Matrix) The forcing vector for the qdot’s, qdoubledot’s and
+    lagrange multipliers (lam) |'
+  prefs: []
+  type: TYPE_TB
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the forcing vector from ‘lagranges_equations’ method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Augments qdots to the forcing vector above.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Method to form Lagrange’s equations of motion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns a vector of equations of motion using Lagrange’s equations of the second
+    kind.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Linearize the equations of motion about a symbolic operating point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**linear_solver** : str, callable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method used to solve the several symbolic linear systems of the form `A*x=b`
+    in the linearization process. If a string is supplied, it should be a valid method
+    that can be used with the [`sympy.matrices.matrixbase.MatrixBase.solve()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.solve
+    "sympy.matrices.matrixbase.MatrixBase.solve"). If a callable is supplied, it should
+    have the format `x = f(A, b)`, where it solves the equations and returns the solution.
+    The default is `'LU'` which corresponds to SymPy’s `A.LUsolve(b)`. `LUsolve()`
+    is fast to compute but will often result in divide-by-zero and thus `nan` results.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '****kwargs**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extra keyword arguments are passed to [`sympy.physics.mechanics.linearize.Linearizer.linearize()`](linearize.html#sympy.physics.mechanics.linearize.Linearizer.linearize
+    "sympy.physics.mechanics.linearize.Linearizer.linearize").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: If kwarg A_and_B is False (default), returns M, A, B, r for the linearized form,
+    M*[q’, u’]^T = A*[q_ind, u_ind]^T + B*r.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If kwarg A_and_B is True, returns A, B, r for the linearized form dx = A*x +
+    B*r, where x = [q_ind, u_ind]^T. Note that this is computationally intensive if
+    there are many symbolic parameters. For this reason, it may be more desirable
+    to use the default A_and_B=False, returning M, A, and B. Values may then be substituted
+    in to these matrices, and the state space form found as A = P.T*M.inv()*A, B =
+    P.T*M.inv()*B, where P = Linearizer.perm_mat.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In both cases, r is found as all dynamicsymbols in the equations of motion that
+    are not part of q, u, q’, or u’. They are sorted in canonical form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The operating points may be also entered using the `op_point` kwarg. This takes
+    a dictionary of {symbol: value}, or a an iterable of such dictionaries. The values
+    may be numeric or symbolic. The more values you can specify beforehand, the faster
+    this computation will run.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more documentation, please see the `Linearizer` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the mass matrix, which is augmented by the Lagrange multipliers, if
+    necessary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the system is described by ‘n’ generalized coordinates and there are no constraint
+    equations then an n X n matrix is returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If there are ‘n’ generalized coordinates and ‘m’ constraint equations have been
+    supplied during initialization then an n X (n+m) matrix is returned. The (n +
+    m - 1)th and (n + m)th columns contain the coefficients of the Lagrange multipliers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Augments the coefficients of qdots to the mass_matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns equations that can be solved numerically.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**inv_method** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The specific sympy inverse matrix calculation method to use. For a list of valid
+    methods, see [`inv()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.inv
+    "sympy.matrices.matrixbase.MatrixBase.inv")
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Solves for the values of the lagrange multipliers symbolically at the specified
+    operating point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**op_point** : dict or iterable of dicts, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Point at which to solve at. The operating point is specified as a dictionary
+    or iterable of dictionaries of {symbol: value}. The value may be numeric or symbolic
+    itself.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**sol_type** : str, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Solution return type. Valid options are: - ‘dict’: A dict of {symbol : value}
+    (default) - ‘Matrix’: An ordered column matrix of the solution'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns an instance of the Linearizer class, initiated from the data in the
+    LagrangesMethod class. This may be more desirable than using the linearize class
+    method, as the Linearizer object will allow more efficient recalculation (i.e.
+    about varying operating points).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**q_ind, qd_ind** : array_like, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The independent generalized coordinates and speeds.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**q_dep, qd_dep** : array_like, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The dependent generalized coordinates and speeds.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**linear_solver** : str, callable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method used to solve the several symbolic linear systems of the form `A*x=b`
+    in the linearization process. If a string is supplied, it should be a valid method
+    that can be used with the [`sympy.matrices.matrixbase.MatrixBase.solve()`](../../../matrices/matrices.html#sympy.matrices.matrixbase.MatrixBase.solve
+    "sympy.matrices.matrixbase.MatrixBase.solve"). If a callable is supplied, it should
+    have the format `x = f(A, b)`, where it solves the equations and returns the solution.
+    The default is `'LU'` which corresponds to SymPy’s `A.LUsolve(b)`. `LUsolve()`
+    is fast to compute but will often result in divide-by-zero and thus `nan` results.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linearizer
+  prefs: []
+  type: TYPE_NORMAL
+- en: An instantiated [`sympy.physics.mechanics.linearize.Linearizer`](linearize.html#sympy.physics.mechanics.linearize.Linearizer
+    "sympy.physics.mechanics.linearize.Linearizer").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL

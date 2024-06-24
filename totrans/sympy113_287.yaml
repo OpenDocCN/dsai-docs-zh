@@ -1,0 +1,901 @@
+- en: Series Manipulation using Polynomials
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/polys/ringseries.html](https://docs.sympy.org/latest/modules/polys/ringseries.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Any finite Taylor series, for all practical purposes is, in fact a polynomial.
+    This module makes use of the efficient representation and operations of sparse
+    polynomials for very fast multivariate series manipulations. Typical speedups
+    compared to SymPy’s `series` method are in the range 20-100, with the gap widening
+    as the series being handled gets larger.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'All the functions expand any given series on some ring specified by the user.
+    Thus, the coefficients of the calculated series depend on the ring being used.
+    For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`QQ` stands for the Rational domain. Here all coefficients are rationals. It
+    is recommended to use `QQ` with ring series as it automatically chooses the fastest
+    Rational type.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Similarly, if a Real domain is used:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Though the definition of a polynomial limits the use of Polynomial module to
+    Taylor series, we extend it to allow Laurent and even Puiseux series (with fractional
+    exponents):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `PolyElement` did not allow non-natural numbers as exponents. It
+    converted a fraction to an integer and raised an error on getting negative exponents.
+    The goal of the `ring series` module is fast series expansion, and not to use
+    the `polys` module. The reason we use it as our backend is simply because it implements
+    a sparse representation and most of the basic functions that we need. However,
+    this default behaviour of `polys` was limiting for `ring series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that there is no such constraint (in having rational exponents) in the
+    data-structure used by `polys`- `dict`. Sparse polynomials (`PolyElement`) use
+    the Python dict to store a polynomial term by term, where a tuple of exponents
+    is the key and the coefficient of that term is the value. There is no reason why
+    we can’t have rational values in the `dict` so as to support rational exponents.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So the approach we took was to modify sparse `polys` to allow non-natural exponents.
+    And it turned out to be quite simple. We only had to delete the conversion to
+    `int` of exponents in the `__pow__` method of `PolyElement`. So:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: and not `1` as was the case earlier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Though this change violates the definition of a polynomial, it doesn’t break
+    anything yet. Ideally, we shouldn’t modify `polys` in any way. But to have all
+    the `series` capabilities we want, no other simple way was found. If need be,
+    we can separate the modified part of `polys` from core `polys`. It would be great
+    if any other elegant solution is found.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'All series returned by the functions of this module are instances of the `PolyElement`
+    class. To use them with other SymPy types, convert them to `Expr`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: rs_series
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Direct use of elementary ring series functions does give more control, but is
+    limiting at the same time. Creating an appropriate ring for the desired series
+    expansion and knowing which ring series function to call, are things not everyone
+    might be familiar with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '\(rs\_series\) is a function that takes an arbitrary `Expr` and returns its
+    expansion by calling the appropriate ring series functions. The returned series
+    is a polynomial over the simplest (almost) possible ring that does the job. It
+    recursively builds the ring as it parses the given expression, adding generators
+    to the ring when it needs them. Some examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It can expand complicated multivariate expressions involving multiple functions
+    and most importantly, it does so blazingly fast:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '\(rs\_series\) is over 300 times faster. Given an expression to expand, there
+    is some fixed overhead to parse it. Thus, for larger orders, the speed improvement
+    becomes more prominent:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To figure out the right ring for a given expression, \(rs\_series\) uses the
+    `sring` function, which in turn uses other functions of `polys`. As explained
+    above, non-natural exponents are not allowed. But the restriction is on exponents
+    and not generators. So, `polys` allows all sorts of symbolic terms as generators
+    to make sure that the exponent is a natural number:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the above example, \(1/a\) and \(a**(1/7)\) will be treated as completely
+    different atoms. For all practical purposes, we could let \(b = 1/a\) and \(c
+    = a**(1/7)\) and do the manipulations. Effectively, expressions involving \(1/a\)
+    and \(a**(1/7)\) (and their powers) will never simplify:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This leads to similar issues with manipulating Laurent and Puiseux series as
+    faced earlier. Fortunately, this time we have an elegant solution and are able
+    to isolate the `series` and `polys` behaviour from one another. We introduce a
+    boolean flag `series` in the list of allowed `Options` for polynomials (see [`sympy.polys.polyoptions.Options`](internals.html#sympy.polys.polyoptions.Options
+    "sympy.polys.polyoptions.Options")). Thus, when we want `sring` to allow rational
+    exponents we supply a `series=True` flag to `sring`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Contribute
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: \(rs\_series\) is not fully implemented yet. As of now, it supports only multivariate
+    Taylor expansions of expressions involving `sin`, `cos`, `exp` and `tan`. Adding
+    the remaining functions is not at all difficult and they will be gradually added.
+    If you are interested in helping, read the comments in `ring_series.py`. Currently,
+    it does not support Puiseux series (though the elementary functions do). This
+    is expected to be fixed soon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can also add more functions to `ring_series.py`. Only elementary functions
+    are supported currently. The long term goal is to replace SymPy’s current `series`
+    method with `rs_series`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reference
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Functions in this module carry the prefix `rs_`, standing for “ring series”.
+    They manipulate finite power series in the sparse representation provided by `polys.ring.ring`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Elementary functions**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Logarithm of `p` modulo `O(x**prec)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: Truncation of `integral dx p**-1*d p/dx` is used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calculate the series expansion of the principal branch of the Lambert W function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`LambertW`](../functions/elementary.html#sympy.functions.elementary.exponential.LambertW
+    "sympy.functions.elementary.exponential.LambertW")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Exponentiation of a series modulo `O(x**prec)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: The arctangent of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the atan of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`atan`](../functions/elementary.html#sympy.functions.elementary.trigonometric.atan
+    "sympy.functions.elementary.trigonometric.atan")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Arcsine of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the asin of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`asin`](../functions/elementary.html#sympy.functions.elementary.trigonometric.asin
+    "sympy.functions.elementary.trigonometric.asin")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tangent of a series.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Return the series expansion of the tan of `p`, about 0.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`_tan1`](#sympy.polys.ring_series._tan1 "sympy.polys.ring_series._tan1"),
+    [`tan`](../functions/elementary.html#sympy.functions.elementary.trigonometric.tan
+    "sympy.functions.elementary.trigonometric.tan")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Helper function of [`rs_tan()`](#sympy.polys.ring_series.rs_tan "sympy.polys.ring_series.rs_tan").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of tan of a univariate series using Newton’s method.
+    It takes advantage of the fact that series expansion of atan is easier than that
+    of tan.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider \(f(x) = y - \arctan(x)\) Let r be a root of f(x) found using Newton’s
+    method. Then \(f(r) = 0\) Or \(y = \arctan(x)\) where \(x = \tan(y)\) as required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cotangent of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the cot of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`cot`](../functions/elementary.html#sympy.functions.elementary.trigonometric.cot
+    "sympy.functions.elementary.trigonometric.cot")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sine of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the sin of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sin`](../functions/elementary.html#sympy.functions.elementary.trigonometric.sin
+    "sympy.functions.elementary.trigonometric.sin")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cosine of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the cos of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`cos`](../functions/elementary.html#sympy.functions.elementary.trigonometric.cos
+    "sympy.functions.elementary.trigonometric.cos")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the tuple ``(rs_cos(p, x, prec)`, `rs_sin(p, x, prec))``.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Is faster than calling rs_cos and rs_sin separately
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Hyperbolic arctangent of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the atanh of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`atanh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.atanh
+    "sympy.functions.elementary.hyperbolic.atanh")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Hyperbolic sine of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the sinh of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sinh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.sinh
+    "sympy.functions.elementary.hyperbolic.sinh")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Hyperbolic cosine of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the cosh of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`cosh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.cosh
+    "sympy.functions.elementary.hyperbolic.cosh")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Hyperbolic tangent of a series
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return the series expansion of the tanh of `p`, about 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`tanh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.tanh
+    "sympy.functions.elementary.hyperbolic.tanh")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `sum f_i/i!*x**i` from `sum f_i*x**i`, where `x` is the first variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `invers=True` return `sum f_i*i!*x**i`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Operations**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the product of the given two series, modulo `O(x**prec)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`x` is the series variable or its position in the generators.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: Square the series modulo `O(x**prec)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return `p1**n` modulo `O(x**prec)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multivariate series inversion `1/p` modulo `O(x**prec)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Reversion of a series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`p` is a series with `O(x**n)` of the form \(p = ax + f(x)\) where \(a\) is
+    a number different from 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(f(x) = \sum_{k=2}^{n-1} a_kx_k\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**a_k** : Can depend polynomially on other variables, not indicated.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'x : Variable with name x. y : Variable with name y.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Solve \(p = y\), that is, given \(ax + f(x) - y = 0\),
+  prefs: []
+  type: TYPE_NORMAL
+- en: find the solution \(x = r(y)\) up to \(O(y^n)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithm
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If \(r_i\) is the solution at order \(i\), then: \(ar_i + f(r_i) - y = O\left(y^{i
+    + 1}\right)\)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'and if \(r_{i + 1}\) is the solution at order \(i + 1\), then: \(ar_{i + 1}
+    + f(r_{i + 1}) - y = O\left(y^{i + 2}\right)\)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have, \(r_{i + 1} = r_i + e\), such that, \(ae + f(r_i) = O\left(y^{i + 2}\right)\)
+    or \(e = -f(r_i)/a\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So we use the recursion relation: \(r_{i + 1} = r_i - f(r_i)/a\) with the boundary
+    condition: \(r_1 = y\)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multivariate series expansion of the nth root of `p`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**p** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The polynomial to computer the root of.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**n** : integer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The order of the root to be computed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**x** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**prec** : integer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Order of the expanded series.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: The result of this function is dependent on the ring over which the polynomial
+    has been defined. If the answer involves a root of a constant, make sure that
+    the polynomial is over a real field. It cannot yet handle roots of symbols.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: Truncate the series in the `x` variable with precision `prec`, that is, modulo
+    `O(x**prec)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: Substitution with truncation according to the mapping in `rules`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return a series with precision `prec` in the generator `x`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that substitutions are not done one after the other
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: which differs from
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**p** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    Input series.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**rules** : `dict` with substitution mappings.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**x** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    in which the series truncation is to be done.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**prec** : [`Integer`](../core.html#sympy.core.numbers.Integer "sympy.core.numbers.Integer")
+    order of the series after truncation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return partial derivative of `p` with respect to `x`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**x** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    with respect to which `p` is differentiated.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: Integrate `p` with respect to `x`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**x** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    with respect to which `p` is integrated.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compute the truncated Newton sum of the polynomial `p`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: compute the composed sum `prod(p2(x - beta) for beta root of p1)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R823](#id1)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A. Bostan, P. Flajolet, B. Salvy and E. Schost “Fast Computation with Two Algebraic
+    Numbers”, (2002) Research Report 4579, Institut National de Recherche en Informatique
+    et en Automatique
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Utility functions**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: Test if `p` is Puiseux series in `x`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Raise an exception if it has a negative power in `x`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the puiseux series for \(f(p, x, prec)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To be used when function `f` is implemented only for regular series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return the puiseux series for \(f(p, q, x, prec)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To be used when function `f` is implemented only for regular series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a series \(sum c[n]*p**n\) modulo \(O(x**prec)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It reduces the number of multiplications by summing concurrently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(ax = [1, p, p**2, .., p**(J - 1)]\) \(s = sum(c[i]*ax[i]\) for i in \(range(r,
+    (r + 1)*J))*p**((K - 1)*J)\) with \(K >= (n + 1)/J\)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: Function of a multivariate series computed by substitution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The case with f method name is used to compute \(rs\_tan\) and \(rs\_nth\_root\)
+    of a multivariate series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(rs\_fun(p, tan, iv, prec)\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: tan series is first computed for a dummy variable _x, i.e, \(rs\_tan(\_x, iv,
+    prec)\). Then we substitute _x with p to get the desired series
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**p** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    The multivariate series to be expanded.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**f** : \(ring\_series\) function to be applied on \(p\).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**args[-2]** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement
+    "sympy.polys.rings.PolyElement") with respect to which, the series is to be expanded.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**args[-1]** : Required order of the expanded series.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return \(p*x_i**n\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(x\_i\) is the ith variable in `p`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE

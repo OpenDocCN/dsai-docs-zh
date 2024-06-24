@@ -1,0 +1,564 @@
+- en: Autowrap Module
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/utilities/autowrap.html](https://docs.sympy.org/latest/modules/utilities/autowrap.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The autowrap module works very well in tandem with the Indexed classes of the
+    [Tensor](../tensor/index.html#tensor-module). Here is a simple example that shows
+    how to setup a binary routine that calculates a matrix-vector product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Because the code printers treat Indexed objects with repeated indices as a
+    summation, the above equality instance will be translated to low-level code for
+    a matrix vector product. This is how you tell SymPy to generate the code, compile
+    it and wrap it as a python function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'That’s it. Now let’s test it with some numpy arrays. The default wrapper backend
+    is f2py. The wrapper function it provides is set up to accept python lists, which
+    it will silently convert to numpy arrays. So we can test the matrix vector product
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Implementation details
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The autowrap module is implemented with a backend consisting of CodeWrapper
+    objects. The base class `CodeWrapper` takes care of details about module name,
+    filenames and options. It also contains the driver routine, which runs through
+    all steps in the correct order, and also takes care of setting up and removing
+    the temporary working directory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The actual compilation and wrapping is done by external resources, such as the
+    system installed f2py command. The Cython backend runs a distutils setup script
+    in a subprocess. Subclasses of CodeWrapper takes care of these backend-dependent
+    details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## API Reference'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Module for compiling codegen output, and wrap the binary for use in python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use the autowrap module it must first be imported
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This module provides a common interface for different external backends, such
+    as f2py, fwrap, Cython, SWIG(?) etc. (Currently only f2py and Cython are implemented)
+    The goal is to provide access to compiled binaries of acceptable performance with
+    a one-button user interface, e.g.,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Although a SymPy user might primarily be interested in working with mathematical
+    expressions and not in the details of wrapping tools needed to evaluate such expressions
+    efficiently in numerical form, the user cannot do so without some understanding
+    of the limits in the target language. For example, the expanded expression contains
+    large coefficients which result in loss of precision when computing the expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Wrapping the unexpanded expression gives the expected behavior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The callable returned from autowrap() is a binary Python function, not a SymPy
+    object. If it is desired to use the compiled function in symbolic expressions,
+    it is better to use binary_function() which returns a SymPy Function object. The
+    binary callable is attached as the _imp_ attribute and invoked when a numerical
+    evaluation is requested with evalf(), or with lambdify().
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: When is this useful?
+  prefs: []
+  type: TYPE_NORMAL
+- en: For computations on large arrays, Python iterations may be too slow, and depending
+    on the mathematical expression, it may be difficult to exploit the advanced index
+    operations provided by NumPy.
+  prefs:
+  - PREF_BQ
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: For *really* long expressions that will be called repeatedly, the compiled binary
+    should be significantly faster than SymPy’s .evalf()
+  prefs:
+  - PREF_BQ
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: If you are generating code with the codegen utility in order to use it in another
+    project, the automatic Python wrappers let you test the binaries immediately from
+    within SymPy.
+  prefs:
+  - PREF_BQ
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: To create customized ufuncs for use with numpy arrays. See *ufuncify*.
+  prefs:
+  - PREF_BQ
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When is this module NOT the best approach?
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are really concerned about speed or memory optimizations, you will probably
+    get better results by working directly with the wrapper tools and the low level
+    code. However, the files generated by this utility may provide a useful starting
+    point and reference code. Temporary files will be left intact if you supply the
+    keyword tempdir=”path/to/files/”.
+  prefs:
+  - PREF_BQ
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: If the array computation can be handled easily by numpy, and you do not need
+    the binaries for another project.
+  prefs:
+  - PREF_BQ
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Base Class for code wrappers
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Wrapper that uses Cython
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Write a Cython file with Python wrappers
+  prefs: []
+  type: TYPE_NORMAL
+- en: This file contains all the definitions of the routines in c code and refers
+    to the header file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arguments
+  prefs: []
+  type: TYPE_NORMAL
+- en: routines
+  prefs: []
+  type: TYPE_NORMAL
+- en: List of Routine instances
+  prefs: []
+  type: TYPE_NORMAL
+- en: f
+  prefs: []
+  type: TYPE_NORMAL
+- en: File-like object to write the file to
+  prefs: []
+  type: TYPE_NORMAL
+- en: prefix
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to refer to the proper header file. Only the basename
+    of the prefix is used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Class used for testing independent of backends
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Wrapper that uses f2py
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Wrapper for Ufuncify
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Write a C file with Python wrappers
+  prefs: []
+  type: TYPE_NORMAL
+- en: This file contains all the definitions of the routines in c code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arguments
+  prefs: []
+  type: TYPE_NORMAL
+- en: routines
+  prefs: []
+  type: TYPE_NORMAL
+- en: List of Routine instances
+  prefs: []
+  type: TYPE_NORMAL
+- en: f
+  prefs: []
+  type: TYPE_NORMAL
+- en: File-like object to write the file to
+  prefs: []
+  type: TYPE_NORMAL
+- en: prefix
+  prefs: []
+  type: TYPE_NORMAL
+- en: The filename prefix, used to name the imported module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: funcname
+  prefs: []
+  type: TYPE_NORMAL
+- en: Name of the main function to be returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generates Python callable binaries based on the math expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The SymPy expression that should be wrapped as a binary routine.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**language** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If supplied, (options: ‘C’ or ‘F95’), specifies the language of the generated
+    code. If `None` [default], the language is inferred based upon the specified backend.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**backend** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backend used to wrap the generated code. Either ‘f2py’ [default], or ‘cython’.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**tempdir** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Path to directory for temporary files. If this argument is supplied, the generated
+    code and the wrapper input files are left intact in the specified path.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**args** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An ordered iterable of symbols. Specifies the argument sequence for the function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**flags** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additional option flags that will be passed to the backend.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**verbose** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, autowrap will not mute the command line backends. This can be helpful
+    for debugging.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**helpers** : 3-tuple or iterable of 3-tuples, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Used to define auxiliary expressions needed for the main expr. If the main expression
+    needs to call a specialized function it should be passed in via `helpers`. Autowrap
+    will then make sure that the compiled main expression can link to the helper routine.
+    Items should be 3-tuples with (<function_name>, <sympy_expression>, <argument_tuple>).
+    It is mandatory to supply an argument sequence to helper routines.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**code_gen** : CodeGen instance'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An instance of a CodeGen subclass. Overrides `language`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**include_dirs** : [string]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of directories to search for C/C++ header files (in Unix form for portability).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**library_dirs** : [string]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of directories to search for C/C++ libraries at link time.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**libraries** : [string]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A list of library names (not filenames or paths) to link against.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**extra_compile_args** : [string]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any extra platform- and compiler-specific information to use when compiling
+    the source files in ‘sources’. For platforms and compilers where “command line”
+    makes sense, this is typically a list of command-line arguments, but for other
+    platforms it could be anything.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**extra_link_args** : [string]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any extra platform- and compiler-specific information to use when linking object
+    files together to create the extension (or to create a new static Python interpreter).
+    Similar interpretation as for ‘extra_compile_args’.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns a SymPy function with expr as binary implementation
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is a convenience function that automates the steps needed to autowrap the
+    SymPy expression and attaching it to a Function object with implemented_function().
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**symfunc** : SymPy Function'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function to bind the callable to.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**expr** : SymPy Expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expression used to generate the function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**kwargs** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any kwargs accepted by autowrap.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generates a binary function that supports broadcasting on numpy arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**args** : iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Either a Symbol or an iterable of symbols. Specifies the argument sequence for
+    the function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**expr**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A SymPy expression that defines the element wise operation.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**language** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If supplied, (options: ‘C’ or ‘F95’), specifies the language of the generated
+    code. If `None` [default], the language is inferred based upon the specified backend.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**backend** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backend used to wrap the generated code. Either ‘numpy’ [default], ‘cython’,
+    or ‘f2py’.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**tempdir** : string, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Path to directory for temporary files. If this argument is supplied, the generated
+    code and the wrapper input files are left intact in the specified path.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**flags** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additional option flags that will be passed to the backend.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**verbose** : bool, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If True, autowrap will not mute the command line backends. This can be helpful
+    for debugging.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**helpers** : iterable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Used to define auxiliary expressions needed for the main expr. If the main expression
+    needs to call a specialized function it should be put in the `helpers` iterable.
+    Autowrap will then make sure that the compiled main expression can link to the
+    helper routine. Items should be tuples with (<funtion_name>, <sympy_expression>,
+    <arguments>). It is mandatory to supply an argument sequence to helper routines.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**kwargs** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These kwargs will be passed to autowrap if the \(f2py\) or \(cython\) backend
+    is used and ignored if the \(numpy\) backend is used.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: The default backend (‘numpy’) will create actual instances of `numpy.ufunc`.
+    These support ndimensional broadcasting, and implicit type conversion. Use of
+    the other backends will result in a “ufunc-like” function, which requires equal
+    length 1-dimensional arrays for all arguments, and will not perform any type conversions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: For the ‘f2py’ and ‘cython’ backends, inputs are required to be equal length
+    1-dimensional arrays. The ‘f2py’ backend will perform type conversion, but the
+    Cython backend will error if the inputs are not of the expected type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R1052](#id1)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://numpy.org/doc/stable/reference/ufuncs.html](https://numpy.org/doc/stable/reference/ufuncs.html)'
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,570 @@
+- en: Basic functionality of the module
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/polys/basics.html](https://docs.sympy.org/latest/modules/polys/basics.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## Introduction'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This tutorial tries to give an overview of the functionality concerning polynomials
+    within SymPy. All code examples assume:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic concepts
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Polynomials
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Given a family \((x_i)\) of symbols, or other suitable objects, including numbers,
+    expressions derived from them by repeated addition, subtraction and multiplication
+    are called *polynomial expressions in the generators* \(x_i\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: By the distributive law it is possible to perform multiplications before additions
+    and subtractions. The products of generators thus obtained are called *monomials*.
+    They are usually written in the form \(x_1^{\nu_1}x_2^{\nu_2}\cdots x_n^{\nu_n}\)
+    where the exponents \(\nu_i\) are nonnegative integers. It is often convenient
+    to write this briefly as \(x^\nu\) where \(x = (x_1, x_2, \ldots, x_n)\) denotes
+    the family of generators and \(\nu = (\nu_1, \nu_2, \ldots, \nu_n)\) is the family
+    of exponents.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When all monomials having the same exponents are combined, the polynomial expression
+    becomes a sum of products \(c_\nu x^\nu\), called the *terms* of the polynomial,
+    where the *coefficients* \(c_\nu\) are integers. If some of the \(x_i\) are manifest
+    numbers, they are incorporated in the coefficients and not regarded as generators.
+    Such coefficients are typically rational, real or complex numbers. Some symbolic
+    numbers, e.g., `pi`, can be either coefficients or generators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A polynomial expression that is a sum of terms with different monomials is uniquely
+    determined by its family of coefficients \((c_\nu)\). Such an expression is customarily
+    called a *polynomial*, though, more properly, that name does stand for the coefficient
+    family once the generators are given. SymPy implements polynomials by default
+    as dictionaries with monomials as keys and coefficients as values. Another implementation
+    consists of nested lists of coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The set of all polynomials with integer coefficients in the generators \(x_i\)
+    is a *ring*, i.e., the sums, differences and products of its elements are again
+    polynomials in the same generators. This ring is denoted \(\mathbb{Z}[x_1, x_2,
+    \ldots, x_n]\), or \(\mathbb{Z}[(x_i)]\), and called the *ring of polynomials
+    in the* \(x_i\) *with integer coefficients*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More generally, the coefficients of a polynomial can be elements of any commutative
+    ring \(A\), and the corresponding polynomial ring is then denoted \(A[x_1, x_2,
+    \dots, x_n]\). The ring \(A\) can also be a polynomial ring. In SymPy, the coefficient
+    ring is called the `domain` of the polynomial ring, and it can be given as a keyword
+    parameter. By default, it is determined by the coefficients of the polynomial
+    arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Polynomial expressions can be transformed into polynomials by the method [`sympy.core.expr.Expr.as_poly`](../core.html#sympy.core.expr.Expr.as_poly
+    "sympy.core.expr.Expr.as_poly"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If a polynomial expression contains numbers that are not integers, they are
+    regarded as coefficients and the coefficient ring is extended accordingly. In
+    particular, division by integers leads to rational coefficients:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Symbolic numbers are considered generators unless they are explicitly excluded,
+    in which case they are adjoined to the coefficient ring:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Alternatively, the coefficient domain can be specified by means of a keyword
+    argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the ring \(\mathbb{Z}[\pi][x, y]\) of polynomials in \(x\) and \(y\)
+    with coefficients in \(\mathbb{Z}[\pi]\) is mathematically equivalent to \(\mathbb{Z}[\pi,
+    x, y]\), only their implementations differ.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If an expression contains functions of the generators, other than their positive
+    integer powers, these are interpreted as new generators:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Since \(y\) and \(\sin(y)\) are algebraically independent they can both appear
+    as generators in a polynomial. However, *polynomial expressions must not contain
+    negative powers of generators*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is important to realize that the generators \(x\) and \(1/x = x^{-1}\) are
+    treated as algebraically independent variables. In particular, their product is
+    not equal to 1\. Hence *generators in denominators should be avoided even if they
+    raise no error in the current implementation*. This behavior is undesirable and
+    may change in the future. Similar problems emerge with rational powers of generators.
+    So, for example, \(x\) and \(\sqrt x = x^{1/2}\) are not recognized as algebraically
+    dependent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If there are algebraic numbers in an expression, it is possible to adjoin them
+    to the coefficient ring by setting the keyword `extension`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: With the default setting `extension=False`, both \(x\) and \(\sqrt 2\) are incorrectly
+    considered algebraically independent variables. With coefficients in the extension
+    field \(\mathbb{Q}(\sqrt 2)\) the square root is treated properly as an algebraic
+    number. Setting `extension=True` whenever algebraic numbers are involved is definitely
+    recommended even though it is not forced in the current implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Divisibility
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The fourth rational operation, division, or inverted multiplication, is not
+    generally possible in rings. If \(a\) and \(b\) are two elements of a ring \(A\),
+    then there may exist a third element \(q\) in \(A\) such that \(a = bq\). In fact,
+    there may exist several such elements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If also \(a = bq'\) for some \(q'\) in \(A\), then \(b(q - q') = 0\). Hence
+    either \(b\) or \(q - q'\) is zero, or they are both *zero divisors*, nonzero
+    elements whose product is zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Integral domains
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Commutative rings with no zero divisors are called *integral domains*. Most
+    of the commonly encountered rings, the ring of integers, fields, and polynomial
+    rings over integral domains are integral domains.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assume now that \(A\) is an integral domain, and consider the set \(P\) of its
+    nonzero elements, which is closed under multiplication. If \(a\) and \(b\) are
+    in \(P\), and there exists an element \(q\) in \(P\) such that \(a = bq\), then
+    \(q\) is unique and called the *quotient*, \(a/b\), of \(a\) by \(b\). Moreover,
+    it is said that
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(a\) is *divisible* by \(b\),
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(b\) is a *divisor* of \(a\),
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(a\) is a *multiple* of \(b\),
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: \(b\) is a *factor* of \(a\).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: An element \(a\) of \(P\) is a divisor of \(1\) if and only if it is *invertible*
+    in \(A\), with the inverse \(a^{-1} = 1/a\). Such elements are called *units*.
+    The units of the ring of integers are \(1\) and \(-1\). The invertible elements
+    in a polynomial ring over a field are the nonzero constant polynomials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If two elements of \(P\), \(a\) and \(b\), are divisible by each other, then
+    the quotient \(a/b\) is invertible with inverse \(b/a\), or equivalently, \(b
+    = ua\) where \(u\) is a unit. Such elements are said to be *associated* with,
+    or *associates* of, each other. The associates of an integer \(n\) are \(n\) and
+    \(-n\). In a polynomial ring over a field the associates of a polynomial are its
+    constant multiples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each element of \(P\) is divisible by its associates and the units. An element
+    is *irreducible* if it has no other divisors and is not a unit. The irreducible
+    elements in the ring of integers are the prime numbers \(p\) and their opposites
+    \(-p\). In a field, every nonzero element is invertible and there are no irreducible
+    elements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Factorial domains
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the ring of integers, each nonzero element can be represented as a product
+    of irreducible elements and optionally a unit \(\pm 1\). Moreover, any two such
+    products have the same number of irreducible factors which are associated with
+    each other in a suitable order. Integral domains having this property are called
+    *factorial*, or *unique factorization domains*. In addition to the ring of integers,
+    all polynomial rings over a field are factorial, and so are more generally polynomial
+    rings over any factorial domain. Fields are trivially factorial since there are
+    only units. The irreducible elements of a factorial domain are usually called
+    *primes*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A family of integers has only a finite number of common divisors and the greatest
+    of them is divisible by all of them. More generally, given a family of nonzero
+    elements \((a_i)\) in an integral domain, a common divisor \(d\) of the elements
+    is called a *greatest common divisor*, abbreviated *gcd*, of the family if it
+    is a multiple of all common divisors. A greatest common divisor, if it exists,
+    is not unique in general; all of its associates have the same property. It is
+    denoted by \(d = \gcd(a_1,\ldots,a_n)\) if there is no danger of confusion. A
+    *least common multiple*, or *lcm*, of a family \((a_i)\) is defined analogously
+    as a common multiple \(m\) that divides all common multiples. It is denoted by
+    \(m = \operatorname{lcm}(a_1,\dots,a_n)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a factorial domain, greatest common divisors always exists. They can be found,
+    at least in principle, by factoring each element of a family into a product of
+    prime powers and an optional unit, and, for each prime, taking the least power
+    that appears in the factorizations. The product of these prime powers is then
+    a greatest common divisor. A least common multiple can be obtained from the same
+    factorizations as the product of the greatest powers for each prime.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Euclidean domains
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'A practical algorithm for computing a greatest common divisor can be implemented
+    in *Euclidean domains*. They are integral domains that can be endowed with a function
+    \(w\) assigning a nonnegative integer to each nonzero element of the domain and
+    having the following property:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: if \(a\) and \(b\) are nonzero, there are \(q\) and \(r\) that satisfy the *division
+    identity*
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: \(a = qb + r\)
+  prefs:
+  - PREF_BQ
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: such that either \(r = 0\) or \(w(r) < w(b)\).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: The ring of integers and all univariate polynomial rings over fields are Euclidean
+    domains with \(w(a) = |a|\) resp. \(w(a) = \deg(a)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The division identity for integers is implemented in Python as the built-in
+    function `divmod` that can also be applied to SymPy Integers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For polynomials the division identity is given in SymPy by the function [`div()`](reference.html#sympy.polys.polytools.div
+    "sympy.polys.polytools.div"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The division identity can be used to determine the divisibility of elements
+    in a Euclidean domain. If \(r = 0\) in the division identity, then \(a\) is divisible
+    by \(b\). Conversely, if \(a = cb\) for some element \(c\), then \((c - q)b =
+    r\). It follows that \(c = q\) and \(r = 0\) if \(w\) has the additional property:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: if \(a\) and \(b\) are nonzero, then \(w(ab) \ge w(b)\).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This is satisfied by the functions given above. (And it is always possible to
+    redefine \(w(a)\) by taking the minimum of the values \(w(xa)\) for \(x \ne 0\).)
+  prefs: []
+  type: TYPE_NORMAL
+- en: The principal application of the division identity is the efficient computation
+    of a greatest common divisor by means of the [Euclidean algorithm](https://en.wikipedia.org/wiki/Euclidean_algorithm).
+    It applies to two elements of a Euclidean domain. A gcd of several elements can
+    be obtained by iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The function for computing the greatest common divisor of integers in SymPy
+    is currently [`igcd()`](../core.html#sympy.core.intfunc.igcd "sympy.core.intfunc.igcd"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For univariate polynomials over a field the function has its common name [`gcd()`](reference.html#sympy.polys.polytools.gcd
+    "sympy.polys.polytools.gcd"), and the returned polynomial is monic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Divisibility of polynomials
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The ring \(A = \mathbb{Z}[x]\) of univariate polynomials over the ring of integers
+    is not Euclidean but it is still factorial. To see this, consider the divisibility
+    in \(A\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let \(f\) and \(g\) be two nonzero polynomials in \(A\). If \(f\) is divisible
+    by \(g\) in \(A\), then it is also divisible in the ring \(B = \mathbb{Q}[x]\)
+    of polynomials with rational coefficients. Since \(B\) is Euclidean, this can
+    be determined by means of the division identity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assume, conversely, that \(f = gh\) for some polynomial \(h\) in \(B\). Then
+    \(f\) is divisible by \(g\) in \(A\) if and only if the coefficients of \(h\)
+    are integers. To find out when this is true it is necessary to consider the divisibility
+    of the coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For a polynomial \(f\) in \(A\), let \(c\) be the greatest common divisor of
+    its coefficients. Then \(f\) is divisible by the constant polynomial \(c\) in
+    \(A\), and the quotient \(f/c= p\) is a polynomial whose coefficients are integers
+    that have no common divisor apart from the units. Such polynomials are called
+    *primitive*. A polynomial with rational coefficients can also be written as \(f
+    = cp\), where \(c\) is a rational number and \(p\) is a primitive polynomial.
+    The constant \(c\) is called the *content* of \(f\), and \(p\) is its *primitive
+    part*. These components can be found by the method [`sympy.core.expr.Expr.as_content_primitive`](../core.html#sympy.core.expr.Expr.as_content_primitive
+    "sympy.core.expr.Expr.as_content_primitive"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let \(f\), \(f'\) be polynomials with contents \(c\), \(c'\) and primitive parts
+    \(p\), \(p'\). Then \(ff' = (cc')(pp')\) where the product \(pp'\) is primitive
+    by [Gauss’s lemma](https://en.wikipedia.org/wiki/Gauss%27s_lemma_(polynomial)).
+    It follows that
+  prefs: []
+  type: TYPE_NORMAL
+- en: the content of a product of polynomials is the product of their contents and
+    the primitive part of the product is the product of the primitive parts.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Returning to the divisibility in the ring \(\mathbb{Z}[x]\), assume that \(f\)
+    and \(g\) are two polynomials with integer coefficients such that the division
+    identity in \(\mathbb{Q}[x]\) yields the equality \(f = gh\) for some polynomial
+    \(h\) with rational coefficients. Then the content of \(f\) is equal to the content
+    of \(g\) multiplied by the content of \(h\). As \(h\) has integer coefficients
+    if and only if its content is an integer, we get the following criterion:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(f\) is divisible by \(g\) in the ring \(\mathbb{Z}[x]\) if and only if
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: \(f\) is divisible by \(g\) in \(\mathbb{Q}[x]\), and
+  prefs:
+  - PREF_BQ
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: the content of \(f\) is divisible by the content of \(g\) in \(\mathbb{Z}\).
+  prefs:
+  - PREF_BQ
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'If \(f = cp\) is irreducible in \(\mathbb{Z}[x]\), then either \(c\) or \(p\)
+    must be a unit. If \(p\) is not a unit, it must be irreducible also in \(\mathbb{Q}[x]\).
+    For if it is a product of two polynomials, it is also the product of their primitive
+    parts, and one of them must be a unit. Hence there are two kinds of irreducible
+    elements in \(\mathbb{Z}[x]\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: prime numbers of \(\mathbb{Z}\), and
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: primitive polynomials that are irreducible in \(\mathbb{Q}[x]\).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: It follows that each polynomial in \(\mathbb{Z}[x]\) is a product of irreducible
+    elements. It suffices to factor its content and primitive part separately. These
+    products are essentially unique; hence \(\mathbb{Z}[x]\) is also factorial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another important consequence is that a greatest common divisor of two polynomials
+    in \(\mathbb{Z}[x]\) can be found efficiently by applying the Euclidean algorithm
+    separately to their contents and primitive parts in the Euclidean domains \(\mathbb{Z}\)
+    and \(\mathbb{Q}[x]\). This is also implemented in SymPy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Basic functionality
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: These functions provide different algorithms dealing with polynomials in the
+    form of SymPy expression, like symbols, sums etc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Division
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The function [`div()`](reference.html#sympy.polys.polytools.div "sympy.polys.polytools.div")
+    provides division of polynomials with remainder. That is, for polynomials `f`
+    and `g`, it computes `q` and `r`, such that \(f = g \cdot q + r\) and \(\deg(r)
+    < \deg(q)\). For polynomials in one variables with coefficients in a field, say,
+    the rational numbers, `q` and `r` are uniquely defined this way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As you can see, `q` has a non-integer coefficient. If you want to do division
+    only in the ring of polynomials with integer coefficients, you can specify an
+    additional parameter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But be warned, that this ring is no longer Euclidean and that the degree of
+    the remainder doesn’t need to be smaller than that of `f`. Since 2 doesn’t divide
+    5, \(2 x\) doesn’t divide \(5 x^2\), even if the degree is smaller. But:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This also works for polynomials with multiple variables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the last examples, all of the three variables `x`, `y` and `z` are assumed
+    to be variables of the polynomials. But if you have some unrelated constant as
+    coefficient, you can specify the variables explicitly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: GCD and LCM
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: With division, there is also the computation of the greatest common divisor
+    and the least common multiple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When the polynomials have integer coefficients, the contents’ gcd is also considered:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But if the polynomials have rational coefficients, then the returned polynomial
+    is monic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It also works with multiple variables. In this case, the variables are ordered
+    alphabetically, be default, which has influence on the leading coefficient:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The lcm is connected with the gcd and one can be computed using the other:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Square-free factorization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The square-free factorization of a univariate polynomial is the product of
+    all factors (not necessarily irreducible) of degree 1, 2 etc.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Factorization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'This function provides factorization of univariate and multivariate polynomials
+    with rational coefficients:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Groebner bases
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Buchberger’s algorithm is implemented, supporting various monomial orders:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Solving Equations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We have (incomplete) methods to find the complex or even symbolic roots of
+    polynomials and to solve some systems of polynomial equations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE

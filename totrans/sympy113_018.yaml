@@ -1,0 +1,1249 @@
+- en: Introduction to Biomechanical Modeling
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/tutorials/physics/biomechanics/biomechanics.html](https://docs.sympy.org/latest/tutorials/physics/biomechanics/biomechanics.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[`sympy.physics.biomechanics`](../../../modules/physics/biomechanics/index.html#module-sympy.physics.biomechanics
+    "sympy.physics.biomechanics") provides features to enhance models created using
+    [`sympy.physics.mechanics`](../../../modules/physics/mechanics/index.html#module-sympy.physics.mechanics
+    "sympy.physics.mechanics") with force producing elements that model muscles and
+    tendons. In this tutorial, we will introduce the features of this module.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The initial primary purpose of the biomechanics package is to introduce tools
+    for modeling the forces produced by [Hill-type muscle models](https://en.wikipedia.org/wiki/Hill%27s_muscle_model).
+    These models generate forces applied to the skeletal structure of an organism
+    based on the contraction state of the muscle coupled with the passive stretch
+    of tendons. In this tutorial, we introduce the elements that make up a musculotendon
+    model and then demonstrate it in operation with a specific implementation, the
+    [`MusculotendonDeGroote2016`](../../../modules/physics/biomechanics/api/musculotendon.html#sympy.physics.biomechanics.musculotendon.MusculotendonDeGroote2016
+    "sympy.physics.biomechanics.musculotendon.MusculotendonDeGroote2016") model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Loads
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[`sympy.physics.mechanics`](../../../modules/physics/mechanics/index.html#module-sympy.physics.mechanics
+    "sympy.physics.mechanics") includes two types of loads: [`Force`](../../../modules/physics/mechanics/api/part_bod.html#sympy.physics.mechanics.loads.Force
+    "sympy.physics.mechanics.loads.Force") and [`Torque`](../../../modules/physics/mechanics/api/part_bod.html#sympy.physics.mechanics.loads.Torque
+    "sympy.physics.mechanics.loads.Torque"). Forces represent bound vector quantities
+    that act directed along a line of action and torques are unbound vectors which
+    represent the resulting torque of a couple from a set of forces.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An example of very common force model is a linear spring and linear damper
+    in parallel. The force acting on a particle of mass \(m\) with 1D motion described
+    by generalized coordinate \(x(t)\) with linear spring and damper coefficients
+    \(k\) and \(c\) has the familiar equation of motion:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[m \ddot{x} = \sum F = -kx - c\dot{x}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In SymPy, we can formulate the force acting on the particle \(P\) that has
+    motion in reference frame \(N\) and position relative to point \(O\) fixed in
+    \(N\) like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and there would be an equal and opposite force acting on \(O\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Forces that a single muscle and tendon applies to a set of rigid bodies will
+    be the primary output of the musculotendon models developed further in this tutorial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pathways
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Muscles and their associated tendons wrap around the moving skeletal system,
+    as well as other muscles and organs. This imposes the challenge of determining
+    the lines of action of the forces that the muscle and tendon produce on the skeleton
+    and organs it touches. We have introduced the [`pathway`](../../../modules/physics/mechanics/api/pathway.html#module-sympy.physics.mechanics.pathway
+    "sympy.physics.mechanics.pathway") module to help manage the specification of
+    the geometric relationships to the forces’ lines of action.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The spring-damper example above has the simplest line of action definition so
+    we can use a [`LinearPathway`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.LinearPathway
+    "sympy.physics.mechanics.pathway.LinearPathway") to establish that line of action.
+    First provide the two endpoints where the force will have equal and opposite application
+    to and the distance between the points and the relative speed between the two
+    points are calculated by the pathway with [`length`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.LinearPathway.length
+    "sympy.physics.mechanics.pathway.LinearPathway.length") and [`extension_velocity`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.LinearPathway.extension_velocity
+    "sympy.physics.mechanics.pathway.LinearPathway.extension_velocity"). Note that
+    a positive speed implies the points are moving away from each other. Also note
+    that the formulation handles the case where \(x\) is positive or negative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`to_loads`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.LinearPathway.to_loads
+    "sympy.physics.mechanics.pathway.LinearPathway.to_loads") method then takes the
+    magnitude of a force with a sign convention that positive magnitudes push the
+    two points away from each other and returns a list of all forces acting on the
+    two points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pathways can be constructed with any arbitrary geometry and any number of interconnected
+    particles and rigid bodies. An example, a more complicated pathway is an [`ObstacleSetPathway`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.ObstacleSetPathway
+    "sympy.physics.mechanics.pathway.ObstacleSetPathway"). You can specify any number
+    of intermediate points between the two pathway endpoints which the actuation path
+    of the forces will follow along. For example, if we introduce two points fixed
+    in \(N\) then the force will act along a set of linear segments connecting \(O\)
+    to \(Q\) to \(R\) then to \(P\). Each of the four points will experience resultant
+    forces. For simplicity we show the effect of only the spring force.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you set \(x=1\), it is a bit easier to see that the collection of forces
+    are correct:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can create your own pathways by sub-classing [`PathwayBase`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.PathwayBase
+    "sympy.physics.mechanics.pathway.PathwayBase").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wrapping Geometries
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'It is common for muscles to wrap over bones, tissue, or organs. We have introduced
+    wrapping geometries and associated wrapping pathways to help manage their complexities.
+    For example, if two pathway endpoints lie on the surface of a cylinder the forces
+    act along lines that are tangent to the geodesic connecting the two points at
+    the endpoints. The [`WrappingCylinder`](../../../modules/physics/mechanics/api/wrapping_geometry.html#sympy.physics.mechanics.wrapping_geometry.WrappingCylinder
+    "sympy.physics.mechanics.wrapping_geometry.WrappingCylinder") object calculates
+    the complex geometry for the pathway. A [`WrappingPathway`](../../../modules/physics/mechanics/api/pathway.html#sympy.physics.mechanics.pathway.WrappingPathway
+    "sympy.physics.mechanics.pathway.WrappingPathway") then uses the geometry to construct
+    the forces. A spring force along this pathway is constructed below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Actuators
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Models of multibody systems commonly have time varying inputs in the form of
+    the magnitudes of forces or torques. In many cases, these specified inputs may
+    be derived from the state of the system or even from the output of another dynamic
+    system. The [`actuator`](../../../modules/physics/mechanics/api/actuator.html#module-sympy.physics.mechanics.actuator
+    "sympy.physics.mechanics.actuator") module includes classes to help manage the
+    creation of such models of force and torque inputs. An actuator is intended to
+    represent a real physical component. For example, the spring-damper force from
+    above can be created by sub-classing [`ActuatorBase`](../../../modules/physics/mechanics/api/actuator.html#sympy.physics.mechanics.actuator.ActuatorBase
+    "sympy.physics.mechanics.actuator.ActuatorBase") and implementing a method that
+    generates the loads associated with that spring-damper actuator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is also a [`ForceActuator`](../../../modules/physics/mechanics/api/actuator.html#sympy.physics.mechanics.actuator.ForceActuator
+    "sympy.physics.mechanics.actuator.ForceActuator") that allows seamless integration
+    with pathway objects. You only need to set the `.force` attribute in initialization
+    in the sub-class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This then makes it easy to apply a spring-damper force to other pathways, e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Activation Dynamics
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Musculotendon models are able to produce an active contractile force when they
+    are activated. Biologically, this occurs when \(\textrm{Ca}^{2+}\) ions are present
+    among the muscle fibers at a sufficient concentration that they start to voluntarily
+    contract. This state of voluntary contraction is “activation”. In biomechanical
+    models it is typically given the symbol \(a(t)\), which is treated as a normalized
+    quantity in the range \([0, 1]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: An organism does not directly control the concentration of these \(\textrm{Ca}^{2+}\)
+    ions in its muscles, instead its nervous system, controlled by its brain, sends
+    an electrical signal to a muscle which causes \(\textrm{Ca}^{2+}\) ions to be
+    released. These diffuse and increase in concentration throughout the muscle leading
+    to activation. An electrical signal transmitted to a muscle stimulating contraction
+    is an “excitation”. In biomechanical models it is usually given the symbol \(e(t)\),
+    which is also treated as a normalized quantity in the range \([0, 1]\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The relationship between the excitation input and the activation state is known
+    as activation dynamics. Because activation dynamics are so common in biomechanical
+    models, SymPy provides the [`activation`](../../../modules/physics/biomechanics/api/activation.html#module-sympy.physics.biomechanics.activation
+    "sympy.physics.biomechanics.activation") module, which contains implementations
+    for some common models of activation dynamics. These are zeroth-order activation
+    dynamics and first-order activation dynamics based on the equations from the paper
+    by [[DeGroote2016]](#degroote2016). Below we will work through manually implementing
+    these models and then show how these relate to the classes provided by SymPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Zeroth-Order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The simplest possible model of activation dynamics is to assume that diffusion
+    of \(\textrm{Ca}^{2+}\) ions is instantaneous. Mathematically this gives us \(a(t)
+    = e(t)\), a zeroth-order ordinary differential equation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternatively, you could give \(a(t)\) its own [`dynamicsymbols`](../../../modules/physics/vector/api/functions.html#sympy.physics.vector.dynamicsymbols
+    "sympy.physics.vector.dynamicsymbols") and use a substitution to replace this
+    with \(e(t)\) in any equation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: SymPy provides the class [`ZerothOrderActivation`](../../../modules/physics/biomechanics/api/activation.html#sympy.physics.biomechanics.activation.ZerothOrderActivation
+    "sympy.physics.biomechanics.activation.ZerothOrderActivation") in the [`activation`](../../../modules/physics/biomechanics/api/activation.html#module-sympy.physics.biomechanics.activation
+    "sympy.physics.biomechanics.activation") module. This class must be instantiated
+    with a single argument, `name`, which associates a name with the instance. This
+    name should be unique per instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: The argument passed to \(name\) tries to help ensures that the automatically-created
+    [`dynamicsymbols`](../../../modules/physics/vector/api/functions.html#sympy.physics.vector.dynamicsymbols
+    "sympy.physics.vector.dynamicsymbols") for \(e(t)\) and \(a(t)\) are unique betweem
+    instances.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`ZerothOrderActivation`](../../../modules/physics/biomechanics/api/activation.html#sympy.physics.biomechanics.activation.ZerothOrderActivation
+    "sympy.physics.biomechanics.activation.ZerothOrderActivation") subclasses [`ActivationBase`](../../../modules/physics/biomechanics/api/activation.html#sympy.physics.biomechanics.activation.ActivationBase
+    "sympy.physics.biomechanics.activation.ActivationBase"), which provides a consistent
+    interface for all concrete classes of activation dynamics. This includes a method
+    to inspect the ordinary differential equation(s) associated with the model. As
+    zeroth-order activation dynamics correspond to a zeroth-order ordinary differential
+    equation, this returns an empty column matrix.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: First-Order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In practice the diffusion and concentration increase of \(\textrm{Ca}^{2+}\)
+    ions is not instantaneous. In a real biological muscle, a step increase in excitation
+    will lead to a smooth and gradual increase in activation. [[DeGroote2016]](#degroote2016)
+    model this using a first-order ordinary differential equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\frac{da}{dt} &= \left( \frac{1}{\tau_a \left(1 + 3a(t)\right)}
+    (1 + 2f) + \frac{1 + 3a(t)}{4\tau_d} (1 - 2f) \right) \left(e(t) - a(t) \right)
+    \\ f &= \frac{1}{2} \tanh{\left(b \left(e(t) -a(t)\right)\right)}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(\tau_a\) is the time constant for activation, \(\tau_d\) is the time
+    constant for deactivation, and \(b\) is a smoothing coefficient.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: This first-order ordinary differential equation can then be used to propagate
+    the state \(a(t)\) under the input \(e(t)\) in a simulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Like before, SymPy provides the class [`FirstOrderActivationDeGroote2016`](../../../modules/physics/biomechanics/api/activation.html#sympy.physics.biomechanics.activation.FirstOrderActivationDeGroote2016
+    "sympy.physics.biomechanics.activation.FirstOrderActivationDeGroote2016") in the
+    [`activation`](../../../modules/physics/biomechanics/api/activation.html#module-sympy.physics.biomechanics.activation
+    "sympy.physics.biomechanics.activation") module. This class is another subclass
+    of [`ActivationBase`](../../../modules/physics/biomechanics/api/activation.html#sympy.physics.biomechanics.activation.ActivationBase
+    "sympy.physics.biomechanics.activation.ActivationBase") and uses the model for
+    first-order activation dynamics from [[DeGroote2016]](#degroote2016) defined above.
+    This class must be instantiated with four arguments: a name, and three sympifiable
+    objects to represent the three constants \(\tau_a\), \(\tau_d\), and \(b\).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first-order ordinary differential equation can be accessed as before, but
+    this time a length-1 column vector is returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also instantiate the class with the suggested values for each of the
+    constants. These are: \(\tau_a = 0.015\), \(\tau_d = 0.060\), and \(b = 10.0\).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Custom
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To create your own custom models of activation dynamics, you can subclass [`ActivationBase`](../../../modules/physics/biomechanics/api/activation.html#sympy.physics.biomechanics.activation.ActivationBase
+    "sympy.physics.biomechanics.activation.ActivationBase") and override the abstract
+    methods. The concrete class will then conform to the expected API and integrate
+    automatically with the rest of [`sympy.physics.mechanics`](../../../modules/physics/mechanics/index.html#module-sympy.physics.mechanics
+    "sympy.physics.mechanics") and [`sympy.physics.biomechanics`](../../../modules/physics/biomechanics/index.html#module-sympy.physics.biomechanics
+    "sympy.physics.biomechanics").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Musculotendon Curves
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Over the years many different configurations of Hill-type muscle models have
+    been published containing different combinations of elements in series and in
+    parallel. We’ll consider a very common version of the model that has the tendon
+    modeled as an element in series with muscle fibers, which are in turn modeled
+    as three elements in parallel: an elastic element, a contractile element, and
+    a damper.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../../../_images/hill-type-muscle-model.svg](../Images/70b2e69f6923b7b36057f1fb1e5f5007.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Schematic showing the four-element Hill-type muscle model. \(SE\) is the series
+    element representing the tendon, \(CE\) is the contractile element, \(EE\) is
+    the parallel element representing the elasticity of the muscle fibers, and \(DE\)
+    is the damper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each of these components typically has a characteristic curve describing it.
+    The following sub-sections will describe and implement the characteristic curves
+    described in the paper by [[DeGroote2016]](#degroote2016).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tendon Force-Length
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is common to model tendons as both rigid (inextensible) and elastic elements.
+    If the tendon is being treated as rigid, the tendon length does not change and
+    the length of the muscle fibers change directly with changes in musculotendon
+    length. A rigid tendon will not have an associated characteristic curve; it does
+    not have any force-producing capabilities itself and just directly transmits the
+    force produced by the muscle fibers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If the tendon is elastic, it is commonly modeled as a nonlinear spring. We
+    therefore have our first characteristic curve, the tendon force-length curve,
+    which is a function of normalized tendon length:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tilde{l}^T = \frac{l^T}{l^T_{slack}}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(l^T\) is tendon length, and \(l^T_{slack}\) is the “tendon slack length”,
+    a constant representing the tendon length under no force. Characteristic musculotendon
+    curves are parameterized in terms of “normalized” (or “dimensionless”) quantities
+    such as \(\tilde{l}^T\) because these curves apply generically to all muscle fibers
+    and tendons. Their properties can be adjusted to model a specific musculotendon
+    by selecting different values for the constants. In the case of the tendon force-length
+    characteristic, this is done by tuning \(l^T_{slack}\). Shorter values for this
+    constant result in a stiffer tendon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The equation for the tendon force-length curve \(fl^T\left(\tilde{l}^T\right)\)
+    from [[DeGroote2016]](#degroote2016) is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[fl^T\left(\tilde{l}^T\right) = c_0 \exp{c_3 \left( \tilde{l}^T - c_1 \right)}
+    - c_2\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: To implement this in SymPy we need a time-varying dynamic symbol representing
+    \(\tilde{l}^T\) and four symbols representing the four constants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternatively, we could define this in terms of \(l^T\) and \(l^T_{slack}\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`biomechanics`](../../../modules/physics/biomechanics/index.html#module-sympy.physics.biomechanics
+    "sympy.physics.biomechanics") module in SymPy provides a class for this exact
+    curve, [`TendonForceLengthDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.TendonForceLengthDeGroote2016
+    "sympy.physics.biomechanics.curve.TendonForceLengthDeGroote2016"). It can be instantiated
+    with five arguments. The first argument is \(\tilde{l}^T\), which need not necessarily
+    be a symbol; it could be an expression. The further four arguments are all constants.
+    It is intended that these will be constants, or sympifiable numerical values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: This class is a subclass of [`Function`](../../../modules/core.html#sympy.core.function.Function
+    "sympy.core.function.Function") and so implements usual SymPy methods for substitution,
+    evaluation, differentiation etc. The [`doit`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.TendonForceLengthDeGroote2016.doit
+    "sympy.physics.biomechanics.curve.TendonForceLengthDeGroote2016.doit") method
+    allows the equation of the curve to be accessed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: The class provides an alternate constructor that allows it to be constucted
+    prepopulated with the values for the constants recommended in [[DeGroote2016]](#degroote2016).
+    This takes a single argument, again corresponding to \(\tilde{l}^T\), which can
+    against either be a symbol or expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the above the constants have been replaced with instances of SymPy numeric
+    types like [`Float`](../../../modules/core.html#sympy.core.numbers.Float "sympy.core.numbers.Float").
+  prefs: []
+  type: TYPE_NORMAL
+- en: The [`TendonForceLengthDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.TendonForceLengthDeGroote2016
+    "sympy.physics.biomechanics.curve.TendonForceLengthDeGroote2016") class also supports
+    code generation, so seamlessly integrates with SymPy’s code printers. To visualize
+    this curve, we can use [`lambdify`](../../../modules/utilities/lambdify.html#sympy.utilities.lambdify.lambdify
+    "sympy.utilities.lambdify.lambdify") on an instance of the function, which will
+    create a callable to evaluate it for a given value of \(\tilde{l}^T\). Sensible
+    values for \(\tilde{l}^T\) fall within the range \([0.95, 1.05]\), which we will
+    plot below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([`png`](../../../_downloads/1c195d16d5c193cfaa51fd5c284ce437/biomechanics-11.png),
+    [`hires.png`](../../../_downloads/137a67af995c8143d13d9fc7e2b2293a/biomechanics-11.hires.png),
+    [`pdf`](../../../_downloads/e3465eeb72d4c5e169113f0f14ba26a4/biomechanics-11.pdf))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../../../_images/biomechanics-11.png](../Images/441de345350612ac7d32103348323b0a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: When deriving the equations describing the musculotendon dynamics of models
+    with elastic tendons, it can be useful to know the inverse of the tendon force-length
+    characteristic curve. The curve defined in [[DeGroote2016]](#degroote2016) is
+    analytically invertible, which means that we can directly determine \(\tilde{l}^T
+    = \left[fl^T\left(\tilde{l}^T\right)\right]^{-1}\) for a given value of \(fl^T\left(\tilde{l}^T\right)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tilde{l}^T = \left[fl^T\left(\tilde{l}^T\right)\right]^{-1} = \frac{\log{\frac{fl^T
+    + c_2}{c_0}}}{c_3} + c_1\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is also a class for this in [`biomechanics`](../../../modules/physics/biomechanics/index.html#module-sympy.physics.biomechanics
+    "sympy.physics.biomechanics"), [`TendonForceLengthInverseDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.TendonForceLengthInverseDeGroote2016
+    "sympy.physics.biomechanics.curve.TendonForceLengthInverseDeGroote2016"), which
+    behaves identically to [`TendonForceLengthDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.TendonForceLengthDeGroote2016
+    "sympy.physics.biomechanics.curve.TendonForceLengthDeGroote2016"). It can be instantiated
+    with five parameters, the first for \(fl^T\) followed by four constants, or by
+    using the alternate constructor with a single argument for \(fl^T\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fiber Passive Force-Length
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The first element used to model the muscle fibers is the fiber passive force-
+    length. This is essentially another nonlinear spring representing the elastic
+    properties of the muscle fibers. The characteristic curve describing this element
+    is a function of normalized muscle fiber length:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tilde{l}^M = \frac{l^M}{l^M_{opt}}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(l^M\) is muscle fiber length, and \(l^M_{opt}\) is the “optimal fiber
+    length, a constant representing the muscle fiber length at which it produces no
+    passive-elastic force (it is also the muscle fiber length at which it can produce
+    maximum active force). Like with tuning \(l^T_{slack}\) to change the stiffness
+    properties of a modeled tendon via the tendon force-length characteristic, we
+    can adjust \(l^M_{opt}\) to change the passive properties of the muscle fibers;
+    decreasing \(l^M_{opt}\) will make modeled muscle fibers stiffer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The equation for the fiber passive force-length curve \(fl^M_{pas}\left(\tilde{l}^M\right)\)
+    from [[DeGroote2016]](#degroote2016) is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[fl^M_{pas} = \frac{\frac{\exp{c_1 \left(\tilde{l^M} - 1\right)}}{c_0} - 1}{\exp{c_1}
+    - 1}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly to before, to implement this in SymPy we need a time-varying dynamic
+    symbol representing \(\tilde{l}^M\) and two symbols representing the two constants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternatively, we could define this in terms of \(l^M\) and \(l^M_{opt}\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: Again, the [`biomechanics`](../../../modules/physics/biomechanics/index.html#module-sympy.physics.biomechanics
+    "sympy.physics.biomechanics") module in SymPy provides a class for this exact
+    curve, [`FiberForceLengthPassiveDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.FiberForceLengthPassiveDeGroote2016
+    "sympy.physics.biomechanics.curve.FiberForceLengthPassiveDeGroote2016"). It can
+    be instantiated with three arguments. The first argument is \(\tilde{l}^M\), which
+    need not necessarily be a symbol and can be an expression. The further two arguments
+    are both constants. It is intended that these will be constants, or sympifiable
+    numerical values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using the alternate constructor, which takes a single parameter for \(\tilde{l}^M\),
+    we can create an instance prepopulated with the values for the constants recommended
+    in [[DeGroote2016]](#degroote2016).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sensible values for \(\tilde{l}^M\) fall within the range \([0.0, 2.0]\), which
+    we will plot below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([`png`](../../../_downloads/369ad75239934a96d848d986813776da/biomechanics-12.png),
+    [`hires.png`](../../../_downloads/c1056b6894e5503ff92f7049e8318808/biomechanics-12.hires.png),
+    [`pdf`](../../../_downloads/97921a3a908f376a2711799f4250ab0c/biomechanics-12.pdf))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../../../_images/biomechanics-12.png](../Images/53edc8c5e7a088d80cf2517dc8bc12bb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The inverse of the fiber passive force-length characteristic curve is sometimes
+    required when formulating musculotendon dynamics. The equation for this curve
+    from [[DeGroote2016]](#degroote2016) is again analytically invertible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tilde{l}^M = \left[fl^M_{pas}\right]^{-1} = \frac{c_0 \log{\left(\exp{c_1}
+    - 1\right)fl^M_{pas} + 1}}{c_1} + 1\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is also a class for this in [`biomechanics`](../../../modules/physics/biomechanics/index.html#module-sympy.physics.biomechanics
+    "sympy.physics.biomechanics"), [`FiberForceLengthPassiveInverseDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.FiberForceLengthPassiveInverseDeGroote2016
+    "sympy.physics.biomechanics.curve.FiberForceLengthPassiveInverseDeGroote2016").
+    It can be instantiated with three parameters, the first for \(fl^M\) followed
+    by a pair of constants, or by using the alternate constructor with a single argument
+    for \(\tilde{l}^M\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fiber Active Force-Length
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When a muscle is activated, it contracts to produce a force. This phenomenom
+    is modeled by the contractile element in the parallel fiber component of the musculotendon
+    model. The amount of force that the fibers can produce is a function of the instantaneous
+    length of the fibers. The characteristic curve describing the fiber active force-length
+    curve is again parameterized by \(\tilde{l}^M\). This curve is “bell-shaped”.
+    For very small and very large values of \(\tilde{l}^M\), the active fiber force-length
+    tends to zero. The peak active fiber force-length occurs when \(\tilde{l}^M =
+    l^M_{opt}\) and gives a value of \(0.0\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The equation for the fiber active force-length curve \(fl^M_{act}\left(\tilde{l}^M\right)\)
+    from [[DeGroote2016]](#degroote2016) is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[fl^M_{act}\left(\tilde{l}^M\right) = c_0 \exp{-\frac{1}{2}\left(\frac{\tilde{l}^M
+    - c_1}{\left(c_2 + c_3 \tilde{l}^M\right)}\right)^2} + c_4 \exp{-\frac{1}{2}\left(\frac{\tilde{l}^M
+    - c_5}{\left(c_6 + c_7 \tilde{l}^M\right)}\right)^2} + c_8 \exp{-\frac{1}{2}\left(\frac{\tilde{l}^M
+    - c_9}{\left(c_{10} + c_{11} \tilde{l}^M\right)}\right)^2}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: To implement this in SymPy we need a time-varying dynamic symbol representing
+    \(\tilde{l}^M\) and twelve symbols representing the twelve constants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: The SymPy-provided class for this exact curve is [`FiberForceLengthActiveDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.FiberForceLengthActiveDeGroote2016
+    "sympy.physics.biomechanics.curve.FiberForceLengthActiveDeGroote2016"). It can
+    be instantiated with thirteen arguments. The first argument is \(\tilde{l}^M\),
+    which need not necessarily be a symbol and can be an expression. The further twelve
+    arguments are all constants. It is intended that these will be constants, or sympifiable
+    numerical values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using the alternate constructor, which takes a single parameter for \(\tilde{l}^M\),
+    we can create an instance prepopulated with the values for the constants recommended
+    in [[DeGroote2016]](#degroote2016).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sensible values for \(\tilde{l}^M\) fall within the range \([0.0, 2.0]\), which
+    we will plot below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([`png`](../../../_downloads/92dd6acf499564169dd47d50987d6de2/biomechanics-13.png),
+    [`hires.png`](../../../_downloads/8441b002c89aee5ab7fb0337e72bb0d1/biomechanics-13.hires.png),
+    [`pdf`](../../../_downloads/04955b3b7dc8e8ff785467390723d72e/biomechanics-13.pdf))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../../../_images/biomechanics-13.png](../Images/64250cb31543861a544f1b6bb80d2e34.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: No inverse curve exists for the fiber active force-length characteristic curve
+    as it has multiple values of \(\tilde{l}^M\) for each value of \(fl^M_{act}\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fiber Force-Velocity
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The force produced by the contractile element is also a function of its lengthening
+    velocity. The characteristic curve describing the velocity-dependent portion of
+    the contractile element’s dynamics is a function of normalized muscle fiber lengthening
+    velocity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tilde{v}^M = \frac{v^M}{v^M_{max}}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(v^M\) is muscle fiber lengthening velocity, and \(v^M_{max}\) is the
+    “maximum fiber velocity”, a constant representing the muscle fiber velocity at
+    which it is not able to produce any contractile force when concentrically contracting.
+    \(v^M_{max}\) is commonly given a value of \(10 l^M_{opt}\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The equation for the fiber force-velocity curve \(fv^M\left(\tilde{v}^M\right)\)
+    from [[DeGroote2016]](#degroote2016) is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[fv^M\left(\tilde{v}^M\right) = c_0 \log{\left(c_1 \tilde{v}^M + c_2\right)
+    + \sqrt{\left(c_1 \tilde{v}^M + c_2\right)^2 + 1}} + c_3\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly to before, to implement this in SymPy we need a time-varying dynamic
+    symbol representing \(\tilde{v}^M\) and four symbols representing the four constants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternatively, we could define this in terms of \(v^M\) and \(v^M_{max}\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: The SymPy-provided class for this exact curve is [`FiberForceVelocityDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.FiberForceVelocityDeGroote2016
+    "sympy.physics.biomechanics.curve.FiberForceVelocityDeGroote2016"). It can be
+    instantiated with five arguments. The first argument is \(\tilde{v}^M\), which
+    need not necessarily be a symbol and can be an expression. The further four arguments
+    are all constants. It is intended that these will be constants, or sympifiable
+    numerical values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using the alternate constructor, which takes a single parameter for \(\tilde{v}^M\),
+    we can create an instance prepopulated with the values for the constants recommended
+    in [[DeGroote2016]](#degroote2016).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sensible values for \(\tilde{v}^M\) fall within the range \([-1.0, 1.0]\), which
+    we will plot below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([`png`](../../../_downloads/83ff802cb90acb6b4d333a4e217a9d8b/biomechanics-14.png),
+    [`hires.png`](../../../_downloads/a9683acdab869b385cd0d3498518169a/biomechanics-14.hires.png),
+    [`pdf`](../../../_downloads/93e2e42be1930b8b607d11fbaa0a248b/biomechanics-14.pdf))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../../../_images/biomechanics-14.png](../Images/8da254d54d2c3279a19d4e2835642026.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The inverse of the fiber force-velocity characteristic curve is sometimes required
+    when formulating musculotendon dynamics. The equation for this curve from [[DeGroote2016]](#degroote2016)
+    is again analytically invertible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tilde{v}^M = \left[fv^M\right]^{-1} = \frac{\sinh{\frac{fv^M - c_3}{c_0}}
+    - c_2}{c_1}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is also a class for this in [`biomechanics`](../../../modules/physics/biomechanics/index.html#module-sympy.physics.biomechanics
+    "sympy.physics.biomechanics"), [`FiberForceVelocityInverseDeGroote2016`](../../../modules/physics/biomechanics/api/curve.html#sympy.physics.biomechanics.curve.FiberForceVelocityInverseDeGroote2016
+    "sympy.physics.biomechanics.curve.FiberForceVelocityInverseDeGroote2016"). It
+    can be instantiated with five parameters, the first for \(fv^M\) followed by four
+    constants, or by using the alternate constructor with a single argument for \(\tilde{v}^M\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fiber Damping
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Perhaps the simplest element in the musculotendon model is the fiber damping.
+    This does not have an associated characteristic curve as it is typically just
+    modeled as a simple linear damper. We will use \(\beta\) as the coefficient of
+    damping such that the damping force can be described as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[f_{damp} = \beta \tilde{v}^M\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[DeGroote2016]](#degroote2016) suggest the value \(\beta = 0.1\). However,
+    SymPy uses \(\beta = 10\) by default. When conducting forward simulations or solving
+    optimal control problems as this increase in damping typically does not significantly
+    effect the musculotendon dynamics but does have been empirically found to significantly
+    improve the numerical conditioning of the equations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Musculotendon Dynamics
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Rigid Tendon Dynamics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Rigid tendon musculotendon dynamics are reasonably straightforward to implement
+    because the inextensible tendon allows for the normalized muscle fiber length
+    to be expressed directly in terms of musculotendon length. With the inextensible
+    tendon \(l^T = l^T_{slack}\) and as such, normalized tendon length is just unity,
+    \(\tilde{l}^T = 1\). Using trigonometry, muscle fiber length can be expressed
+    as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[l^M = \sqrt{\left(l^{MT} - l^T\right)^2 + \left(l^M_{opt} \sin{\alpha_{opt}}
+    \right)^2}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: where \(\alpha_{opt}\) is the “optimal pennation angle”, another constant property
+    of a musculotendon that describes the pennation angle (the angle of the muscle
+    fibers relative to the direction parallel to the tendon) at which \(l^M = l^M_{opt}\).
+    A common simplifying assumption is to assume \(\alpha_{opt} = 0\), which simplifies
+    the above to
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[l^M = \sqrt{\left(l^{MT} - l^T\right)^2 + \left(l^M_{opt}\right)^2}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: With \(\tilde{l}^M = \frac{l^M}{l^M_{opt}}\), the muscle fiber velocity can
+    be expressed as
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[v^M = v^{MT} \frac{l^{MT} - l^T_{slack}}{l^M}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Muscle fiber can be normalized as before, \(\tilde{v}^M = \frac{v^M}{v^M_{max}}\).
+    Using the curves described above, we can express the normalized muscle fiber force
+    (\(\tilde{F}^M\)) can be expressed as a function of normalized tendon length (\(\tilde{l}^T\)),
+    normalized fiber length (\(\tilde{l}^M\)), normalized fiber velocity (\(\tilde{v}^M\)),
+    and activation (\(a\)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tilde{F}^M = a \cdot fl^M_{act}\left(\tilde{l}^M\right) \cdot fv^M\left(\tilde{v}^M\right)
+    + fl^M_{pas}\left(\tilde{l}^M\right) + \beta \cdot \tilde{v}^M\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We introduce a new constant, \(F^M_{max}\), the “maximum isometric force”,
+    which describes the maximum force that a musculotendon can produce under full
+    activation and an isometric (\(v^M = 0\)) contraction. Accounting for the pennation
+    angle, the tendon force (\(F^T\)), which is the force applied to the skeleton
+    at the musculotendon’s origin and insertion, can be expressed as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[F^T = F^M_{max} \cdot F^M \cdot \sqrt{1 - \sin{\alpha_{opt}}^2}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can describe all of this using SymPy and the musculotendon curve classes
+    that we introduced above. We will need time-varying dynamics symbols for \(l^{MT}\),
+    \(v_{MT}\), and \(a\). We will also need constant symbols for \(l^T_{slack}\),
+    \(l^M_{opt}\), \(F^M_{max}\), \(v^M_{max}\), \(\alpha_{opt}\), and \(\beta\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: SymPy offers this implementation of rigid tendon dynamics in the [`MusculotendonDeGroote2016`](../../../modules/physics/biomechanics/api/musculotendon.html#sympy.physics.biomechanics.musculotendon.MusculotendonDeGroote2016
+    "sympy.physics.biomechanics.musculotendon.MusculotendonDeGroote2016") class, a
+    full demonstration of which is shown below when we will construct a complete simple
+    musculotendon model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Elastic Tendon Dynamics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Elastic tendon dynamics are more complicated as we cannot directly express fiber
+    length in terms of musculotendon length due to tendon length varying. Instead,
+    we have to related the forces experienced in the tendon to the forces produced
+    by the muscle fibers, ensuring that the two are in equilibrium. We cannot do this
+    without introducing an additional state variable into the musculotendon dynamics,
+    and thus an additional first-order ordinary differential equation. There are many
+    choices that we can make for this state, but perhaps one of the most intuitive
+    is to use \(\tilde{l}^M\). With this we will need to both create an expression
+    for the tendon force (\(F^T\)) as well as the first-order ordinary differential
+    equation for \(\frac{d \tilde{l}^M}{dt}\). \(l^M\), \(l^T\), and \(\tilde{l}^T\)
+    can be calculated similar to with rigid tendon dynamics, remembering that we already
+    have \(\tilde{l}^M\) available as a know value due to it being a state variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}l^M &= \tilde{l}^M \cdot l^M_{opt} \\ l^T &= l^{MT} - \sqrt{\left(l^M\right)^2
+    - \left(l^M_{opt} \sin{\alpha_{opt}}\right)^2} \\ \tilde{l}^T &= \frac{l^T}{l^T_{slack}}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using \(\tilde{l}^T\) and the tendon force-length curve (\(fl^T\left(\tilde{l}^T\right)\)),
+    we can write an equation for the normalized and absolte tendon force:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\tilde{F}^T &= fl^T\left(\tilde{l}^T\right) \\ F^T &= F^M_{max}
+    \cdot \tilde{F}^T\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To express \(F^M\) we need to know the cosine of the pennation angle (\(\cos{\alpha}\)).
+    We can use trigonometry to write an equation for this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\begin{split}\cos{\alpha} &= \frac{l^{MT} - l^T}{l^M} \\ F^M &= \frac{F^T}{\cos{\alpha}}\end{split}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we assume that the damping coefficient \(\beta = 0\), we can rearrange the
+    muscle fiber force equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\tilde{F}^M = a \cdot fl^M_{act}\left(\tilde{l}^M\right) \cdot fv^M\left(\tilde{v}^M\right)
+    + fl^M_{pas}\left(\tilde{l}^M\right) + \beta \cdot \tilde{v}^M\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'to give \(fv^M\left(\tilde{v}^M\right)\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[fv^M\left(\tilde{v}^M\right) = \frac{\tilde{F}^M - fl^M_{pas}\left(\tilde{l}^M\right)}{a
+    \cdot fl^M_{act}\left(\tilde{l}^M\right)}\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the inverse fiber force-velocity curve, \(\left[fv^M\left(\tilde{v}^M\right)\right]^{-1}\),
+    and differentiating \(\tilde{l}^M\) with respect to time, we can finally write
+    an equation for \(\frac{d \tilde{l}^M}{dt}\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \[\frac{d \tilde{l}^M}{dt} = \frac{v^M_{max}}{l^M_{opt}} \tilde{v}^M\]
+  prefs: []
+  type: TYPE_NORMAL
+- en: To formulate these elastic tendon musculotendon dynamics, we had to assume that
+    \(\beta = 0\), which is suboptimal in forward simulations and optimal control
+    problems. It is possible to formulate elastic tendon musculotendon dynamics with
+    damping, but this requires a more complicated formulation with an additional input
+    variable in addition to an additional state variable, and as such the musculotendon
+    dynamics must be enforced as a differential algebraic equation rather than an
+    ordinary differential equation. The specifics of these types of formulation will
+    not be discussed here, but the interested reader can refer to the docstrings of
+    the [`MusculotendonDeGroote2016`](../../../modules/physics/biomechanics/api/musculotendon.html#sympy.physics.biomechanics.musculotendon.MusculotendonDeGroote2016
+    "sympy.physics.biomechanics.musculotendon.MusculotendonDeGroote2016") where they
+    are implemented.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Simple Musculotendon Model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'To demonstrate a muscle’s effect on a simple system, we can model a particle
+    of mass \(m\) under the influence of gravity with a muscle pulling the mass against
+    gravity. The mass \(m\) has a single generalized coordinate \(q\) and generalized
+    speed \(u\) to describe its position and motion. The following code establishes
+    the kinematics and gravitational force and an associated particle:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: SymPy Biomechanics includes musculotendon actuator models. Here we will use
+    a specific musculotendon model implementation. A musculotendon actuator is instantiated
+    with two input components, the pathway and the activation dynamics model. The
+    actuator must act along a pathway that connects the origin and insertion points
+    of the muscle. Our origin will attach to the fixed point \(O\) and insert on the
+    moving particle \(P\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A pathway has attachment points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and knows the length between the end attachment points as well as the relative
+    speed between the two attachment points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, the pathway can determine the forces acting on the two attachment
+    points give a force magnitude:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: The activation dynamics model represents a set of algebraic or ordinary differential
+    equations that relate the muscle excitation to the muscle activation. In our case,
+    we will use a first order ordinary differential equation that gives a smooth,
+    but delayed activation \(a(t)\) from the excitation \(e(t)\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The activation model has a state variable \(\mathbf{x}\), input variable \(\mathbf{r}\),
+    and some constant parameters \(\mathbf{p}\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that the return value for the constants parameters is empty. If we had
+    instantiated [`FirstOrderActivationDeGroote2016`](../../../modules/physics/biomechanics/api/activation.html#sympy.physics.biomechanics.activation.FirstOrderActivationDeGroote2016
+    "sympy.physics.biomechanics.activation.FirstOrderActivationDeGroote2016") normally
+    then we would have had to supply three values for \(\tau_{a}\), \(\tau_{d}\),
+    and \(b\). If these had been [`Symbol`](../../../modules/core.html#sympy.core.symbol.Symbol
+    "sympy.core.symbol.Symbol") objects then these would have shown up in the returned
+    [`MutableDenseMatrix`](../../../modules/matrices/dense.html#sympy.matrices.dense.MutableDenseMatrix
+    "sympy.matrices.dense.MutableDenseMatrix").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These are associated with its first order differential equation \(\dot{a} =
+    f(a, e, t)\):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: With the pathway and activation dynamics, the musculotendon model created using
+    them both and needs some parameters to define the muscle and tendon specific properties.
+    You need to specify the tendon slack length, peak isometric force, optimal fiber
+    length, maximal fiber velocity, optimal pennation angle, and fiber damping coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Because this musculotendon actuator has a rigid tendon model, it has the same
+    state and ordinary differential equation as the activation model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The musculotendon provides the extra ordinary differential equations as well
+    as the muscle specific forces applied to the pathway:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: These loads are made up of various functions that describe the length and velocity
+    relationships to the muscle fiber force.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that we have the forces that the muscles and tendons produce the equations
+    of motion of the system can be formed with, for example, Kane’s Method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The equations of motion are made up of the kinematical differential equation,
+    the dynamical differential equation (Newton’s Second Law), and the muscle activation
+    differential equation. The explicit form of each can be formed like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can now create a numerical function that evaluates the equations of motion
+    given the state, inputs, and constant parameters. Start by listing each symbolically:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then the numerical function to evaluate the right hand side of the explicit
+    ordinary differential equations is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It will additionally be interesting to numerically evaluate the muscle force,
+    so create a function for it too:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To test these functions we need some suitable numerical values. This muscle
+    will be able to produce a maximum force of 10 N to lift a mass of 0.5 kg:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our tendon is rigid, so the length of the muscle will be \(q-l_{T_\textrm{slack}}\)
+    and we want to give an initial muscle length near its force producing peak, so
+    we choose \(q_0=l_{M_\textrm{opt}} + l_{T_\textrm{slack}}\). Let’s also give the
+    muscle a small initial activation so that it produces a non-zero force:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Set the excitation to 1.0 and test the numerical functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The two functions work so we can now simulate this system to see if and how
+    the muscle lifts the mass:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: ([`png`](../../../_downloads/dcdaa307df65b18c0c605bea15881789/biomechanics-34.png),
+    [`hires.png`](../../../_downloads/1d551c01f373f4a7b3a87ccc488ab1a3/biomechanics-34.hires.png),
+    [`pdf`](../../../_downloads/e580f4a9d3ea5bba6ef2456e504e21c5/biomechanics-34.pdf))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![../../../_images/biomechanics-34.png](../Images/a9038a344d6beec6b50ec88eb8930b14.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The muscle pulls the mass in opposition to gravity and damps out to an equilibrium
+    of 5 N.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[DeGroote2016] ([1](#id1),[2](#id2),[3](#id3),[4](#id4),[5](#id5),[6](#id6),[7](#id7),[8](#id8),[9](#id9),[10](#id10),[11](#id11),[12](#id12),[13](#id13),[14](#id14),[15](#id15),[16](#id16))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: De Groote, F., Kinney, A. L., Rao, A. V., & Fregly, B. J., Evaluation of direct
+    collocation optimal control problem formulations for solving the muscle redundancy
+    problem, Annals of biomedical engineering, 44(10), (2016) pp. 2922-2936
+  prefs: []
+  type: TYPE_NORMAL

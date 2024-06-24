@@ -1,0 +1,345 @@
+- en: Symbolic and fuzzy booleans
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/guides/booleans.html](https://docs.sympy.org/latest/guides/booleans.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This page describes what a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") in SymPy is and also how that relates to three-valued
+    fuzzy-bools that are used in many parts of SymPy. It also discusses some common
+    problems that arise when writing code that uses three-valued logic and how to
+    handle them correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Symbolic Boolean vs three valued bool
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Assumptions queries like `x.ispositive` give fuzzy-bool `True`, `False` or `None`
+    results [[1]](#fuzzy). These are low-level Python objects rather than SymPy’s
+    symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean")
+    expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: A `None` result as a fuzzy-bool should be interpreted as meaning “maybe” or
+    “unknown”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An example of a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") class in SymPy can be found when using inequalities.
+    When an inequality is not known to be true or false a [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") can represent indeterminate results symbolically:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The last example shows what happens when an inequality is indeterminate: we
+    get an instance of [`StrictGreaterThan`](../modules/core.html#sympy.core.relational.StrictGreaterThan
+    "sympy.core.relational.StrictGreaterThan") which represents the inequality as
+    a symbolic expression. Internally when attempting to evaluate an inequality like
+    `a > b` SymPy will compute `(a - b).is_extended_positive`. If the result is `True`
+    or `False` then SymPy’s symbolic `S.true` or `S.false` will be returned. If the
+    result is `None` then an unevaluated [`StrictGreaterThan`](../modules/core.html#sympy.core.relational.StrictGreaterThan
+    "sympy.core.relational.StrictGreaterThan") is returned as shown for `x > 0` above.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is not obvious that queries like `xpos > 0` return `S.true` rather than
+    `True` because both objects display in the same way but we can check this using
+    the Python `is` operator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There is no general symbolic analogue of `None` in SymPy. In the cases where
+    a low-level assumptions query gives `None` the symbolic query will result in an
+    unevaluated symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") (e.g, `x > 0`). We can use a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") as part of a symbolic expression such as a [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
+    "sympy.functions.elementary.piecewise.Piecewise"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here `p` represents an expression that will be equal to `1` if `x > 0` or otherwise
+    it will be equal to `2`. The unevaluated [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") inequality `x > 0` represents the condition for
+    deciding the value of the expression symbolically. When we substitute a value
+    for `x` the inequality will resolve to `S.true` and then the [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
+    "sympy.functions.elementary.piecewise.Piecewise") can evaluate to `1` or `2`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The same will not work when using a fuzzy-bool instead of a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
+    "sympy.functions.elementary.piecewise.Piecewise") can not use `None` as the condition
+    because unlike the inequality `x > 0` it gives no information. With the inequality
+    it is possible to decide in future if the condition might `True` or `False` once
+    a value for `x` is known. A value of `None` can not be used in that way so it
+    is rejected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can use `True` in the [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
+    "sympy.functions.elementary.piecewise.Piecewise") because `True` sympifies to
+    `S.true`. Sympifying `None` just gives `None` again which is not a valid symbolic
+    SymPy object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are many other symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") types in SymPy. The same considerations about the
+    differences between fuzzy bool and symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") apply to all other SymPy [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") types. To give a different example there is [`Contains`](../modules/sets.html#sympy.sets.conditionset.Contains
+    "sympy.sets.conditionset.Contains") which represents the statement that an object
+    is contained in a set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The Python operator corresponding to [`Contains`](../modules/sets.html#sympy.sets.conditionset.Contains
+    "sympy.sets.conditionset.Contains") is `in`. A quirk of `in` is that it can only
+    evaluate to a `bool` (`True` or `False`) so if the result is indeterminate then
+    an exception will be raised:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The exception can be avoided by using `Contains(x, Reals)` or `Reals.contains(x)`
+    rather than `x in Reals`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Three-valued logic with fuzzy bools
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Whether we use the fuzzy-bool or symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") we always need to be aware of the possibility that
+    a query might be indeterminate. How to write code that handles this is different
+    in the two cases though. We will look at fuzzy-bools first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider the following function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `both_positive` function is supposed to tell us whether or not `a` and
+    `b` are both positive. However the `both_positive` function will fail if either
+    of the `is_positive` queries gives `None`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need to sympify the arguments to this function using `S` because the assumptions
+    are only defined on SymPy objects and not regular Python `int` objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here `False` is incorrect because it is *possible* that `x` is positive in which
+    case both arguments would be positive. We get `False` here because `x.is_positive`
+    gives `None` and Python will treat `None` as “falsey”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In order to handle all possible cases correctly we need to separate the logic
+    for identifying the `True` and `False` cases. An improved function might be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This function now can handle all cases of `True`, `False` or `None` for both
+    `a` and `b` and will always return a fuzzy bool representing whether the statement
+    “`a` and `b` are both positive” is true, false or unknown:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Another case that we need to be careful of when using fuzzy-bools is negation
+    with Python’s `not` operator e.g.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The correct negation of a fuzzy bool `None` is `None` again. If we do not know
+    whether the statement “`x` is positive” is `True` or `False` then we also do not
+    know whether its negation “`x` is not positive” is `True` or `False`. The reason
+    we get `True` instead is again because `None` is considered “falsey”. When `None`
+    is used with a logical operator such as `not` it will first be converted to a
+    `bool` and then negated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: The fact that `None` is treated as falsey can be useful if used correctly. For
+    example we may want to do something only if `x` is known to positive in which
+    case we can do
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Provided we understand that an alternate condition branch refers to two cases
+    (`False` and `None`) then this can be a useful way of writing conditionals. When
+    we really do need to distinguish all cases then we need to use things like `x.is_positive
+    is False`. What we need to be careful of though is using Python’s binary logic
+    operators like `not` or `and` with fuzzy bools as they will not handle the indeterminate
+    case correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In fact SymPy has internal functions that are designed to handle fuzzy-bools
+    correctly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Using the `fuzzy_and` function we can write the `both_positive` function more
+    simply:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Making use of `fuzzy_and`, `fuzzy_or` and `fuzzy_not` leads to simpler code
+    and can also reduce the chance of introducing a logic error because the code can
+    look more like it would in the case of ordinary binary logic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Three-valued logic with symbolic Booleans
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When working with symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") rather than fuzzy-bool the issue of `None` silently
+    being treated as falsey does not arise so it is easier not to end up with a logic
+    error. However instead the indeterminate case will often lead to an exception
+    being raised if not handled carefully.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will try to implement the `both_positive` function this time using symbolic
+    [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first difference is that we return the symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") objects `S.true` and `S.false` rather than `True`
+    and `False`. The second difference is that we test e.g. `a > 0` rather than `a.is_positive`.
+    Trying this out we get
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: What happens now is that testing `x > 0` gives an exception when `x` is not
+    known to be positive or not positive. More precisely `x > 0` does not give an
+    exception but `if x > 0` does and that is because the `if` statement implicitly
+    calls `bool(x > 0)` which raises.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Python expression `x > 0` creates a SymPy [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean"). Since in this case the [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") can not evaluate to `True` or `False` we get an
+    unevaluated [`StrictGreaterThan`](../modules/core.html#sympy.core.relational.StrictGreaterThan
+    "sympy.core.relational.StrictGreaterThan"). Attempting to force that into a `bool`
+    with `bool(x > 0)` raises an exception. That is because a regular Python `bool`
+    must be either `True` or `False` and neither of those are known to be correct
+    in this case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The same kind of issue arises when using `and`, `or` or `not` with symbolic
+    [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean").
+    The solution is to use SymPy’s symbolic [`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And"), [`Or`](../modules/logic.html#sympy.logic.boolalg.Or
+    "sympy.logic.boolalg.Or") and [`Not`](../modules/logic.html#sympy.logic.boolalg.Not
+    "sympy.logic.boolalg.Not") or equivalently Python’s bitwise logical operators
+    `&`, `|` and `~`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As before we can make a better version of `both_positive` if we avoid directly
+    using a SymPy [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean")
+    in an `if`, `and`, `or`, or `not`. Instead we can test whether or not the [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") has evaluated to `S.true` or `S.false`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now with this version we don’t get any exceptions and if the result is indeterminate
+    we will get a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") representing the conditions under which the statement
+    “`a` and `b` are both positive” would be true:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: The last case shows that actually using the [`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And") with a condition that is known to be true simplifies
+    the [`And`](../modules/logic.html#sympy.logic.boolalg.And "sympy.logic.boolalg.And").
+    In fact we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'What this means is that we can improve `both_positive_better`. The different
+    cases are not needed at all. Instead we can simply return the [`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And") and let it simplify if possible:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now this will work with any symbolic real objects and produce a symbolic result.
+    We can also substitute into the result to see how it would work for particular
+    values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: The idea when working with symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") objects is as much as possible to avoid trying
+    to branch on them with `if/else` and other logical operators like `and` etc. Instead
+    think of computing a condition and passing it around as a variable. The elementary
+    symbolic operations like [`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And"), [`Or`](../modules/logic.html#sympy.logic.boolalg.Or
+    "sympy.logic.boolalg.Or") and [`Not`](../modules/logic.html#sympy.logic.boolalg.Not
+    "sympy.logic.boolalg.Not") can then take care of the logic for you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Footnotes
+  prefs: []
+  type: TYPE_NORMAL

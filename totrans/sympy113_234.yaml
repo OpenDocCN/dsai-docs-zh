@@ -1,0 +1,1952 @@
+- en: Control API
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/physics/control/lti.html](https://docs.sympy.org/latest/modules/physics/control/lti.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '## lti'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: A class for representing LTI (Linear, time-invariant) systems that can be strictly
+    described by ratio of polynomials in the Laplace transform complex variable. The
+    arguments are `num`, `den`, and `var`, where `num` and `den` are numerator and
+    denominator polynomials of the `TransferFunction` respectively, and the third
+    argument is a complex variable of the Laplace transform used by these polynomials
+    of the transfer function. `num` and `den` can be either polynomials or numbers,
+    whereas `var` has to be a [`Symbol`](../../core.html#sympy.core.symbol.Symbol
+    "sympy.core.symbol.Symbol").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**num** : Expr, Number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The numerator polynomial of the transfer function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**den** : Expr, Number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The denominator polynomial of the transfer function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**var** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Complex variable of the Laplace transform used by the polynomials of the transfer
+    function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**TypeError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When `var` is not a Symbol or when `num` or `den` is not a number or a polynomial.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**ValueError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When `den` is zero.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generally, a dynamical system representing a physical model can be described
+    in terms of Linear Ordinary Differential Equations like -
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(\small{b_{m}y^{\left(m\right)}+b_{m-1}y^{\left(m-1\right)}+\dots+b_{1}y^{\left(1\right)}+b_{0}y=
+    a_{n}x^{\left(n\right)}+a_{n-1}x^{\left(n-1\right)}+\dots+a_{1}x^{\left(1\right)}+a_{0}x}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Here, \(x\) is the input signal and \(y\) is the output signal and superscript
+    on both is the order of derivative (not exponent). Derivative is taken with respect
+    to the independent variable, \(t\). Also, generally \(m\) is greater than \(n\).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is not feasible to analyse the properties of such systems in their native
+    form therefore, we use mathematical tools like Laplace transform to get a better
+    perspective. Taking the Laplace transform of both the sides in the equation (at
+    zero initial conditions), we get -
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(\small{\mathcal{L}[b_{m}y^{\left(m\right)}+b_{m-1}y^{\left(m-1\right)}+\dots+b_{1}y^{\left(1\right)}+b_{0}y]=
+    \mathcal{L}[a_{n}x^{\left(n\right)}+a_{n-1}x^{\left(n-1\right)}+\dots+a_{1}x^{\left(1\right)}+a_{0}x]}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Using the linearity property of Laplace transform and also considering zero
+    initial conditions (i.e. \(\small{y(0^{-}) = 0}\), \(\small{y'(0^{-}) = 0}\) and
+    so on), the equation above gets translated to -
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(\small{b_{m}\mathcal{L}[y^{\left(m\right)}]+\dots+b_{1}\mathcal{L}[y^{\left(1\right)}]+b_{0}\mathcal{L}[y]=
+    a_{n}\mathcal{L}[x^{\left(n\right)}]+\dots+a_{1}\mathcal{L}[x^{\left(1\right)}]+a_{0}\mathcal{L}[x]}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Now, applying Derivative property of Laplace transform,
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(\small{b_{m}s^{m}\mathcal{L}[y]+\dots+b_{1}s\mathcal{L}[y]+b_{0}\mathcal{L}[y]=
+    a_{n}s^{n}\mathcal{L}[x]+\dots+a_{1}s\mathcal{L}[x]+a_{0}\mathcal{L}[x]}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Here, the superscript on \(s\) is **exponent**. Note that the zero initial conditions
+    assumption, mentioned above, is very important and cannot be ignored otherwise
+    the dynamical system cannot be considered time-independent and the simplified
+    equation above cannot be reached.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Collecting \(\mathcal{L}[y]\) and \(\mathcal{L}[x]\) terms from both the sides
+    and taking the ratio \(\frac{ \mathcal{L}\left\{y\right\} }{ \mathcal{L}\left\{x\right\}
+    }\), we get the typical rational form of transfer function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The numerator of the transfer function is, therefore, the Laplace transform
+    of the output signal (The signals are represented as functions of time) and similarly,
+    the denominator of the transfer function is the Laplace transform of the input
+    signal. It is also a convention to denote the input and output signal’s Laplace
+    transform with capital alphabets like shown below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(H(s) = \frac{Y(s)}{X(s)} = \frac{ \mathcal{L}\left\{y(t)\right\} }{ \mathcal{L}\left\{x(t)\right\}
+    }\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: \(s\), also known as complex frequency, is a complex variable in the Laplace
+    domain. It corresponds to the equivalent variable \(t\), in the time domain. Transfer
+    functions are sometimes also referred to as the Laplace transform of the system’s
+    impulse response. Transfer function, \(H\), is represented as a rational function
+    in \(s\) like,
+  prefs: []
+  type: TYPE_NORMAL
+- en: \(H(s) =\ \frac{a_{n}s^{n}+a_{n-1}s^{n-1}+\dots+a_{1}s+a_{0}}{b_{m}s^{m}+b_{m-1}s^{m-1}+\dots+b_{1}s+b_{0}}\)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Any complex variable can be used for `var`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To negate a transfer function the `-` operator can be prepended:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can use a float or an integer (or other constants) as numerator and denominator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can take the integer power of a transfer function using the `**` operator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Addition, subtraction, and multiplication of transfer functions can form unevaluated
+    `Series` or `Parallel` objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: These unevaluated `Series` or `Parallel` objects can convert into the resultant
+    transfer function using `.doit()` method or by `.rewrite(TransferFunction)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Feedback`](#sympy.physics.control.lti.Feedback "sympy.physics.control.lti.Feedback"),
+    [`Series`](#sympy.physics.control.lti.Series "sympy.physics.control.lti.Series"),
+    [`Parallel`](#sympy.physics.control.lti.Parallel "sympy.physics.control.lti.Parallel")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R734](#id1)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Transfer_function](https://en.wikipedia.org/wiki/Transfer_function)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R735](#id2)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Laplace_transform](https://en.wikipedia.org/wiki/Laplace_transform)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computes the gain of the response as the frequency approaches zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The DC gain is infinite for systems with pure integrators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the denominator polynomial of the transfer function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the system response at any point in the real or complex plane.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the transfer function with numerator and denominator in expanded form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates a new `TransferFunction` efficiently from a list of coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**num_list** : Sequence'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence comprising of numerator coefficients.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**den_list** : Sequence'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence comprising of denominator coefficients.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**var** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Complex variable of the Laplace transform used by the polynomials of the transfer
+    function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ZeroDivisionError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the constructed denominator is zero.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a Transfer Function with more than one variable >>> tf1 = TransferFunction.from_coeff_lists([p,
+    1], [2*p, 0, 4], s) >>> tf1 TransferFunction(p*s + 1, 2*p*s**2 + 4, s)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates a new `TransferFunction` efficiently from a rational expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : Expr, Number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The rational expression representing the `TransferFunction`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**var** : Symbol, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Complex variable of the Laplace transform used by the polynomials of the transfer
+    function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ValueError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When `expr` is of type `Number` and optional parameter `var` is not passed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: When `expr` has more than one variables and an optional parameter `var` is not
+    passed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**ZeroDivisionError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When denominator of `expr` is zero or it has `ComplexInfinity` in its numerator.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: In case of conflict between two or more variables in a expression, SymPy will
+    raise a `ValueError`, if `var` is not passed by the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can be corrected by specifying the `var` parameter manually.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`var` also need to be specified when `expr` is a `Number`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates a new `TransferFunction` from given zeros, poles and gain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**zeros** : Sequence'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence comprising of zeros of transfer function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**poles** : Sequence'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequence comprising of poles of transfer function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**gain** : Number, Symbol, Expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A scalar value specifying gain of the model.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**var** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Complex variable of the Laplace transform used by the polynomials of the transfer
+    function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a Transfer Function with variable poles and zeros >>> tf1 = TransferFunction.from_zpk([p,
+    k], [p + k, p - k], 2, s) >>> tf1 TransferFunction(2*(-k + s)*(-p + s), (-k -
+    p + s)*(k - p + s), s)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Complex poles or zeros are acceptable >>> tf2 = TransferFunction.from_zpk([0],
+    [1-1j, 1+1j, 2], -2, s) >>> tf2 TransferFunction(-2*s, (s - 2)*(s - 1.0 - 1.0*I)*(s
+    - 1.0 + 1.0*I), s)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial is equal to degree of the
+    denominator polynomial, else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial is less than or equal to
+    degree of the denominator polynomial, else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if the transfer function is asymptotically stable; else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This would not check the marginal or conditional stability of the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial is strictly less than degree
+    of the denominator polynomial, else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the numerator polynomial of the transfer function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the poles of a transfer function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts a `TransferFunction` object to SymPy Expr.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the complex variable of the Laplace transform used by the polynomials
+    of the transfer function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the zeros of a transfer function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: A class for representing a series configuration of SISO systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**args** : SISOLinearTimeInvariant'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SISO systems in a series configuration.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**evaluate** : Boolean, Keyword'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When passed `True`, returns the equivalent `Series(*args).doit()`. Set to `False`
+    by default.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ValueError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When no argument is passed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '`var` attribute is not same for every system.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**TypeError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any of the passed `*args` has unsupported type
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A combination of SISO and MIMO systems is passed. There should be homogeneity
+    in the type of systems passed, SISO in this case.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can get the resultant transfer function by using `.doit()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: All the transfer functions should use the same complex variable `var` of the
+    Laplace transform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`MIMOSeries`](#sympy.physics.control.lti.MIMOSeries "sympy.physics.control.lti.MIMOSeries"),
+    [`Parallel`](#sympy.physics.control.lti.Parallel "sympy.physics.control.lti.Parallel"),
+    [`TransferFunction`](#sympy.physics.control.lti.TransferFunction "sympy.physics.control.lti.TransferFunction"),
+    [`Feedback`](#sympy.physics.control.lti.Feedback "sympy.physics.control.lti.Feedback")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the resultant transfer function obtained after evaluating the transfer
+    functions in series configuration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial of the resultant transfer
+    function is equal to degree of the denominator polynomial of the same, else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial of the resultant transfer
+    function is less than or equal to degree of the denominator polynomial of the
+    same, else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial of the resultant transfer
+    function is strictly less than degree of the denominator polynomial of the same,
+    else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the equivalent `Expr` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the complex variable used by all the transfer functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: A class for representing a parallel configuration of SISO systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**args** : SISOLinearTimeInvariant'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SISO systems in a parallel arrangement.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**evaluate** : Boolean, Keyword'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When passed `True`, returns the equivalent `Parallel(*args).doit()`. Set to
+    `False` by default.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ValueError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When no argument is passed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '`var` attribute is not same for every system.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**TypeError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any of the passed `*args` has unsupported type
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A combination of SISO and MIMO systems is passed. There should be homogeneity
+    in the type of systems passed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can get the resultant transfer function by using `.doit()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: All the transfer functions should use the same complex variable `var` of the
+    Laplace transform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Series`](#sympy.physics.control.lti.Series "sympy.physics.control.lti.Series"),
+    [`TransferFunction`](#sympy.physics.control.lti.TransferFunction "sympy.physics.control.lti.TransferFunction"),
+    [`Feedback`](#sympy.physics.control.lti.Feedback "sympy.physics.control.lti.Feedback")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the resultant transfer function obtained after evaluating the transfer
+    functions in parallel configuration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial of the resultant transfer
+    function is equal to degree of the denominator polynomial of the same, else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial of the resultant transfer
+    function is less than or equal to degree of the denominator polynomial of the
+    same, else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns True if degree of the numerator polynomial of the resultant transfer
+    function is strictly less than degree of the denominator polynomial of the same,
+    else False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the equivalent `Expr` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the complex variable used by all the transfer functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: A class for representing closed-loop feedback interconnection between two SISO
+    input/output systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first argument, `sys1`, is the feedforward part of the closed-loop system
+    or in simple words, the dynamical model representing the process to be controlled.
+    The second argument, `sys2`, is the feedback system and controls the fed back
+    signal to `sys1`. Both `sys1` and `sys2` can either be `Series` or `TransferFunction`
+    objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**sys1** : Series, TransferFunction'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The feedforward path system.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**sys2** : Series, TransferFunction, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The feedback path system (often a feedback controller). It is the model sitting
+    on the feedback path.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: If not specified explicitly, the sys2 is assumed to be unit (1.0) transfer function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**sign** : int, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sign of feedback. Can either be `1` (for positive feedback) or `-1` (for
+    negative feedback). Default value is \(-1\).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ValueError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When `sys1` and `sys2` are not using the same complex variable of the Laplace
+    transform.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: When a combination of `sys1` and `sys2` yields zero denominator.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**TypeError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When either `sys1` or `sys2` is not a `Series` or a `TransferFunction` object.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can get the feedforward and feedback path systems by using `.sys1` and `.sys2`
+    respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can get the resultant closed loop transfer function obtained by negative
+    feedback interconnection using `.doit()` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To negate a `Feedback` object, the `-` operator can be prepended:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`MIMOFeedback`](#sympy.physics.control.lti.MIMOFeedback "sympy.physics.control.lti.MIMOFeedback"),
+    [`Series`](#sympy.physics.control.lti.Series "sympy.physics.control.lti.Series"),
+    [`Parallel`](#sympy.physics.control.lti.Parallel "sympy.physics.control.lti.Parallel")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the denominator of the closed loop feedback model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the resultant transfer function obtained by the feedback interconnection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: Use kwarg `expand=True` to expand the resultant transfer function. Use `cancel=True`
+    to cancel out the common terms in numerator and denominator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the numerator of the closed loop feedback system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the sensitivity function of the feedback loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sensitivity of a Feedback system is the ratio of change in the open loop gain
+    to the change in the closed loop gain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: This method would not return the complementary sensitivity function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the type of MIMO Feedback model. `1` for Positive and `-1` for Negative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the feedforward system of the feedback interconnection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the feedback controller of the feedback interconnection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: Converts a `Feedback` object to SymPy Expr.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the complex variable of the Laplace transform used by all the transfer
+    functions involved in the feedback interconnection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: A class for representing the MIMO (multiple-input and multiple-output) generalization
+    of the SISO (single-input and single-output) transfer function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is a matrix of transfer functions (`TransferFunction`, SISO-`Series` or SISO-`Parallel`).
+    There is only one argument, `arg` which is also the compulsory argument. `arg`
+    is expected to be strictly of the type list of lists which holds the transfer
+    functions or reducible to transfer functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**arg** : Nested `List` (strictly).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Users are expected to input a nested list of `TransferFunction`, `Series` and/or
+    `Parallel` objects.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`pprint()` can be used for better visualization of `TransferFunctionMatrix`
+    objects.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: TransferFunctionMatrix can be transposed, if user wants to switch the input
+    and output transfer functions
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: To access the `TransferFunction` at any index in the `TransferFunctionMatrix`,
+    use the index notation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To negate a transfer function matrix, `-` operator can be prepended:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`subs()` returns the `TransferFunctionMatrix` object with the value substituted
+    in the expression. This will not mutate your original `TransferFunctionMatrix`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`subs()` also supports multiple substitutions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: Users can reduce the `Series` and `Parallel` elements of the matrix to `TransferFunction`
+    by using `doit()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: Addition, subtraction, and multiplication of transfer function matrices can
+    form unevaluated `Series` or `Parallel` objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For addition and subtraction: All the transfer function matrices must have
+    the same shape.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For multiplication (C = A * B): The number of inputs of the first transfer
+    function matrix (A) must be equal to the number of outputs of the second transfer
+    function matrix (B).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Also, use pretty-printing (`pprint`) to analyse better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: These unevaluated `Series` or `Parallel` objects can convert into the resultant
+    transfer function matrix using `.doit()` method or by `.rewrite(TransferFunctionMatrix)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`TransferFunction`](#sympy.physics.control.lti.TransferFunction "sympy.physics.control.lti.TransferFunction"),
+    [`MIMOSeries`](#sympy.physics.control.lti.MIMOSeries "sympy.physics.control.lti.MIMOSeries"),
+    [`MIMOParallel`](#sympy.physics.control.lti.MIMOParallel "sympy.physics.control.lti.MIMOParallel"),
+    [`Feedback`](#sympy.physics.control.lti.Feedback "sympy.physics.control.lti.Feedback")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the poles of each element of the `TransferFunctionMatrix`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Actual poles of a MIMO system are NOT the poles of individual elements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`elem_zeros`](#sympy.physics.control.lti.TransferFunctionMatrix.elem_zeros
+    "sympy.physics.control.lti.TransferFunctionMatrix.elem_zeros")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the zeros of each element of the `TransferFunctionMatrix`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Actual zeros of a MIMO system are NOT the zeros of individual elements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`elem_poles`](#sympy.physics.control.lti.TransferFunctionMatrix.elem_poles
+    "sympy.physics.control.lti.TransferFunctionMatrix.elem_poles")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluates system response of each transfer function in the `TransferFunctionMatrix`
+    at any point in the real or complex plane.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: Expands the transfer function matrix
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates a new `TransferFunctionMatrix` efficiently from a SymPy Matrix of `Expr`
+    objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**matrix** : `ImmutableMatrix` having `Expr`/`Number` elements.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**var** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Complex variable of the Laplace transform which will be used by the all the
+    `TransferFunction` objects in the `TransferFunctionMatrix`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the number of inputs of the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`num_outputs`](#sympy.physics.control.lti.TransferFunctionMatrix.num_outputs
+    "sympy.physics.control.lti.TransferFunctionMatrix.num_outputs")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the number of outputs of the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE115]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`num_inputs`](#sympy.physics.control.lti.TransferFunctionMatrix.num_inputs
+    "sympy.physics.control.lti.TransferFunctionMatrix.num_inputs")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Returns the shape of the transfer function matrix, that is, `(# of outputs,
+    # of inputs)`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the transpose of the `TransferFunctionMatrix` (switched input and output
+    layers).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the complex variable used by all the transfer functions or `Series`/`Parallel`
+    objects in a transfer function matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: A class for representing a series configuration of MIMO systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**args** : MIMOLinearTimeInvariant'
+  prefs: []
+  type: TYPE_NORMAL
+- en: MIMO systems in a series configuration.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**evaluate** : Boolean, Keyword'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When passed `True`, returns the equivalent `MIMOSeries(*args).doit()`. Set to
+    `False` by default.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ValueError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When no argument is passed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '`var` attribute is not same for every system.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '`num_outputs` of the MIMO system is not equal to the `num_inputs` of its adjacent
+    MIMO system. (Matrix multiplication constraint, basically)'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**TypeError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any of the passed `*args` has unsupported type
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A combination of SISO and MIMO systems is passed. There should be homogeneity
+    in the type of systems passed, MIMO in this case.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: All the transfer function matrices should use the same complex variable `var`
+    of the Laplace transform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`MIMOSeries(A, B)` is not equivalent to `A*B`. It is always in the reverse
+    order, that is `B*A`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Series`](#sympy.physics.control.lti.Series "sympy.physics.control.lti.Series"),
+    [`MIMOParallel`](#sympy.physics.control.lti.MIMOParallel "sympy.physics.control.lti.MIMOParallel")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the resultant transfer function matrix obtained after evaluating the
+    MIMO systems arranged in a series configuration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the number of input signals of the series system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the number of output signals of the series system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the shape of the equivalent MIMO system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the complex variable used by all the transfer functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: A class for representing a parallel configuration of MIMO systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**args** : MIMOLinearTimeInvariant'
+  prefs: []
+  type: TYPE_NORMAL
+- en: MIMO Systems in a parallel arrangement.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**evaluate** : Boolean, Keyword'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When passed `True`, returns the equivalent `MIMOParallel(*args).doit()`. Set
+    to `False` by default.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ValueError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When no argument is passed.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '`var` attribute is not same for every system.'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: All MIMO systems passed do not have same shape.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**TypeError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any of the passed `*args` has unsupported type
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A combination of SISO and MIMO systems is passed. There should be homogeneity
+    in the type of systems passed, MIMO in this case.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notes
+  prefs: []
+  type: TYPE_NORMAL
+- en: All the transfer function matrices should use the same complex variable `var`
+    of the Laplace transform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Parallel`](#sympy.physics.control.lti.Parallel "sympy.physics.control.lti.Parallel"),
+    [`MIMOSeries`](#sympy.physics.control.lti.MIMOSeries "sympy.physics.control.lti.MIMOSeries")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the resultant transfer function matrix obtained after evaluating the
+    MIMO systems arranged in a parallel configuration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE134]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the number of input signals of the parallel system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the number of output signals of the parallel system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the shape of the equivalent MIMO system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the complex variable used by all the systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: A class for representing closed-loop feedback interconnection between two MIMO
+    input/output systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**sys1** : MIMOSeries, TransferFunctionMatrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The MIMO system placed on the feedforward path.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**sys2** : MIMOSeries, TransferFunctionMatrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The system placed on the feedback path (often a feedback controller).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**sign** : int, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sign of feedback. Can either be `1` (for positive feedback) or `-1` (for
+    negative feedback). Default value is \(-1\).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ValueError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When `sys1` and `sys2` are not using the same complex variable of the Laplace
+    transform.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Forward path model should have an equal number of inputs/outputs to the feedback
+    path outputs/inputs.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: When product of `sys1` and `sys2` is not a square matrix.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: When the equivalent MIMO system is not invertible.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**TypeError**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When either `sys1` or `sys2` is not a `MIMOSeries` or a `TransferFunctionMatrix`
+    object.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: To get the equivalent system matrix, use either `doit` or `rewrite` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: To negate the `MIMOFeedback` object, use `-` operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Feedback`](#sympy.physics.control.lti.Feedback "sympy.physics.control.lti.Feedback"),
+    [`MIMOSeries`](#sympy.physics.control.lti.MIMOSeries "sympy.physics.control.lti.MIMOSeries"),
+    [`MIMOParallel`](#sympy.physics.control.lti.MIMOParallel "sympy.physics.control.lti.MIMOParallel")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the resultant transfer function matrix obtained by the feedback interconnection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the user wants the resultant `TransferFunctionMatrix` object without canceling
+    the common factors then the `cancel` kwarg should be passed `False`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the user wants the expanded form of the resultant transfer function matrix,
+    the `expand` kwarg should be passed as `True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the sensitivity function matrix of the feedback loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sensitivity of a closed-loop system is the ratio of change in the open loop
+    gain to the change in the closed loop gain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: This method would not return the complementary sensitivity function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the type of feedback interconnection of two models. `1` for Positive
+    and `-1` for Negative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the system placed on the feedforward path of the MIMO feedback interconnection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the feedback controller of the MIMO feedback interconnection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the complex variable of the Laplace transform used by all the transfer
+    functions involved in the MIMO feedback loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE155]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns falling coefficients of H(z) from numerator and denominator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where H(z) is the corresponding discretized transfer function, discretized with
+    the generalised bilinear transformation method. H(z) is obtained from the continuous
+    transfer function H(s) by substituting \(s(z) = \frac{z-1}{T(\alpha z + (1-\alpha))}\)
+    into H(s), where T is the sample period. Coefficients are falling, i.e. \(H(z)
+    = \frac{az+b}{cz+d}\) is returned as [a, b], [c, d].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE160]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE161]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R736](#id3)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://www.polyu.edu.hk/ama/profile/gfzhang/Research/ZCC09_IJC.pdf](https://www.polyu.edu.hk/ama/profile/gfzhang/Research/ZCC09_IJC.pdf)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE162]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns falling coefficients of H(z) from numerator and denominator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where H(z) is the corresponding discretized transfer function, discretized with
+    the bilinear transform method. H(z) is obtained from the continuous transfer function
+    H(s) by substituting \(s(z) = \frac{2}{T}\frac{z-1}{z+1}\) into H(s), where T
+    is the sample period. Coefficients are falling, i.e. \(H(z) = \frac{az+b}{cz+d}\)
+    is returned as [a, b], [c, d].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE163]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE164]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE165]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns falling coefficients of H(z) from numerator and denominator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where H(z) is the corresponding discretized transfer function, discretized with
+    the forward difference transform method. H(z) is obtained from the continuous
+    transfer function H(s) by substituting \(s(z) = \frac{z-1}{T}\) into H(s), where
+    T is the sample period. Coefficients are falling, i.e. \(H(z) = \frac{az+b}{cz+d}\)
+    is returned as [a, b], [c, d].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE166]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE167]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE168]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns falling coefficients of H(z) from numerator and denominator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where H(z) is the corresponding discretized transfer function, discretized with
+    the backward difference transform method. H(z) is obtained from the continuous
+    transfer function H(s) by substituting \(s(z) = \frac{z-1}{Tz}\) into H(s), where
+    T is the sample period. Coefficients are falling, i.e. \(H(z) = \frac{az+b}{cz+d}\)
+    is returned as [a, b], [c, d].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE169]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE170]'
+  prefs: []
+  type: TYPE_PRE

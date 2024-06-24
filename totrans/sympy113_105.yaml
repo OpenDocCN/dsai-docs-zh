@@ -1,0 +1,2830 @@
+- en: Code Generation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://docs.sympy.org/latest/modules/codegen.html](https://docs.sympy.org/latest/modules/codegen.html)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Several submodules in SymPy allow one to generate directly compilable and executable
+    code in a variety of different programming languages from SymPy expressions. In
+    addition, there are functions that generate Python importable objects that can
+    evaluate SymPy expressions very efficiently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will start with a brief introduction to the components that make up the code
+    generation capabilities of SymPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are four main levels of abstractions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[`sympy.utilities.autowrap`](utilities/autowrap.html#module-sympy.utilities.autowrap
+    "sympy.utilities.autowrap") uses codegen, and codegen uses the code printers.
+    [`sympy.utilities.autowrap`](utilities/autowrap.html#module-sympy.utilities.autowrap
+    "sympy.utilities.autowrap") does everything: it lets you go from SymPy expression
+    to numerical function in the same Python process in one step. Codegen is actual
+    code generation, i.e., to compile and use later, or to include in some larger
+    project.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code printers translate the SymPy objects into actual code, like `abs(x)
+    -> fabs(x)` (for C).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code printers don’t print optimal code in many cases. An example of this
+    is powers in C. `x**2` prints as `pow(x, 2)` instead of `x*x`. Other optimizations
+    (like mathematical simplifications) should happen before the code printers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Currently, [`sympy.simplify.cse_main.cse()`](simplify/simplify.html#sympy.simplify.cse_main.cse
+    "sympy.simplify.cse_main.cse") is not applied automatically anywhere in this chain.
+    It ideally happens at the codegen level, or somewhere above it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will iterate through the levels below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following three lines will be used to setup each example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Code printers (sympy.printing)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This is where the meat of code generation is; the translation of SymPy actually
+    more like a lightweight version of codegen for Python, and Python ([`sympy.printing.pycode.pycode()`](printing.html#sympy.printing.pycode.pycode
+    "sympy.printing.pycode.pycode")), and [`sympy.printing.lambdarepr.lambdarepr()`](printing.html#sympy.printing.lambdarepr.lambdarepr
+    "sympy.printing.lambdarepr.lambdarepr"), which supports many libraries (like NumPy),
+    and Aesara ([`sympy.printing.aesaracode.aesara_function()`](printing.html#sympy.printing.aesaracode.aesara_function
+    "sympy.printing.aesaracode.aesara_function")). The code printers are special cases
+    of the other prints in SymPy (str printer, pretty printer, etc.).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An important distinction is that the code printer has to deal with assignments
+    (using the [`sympy.codegen.ast.Assignment`](#sympy.codegen.ast.Assignment "sympy.codegen.ast.Assignment")
+    object). This serves as building blocks for the code printers and hence the `codegen`
+    module. An example that shows the use of `Assignment` in C code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here is another simple example of printing a C version of a SymPy expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To generate code with some math functions provided by e.g. the C99 standard
+    we need to import functions from [`sympy.codegen.cfunctions`](#module-sympy.codegen.cfunctions
+    "sympy.codegen.cfunctions"):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
+    variable is provided an if statement is created, otherwise the ternary operator
+    is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
+    True)` then an error will be thrown. This is to prevent generating an expression
+    that may not evaluate to anything. A use case for `Piecewise`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The various printers also tend to support `Indexed` objects well. With `contract=True`
+    these expressions will be turned into loops, whereas `contract=False` will just
+    print the assignment expression that should be looped over:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Custom printing can be defined for certain types by passing a dictionary of
+    “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
+    value can be a list of tuples i.e., `[(argument_test, cfunction_string)]`. This
+    can be used to call a custom Octave function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An example of Mathematica code printer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can go through a common expression in different languages we support and
+    see how it works:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Codegen (sympy.utilities.codegen)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This module deals with creating compilable code from SymPy expressions. This
+    is lower level than autowrap, as it doesn’t actually attempt to compile the code,
+    but higher level than the printers, as it generates compilable files (including
+    header files), rather than just code snippets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The user friendly functions, here, are `codegen` and `make_routine`. `codegen`
+    takes a list of `(variable, expression)` pairs and a language (C, F95, and Octave/Matlab
+    are supported). It returns, as strings, a code file and a header file (for relevant
+    languages). The variables are created as functions that return the value of the
+    expression as output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `codegen` callable is not in the sympy namespace automatically, to use it
+    you must first import `codegen` from `sympy.utilities.codegen`
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Various flags to `codegen` let you modify things. The project name for preprocessor
+    instructions can be varied using `project`. Variables listed as global variables
+    in arg `global_vars` will not show up as function arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`language` is a case-insensitive string that indicates the source code language.
+    Currently, `C`, `F95` and `Octave` are supported. `Octave` generates code compatible
+    with both Octave and Matlab.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`header` when True, a header is written on top of each source file. `empty`
+    when True, empty lines are used to structure the code. With `argument_sequence`
+    a sequence of arguments for the routine can be defined in a preferred order.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`prefix` defines a prefix for the names of the files that contain the source
+    code. If omitted, the name of the first name_expr tuple is used.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`to_files` when True, the code will be written to one or more files with the
+    given prefix.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: The method `make_routine` creates a `Routine` object, which represents an evaluation
+    routine for a set of expressions. This is only good for internal use by the CodeGen
+    objects, as an intermediate representation from SymPy expression to generated
+    code. It is not recommended to make a `Routine` object yourself. You should instead
+    use `make_routine` method. `make_routine` in turn calls the `routine` method of
+    the CodeGen object depending upon the language of choice. This creates the internal
+    objects representing assignments and so on, and creates the `Routine` class with
+    them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The various codegen objects such as `Routine` and `Variable` aren’t SymPy objects
+    (they don’t subclass from Basic).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Another more complicated example with a mixture of specified and automatically-assigned
+    names. Also has Matrix output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can examine the various arguments more closely:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The full API reference can be viewed [here](utilities/codegen.html#codegen-api).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Autowrap
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Autowrap automatically generates code, writes it to disk, compiles it, and imports
+    it into the current session. Main functions of this module are `autowrap`, `binary_function`,
+    and `ufuncify`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It also automatically converts expressions containing `Indexed` objects into
+    summations. The classes IndexedBase, Indexed and Idx represent a matrix element
+    M[i, j]. See [Tensor](tensor/index.html#tensor-module) for more on this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`autowrap` creates a wrapper using f2py or Cython and creates a numerical function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `autowrap` callable is not in the sympy namespace automatically, to use
+    it you must first import `autowrap` from `sympy.utilities.autowrap`
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The callable returned from autowrap() is a binary Python function, not a SymPy
+    object. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The various flags available with autowrap() help to modify the services provided
+    by the method. The argument `tempdir` tells autowrap to compile the code in a
+    specific directory, and leave the files intact when finished. For instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Checking the Fortran source code in the directory specified reveals this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Using the argument `args` along with it changes argument sequence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'yields:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: The argument `verbose` is boolean, optional and if True, autowrap will not mute
+    the command line backends. This can be helpful for debugging.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The argument `language` and `backend` are used to change defaults: `Fortran`
+    and `f2py` to `C` and `Cython`. The argument helpers is used to define auxiliary
+    expressions needed for the main expression. If the main expression needs to call
+    a specialized function it should be put in the `helpers` iterable. Autowrap will
+    then make sure that the compiled main expression can link to the helper routine.
+    Items should be tuples with `(<function_name>, <sympy_expression>, <arguments>)`.
+    It is mandatory to supply an argument sequence to helper routines.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another method available at the `autowrap` level is `binary_function`. It returns
+    a sympy function. The advantage is that we can have very fast functions as compared
+    to SymPy speeds. This is because we will be using compiled functions with SymPy
+    attributes and methods. An illustration:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: While NumPy operations are very efficient for vectorized data but they sometimes
+    incur unnecessary costs when chained together. Consider the following operation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: The operators `sin` and `/` call routines that execute tight for loops in `C`.
+    The resulting computation looks something like this
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is slightly sub-optimal because
+  prefs: []
+  type: TYPE_NORMAL
+- en: We allocate an extra `temp` array
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We walk over `x` memory twice when once would have been sufficient
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: A better solution would fuse both element-wise operations into a single for
+    loop
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Statically compiled projects like NumPy are unable to take advantage of such
+    optimizations. Fortunately, SymPy is able to generate efficient low-level C or
+    Fortran code. It can then depend on projects like `Cython` or `f2py` to compile
+    and reconnect that code back up to Python. Fortunately this process is well automated
+    and a SymPy user wishing to make use of this code generation should call the `ufuncify`
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`ufuncify` is the third method available with Autowrap module. It basically
+    implies ‘Universal functions’ and follows an ideology set by NumPy. The main point
+    of ufuncify as compared to autowrap is that it allows arrays as arguments and
+    can operate in an element-by-element fashion. The core operation done element-wise
+    is in accordance to Numpy’s array broadcasting rules. See [this](https://numpy.org/doc/stable/reference/ufuncs.html)
+    for more.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function `f` consumes and returns a NumPy array. Generally `ufuncify` performs
+    at least as well as `lambdify`. If the expression is complicated then `ufuncify`
+    often significantly outperforms the NumPy backed solution. Jensen has a good [blog
+    post](https://ojensen.wordpress.com/2010/08/10/fast-ufunc-ish-hydrogen-solutions/)
+    on this topic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let us see an example for some quantitative analysis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: The lambdify function translates SymPy expressions into Python functions, leveraging
+    a variety of numerical libraries. By default lambdify relies on implementations
+    in the `math` standard library. Naturally, Raw Python is faster than SymPy. However
+    it also supports `mpmath` and most notably, `numpy`. Using the NumPy library gives
+    the generated function access to powerful vectorized ufuncs that are backed by
+    compiled C code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let us compare the speeds:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: The options available with ufuncify are more or less the same as those available
+    with `autowrap`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are other facilities available with SymPy to do efficient numeric computation.
+    See [this](numeric-computation.html#numeric-computation) page for a comparison
+    among them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '## Classes and functions for rewriting expressions (sympy.codegen.rewriting)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Classes and functions useful for rewriting expressions for optimized code generation.
+    Some languages (or standards thereof), e.g. C99, offer specialized math functions
+    for better performance and/or precision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the `optimize` function in this module, together with a collection of
+    rules (represented as instances of `Optimization`), one can rewrite the expressions
+    for this purpose:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `optims_c99` imported above is tuple containing the following instances
+    (which may be imported from `sympy.codegen.rewriting`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`expm1_opt`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`log1p_opt`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`exp2_opt`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`log2_opt`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`log2const_opt`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Specialization of ReplaceOptim for functions evaluating “f(x) - 1”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**func :**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function which is subtracted by one.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**func_m_1 :**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The specialized function evaluating `func(x) - 1`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**opportunistic** : bool'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When `True`, apply the transformation as long as the magnitude of the remaining
+    number terms decreases. When `False`, only apply the transformation if it completely
+    eliminates the number term.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numerical functions which go toward one as x go toward zero is often best implemented
+    by a dedicated function in order to avoid catastrophic cancellation. One such
+    example is `expm1(x)` in the C standard library which evaluates `exp(x) - 1`.
+    Such functions preserves many more significant digits when its argument is much
+    smaller than one, compared to subtracting one afterwards.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: passed as second argument to Basic.replace(…)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Abstract base class for rewriting optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subclasses should implement `__call__` taking an expression as argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**cost_function** : callable returning number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**priority** : number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rewriting optimization calling replace on expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**query :**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First argument passed to replace.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**value :**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Second argument passed to replace.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The instance can be used as a function on expressions for which it will apply
+    the `replace` method (see [`sympy.core.basic.Basic.replace()`](core.html#sympy.core.basic.Basic.replace
+    "sympy.core.basic.Basic.replace")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates an instance of [`ReplaceOptim`](#sympy.codegen.rewriting.ReplaceOptim
+    "sympy.codegen.rewriting.ReplaceOptim") for expanding `Pow`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**limit** : int'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The highest power which is expanded into multiplication.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**base_req** : function returning bool'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Requirement on base for expansion to happen, default is to return the `is_symbol`
+    attribute of the base.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The requirements for expansions are that the base needs to be a symbol and the
+    exponent needs to be an Integer (and be less than or equal to `limit`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Apply optimizations to an expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**optimizations** : iterable of `Optimization` instances'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The optimizations will be sorted with respect to `priority` (highest first).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additional AST nodes for operations on matrices. The nodes in this module are
+    meant to represent optimization of matrix expressions within codegen’s target
+    languages that cannot be represented by SymPy expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example, we can use [`sympy.codegen.rewriting.optimize()`](#sympy.codegen.rewriting.optimize
+    "sympy.codegen.rewriting.optimize") and the `matin_opt` optimization provided
+    in [`sympy.codegen.rewriting`](#module-sympy.codegen.rewriting "sympy.codegen.rewriting")
+    to transform matrix multiplication under certain assumptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents an operation to solve a linear matrix equation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**matrix** : MatrixSymbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Matrix representing the coefficients of variables in the linear equation. This
+    matrix must be square and full-rank (i.e. all columns must be linearly independent)
+    for the solving operation to be valid.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**vector** : MatrixSymbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One-column matrix representing the solutions to the equations represented in
+    `matrix`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]  ## Tools for simplifying expressions using approximations (sympy.codegen.approximations)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Approximates functions by expanding them as a series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**bounds** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mapping expressions to length 2 tuple of bounds (low, high).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**reltol** : number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Threshold for when to ignore a term. Taken relative to the largest lower bound
+    among bounds.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**max_order** : int'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Largest order to include in series expansion
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**n_point_checks** : int (even)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The validity of an expansion (with respect to reltol) is checked at discrete
+    points (linearly spaced over the bounds of the variable). The number of points
+    used in this numerical check is given by this number.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Approximates sum by neglecting small terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**bounds** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mapping expressions to length 2 tuple of bounds (low, high).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**reltol** : number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Threshold for when to ignore a term. Taken relative to the largest lower bound
+    among bounds.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: If terms are expressions which can be determined to be monotonic, then bounds
+    for those expressions are added.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]  ## Classes for abstract syntax trees (sympy.codegen.ast)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Types used to represent a full function/module as an Abstract Syntax Tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most types are small, and are merely used as tokens in the AST. A tree diagram
+    has been included below to illustrate the relationships between the AST types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: AST Type Tree
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Predefined types
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A number of `Type` instances are provided in the `sympy.codegen.ast` module
+    for convenience. Perhaps the two most common ones for code-generation (of numeric
+    codes) are `float32` and `float64` (known as single and double precision respectively).
+    There are also precision generic versions of Types (for which the codeprinters
+    selects the underlying data type at time of printing): `real`, `integer`, `complex_`,
+    `bool_`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The other `Type` instances defined are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`intc`: Integer type used by C’s “int”.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`intp`: Integer type used by C’s “unsigned”.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`int8`, `int16`, `int32`, `int64`: n-bit integers.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`uint8`, `uint16`, `uint32`, `uint64`: n-bit unsigned integers.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`float80`: known as “extended precision” on modern x86/amd64 hardware.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`complex64`: Complex number represented by two `float32` numbers'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`complex128`: Complex number represented by two `float64` numbers'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Using the nodes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'It is possible to construct simple algorithms using the AST nodes. Let’s construct
+    a loop applying Newton’s method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If we want to generate Fortran code for the same while loop we simple call
+    `fcode`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is a function constructing a loop (or a complete function) like this in
+    [`sympy.codegen.algorithms`](#module-sympy.codegen.algorithms "sympy.codegen.algorithms").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents variable assignment for code generation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**lhs** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SymPy object representing the lhs of the expression. These should be singular
+    objects, such as one would use in writing code. Notable types include Symbol,
+    MatrixSymbol, MatrixElement, and Indexed. Types that subclass these types are
+    also supported.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**rhs** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SymPy object representing the rhs of the expression. This can be any type, provided
+    its shape corresponds to that of the lhs. For example, a Matrix type can be assigned
+    to MatrixSymbol, but not to Symbol, as the dimensions will not align.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: Abstract base class for Assignment and AugmentedAssignment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Attributes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: opstr
+  prefs: []
+  type: TYPE_NORMAL
+- en: Symbol for assignment operator, e.g. “=”, “+=”, etc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: For use with [`sympy.codegen.ast.Node`](#sympy.codegen.ast.Node "sympy.codegen.ast.Node")
+    (which takes instances of `Attribute` as `attrs`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**parameters** : Tuple'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: Base class for augmented assignments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Attributes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: binopstr
+  prefs: []
+  type: TYPE_NORMAL
+- en: Symbol for binary operation being applied in the assignment, such as “+”, “*”,
+    etc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents ‘break’ in C/Python (‘exit’ in Fortran).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use the premade instance `break_` or instantiate manually.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a block of code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: For now only assignments are supported. This restriction will be lifted in the
+    future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Useful attributes on this object are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`left_hand_sides`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tuple of left-hand sides of assignments, in order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`left_hand_sides`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tuple of right-hand sides of assignments, in order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`free_symbols`: Free symbols of the expressions in the right-hand sides'
+  prefs: []
+  type: TYPE_NORMAL
+- en: which do not appear in the left-hand side of an assignment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Useful methods on this object are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`topological_sort`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Class method. Return a CodeBlock with assignments sorted so that variables are
+    assigned before they are used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`cse`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Return a new CodeBlock with common subexpressions eliminated and pulled out
+    as assignments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a new code block with common subexpressions eliminated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the docstring of [`sympy.simplify.cse_main.cse()`](simplify/simplify.html#sympy.simplify.cse_main.cse
+    "sympy.simplify.cse_main.cse") for more information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: Return a CodeBlock with topologically sorted assignments so that variables are
+    assigned before they are used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: The existing order of assignments is preserved as much as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function assumes that variables are assigned to only once.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is a class constructor so that the default constructor for CodeBlock can
+    error when variables are used before they are assigned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a comment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a complex floating point number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents ‘continue’ in C/Python (‘cycle’ in Fortran)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use the premade instance `continue_` or instantiate manually.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a variable declaration
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**variable** : Variable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: Element in (a possibly N-dimensional) array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a floating point number type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: alias of [`Float`](core.html#sympy.core.numbers.Float "sympy.core.numbers.Float")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a floating point type with fixed bit width.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Base 2 & one sign bit is assumed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Name of the type.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**nbits** : integer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Number of bits used (storage).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**nmant** : integer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Number of bits used to represent the mantissa.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**nexp** : integer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Number of bits used to represent the mantissa.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: Casts without checking if out of bounds or subnormal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: Number of digits needed to store & load without loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Number of decimal digits needed to guarantee that two consecutive conversions
+    (float -> text -> float) to be idempotent. This is useful when one do not want
+    to loose precision due to rounding errors when storing a floating point value
+    as text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: Number of decimal digits that are guaranteed to be preserved in text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When converting text -> float -> text, you are guaranteed that at least `dig`
+    number of digits are preserved with respect to rounding or overflow.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: Difference between 1.0 and the next representable value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: Maximum value representable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: The largest positive number n, such that 2**(n - 1) is a representable finite
+    value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: The lowest negative number n, such that 2**(n - 1) is a valid normalized number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: The minimum positive normalized value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a ‘for-loop’ in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Expressions are of the form:'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '“for target in iter:'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: body…”
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**target** : symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'iter : iterable body : CodeBlock or iterable'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**! When passed an iterable it is used to instantiate a CodeBlock.**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a call to a function in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**function_args** : Tuple'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a function definition in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**return_type** : Type'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**parameters: iterable of Variable instances**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**body** : CodeBlock or iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**attrs** : iterable of Attribute instances'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a function prototype
+  prefs: []
+  type: TYPE_NORMAL
+- en: Allows the user to generate forward declaration in e.g. C/C++.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**return_type** : Type'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**parameters: iterable of Variable instances**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**attrs** : iterable of Attribute instances'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: Integer base type, contains no size information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: Subclass of Token, carrying the attribute ‘attrs’ (Tuple)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the parameters of the Attribute with name `looking_for` in self.attrs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: The AST equivalence of Python’s NoneType
+  prefs: []
+  type: TYPE_NORMAL
+- en: The corresponding instance of Python’s `None` is `none`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a pointer. See `Variable`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Can create instances of `Element`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents print command in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**formatstring** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***args** : Basic instances (or convertible to such through sympify)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a string which should be printed with quotes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: Prints as ‘raise …’ in Python, ‘throw …’ in C++
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a return command in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**return** : Basic'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents ‘std::runtime_error’ in C++ and ‘RuntimeError’ in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that the latter is uncommon, and you might want to use e.g. ValueError.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a scope in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**body** : CodeBlock or iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When passed an iterable it is used to instantiate a CodeBlock.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a signed integer type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a stream.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are two predefined Stream instances `stdout` & `stderr`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: SymPy object representing a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Atomic object which is not an expression (as opposed to Symbol).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**text** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE114]'
+  prefs: []
+  type: TYPE_PRE
+- en: Base class for the AST types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Defining fields are set in `_fields`. Attributes (defined in _fields) are only
+    allowed to contain instances of Basic (unless atomic, see `String`). The arguments
+    to `__new__()` correspond to the attributes in the order defined in [PRE115] class
+    attribute is a dictionary mapping attribute names to their default values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subclasses should not need to override the `__new__()` method. They may define
+    a class or static method named `_construct_<attr>` for each attribute to process
+    the value passed to `__new__()`. Attributes listed in the class attribute `not_in_args`
+    are not passed to [`Basic`](core.html#sympy.core.basic.Basic "sympy.core.basic.Basic").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE116]'
+  prefs: []
+  type: TYPE_PRE
+- en: Get instance’s attributes as dict of keyword arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**exclude** : collection of str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Collection of keywords to exclude.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**apply** : callable, optional'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Function to apply to all values.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE117]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Name of the type, e.g. `object`, `int16`, `float16` (where the latter two would
+    use the `Type` sub-classes `IntType` and `FloatType` respectively). If a `Type`
+    instance is given, the said instance is returned.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The naming is a super-set of NumPy naming. Type has a classmethod `from_expr`
+    which offer type deduction. It also has a method `cast_check` which casts the
+    argument to its type, possibly raising an exception if rounding error is not within
+    tolerances, or if the value is not representable by the underlying data type (e.g.
+    unsigned integers).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE118]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R39](#id2)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://numpy.org/doc/stable/user/basics.types.html](https://numpy.org/doc/stable/user/basics.types.html)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE119]'
+  prefs: []
+  type: TYPE_PRE
+- en: Casts a value to the data type of the instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**value** : number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**rtol** : floating point number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Relative tolerance. (will be deduced if not given).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**atol** : floating point number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Absolute tolerance (in addition to `rtol`).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**type_aliases** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Maps substitutions for Type, e.g. {integer: int64, real: float32}'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE120]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE121]'
+  prefs: []
+  type: TYPE_PRE
+- en: Deduces type from an expression or a `Symbol`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : number or SymPy object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The type will be deduced from type or properties.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Raises:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**ValueError when type deduction fails.**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE122]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE123]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents an unsigned integer type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE124]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**symbol** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**type** : Type (optional)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Type of the variable.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**attrs** : iterable of Attribute instances'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Will be stored as a Tuple.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE125]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'One may also construct a `Variable` instance with the type deduced from assumptions
+    about the symbol using the `deduced` classmethod:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE126]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE127]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convenience method for creating a Declaration instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the variable of the Declaration need to wrap a modified variable keyword
+    arguments may be passed (overriding e.g. the `value` of the Variable instance).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE128]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE129]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alt. constructor with type deduction from `Type.from_expr`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deduces type primarily from `symbol`, secondarily from `value`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**symbol** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**value** : expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (optional) value of the variable.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**attrs** : iterable of Attribute instances'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**cast_check** : bool'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether to apply `Type.cast_check` on `value`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE130]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE131]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a ‘for-loop’ in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Expressions are of the form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '“while condition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: body…”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**condition** : expression convertible to Boolean'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**body** : CodeBlock or iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When passed an iterable it is used to instantiate a CodeBlock.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE132]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE133]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create ‘lhs op= rhs’.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**lhs** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SymPy object representing the lhs of the expression. These should be singular
+    objects, such as one would use in writing code. Notable types include Symbol,
+    MatrixSymbol, MatrixElement, and Indexed. Types that subclass these types are
+    also supported.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**op** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Operator (+, -, /, *, %).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**rhs** : Expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SymPy object representing the rhs of the expression. This can be any type, provided
+    its shape corresponds to that of the lhs. For example, a Matrix type can be assigned
+    to MatrixSymbol, but not to Symbol, as the dimensions will not align.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Represents augmented variable assignment for code generation. This is a convenience
+    function. You can also use the AugmentedAssignment classes directly, like AddAugmentedAssignment(x,
+    y).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE134]  ## Special C math functions (sympy.codegen.cfunctions)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This module contains SymPy functions mathcin corresponding to special math functions
+    in the C standard library (since C99, also available in C++11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The functions defined in this module allows the user to express functions such
+    as `expm1` as a SymPy function for symbolic manipulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE135]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the cube root function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The reason why one would use `Cbrt(x)` over `cbrt(x)` is that the latter is
+    internally represented as `Pow(x, Rational(1, 3))` which may not be what one wants
+    when doing code-generation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE136]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Sqrt`](#sympy.codegen.cfunctions.Sqrt "sympy.codegen.cfunctions.Sqrt")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE137]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the first derivative of this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE138]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the square root function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The reason why one would use `Sqrt(x)` over `sqrt(x)` is that the latter is
+    internally represented as `Pow(x, S.Half)` which may not be what one wants when
+    doing code-generation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE139]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`Cbrt`](#sympy.codegen.cfunctions.Cbrt "sympy.codegen.cfunctions.Cbrt")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE140]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the first derivative of this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE141]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the exponential function with base two.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The benefit of using `exp2(x)` over `2**x` is that the latter is not as efficient
+    under finite precision arithmetic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE142]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`log2`](#sympy.codegen.cfunctions.log2 "sympy.codegen.cfunctions.log2")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE143]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the first derivative of this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE144]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the exponential function minus one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The benefit of using `expm1(x)` over `exp(x) - 1` is that the latter is prone
+    to cancellation under finite precision arithmetic when x is close to zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE145]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`log1p`](#sympy.codegen.cfunctions.log1p "sympy.codegen.cfunctions.log1p")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE146]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the first derivative of this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE147]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents “fused multiply add”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The benefit of using `fma(x, y, z)` over `x*y + z` is that, under finite precision
+    arithmetic, the former is supported by special instructions on some CPUs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE148]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE149]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the first derivative of this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE150]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the hypotenuse function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The hypotenuse function is provided by e.g. the math library in the C99 standard,
+    hence one may want to represent the function symbolically when doing code-generation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE151]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE152]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the first derivative of this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE153]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the logarithm function with base ten.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE154]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`log2`](#sympy.codegen.cfunctions.log2 "sympy.codegen.cfunctions.log2")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE155]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the first derivative of this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE156]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the natural logarithm of a number plus one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The benefit of using `log1p(x)` over `log(x + 1)` is that the latter is prone
+    to cancellation under finite precision arithmetic when x is close to zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE157]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`expm1`](#sympy.codegen.cfunctions.expm1 "sympy.codegen.cfunctions.expm1")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE158]'
+  prefs: []
+  type: TYPE_PRE
+- en: Returns the first derivative of this function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE159]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the logarithm function with base two.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The benefit of using `log2(x)` over `log(x)/log(2)` is that the latter is not
+    as efficient under finite precision arithmetic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE160]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`exp2`](#sympy.codegen.cfunctions.exp2 "sympy.codegen.cfunctions.exp2"), [`log10`](#sympy.codegen.cfunctions.log10
+    "sympy.codegen.cfunctions.log10")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE161]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Returns the first derivative of this function.  ## C specific AST nodes (sympy.codegen.cnodes)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: AST nodes specific to the C family of languages
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE162]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the comma operator in C
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE163]'
+  prefs: []
+  type: TYPE_PRE
+- en: Label for use with e.g. goto statement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE164]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE165]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the post-decrement operator
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE166]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE167]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the post-increment operator
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE168]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE169]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the pre-decrement operator
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE170]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE171]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents the pre-increment operator
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE172]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE173]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generate of FunctionCall instance for calling ‘alignof’
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE174]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents goto in C
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE175]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generate of FunctionCall instance for calling ‘sizeof’
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE176]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE177]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a struct in C
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE178]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Represents a union in C  ## C++ specific AST nodes (sympy.codegen.cxxnodes)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: AST nodes specific to C++.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE179]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Represents a ‘using’ statement in C++  ## Fortran specific AST nodes (sympy.codegen.fnodes)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: AST nodes specific to Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The functions defined in this module allows the user to express functions such
+    as `dsign` as a SymPy function for symbolic manipulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE180]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents an array constructor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE181]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE182]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a Do loop in in Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE183]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE184]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a dimension extent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE185]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE186]'
+  prefs: []
+  type: TYPE_PRE
+- en: AST node explicitly mapped to a fortran “return”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because a return statement in fortran is different from C, and in order to aid
+    reuse of our codegen ASTs the ordinary `.codegen.ast.Return` is interpreted as
+    assignment to the result variable of the function. If one for some reason needs
+    to generate a fortran RETURN statement, this node should be used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE187]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE188]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a goto statement in Fortran
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE189]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE190]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents an implied do loop in Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE191]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE192]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a module in Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE193]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE194]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a ‘program’ block in Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE195]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE196]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a subroutine in Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE197]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE198]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a call to a subroutine in Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE199]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE200]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates an AST node for a function call to Fortran’s “allocated(…)”
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE201]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE202]'
+  prefs: []
+  type: TYPE_PRE
+- en: Convenience function for creating a Variable instance for a Fortran array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**symbol** : symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**dim** : Attribute or iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If dim is an `Attribute` it need to have the name ‘dimension’. If it is not
+    an `Attribute`, then it is passed to [`dimension()`](#sympy.codegen.fnodes.dimension
+    "sympy.codegen.fnodes.dimension") as `*dim`
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**intent** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One of: ‘in’, ‘out’, ‘inout’ or None'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '****kwargs:**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keyword arguments for `Variable` (‘type’ & ‘value’)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE203]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE204]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates an Attribute `bind_C` with a name.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE205]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE206]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fortran complex conversion function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE207]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates a ‘dimension’ Attribute with (up to 7) extents.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE208]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE209]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fortran sign intrinsic for double precision arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE210]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fortran sign intrinsic for integer arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE211]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fortran kind function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE212]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates an AST node for a function call to Fortran’s “lbound(…)”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**array** : Symbol or String'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**dim** : expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**kind** : expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE213]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE214]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fortran double precision real literal
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE215]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fortran single precision real literal
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE216]'
+  prefs: []
+  type: TYPE_PRE
+- en: Fortran merge function
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE217]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates an AST node for a function call to Fortran’s “reshape(…)”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**source** : Symbol or String'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**shape** : ArrayExpr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE218]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates an AST node for a function call to Fortran’s “shape(…)”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**source** : Symbol or String'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**kind** : expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE219]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE220]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates an AST node for a function call to Fortran’s “size(…)”
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE221]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE222]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a use statement in Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE223]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE224]'
+  prefs: []
+  type: TYPE_PRE
+- en: Represents a renaming in a use statement in Fortran.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE225]  ## Algorithms (sympy.codegen.algorithms)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE226]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generates an AST for Newton-Raphson method (a root-finding algorithm).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**wrt** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With respect to, i.e. what is the variable.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**atol** : number or expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Absolute tolerance (stopping criterion)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**rtol** : number or expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Relative tolerance (stopping criterion)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**delta** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Will be a `Dummy` if `None`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**debug** : bool'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether to print convergence information during iterations
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**itermax** : number or expr'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Maximum number of iterations.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**counter** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Will be a `Dummy` if `None`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**delta_fn: Callable[[Expr, Symbol], Expr]**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'computes the step, default is newtons method. For e.g. Halley’s method use
+    delta_fn=lambda e, x: -2*e*e.diff(x)/(2*e.diff(x)**2 - e*e.diff(x, 2))'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**cse: bool**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Perform common sub-expression elimination on delta expression
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**handle_nan: Token**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to handle occurrence of not-a-number (NaN).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**bounds: Optional[tuple[Expr, Expr]]**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Perform optimization within bounds
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Explanation
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns an abstract syntax tree (AST) based on `sympy.codegen.ast` for Netwon’s
+    method of root-finding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE227]'
+  prefs: []
+  type: TYPE_PRE
+- en: References
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[R40](#id3)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://en.wikipedia.org/wiki/Newton%27s_method](https://en.wikipedia.org/wiki/Newton%27s_method)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE228]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generates an AST for a function implementing the Newton-Raphson method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**expr** : expression'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**wrt** : Symbol'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With respect to, i.e. what is the variable
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**params** : iterable of symbols'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Symbols appearing in expr that are taken as constants during the iterations
+    (these will be accepted as parameters to the generated function).
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**func_name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Name of the generated function.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**attrs** : Tuple'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Attribute instances passed as `attrs` to `FunctionDefinition`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '****kwargs :**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keyword arguments passed to [`sympy.codegen.algorithms.newtons_method()`](#sympy.codegen.algorithms.newtons_method
+    "sympy.codegen.algorithms.newtons_method").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Examples
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE229]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[`sympy.codegen.algorithms.newtons_method`](#sympy.codegen.algorithms.newtons_method
+    "sympy.codegen.algorithms.newtons_method")  ## Python utilities (sympy.codegen.pyutils)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE230]'
+  prefs: []
+  type: TYPE_PRE
+- en: Renders Python code as a module (with the required imports).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**standard :**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'See the parameter `standard` in [`sympy.printing.pycode.pycode()`](printing.html#sympy.printing.pycode.pycode
+    "sympy.printing.pycode.pycode")  ## C utilities (sympy.codegen.cutils)'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE231]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Renders a C source file (with required #include statements)  ## Fortran utilities
+    (sympy.codegen.futils)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE232]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creates a `Module` instance and renders it as a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This generates Fortran source code for a module with the correct `use` statements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**definitions** : iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passed to [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**name** : str'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passed to [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module").
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**declarations** : iterable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passed to [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module").
+    It will be extended with use statements, ‘implicit none’ and public list generated
+    from `definitions`.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '**printer_settings** : dict'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Passed to `FCodePrinter` (default: `{''standard'': 2003, ''source_format'':
+    ''free''}`).'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
