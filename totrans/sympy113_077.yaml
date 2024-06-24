@@ -264,6 +264,9 @@
   id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果被积函数已经重新表达为G函数，那么评估积分就相对容易了。我们首先进行一些替换，以减少G函数参数的指数（分别参见 `_rewrite_saxena_1`
+    和 `_rewrite_saxena`，用于一个或两个G函数）。接下来，我们列出应用积分定理的条件列表。它可能失败基本有两个原因：要么积分不存在，要么在推导定理时的操作不允许（有关更多详细信息，请参见此处的
+    [[博客帖子]](#blogpost)）。
 - en: Sometimes this can be remedied by reducing the argument of the G-functions involved.
     For example it is clear that the G-function representing \(e^z\) is satisfies
     \(G(\operatorname{Exp}(2 \pi i)z) = G(z)\) for all \(z \in \mathcal{S}\). The
@@ -273,19 +276,25 @@
   id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时可以通过减少所涉及的G函数的参数来纠正这一点。例如，很明显，表示\(e^z\)的G函数满足对于所有\(z \in \mathcal{S}\)，有\(G(\operatorname{Exp}(2
+    \pi i)z) = G(z)\)。函数 `meijerg.get_period()` 可用于发现这一点，而函数 `functions/elementary/complexes.py`
+    中的 `principal_branch(z, period)` 可用于利用这些信息。这是由积分代码透明地完成的。
 - en: '[[BlogPost](#id1)]'
   id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[博客帖子](#id1)]'
 - en: '[https://nessgrh.wordpress.com/2011/07/07/tricky-branch-cuts/](https://nessgrh.wordpress.com/2011/07/07/tricky-branch-cuts/)'
   id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://nessgrh.wordpress.com/2011/07/07/tricky-branch-cuts/](https://nessgrh.wordpress.com/2011/07/07/tricky-branch-cuts/)'
 - en: The G-Function Integration Theorems
   id: totrans-31
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: G-函数积分定理
 - en: 'This section intends to display in detail the definite integration theorems
     used in the code. The following two formulae go back to Meijer (In fact he proved
     more general formulae; indeed in the literature formulae are usually staded in
@@ -295,6 +304,7 @@
   id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节旨在详细展示代码中使用的确定积分定理。以下两个公式可以追溯到迈杰尔（实际上他证明了更一般的公式；事实上，在文献中，公式通常以更一般的形式陈述。然而，从我们在这里给出的公式中，推导出一般的公式非常容易。最好保持定理尽可能简单，因为它们本身非常复杂。）：
 - en: \[\begin{split}\int_0^\infty G_{p, q}^{m, n} \left.\left(\begin{matrix} a_1,
     \cdots, a_p \\ b_1, \cdots, b_q \end{matrix} \right| \eta x \right) \mathrm{d}x
     = \frac{\prod_{j=1}^m \Gamma(b_j + 1) \prod_{j=1}^n \Gamma(-a_j)}{\eta \prod_{j=m+1}^q
@@ -303,6 +313,10 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[\begin{split}\int_0^\infty G_{p, q}^{m, n} \left.\left(\begin{matrix} a_1,
+    \cdots, a_p \\ b_1, \cdots, b_q \end{matrix} \right| \eta x \right) \mathrm{d}x
+    = \frac{\prod_{j=1}^m \Gamma(b_j + 1) \prod_{j=1}^n \Gamma(-a_j)}{\eta \prod_{j=m+1}^q
+    \Gamma(-b_j) \prod_{j=n+1}^p \Gamma(a_j + 1)}\end{split}\]
 - en: \[\begin{split}\int_0^\infty G_{u, v}^{s, t} \left.\left(\begin{matrix} c_1,
     \cdots, c_u \\ d_1, \cdots, d_v \end{matrix} \right| \sigma x \right) G_{p, q}^{m,
     n} \left.\left(\begin{matrix} a_1, \cdots, a_p \\ b_1, \cdots, b_q \end{matrix}
@@ -314,6 +328,13 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \[\begin{split}\int_0^\infty G_{u, v}^{s, t} \left.\left(\begin{matrix} c_1,
+    \cdots, c_u \\ d_1, \cdots, d_v \end{matrix} \right| \sigma x \right) G_{p, q}^{m,
+    n} \left.\left(\begin{matrix} a_1, \cdots, a_p \\ b_1, \cdots, b_q \end{matrix}
+    \right| \omega x \right) \mathrm{d}x = G_{v+p, u+q}^{m+t, n+s} \left.\left( \begin{matrix}
+    a_1, \cdots, a_n, -d_1, \cdots, -d_v, a_{n+1}, \cdots, a_p \\ b_1, \cdots, b_m,
+    -c_1, \cdots, -c_u, b_{m+1}, \cdots, b_q \end{matrix} \right| \frac{\omega}{\sigma}
+    \right)\end{split}\]
 - en: The more interesting question is under what conditions these formulae are valid.
     Below we detail the conditions implemented in SymPy. They are an amalgamation
     of conditions found in [[Prudnikov1990]](../simplify/hyperexpand.html#prudnikov1990)
@@ -322,11 +343,13 @@
   id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 更有趣的问题是在什么条件下这些公式是有效的。下面我们详细说明了SymPy中实施的条件。它们是在[[Prudnikov1990]](../simplify/hyperexpand.html#prudnikov1990)和[[Luke1969]](../simplify/hyperexpand.html#luke1969)中找到的条件的混合；如果您发现任何错误，请告诉我们。
 - en: Conditions of Convergence for Integral (1)
   id: totrans-36
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 收敛条件积分 (1)
 - en: 'We can without loss of generality assume \(p \le q\), since the G-functions
     of indices \(m, n, p, q\) and of indices \(n, m, q, p\) can be related easily
     (see e.g. [[Luke1969]](../simplify/hyperexpand.html#luke1969), section 5.3). We
@@ -1066,11 +1089,14 @@
   id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是所谓的 Fox H 函数（参数为 \(\frac{b}{t^a}\)）。对于有理数 \(a\)，这可以利用伽玛函数乘法定理表示为 Meijer G
+    函数。
 - en: When this computation is valid
   id: totrans-119
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 当这个计算有效时
 - en: There are a number of obstacles in this computation. Interchange of integrals
     is only valid if all integrals involved are absolutely convergent. In particular
     the inner integral has to converge. Also, for our identification of the final
@@ -1079,6 +1105,8 @@
   id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个计算中有很多障碍。只有当涉及的所有积分都绝对收敛时，积分的互换才有效。特别是内积分必须收敛。此外，为了正确地将最终积分识别为 Fox H / Meijer
+    G 函数，新引入的伽玛函数的极点必须正确分离。
 - en: It is easy to check that the inner integral converges absolutely for \(\Re(as)
     < -1\). Thus the contour \(L\) has to run left of the line \(\Re(as) = -1\). Under
     this condition, the poles of the newly-introduced gamma function are separated
@@ -1086,6 +1114,7 @@
   id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 很容易检查内积分对于 \(\Re(as) < -1\) 绝对收敛。因此轮廓 \(L\) 必须位于线 \(\Re(as) = -1\) 的左侧。在这种条件下，新引入的伽玛函数的极点正确分离。
 - en: It remains to observe that the Meijer G-function is an analytic, unbranched
     function of its parameters, and of the coefficient \(b\). Hence so is \(f(t)\).
     Thus the final computation remains valid as long as the initial integral converges,
@@ -1096,25 +1125,33 @@
   id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还需观察 Meijer G 函数是其参数的解析、无分支函数，以及系数 \(b\) 的解析。因此 \(f(t)\) 也是有效的最终计算，只要初始积分收敛，并且存在一组参数变化使计算有效。如果我们假设
+    w.l.o.g. \(a > 0\)，则后一条件在 \(G\) 沿着 [[Luke1969]](../simplify/hyperexpand.html#luke1969)，第
+    5.2 节的轮廓 (2) 或 (3) 收敛时成立，即 \(\delta \ge \frac{a}{2}\) 或 \(p \ge 1, p \ge q\)。
 - en: When the integral exists
   id: totrans-123
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 当积分存在时
 - en: Using [[Luke1969]](../simplify/hyperexpand.html#luke1969), section 5.10, for
     any given meijer G-function we can find a dominant term of the form \(z^a e^{bz^c}\)
     (although this expression might not be the best possible, because of cancellation).
   id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 [[Luke1969]](../simplify/hyperexpand.html#luke1969)，第 5.10 节，对于任何给定的 Meijer
+    G 函数，我们可以找到形如 \(z^a e^{bz^c}\) 的主导项（尽管由于抵消的原因，这个表达可能不是最佳的）。
 - en: We must thus investigate
   id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们必须调查
 - en: \[\lim_{T \to \infty} \int_{c-iT}^{c+iT} e^{zt} z^a e^{bz^c} \mathrm{d}z.\]
   id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\lim_{T \to \infty} \int_{c-iT}^{c+iT} e^{zt} z^a e^{bz^c} \mathrm{d}z.\]
 - en: (This principal value integral is the exact statement used in the Laplace inversion
     theorem.) We write \(z = c + i \tau\). Then \(arg(z) \to \pm \frac{\pi}{2}\),
     and so \(e^{zt} \sim e^{it \tau}\) (where \(\sim\) shall always mean “asymptotically
@@ -1123,33 +1160,43 @@
   id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: （这个主值积分正是拉普拉斯反演定理中使用的确切陈述。）我们写成 \(z = c + i \tau\)。那么 \(arg(z) \to \pm \frac{\pi}{2}\)，因此
+    \(e^{zt} \sim e^{it \tau}\)（其中 \(\sim\) 总是意味着“渐近等价，直到正实数乘法常数为止”）。还有 \(z^{x + iy}
+    \sim |\tau|^x e^{i y \log{|\tau|}} e^{\pm x i \frac{\pi}{2}}\)。
 - en: 'Set \(\omega_{\pm} = b e^{\pm i \Re(c) \frac{\pi}{2}}\). We have three cases:'
   id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 设定 \(\omega_{\pm} = b e^{\pm i \Re(c) \frac{\pi}{2}}\)。我们有三种情况：
 - en: \(b=0\) or \(\Re(c) \le 0\). In this case the integral converges if \(\Re(a)
     \le -1\).
   id: totrans-129
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \(b=0\) 或 \(\Re(c) \le 0\)。在这种情况下，如果 \(\Re(a) \le -1\)，积分收敛。
 - en: \(b \ne 0\), \(\Im(c) = 0\), \(\Re(c) > 0\). In this case the integral converges
     if \(\Re(\omega_{\pm}) < 0\).
   id: totrans-130
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \(b \ne 0\), \(\Im(c) = 0\), \(\Re(c) > 0\)。在这种情况下，如果 \(\Re(\omega_{\pm}) <
+    0\)，则积分收敛。
 - en: \(b \ne 0\), \(\Im(c) = 0\), \(\Re(c) > 0\), \(\Re(\omega_{\pm}) \le 0\), and
     at least one of \(\Re(\omega_{\pm}) = 0\). Here the same condition as in (1) applies.
   id: totrans-131
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: \(b \ne 0\), \(\Im(c) = 0\), \(\Re(c) > 0\), \(\Re(\omega_{\pm}) \le 0\), 并且至少一个
+    \(\Re(\omega_{\pm}) = 0\)。在这种情况下，与 (1) 中相同的条件适用。
 - en: Implemented G-Function Formulae
   id: totrans-132
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 实施的 G-函数公式
 - en: An important part of the algorithm is a table expressing various functions as
     Meijer G-functions. This is essentially a table of Mellin Transforms in disguise.
     The following automatically generated table shows the formulae currently implemented
@@ -1257,10 +1304,23 @@
   id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\left(z^{q} p - b\right)^{a - 1} \theta\left(z^{q} p - b\right)
+    = b^{a - 1} {G_{1, 1}^{0, 1}\left(\begin{matrix} a & \\ & 0 \end{matrix} \middle|
+    {\frac{z^{q} p}{b}} \right)} \Gamma\left(a\right),\text{ if } b > 0\end{split}\]\[\begin{split}\left(-
+    z^{q} p + b\right)^{a - 1} \theta\left(- z^{q} p + b\right) = b^{a - 1} {G_{1,
+    1}^{1, 0}\left(\begin{matrix} & a \\0 & \end{matrix} \middle| {\frac{z^{q} p}{b}}
+    \right)} \Gamma\left(a\right),\text{ if } b > 0\end{split}\]\[\begin{split}\left(z^{q}
+    p - b\right)^{a - 1} \theta\left(z - \left(\frac{b}{p}\right)^{\frac{1}{q}}\right)
+    = b^{a - 1} {G_{1, 1}^{0, 1}\left(\begin{matrix} a & \\ & 0 \end{matrix} \middle|
+    {\frac{z^{q} p}{b}} \right)} \Gamma\left(a\right),\text{ if } b > 0\end{split}\]\[\begin{split}\left(-
+    z^{q} p + b\right)^{a - 1} \theta\left(- z + \left(\frac{b}{p}\right)^{\frac{1}{q}}\right)
+    = b^{a - 1} {G_{1, 1}^{1, 0}\left(\begin{matrix} & a \\0 & \end{matrix} \middle|
+    {\frac{z^{q} p}{b}} \right)} \Gamma\left(a\right),\text{ if } b > 0\end{split}\]
 - en: 'Functions involving \(\left|{z^{q} p - b}\right|\):'
   id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 涉及\(\left|{z^{q} p - b}\right|\)的函数：
 - en: \[\begin{split}\left|{z^{q} p - b}\right|^{- a} = 2 {G_{2, 2}^{1, 1}\left(\begin{matrix}
     1 - a & \frac{1}{2} - \frac{a}{2} \\0 & \frac{1}{2} - \frac{a}{2} \end{matrix}
     \middle| {\frac{z^{q} p}{b}} \right)} \sin{\left(\frac{\pi a}{2} \right)} \left|{b}\right|^{-
@@ -1268,68 +1328,94 @@
   id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\left|{z^{q} p - b}\right|^{- a} = 2 {G_{2, 2}^{1, 1}\left(\begin{matrix}
+    1 - a & \frac{1}{2} - \frac{a}{2} \\0 & \frac{1}{2} - \frac{a}{2} \end{matrix}
+    \middle| {\frac{z^{q} p}{b}} \right)} \sin{\left(\frac{\pi a}{2} \right)} \left|{b}\right|^{-
+    a} \Gamma\left(1 - a\right),\text{ if } \operatorname{re}{\left(a\right)} < 1\end{split}\]
 - en: 'Functions involving \(e^{z^{q} p e^{i \pi}}\):'
   id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 涉及\(e^{z^{q} p e^{i \pi}}\)的函数：
 - en: \[\begin{split}e^{z^{q} p e^{i \pi}} = {G_{0, 1}^{1, 0}\left(\begin{matrix}
     & \\0 & \end{matrix} \middle| {z^{q} p} \right)}\end{split}\]
   id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}e^{z^{q} p e^{i \pi}} = {G_{0, 1}^{1, 0}\left(\begin{matrix}
+    & \\0 & \end{matrix} \middle| {z^{q} p} \right)}\end{split}\]
 - en: 'Functions involving \(\sinh{\left(z^{q} p \right)}\):'
   id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 涉及\(\sinh{\left(z^{q} p \right)}\)的函数：
 - en: \[\begin{split}\sinh{\left(z^{q} p \right)} = \pi^{\frac{3}{2}} {G_{1, 3}^{1,
     0}\left(\begin{matrix} & 1 \\\frac{1}{2} & 0, 1 \end{matrix} \middle| {\frac{z^{2
     q} p^{2}}{4}} \right)}\end{split}\]
   id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\sinh{\left(z^{q} p \right)} = \pi^{\frac{3}{2}} {G_{1, 3}^{1,
+    0}\left(\begin{matrix} & 1 \\\frac{1}{2} & 0, 1 \end{matrix} \middle| {\frac{z^{2
+    q} p^{2}}{4}} \right)}\end{split}\]
 - en: 'Functions involving \(\cosh{\left(z^{q} p \right)}\):'
   id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 涉及\(\cosh{\left(z^{q} p \right)}\)的函数：
 - en: \[\begin{split}\cosh{\left(z^{q} p \right)} = \pi^{\frac{3}{2}} {G_{1, 3}^{1,
     0}\left(\begin{matrix} & \frac{1}{2} \\0 & \frac{1}{2}, \frac{1}{2} \end{matrix}
     \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
   id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\cosh{\left(z^{q} p \right)} = \pi^{\frac{3}{2}} {G_{1, 3}^{1,
+    0}\left(\begin{matrix} & \frac{1}{2} \\0 & \frac{1}{2}, \frac{1}{2} \end{matrix}
+    \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
 - en: 'Functions involving \(\sin{\left(z^{q} p \right)}\):'
   id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 涉及\(\sin{\left(z^{q} p \right)}\)的函数：
 - en: \[\begin{split}\sin{\left(z^{q} p \right)} = \sqrt{\pi} {G_{0, 2}^{1, 0}\left(\begin{matrix}
     & \\\frac{1}{2} & 0 \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
   id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\sin{\left(z^{q} p \right)} = \sqrt{\pi} {G_{0, 2}^{1, 0}\left(\begin{matrix}
+    & \\\frac{1}{2} & 0 \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
 - en: 'Functions involving \(\cos{\left(z^{q} p \right)}\):'
   id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 涉及\(\cos{\left(z^{q} p \right)}\)的函数：
 - en: \[\begin{split}\cos{\left(z^{q} p \right)} = \sqrt{\pi} {G_{0, 2}^{1, 0}\left(\begin{matrix}
     & \\0 & \frac{1}{2} \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
   id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\cos{\left(z^{q} p \right)} = \sqrt{\pi} {G_{0, 2}^{1, 0}\left(\begin{matrix}
+    & \\0 & \frac{1}{2} \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
 - en: 'Functions involving \(\operatorname{sinc}{\left(z^{q} p \right)}\):'
   id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 涉及\(\operatorname{sinc}{\left(z^{q} p \right)}\)的函数：
 - en: \[\begin{split}\operatorname{sinc}{\left(z^{q} p \right)} = \frac{\sqrt{\pi}
     {G_{0, 2}^{1, 0}\left(\begin{matrix} & \\0 & - \frac{1}{2} \end{matrix} \middle|
     {\frac{z^{2 q} p^{2}}{4}} \right)}}{2}\end{split}\]
   id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{sinc}{\left(z^{q} p \right)} = \frac{\sqrt{\pi}
+    {G_{0, 2}^{1, 0}\left(\begin{matrix} & \\0 & - \frac{1}{2} \end{matrix} \middle|
+    {\frac{z^{2 q} p^{2}}{4}} \right)}}{2}\end{split}\]
 - en: 'Functions involving \(\log{\left(z^{q} p \right)}\), \(\theta\left(- z^{q}
     p + 1\right)\):'
   id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 涉及\(\log{\left(z^{q} p \right)}\), \(\theta\left(- z^{q} p + 1\right)\)的函数：
 - en: \[\log{\left(z^{q} p \right)}^{n} \theta\left(- z^{q} p + 1\right) = \text{generated}\]\[\log{\left(z^{q}
     p \right)}^{n} \theta\left(z^{q} p - 1\right) = \text{generated}\]
   id: totrans-153
@@ -1457,171 +1543,227 @@
   id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(\operatorname{erf}{\left(z^{q} p \right)}\):'
 - en: \[\begin{split}\operatorname{erf}{\left(z^{q} p \right)} = \frac{{G_{1, 2}^{1,
     1}\left(\begin{matrix} 1 & \\\frac{1}{2} & 0 \end{matrix} \middle| {z^{2 q} p^{2}}
     \right)}}{\sqrt{\pi}}\end{split}\]
   id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{erf}{\left(z^{q} p \right)} = \frac{{G_{1, 2}^{1,
+    1}\left(\begin{matrix} 1 & \\\frac{1}{2} & 0 \end{matrix} \middle| {z^{2 q} p^{2}}
+    \right)}}{\sqrt{\pi}}\end{split}\]
 - en: 'Functions involving \(\operatorname{erfc}{\left(z^{q} p \right)}\):'
   id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(\operatorname{erfc}{\left(z^{q} p \right)}\):'
 - en: \[\begin{split}\operatorname{erfc}{\left(z^{q} p \right)} = \frac{{G_{1, 2}^{2,
     0}\left(\begin{matrix} & 1 \\0, \frac{1}{2} & \end{matrix} \middle| {z^{2 q} p^{2}}
     \right)}}{\sqrt{\pi}}\end{split}\]
   id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{erfc}{\left(z^{q} p \right)} = \frac{{G_{1, 2}^{2,
+    0}\left(\begin{matrix} & 1 \\0, \frac{1}{2} & \end{matrix} \middle| {z^{2 q} p^{2}}
+    \right)}}{\sqrt{\pi}}\end{split}\]
 - en: 'Functions involving \(\operatorname{erfi}{\left(z^{q} p \right)}\):'
   id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(\operatorname{erfi}{\left(z^{q} p \right)}\):'
 - en: \[\begin{split}\operatorname{erfi}{\left(z^{q} p \right)} = \frac{z^{q} p {G_{1,
     2}^{1, 1}\left(\begin{matrix} \frac{1}{2} & \\0 & - \frac{1}{2} \end{matrix} \middle|
     {- z^{2 q} p^{2}} \right)}}{\sqrt{\pi}}\end{split}\]
   id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\operatorname{erfi}{\left(z^{q} p \right)} = \frac{z^{q} p {G_{1,
+    2}^{1, 1}\left(\begin{matrix} \frac{1}{2} & \\0 & - \frac{1}{2} \end{matrix} \middle|
+    {- z^{2 q} p^{2}} \right)}}{\sqrt{\pi}}\end{split}\]
 - en: 'Functions involving \(S\left(z^{q} p\right)\):'
   id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(S\left(z^{q} p\right)\):'
 - en: \[\begin{split}S\left(z^{q} p\right) = \frac{{G_{1, 3}^{1, 1}\left(\begin{matrix}
     1 & \\\frac{3}{4} & 0, \frac{1}{4} \end{matrix} \middle| {\frac{z^{4 q} \pi^{2}
     p^{4}}{16}} \right)}}{2}\end{split}\]
   id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}S\left(z^{q} p\right) = \frac{{G_{1, 3}^{1, 1}\left(\begin{matrix}
+    1 & \\\frac{3}{4} & 0, \frac{1}{4} \end{matrix} \middle| {\frac{z^{4 q} \pi^{2}
+    p^{4}}{16}} \right)}}{2}\end{split}\]
 - en: 'Functions involving \(C\left(z^{q} p\right)\):'
   id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(C\left(z^{q} p\right)\):'
 - en: \[\begin{split}C\left(z^{q} p\right) = \frac{{G_{1, 3}^{1, 1}\left(\begin{matrix}
     1 & \\\frac{1}{4} & 0, \frac{3}{4} \end{matrix} \middle| {\frac{z^{4 q} \pi^{2}
     p^{4}}{16}} \right)}}{2}\end{split}\]
   id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}C\left(z^{q} p\right) = \frac{{G_{1, 3}^{1, 1}\left(\begin{matrix}
+    1 & \\\frac{1}{4} & 0, \frac{3}{4} \end{matrix} \middle| {\frac{z^{4 q} \pi^{2}
+    p^{4}}{16}} \right)}}{2}\end{split}\]
 - en: 'Functions involving \(J_{a}\left(z^{q} p\right)\):'
   id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(J_{a}\left(z^{q} p\right)\):'
 - en: \[\begin{split}J_{a}\left(z^{q} p\right) = {G_{0, 2}^{1, 0}\left(\begin{matrix}
     & \\\frac{a}{2} & - \frac{a}{2} \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}}
     \right)}\end{split}\]
   id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}J_{a}\left(z^{q} p\right) = {G_{0, 2}^{1, 0}\left(\begin{matrix}
+    & \\\frac{a}{2} & - \frac{a}{2} \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}}
+    \right)}\end{split}\]
 - en: 'Functions involving \(Y_{a}\left(z^{q} p\right)\):'
   id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(Y_{a}\left(z^{q} p\right)\):'
 - en: \[\begin{split}Y_{a}\left(z^{q} p\right) = {G_{1, 3}^{2, 0}\left(\begin{matrix}
     & - \frac{a}{2} - \frac{1}{2} \\- \frac{a}{2}, \frac{a}{2} & - \frac{a}{2} - \frac{1}{2}
     \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
   id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}Y_{a}\left(z^{q} p\right) = {G_{1, 3}^{2, 0}\left(\begin{matrix}
+    & - \frac{a}{2} - \frac{1}{2} \\- \frac{a}{2}, \frac{a}{2} & - \frac{a}{2} - \frac{1}{2}
+    \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
 - en: 'Functions involving \(I_{a}\left(z^{q} p\right)\):'
   id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(I_{a}\left(z^{q} p\right)\):'
 - en: \[\begin{split}I_{a}\left(z^{q} p\right) = \pi {G_{1, 3}^{1, 0}\left(\begin{matrix}
     & \frac{a}{2} + \frac{1}{2} \\\frac{a}{2} & - \frac{a}{2}, \frac{a}{2} + \frac{1}{2}
     \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
   id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}I_{a}\left(z^{q} p\right) = \pi {G_{1, 3}^{1, 0}\left(\begin{matrix}
+    & \frac{a}{2} + \frac{1}{2} \\\frac{a}{2} & - \frac{a}{2}, \frac{a}{2} + \frac{1}{2}
+    \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}} \right)}\end{split}\]
 - en: 'Functions involving \(K_{a}\left(z^{q} p\right)\):'
   id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(K_{a}\left(z^{q} p\right)\):'
 - en: \[\begin{split}K_{a}\left(z^{q} p\right) = \frac{{G_{0, 2}^{2, 0}\left(\begin{matrix}
     & \\- \frac{a}{2}, \frac{a}{2} & \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}}
     \right)}}{2}\end{split}\]
   id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}K_{a}\left(z^{q} p\right) = \frac{{G_{0, 2}^{2, 0}\left(\begin{matrix}
+    & \\- \frac{a}{2}, \frac{a}{2} & \end{matrix} \middle| {\frac{z^{2 q} p^{2}}{4}}
+    \right)}}{2}\end{split}\]
 - en: 'Functions involving \(K\left(z^{q} p\right)\):'
   id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(K\left(z^{q} p\right)\):'
 - en: \[\begin{split}K\left(z^{q} p\right) = \frac{{G_{2, 2}^{1, 2}\left(\begin{matrix}
     \frac{1}{2}, \frac{1}{2} & \\0 & 0 \end{matrix} \middle| {- z^{q} p} \right)}}{2}\end{split}\]
   id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}K\left(z^{q} p\right) = \frac{{G_{2, 2}^{1, 2}\left(\begin{matrix}
+    \frac{1}{2}, \frac{1}{2} & \\0 & 0 \end{matrix} \middle| {- z^{q} p} \right)}}{2}\end{split}\]
 - en: 'Functions involving \(E\left(z^{q} p\right)\):'
   id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: '函数涉及\(E\left(z^{q} p\right)\):'
 - en: '\[\begin{split}E\left(z^{q} p\right) = - \frac{{G_{2, 2}^{1, 2}\left(\begin{matrix}
     \frac{1}{2}, \frac{3}{2} & \\0 & 0 \end{matrix} \middle| {- z^{q} p} \right)}}{4}\end{split}\]
     ### Internal API Reference'
   id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: '\[\begin{split}E\left(z^{q} p\right) = - \frac{{G_{2, 2}^{1, 2}\left(\begin{matrix}
+    \frac{1}{2}, \frac{3}{2} & \\0 & 0 \end{matrix} \middle| {- z^{q} p} \right)}}{4}\end{split}\]
+    ### 内部 API 参考'
 - en: Integrate functions by rewriting them as Meijer G-functions.
   id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将它们重写为 Meijer G 函数来积分函数。
 - en: 'There are three user-visible functions that can be used by other parts of the
     sympy library to solve various integration problems:'
   id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 有三个用户可见函数可以由 sympy 库的其他部分使用来解决各种积分问题：
 - en: meijerint_indefinite
   id: totrans-192
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: meijerint_indefinite
 - en: meijerint_definite
   id: totrans-193
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: meijerint_definite
 - en: meijerint_inversion
   id: totrans-194
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: meijerint_inversion
 - en: They can be used to compute, respectively, indefinite integrals, definite integrals
     over intervals of the real line, and inverse laplace-type integrals (from c-I*oo
     to c+I*oo). See the respective docstrings for details.
   id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 它们可以用于计算无穷大、实数线段上的定积分以及反拉普拉斯类型的积分（从 c-I*oo 到 c+I*oo）。详细信息请参见各自的文档字符串。
 - en: 'The main references for this are:'
   id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 主要参考文献包括：
 - en: '[L] Luke, Y. L. (1969), The Special Functions and Their Approximations,'
   id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: '[L] 卢克，Y·L·（1969年），特殊函数及其近似，'
 - en: Volume 1
   id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: 卷1
 - en: '[R] Kelly B. Roach. Meijer G Function Representations.'
   id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: '[R] 凯利·B·罗奇。Meijer G 函数表示。'
 - en: 'In: Proceedings of the 1997 International Symposium on Symbolic and Algebraic
     Computation, pages 205-211, New York, 1997\. ACM.'
   id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 在：1997年国际符号和代数计算研讨会论文集，205-211页，纽约，1997年。ACM。
 - en: '[P] A. P. Prudnikov, Yu. A. Brychkov and O. I. Marichev (1990).'
   id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: '[P] A·P·普鲁德尼科夫，Yu·A·布里奇科夫和O·I·马里切夫（1990年）。'
 - en: 'Integrals and Series: More Special Functions, Vol. 3,. Gordon and Breach Science
     Publisher'
   id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 积分与级数：更多特殊函数，第3卷，戈登和布雷奇科科学出版社
 - en: '[PRE0]'
   id: totrans-203
   prefs: []
@@ -1631,6 +1773,7 @@
   id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: _get_coeff_exp 引发的异常，仅供内部使用。
 - en: '[PRE1]'
   id: totrans-205
   prefs: []
@@ -1640,6 +1783,7 @@
   id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回适用于积分定理的条件。
 - en: '[PRE2]'
   id: totrans-207
   prefs: []
@@ -1651,15 +1795,18 @@
   id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回使得 g 的 mellin 变换存在的条件。任何 x 的幂已经被吸收进 G 函数中，因此这只是 \(\int_0^\infty g\, dx\)。
 - en: See [L, section 5.6.1]. (Note that s=1.)
   id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 见[L，第5.6.1节]。（注意 s=1。）
 - en: If `helper` is True, only check if the MT exists at infinity, i.e. if \(\int_1^\infty
     g\, dx\) exists.
   id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 `helper` 为 True，则仅检查无穷远处的 MT 是否存在，即是否存在 \(\int_1^\infty g\, dx\)。
 - en: '[PRE3]'
   id: totrans-211
   prefs: []
@@ -1669,6 +1816,7 @@
   id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 检查拉普拉斯反演积分的前提条件。
 - en: '[PRE4]'
   id: totrans-213
   prefs: []
@@ -1678,19 +1826,23 @@
   id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 对 `cond` 进行天真的简化。
 - en: Explanation
   id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: Note that this routine is completely ad-hoc, simplification rules being added
     as need arises rather than following any logical pattern.
   id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，此例程完全是特定应用的，简化规则是根据需要添加的，而不是遵循任何逻辑模式。
 - en: Examples
   id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE5]'
   id: totrans-218
   prefs: []
@@ -1705,6 +1857,7 @@
   id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 添加函数 -> meijerg 查询表格的公式。
 - en: '[PRE7]'
   id: totrans-221
   prefs: []
@@ -1715,6 +1868,7 @@
   id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回一个虚拟值。如果请求同一 token+name 多次且它尚未在表达式中，则返回相同的虚拟值，这样做是为了更友好地使用缓存。
 - en: '[PRE8]'
   id: totrans-223
   prefs: []
@@ -1724,6 +1878,7 @@
   id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回与名称和 token 关联的虚拟值。与全局声明效果相同。
 - en: '[PRE9]'
   id: totrans-225
   prefs: []
@@ -1733,6 +1888,7 @@
   id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 重新评估条件。
 - en: '[PRE10]'
   id: totrans-227
   prefs: []
@@ -1742,10 +1898,12 @@
   id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 `expr` 中找到 `x` 的指数（不包括零）。
 - en: Examples
   id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE11]'
   id: totrans-230
   prefs: []
@@ -1761,10 +1919,12 @@
   id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 找到使得线性替换 x -> x + a（希望）简化表达式的数字 a。
 - en: Examples
   id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE13]'
   id: totrans-234
   prefs: []
@@ -1779,6 +1939,7 @@
   id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 G 函数转换为其逆参数之一（即 G(1/x) -> G’(x)）。
 - en: '[PRE15]'
   id: totrans-237
   prefs: []
@@ -1788,6 +1949,7 @@
   id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 找到 expr 中函数的类型，以估计其复杂性。
 - en: '[PRE16]'
   id: totrans-239
   prefs: []
@@ -1798,10 +1960,12 @@
   id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 当 expr 已知为形式 c*x**b 时，其中 c 和/或 b 可能为 1 时，返回 c, b。
 - en: Examples
   id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE17]'
   id: totrans-242
   prefs: []
@@ -1816,6 +1980,7 @@
   id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试猜测积分被 f(x) 重写的合理方式。
 - en: '[PRE19]'
   id: totrans-245
   prefs: []
@@ -1827,15 +1992,18 @@
   id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 设 d 表示 G 函数 `g` 的被积函数。考虑以相同方式定义的函数 H，但积分变为 d/Gamma(a*s)（遵循通常的轮廓惯例）。
 - en: If `a` is rational, the function H can be written as C*G, for a constant C and
     a G-function G.
   id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 `a` 是有理数，则函数 H 可以写成 C*G，其中 C 是常数，G 函数是 G。
 - en: This function returns C, G.
   id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数返回 C, G。
 - en: '[PRE20]'
   id: totrans-249
   prefs: []
@@ -1845,6 +2013,7 @@
   id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回 C, h，使得 h 是参数 z**n 的 G 函数，且 g = C*h。
 - en: '[PRE21]'
   id: totrans-251
   prefs: []
@@ -1855,10 +2024,12 @@
   id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 用 G 函数表示从零到无穷大的积分 g1*g2，假设满足必要条件。
 - en: Examples
   id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE22]'
   id: totrans-254
   prefs: []
@@ -1874,10 +2045,12 @@
   id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 G 函数计算 \(\int_0^\infty g\, dx\)，假设满足必要条件。
 - en: Examples
   id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE24]'
   id: totrans-258
   prefs: []
@@ -1892,6 +2065,7 @@
   id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算拉普拉斯反演积分，假设公式适用。
 - en: '[PRE26]'
   id: totrans-261
   prefs: []
@@ -1902,6 +2076,7 @@
   id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 检查在正实数上使用 G 函数表示的 f(x) 是否实际上几乎处处与 G 函数相符。
 - en: '[PRE27]'
   id: totrans-263
   prefs: []
@@ -1911,6 +2086,7 @@
   id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试从零到无穷大积分 f dx。
 - en: The body of this function computes various ‘simplifications’ f1, f2, … of f
     (e.g. by calling expand_mul(), trigexpand() - see _guess_expansion) and calls
     _meijerint_definite_3 with each of these in succession. If _meijerint_definite_3
@@ -1918,6 +2094,8 @@
   id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数的主体计算 f 的各种简化形式（例如通过调用 expand_mul()、trigexpand() - 见 _guess_expansion），并依次调用
+    _meijerint_definite_3。如果 _meijerint_definite_3 在任何简化函数上成功，则返回此结果。
 - en: '[PRE28]'
   id: totrans-266
   prefs: []
@@ -1927,11 +2105,13 @@
   id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试从零到无穷大积分 f dx。
 - en: This function calls _meijerint_definite_4 to try to compute the integral. If
     this fails, it tries using linearity.
   id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数调用 _meijerint_definite_4 尝试计算积分。如果失败，则尝试使用线性性。
 - en: '[PRE29]'
   id: totrans-269
   prefs: []
@@ -1941,20 +2121,24 @@
   id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试从零到无穷大积分 f dx。
 - en: Explanation
   id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: This function tries to apply the integration theorems found in literature, i.e.
     it tries to rewrite f as either one or a product of two G-functions.
   id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数尝试应用文献中找到的积分定理，即尝试将 f 重写为一个或两个 G 函数的乘积。
 - en: The parameter `only_double` is used internally in the recursive algorithm to
     disable trying to rewrite f as a single G-function.
   id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数 `only_double` 在递归算法中内部使用，以禁止将 f 试图重写为单个 G 函数。
 - en: '[PRE30]'
   id: totrans-274
   prefs: []
@@ -1964,6 +2148,7 @@
   id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: 不尝试任何替换的辅助函数。
 - en: '[PRE31]'
   id: totrans-276
   prefs: []
@@ -1973,11 +2158,14 @@
   id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回一个列表 `L`，使得 `Mul(*L) == f`。
 - en: If `f` is not a `Mul` or `Pow`, `L=[f]`. If `f=g**n` for an integer `n`, `L=[g]*n`.
     If `f` is a `Mul`, `L` comes from applying `_mul_args` to all factors of `f`.
   id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 `f` 不是 `Mul` 或 `Pow`，`L=[f]`。如果 `f=g**n`，其中 n 是整数，`L=[g]*n`。如果 `f` 是 `Mul`，`L`
+    来自将 `_mul_args` 应用于 f 的所有因子。
 - en: '[PRE32]'
   id: totrans-279
   prefs: []
@@ -1987,20 +2175,25 @@
   id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 找到将 `f` 拆分为两项乘积的所有方式。失败时返回 None。
 - en: Explanation
   id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: Although the order is canonical from multiset_partitions, this is not necessarily
     the best order to process the terms. For example, if the case of len(gs) == 2
     is removed and multiset is allowed to sort the terms, some tests fail.
   id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管从 multiset_partitions 中的规范顺序来看，这不一定是处理项的最佳顺序。例如，如果去掉 len(gs) == 2 的情况，并允许
+    multiset 对项进行排序，某些测试会失败。
 - en: Examples
   id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE33]'
   id: totrans-284
   prefs: []
@@ -2017,6 +2210,7 @@
   id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过去除多余的因子将 expr 接近其主分支。此函数不保证产生主分支，以避免引入不透明的 principal_branch() 对象，除非 full_pb=True。
 - en: '[PRE35]'
   id: totrans-287
   prefs: []
@@ -2026,6 +2220,7 @@
   id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建描述 f 类型的可哈希实体。
 - en: '[PRE36]'
   id: totrans-289
   prefs: []
@@ -2037,6 +2232,8 @@
   id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试使用参数 a*x**b 的单个 G 函数（或其和）重写 `f`。返回 fac, po, g，使得 f = fac*po*g，其中 fac 独立于 `x`，po
+    = x**s。这里的 g 是 _rewrite_single 的结果。失败时返回 None。
 - en: '[PRE37]'
   id: totrans-291
   prefs: []
@@ -2048,6 +2245,8 @@
   id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试将 `f` 重写为参数为 a*x**b 的两个 G 函数的乘积。返回 fac, po, g1, g2，使得 f = fac*po*g1*g2，其中
+    fac 独立于 x，po = x**s。这里的 g1 和 g2 是 _rewrite_single 的结果。失败时返回 None。
 - en: '[PRE38]'
   id: totrans-293
   prefs: []
@@ -2057,6 +2256,7 @@
   id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 吸收 `po` == x**s 到 g 中。
 - en: '[PRE39]'
   id: totrans-295
   prefs: []
@@ -2067,19 +2267,23 @@
   id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 在参数为 `c*x` 的 G 函数项中，将从 0 到 oo 的积分 `fac*po*g1*g2` 重写为积分 `fac*G`。
 - en: Explanation
   id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: Return C, f1, f2 such that integral C f1 f2 from 0 to infinity equals integral
     fac `po`, `g1`, `g2` from 0 to infinity.
   id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回 C, f1, f2，使得从 0 到无穷大的积分 C f1 f2 等于从 0 到无穷大的积分 fac `po`, `g1`, `g2`。
 - en: Examples
   id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE40]'
   id: totrans-300
   prefs: []
@@ -2095,6 +2299,7 @@
   id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 将从零到无穷大的积分 fac*po*g dx 重写为积分 fac*G，其中 G 的参数为 a*x。注意 po=x**s。返回 fac, G。
 - en: '[PRE42]'
   id: totrans-303
   prefs: []
@@ -2107,6 +2312,8 @@
   id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试将 f 重写为形式为 C*x**s*G(a*x**b) 的单个 G 函数的和，其中 b 是有理数且 C 与 x 无关。我们保证 result.argument.as_coeff_mul(x)
+    返回 (a, (x**b,)) 或 (a, ())。在失败时返回空列表。
 - en: '[PRE43]'
   id: totrans-305
   prefs: []
@@ -2117,10 +2324,12 @@
   id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式 `f` 拆分为 fac、po、g，其中 fac 是常数因子，po = x**s（其中 s 与 s 独立）且 g 是“其余部分”。
 - en: Examples
   id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE44]'
   id: totrans-308
   prefs: []
@@ -2136,14 +2345,17 @@
   id: totrans-310
   prefs: []
   type: TYPE_NORMAL
+  zh: 对 `f` 在区间 [`a`, `b`] 上进行积分，通过将其重写为两个 G 函数的乘积或一个单一的 G 函数。
 - en: Return res, cond, where cond are convergence conditions.
   id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回 res、cond，其中 cond 是收敛条件。
 - en: Examples
   id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE46]'
   id: totrans-313
   prefs: []
@@ -2156,6 +2368,8 @@
   id: totrans-314
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数实现为 meijerint_definite、_meijerint_definite_2、_meijerint_definite_3、_meijerint_definite_4
+    的一系列函数。列表中的每个函数多次调用下一个函数（可能）。这意味着调用 meijerint_definite 可能非常昂贵。
 - en: '[PRE47]'
   id: totrans-315
   prefs: []
@@ -2165,10 +2379,12 @@
   id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将 `f` 重写为 G 函数的形式计算不定积分。
 - en: Examples
   id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE48]'
   id: totrans-318
   prefs: []
@@ -2184,18 +2400,22 @@
   id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算逆拉普拉斯变换 \(\int_{c+i\infty}^{c-i\infty} f(x) e^{tx}\, dx\)，其中 c 是大于 `f` 的所有奇点的实部的实数。
 - en: Note that `t` is always assumed real and positive.
   id: totrans-321
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意 `t` 始终假定为实数且为正数。
 - en: Return None if the integral does not exist or could not be evaluated.
   id: totrans-322
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果积分不存在或无法评估，则返回 None。
 - en: Examples
   id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE50]'
   id: totrans-324
   prefs: []
