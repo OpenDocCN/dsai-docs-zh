@@ -1,196 +1,303 @@
 - en: Finite Difference Approximations to Derivatives
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 导数的有限差分逼近
 - en: 原文：[https://docs.sympy.org/latest/explanation/special_topics/finite_diff_derivatives.html](https://docs.sympy.org/latest/explanation/special_topics/finite_diff_derivatives.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://docs.sympy.org/latest/explanation/special_topics/finite_diff_derivatives.html](https://docs.sympy.org/latest/explanation/special_topics/finite_diff_derivatives.html)
 - en: Introduction
+  id: totrans-2
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 引言
 - en: Finite difference approximations to derivatives are quite important in numerical
     analysis and computational physics. In this tutorial, we show how to use SymPy
     to compute approximations of varying accuracy. The hope is that these notes could
     be useful for the practicing researcher who is developing code in some language
     and needs to be able to efficiently generate finite difference formulae for various
     approximations.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在数值分析和计算物理中，导数的有限差分逼近非常重要。在本教程中，我们展示如何使用 SymPy 计算不同精度的逼近值。希望这些笔记能对需要在某种语言中编写代码且需要高效生成各种逼近公式的研究人员有所帮助。
 - en: In order to establish notation, we first state that we envision that there exists
     a continuous function F of a single variable x, with F having as many derivatives
     as desired. We sample x values uniformly at points along the real line separated
     by h. In most cases we want h to be small in some sense. F(x) may be expanded
     about some point \(x_{0}\) via the usual Taylor series expansion. Let \(x = x_{0}
     + h\). Then the Taylor expansion is
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了明确符号，我们首先声明：我们设想存在一个关于单变量 \(x\) 的连续函数 \(F\)，其具有所需的所有导数。我们在实轴上均匀地以间隔 \(h\)
+    采样 \(x\) 值。在大多数情况下，我们希望 \(h\) 在某种意义上足够小。可以关于某一点 \(x_{0}\) 展开 \(F(x)\) 的泰勒级数展开式。令
+    \(x = x_{0} + h\)。那么泰勒展开式为
 - en: \[F(x_{0}+h) = F(x_{0}) + \big(\frac{dF}{dx}\big)_{x_{0}} * h + \frac{1}{2!}
     \big(\frac{d^{2}F }{dx^{2}}\big)_{x_{0}}* h^2 + \frac{1}{3!} \big(\frac{d^{3}F
     }{dx^{3}}\big)_{x_{0}}* h^3 + ...\]
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: \[F(x_{0}+h) = F(x_{0}) + \big(\frac{dF}{dx}\big)_{x_{0}} * h + \frac{1}{2!}
+    \big(\frac{d^{2}F }{dx^{2}}\big)_{x_{0}}* h^2 + \frac{1}{3!} \big(\frac{d^{3}F
+    }{dx^{3}}\big)_{x_{0}}* h^3 + ...\]
 - en: In order to simplify the notation, we now define a set of coefficients \(c_{n}\),
     where
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 为简化表示，我们现在定义一组系数 \(c_{n}\)，其中
 - en: \[c_{n} := \frac{1}{n!} \big(\frac{d^{n}F }{dx^{n}}\big)_{x_{0}}.\]
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: \[c_{n} := \frac{1}{n!} \big(\frac{d^{n}F }{dx^{n}}\big)_{x_{0}}.\]
 - en: 'So now our series has the form:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: '现在我们的级数形式如下:'
 - en: \[F(x_{0}+h) = F(x_{0}) + c_{1} * h + c_{2}* h^2 + c_{3}* h^3 + ...\]
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: \[F(x_{0}+h) = F(x_{0}) + c_{1} * h + c_{2}* h^2 + c_{3}* h^3 + ...\]
 - en: In the following we will only use a finite grid of values \(x_{i}\) with \(i\)
     running from \(1,...,N\) and the corresponding values of our function F at these
     grid points denoted by \(F_{i}\). So the problem is how to generate approximate
     values for the derivatives of F with the constraint that we use a subset of the
     finite set of pairs \((x_{i},F_{i})\) of size N.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将仅使用有限网格上的数值 \(x_{i}\)，其中 \(i\) 从 \(1,...,N\)，以及在这些网格点上对应的函数 \(F\) 的数值 \(F_{i}\)。因此问题在于如何生成
+    \(F\) 的导数的近似值，条件是我们只能使用大小为 \(N\) 的有限对 \((x_{i},F_{i})\) 的子集。
 - en: What follows are manipulations using SymPy to formulate approximations for derivatives
     of a given order and to assess its accuracy. First, we use SymPy to derive the
     approximations by using a rather brute force method frequently covered in introductory
     treatments. Later we shall make use of other SymPy functions which get the job
     done with more efficiency.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来使用 SymPy 进行操作，以制定给定阶数导数的逼近并评估其精度。首先，我们使用 SymPy 通过一种常见但效率较低的方法推导逼近值。稍后，我们将利用其他
+    SymPy 函数来更高效地完成这项工作。
 - en: A Direct Method Using SymPy Matrices
+  id: totrans-12
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用 SymPy 矩阵的直接方法
 - en: 'If we let \(x_{0} = x_{i}\), evaluate the series at \(x_{i+1}=x_{i}+ h\) and
     truncate all terms above \(O(h^1)\) we can solve for the single coefficient \(c_{1}\)
     and obtain an approximation to the first derivative:'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们令 \(x_{0} = x_{i}\)，在 \(x_{i+1}=x_{i}+ h\) 处评估级数，并截断所有高于 \(O(h^1)\) 的项，我们可以解出单一系数
+    \(c_{1}\)，从而获得一阶导数的近似值：
 - en: \[\big(\frac{dF}{dx}\big)_{x_{0}} \approx \frac{F_{i+1} - F_{i}}{h} + O(h)\]
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\big(\frac{dF}{dx}\big)_{x_{0}} \approx \frac{F_{i+1} - F_{i}}{h} + O(h)\]
 - en: where the \(O(h)\) refers to the lowest order term in the series in \(h\). This
     establishes that the derivative approximation is of first order accuracy. Put
     another way, if we decide that we can only use the two pairs \((x_{i},F_{i})\)
     and \((x_{i+1},F_{i+1})\) we obtain a “first order accurate” derivative.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的 \(O(h)\) 是指 \(h\) 级数中的最低阶项。这确立了导数逼近是一阶精度的事实。换句话说，如果我们只能使用两对 \((x_{i},F_{i})\)
+    和 \((x_{i+1},F_{i+1})\)，我们得到一个“一阶精度”的导数逼近。
 - en: 'In addition to \((x_{i},F_{i})\) we next use the two points \((x_{i+1},F_{i+1})\)
     and \((x_{i+2},F_{i+2})\). Then we have two equations:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了 \((x_{i},F_{i})\) 外，我们接下来使用 \((x_{i+1},F_{i+1})\) 和 \((x_{i+2},F_{i+2})\)
+    两个点。然后我们有两个方程：
 - en: \[F_{i+1} = F_{i} + c_{1}* h + \frac{1}{2}*c_{2}*h^2 + \frac{1}{3!}*c_{3}*h^3
     + ...\]\[F_{i+2} = F_{i} + c_{1}* (2h) + \frac{1}{2}*c_{2}*(2h)^2 + \frac{1}{3!}*c_{3}*(2h)^3
     + ...\]
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: \[F_{i+1} = F_{i} + c_{1}* h + \frac{1}{2}*c_{2}*h^2 + \frac{1}{3!}*c_{3}*h^3
+    + ...\]\[F_{i+2} = F_{i} + c_{1}* (2h) + \frac{1}{2}*c_{2}*(2h)^2 + \frac{1}{3!}*c_{3}*(2h)^3
+    + ...\]
 - en: If we again want to find the first derivative (\(c_{1}\)), we can do that by
     eliminating the term involving \(c_{2}\) from the two equations. We show how to
     do it using SymPy.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们再次想要找到第一阶导数（\(c_{1}\)），我们可以通过消除涉及 \(c_{2}\) 的项来实现这一点。我们展示如何使用SymPy完成这一过程。
 - en: '[PRE0]'
+  id: totrans-19
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Vector of right hand sides:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 右手边的向量：
 - en: '[PRE1]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Now we make a matrix consisting of the coefficients of the c_i in the nth degree
     polynomial P.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们构造一个矩阵，其中包含多项式 P 中 \(c_i\) 的系数。
 - en: 'Coefficients of \(c_i\) evaluated at \(x_i\):'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 \(x_i\) 处评估的 \(c_i\) 的系数：
 - en: '[PRE2]'
+  id: totrans-24
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Coefficients of \(c_i\) evaluated at \(x_i + h\):'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 \(x_i + h\) 处评估的 \(c_i\) 的系数：
 - en: '[PRE3]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'Coefficients of \(c_i\) evaluated at \(x_i + 2*h\):'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 \(x_i + 2*h\) 处评估的 \(c_i\) 的系数：
 - en: '[PRE4]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Matrix of the coefficients is 3x3 in this case:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，系数矩阵是3x3的：
 - en: '[PRE5]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Matrix form of the three equations for the \(c_i\) is M*X = R:'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: \(c_i\) 的三个方程的矩阵形式是 M*X = R：
 - en: 'The solution is obtained by directly inverting the 3x3 matrix M:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 解决方案通过直接反转3x3矩阵 M 获得：
 - en: '[PRE6]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Note that all three coefficients make up the solution. The desired first derivative
     is coefficient \(c_1\) which is X[1].
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，所有三个系数构成了解。所需的第一阶导数是系数 \(c_1\)，即 X[1]。
 - en: '[PRE7]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'It is instructive to compute another three-point approximation to the first
     derivative, except centering the approximation at \(x_i\) and thus using points
     at \(x_{i-1}\), \(x_{i}\), and \(x_{i+1}\). So here is how this can be done using
     the ‘brute force’ method:'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算另一个三点近似的第一阶导数是有益的，除了在 \(x_i\) 处居中近似，因此使用 \(x_{i-1}\)、\(x_{i}\) 和 \(x_{i+1}\)
+    三个点。这里是使用“暴力方法”完成这个过程的方法：
 - en: '[PRE8]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Now that we have the matrix of coefficients we next form the right-hand-side
     and solve by inverting \(M\):'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们有了系数矩阵，接下来形成右侧并通过反转 \(M\) 解决：
 - en: '[PRE9]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: These two examples serve to show how one can directly find second order accurate
     first derivatives using SymPy. The first example uses values of \(x\) and \(F\)
     at all three points \(x_i\), \(x_{i+1}\), and \(x_{i+2}\) whereas the second example
     only uses values of \(x\) at the two points \(x_{i-1}\) and \(x_{i+1}\) and thus
     is a bit more efficient.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 这两个例子展示了如何使用SymPy直接找到二阶精确的一阶导数。第一个例子使用了 \(x_i\)、\(x_{i+1}\) 和 \(x_{i+2}\) 所有三点的
+    \(x\) 和 \(F\) 值，而第二个例子仅使用了 \(x_{i-1}\) 和 \(x_{i+1}\) 两点的 \(x\) 值，因此效率更高一些。
 - en: From these two simple examples a general rule is that if one wants a first derivative
     to be accurate to \(O(h^{n})\) then one needs n+1 function values in the approximating
     polynomial (here provided via the function \(P(x,x0,c,n)\)).
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 从这两个简单的例子中可以得出一个一般规则，即如果想要一阶导数精确到 \(O(h^{n})\)，那么在逼近多项式中需要 n+1 个函数值（通过函数 \(P(x,x0,c,n)\)
+    提供）。
 - en: 'Now let’s assess the question of the accuracy of the centered difference result
     to see how we determine that it is really second order. To do this we take the
     result for \(dF/dx\) and substitute in the polynomial expansion for a higher order
     polynomial and see what we get. To this end, we make a set of eight coefficients
     d and use them to perform the check:'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们评估中心差分结果的精确性，看看如何确定它确实是二阶的。为此，我们将 \(dF/dx\) 的结果代入更高阶多项式的展开式中，看看我们得到什么。为此，我们制作了一组八个系数
+    d，并用它们执行检查：
 - en: '[PRE10]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Thus we see that indeed the derivative is \(c_1\) with the next term in the
     series of order \(h^2\).
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们看到导数确实是 \(c_1\)，下一个阶数的级数为 \(h^2\)。
 - en: However, it can quickly become rather tedious to generalize the direct method
     as presented above when attempting to generate a derivative approximation to high
     order, such as 6 or 8 although the method certainly works and using the present
     method is certainly less tedious than performing the calculations by hand.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，当试图生成高阶（如6或8阶）的导数近似时，通常很快会变得相当乏味，尽管这种方法确实有效，并且使用现有方法肯定比手动计算要少费力。
 - en: 'As we have seen in the discussion above, the simple centered approximation
     for the first derivative only uses two point values of the \((x_{i},F_{i})\) pairs.
     This works fine until one encounters the last point in the domain, say at \(i=N\).
@@ -202,59 +309,97 @@
     three points \((x_{N},F_{N})\), \((x_{N-1},F_{N-1})\), and \((x_{N-2},F_{N-2})\)
     and center the approximation at \((x_{N},F_{N})\). Here is how it can be done
     using SymPy:'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在上面的讨论中看到的，对于第一导数的简单中心近似只使用 \((x_{i},F_{i})\) 对的两个点值。这在遇到域中的最后一个点时就会出现问题，比如在
+    \(i=N\) 处。由于我们的中心导数近似会使用点 \((x_{N+1},F_{N+1})\) 处的数据，我们可以看到导数公式将无法工作。那么，该怎么办呢？嗯，处理这个问题的简单方法是为这最后一个点设计一个使用我们有值的点的不同公式。这就是所谓的向后差分公式。为了得到它，我们可以使用同样的直接方法，但现在使用三个点
+    \((x_{N},F_{N})\)、\((x_{N-1},F_{N-1})\) 和 \((x_{N-2},F_{N-2})\) 并在 \((x_{N},F_{N})\)
+    处进行近似。以下是使用 SymPy 完成它的方法：
 - en: '[PRE11]'
+  id: totrans-47
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'Now we make a matrix consisting of the coefficients of the \(c_i\) in the dth
     degree polynomial P coefficients of \(c_i\) evaluated at \(x_i, x_{i-1},\) and
     \(x_{i+1}\):'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们制作一个矩阵，其中包含 \(c_i\) 在第 \(d\) 次多项式 \(P\) 系数在 \(x_i, x_{i-1}\) 和 \(x_{i+1}\)
+    处的系数：
 - en: '[PRE12]'
+  id: totrans-49
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'Next we construct the \(3 \times 3\) matrix of the coefficients:'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们构造 \(3 \times 3\) 系数矩阵：
 - en: '[PRE13]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Then we invert \(M\) and write the solution to the \(3 \times 3\) system.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们反转 \(M\) 并写出 \(3 \times 3\) 系统的解。
 - en: 'The matrix form of the three equations for the c_i is \(M*C = R\). The solution
     is obtained by directly inverting \(M\):'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 三个方程式 \(c_i\) 的矩阵形式是 \(M*C = R\)。通过直接求逆 \(M\) 来获得解决方案：
 - en: '[PRE14]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'The first derivative is coefficient \(c_1\) which is \(X[1]\). Thus the second
     order accurate approximation for the first derivative is:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一导数是系数 \(c_1\)，即 \(X[1]\)。因此，第一导数的二阶精确逼近是：
 - en: '[PRE15]'
+  id: totrans-56
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Of course, we can devise a similar formula for the value of the derivative at
     the left end of the set of points at \((x_{1},F_{1})\) in terms of values at \((x_{2},F_{2})\)
     and \((x_{3},F_{3})\).
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 当然，我们可以为点集合左端的点 \((x_{1},F_{1})\) 的导数值设计类似的公式，该公式以 \((x_{2},F_{2})\) 和 \((x_{3},F_{3})\)
+    的值为基础。
 - en: Also, we note that output of formats appropriate to Fortran, C, etc. may be
     done in the examples given above.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，我们注意到输出适合 Fortran、C 等格式的示例在上述示例中可能已经完成。
 - en: Next we show how to perform these and many other discritizations of derivatives,
     but using a much more efficient approach originally due to Bengt Fornberg and
     now incorporated into SymPy.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们展示如何执行这些以及许多其他导数的离散化，但使用一种更有效的方法，最初由本特·弗恩伯格（Bengt Fornberg）提出，并已纳入 SymPy
+    中。
 - en: '[Finite differences](../../tutorials/intro-tutorial/calculus.html#calculus-finite-differences)'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: '[有限差分](../../tutorials/intro-tutorial/calculus.html#calculus-finite-differences)'
 - en: '[Finite difference weights](../../modules/calculus/index.html#finite-diff)'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: '[有限差分权重](../../modules/calculus/index.html#finite-diff)'

@@ -1,34 +1,51 @@
 - en: Advanced Expression Manipulation
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 高级表达式操作
 - en: 原文：[https://docs.sympy.org/latest/tutorials/intro-tutorial/manipulation.html](https://docs.sympy.org/latest/tutorials/intro-tutorial/manipulation.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://docs.sympy.org/latest/tutorials/intro-tutorial/manipulation.html](https://docs.sympy.org/latest/tutorials/intro-tutorial/manipulation.html)
 - en: In this section, we discuss some ways that we can perform advanced manipulation
     of expressions.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们讨论了一些进行高级表达式操作的方法。
 - en: '## Understanding Expression Trees'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 理解表达式树'
 - en: Before we can do this, we need to understand how expressions are represented
     in SymPy. A mathematical expression is represented as a tree. Let us take the
     expression \(x^2 + xy\), i.e., `x**2 + x*y`. We can see what this expression looks
     like internally by using `srepr`
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们进行此操作之前，我们需要了解 SymPy 中表达式的表示方法。数学表达式被表示为一棵树。让我们看一下表达式 \(x^2 + xy\)，即 `x**2
+    + x*y`。我们可以使用 `srepr` 看到这个表达式的内部结构。
 - en: '[PRE0]'
+  id: totrans-5
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '[PRE1]'
+  id: totrans-6
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'The easiest way to tear this apart is to look at a diagram of the expression
     tree:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 最简单的方法是查看表达式树的图示：
 - en: 'digraph{ # Graph style "ordering"="out" "rankdir"="TD" ######### # Nodes #
     ######### "Add(Pow(Symbol(''x''), Integer(2)), Mul(Symbol(''x''), Symbol(''y'')))_()"
     ["color"="black", "label"="Add", "shape"="ellipse"]; "Pow(Symbol(''x''), Integer(2))_(0,)"
@@ -44,90 +61,156 @@
     -> "Symbol(''x'')_(0, 0)"; "Pow(Symbol(''x''), Integer(2))_(0,)" -> "Integer(2)_(0,
     1)"; "Mul(Symbol(''x''), Symbol(''y''))_(1,)" -> "Symbol(''x'')_(1, 0)"; "Mul(Symbol(''x''),
     Symbol(''y''))_(1,)" -> "Symbol(''y'')_(1, 1)"; }'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 'digraph{ # Graph style "ordering"="out" "rankdir"="TD" ######### # Nodes #
+    ######### "Add(Pow(Symbol(''x''), Integer(2)), Mul(Symbol(''x''), Symbol(''y'')))_()"
+    ["color"="black", "label"="Add", "shape"="ellipse"]; "Pow(Symbol(''x''), Integer(2))_(0,)"
+    ["color"="black", "label"="Pow", "shape"="ellipse"]; "Symbol(''x'')_(0, 0)" ["color"="black",
+    "label"="Symbol(''x'')", "shape"="ellipse"]; "Integer(2)_(0, 1)" ["color"="black",
+    "label"="Integer(2)", "shape"="ellipse"]; "Mul(Symbol(''x''), Symbol(''y''))_(1,)"
+    ["color"="black", "label"="Mul", "shape"="ellipse"]; "Symbol(''x'')_(1, 0)" ["color"="black",
+    "label"="Symbol(''x'')", "shape"="ellipse"]; "Symbol(''y'')_(1, 1)" ["color"="black",
+    "label"="Symbol(''y'')", "shape"="ellipse"]; ######### # Edges # ######### "Add(Pow(Symbol(''x''),
+    Integer(2)), Mul(Symbol(''x''), Symbol(''y'')))_()" -> "Pow(Symbol(''x''), Integer(2))_(0,)";
+    "Add(Pow(Symbol(''x''), Integer(2)), Mul(Symbol(''x''), Symbol(''y'')))_()" ->
+    "Mul(Symbol(''x''), Symbol(''y''))_(1,)"; "Pow(Symbol(''x''), Integer(2))_(0,)"
+    -> "Symbol(''x'')_(0, 0)"; "Pow(Symbol(''x''), Integer(2))_(0,)" -> "Integer(2)_(0,
+    1)"; "Mul(Symbol(''x''), Symbol(''y''))_(1,)" -> "Symbol(''x'')_(1, 0)"; "Mul(Symbol(''x''),
+    Symbol(''y''))_(1,)" -> "Symbol(''y'')_(1, 1)"; }'
 - en: Note
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The above diagram was made using [Graphviz](https://www.graphviz.org/) and the
     [`dotprint`](../../modules/printing.html#sympy.printing.dot.dotprint "sympy.printing.dot.dotprint")
     function.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述图表是使用 [Graphviz](https://www.graphviz.org/) 和 [`dotprint`](../../modules/printing.html#sympy.printing.dot.dotprint
+    "sympy.printing.dot.dotprint") 函数创建的。
 - en: First, let’s look at the leaves of this tree. Symbols are instances of the class
     Symbol. While we have been doing
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，让我们看一下这棵树的叶子节点。符号是类 `Symbol` 的实例。虽然我们一直在做
 - en: '[PRE2]'
+  id: totrans-12
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: we could have also done
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们也可以这样做
 - en: '[PRE3]'
+  id: totrans-14
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Either way, we get a Symbol with the name “x” [[1]](#symbols-fn). For the number
     in the expression, 2, we got `Integer(2)`. `Integer` is the SymPy class for integers.
     It is similar to the Python built-in type `int`, except that `Integer` plays nicely
     with other SymPy types.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 无论哪种方式，我们都会得到一个名为“x”的符号 [[1]](#symbols-fn)。在表达式中的数字2，我们得到了 `Integer(2)`。`Integer`
+    是 SymPy 中整数的类。它类似于 Python 内置类型 `int`，不过 `Integer` 与其他 SymPy 类型协作更好。
 - en: When we write `x**2`, this creates a `Pow` object. `Pow` is short for “power”.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 当我们写 `x**2` 时，这将创建一个 `Pow` 对象。`Pow` 是“power”的缩写。
 - en: '[PRE4]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: We could have created the same object by calling `Pow(x, 2)`
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过调用 `Pow(x, 2)` 创建相同的对象。
 - en: '[PRE5]'
+  id: totrans-19
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Note that in the `srepr` output, we see `Integer(2)`, the SymPy version of integers,
     even though technically, we input `2`, a Python int. In general, whenever you
     combine a SymPy object with a non-SymPy object via some function or operation,
     the non-SymPy object will be converted into a SymPy object. The function that
     does this is `sympify` [[2]](#sympify-fn).
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，在 `srepr` 输出中，我们看到 `Integer(2)`，这是 SymPy 版本的整数，尽管从技术上讲，我们输入了 Python 的 `int`
+    类型的 `2`。通常情况下，当您通过某个函数或操作将 SymPy 对象与非 SymPy 对象组合时，非 SymPy 对象将被转换为 SymPy 对象。执行此操作的函数是
+    `sympify` [[2]](#sympify-fn)。
 - en: '[PRE6]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: We have seen that `x**2` is represented as `Pow(x, 2)`. What about `x*y`? As
     we might expect, this is the multiplication of `x` and `y`. The SymPy class for
     multiplication is `Mul`.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经看到 `x**2` 表示为 `Pow(x, 2)`。那么 `x*y` 呢？正如我们所预期的那样，这是 `x` 和 `y` 的乘积。SymPy 中用于乘法的类是
+    `Mul`。
 - en: '[PRE7]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Thus, we could have created the same object by writing `Mul(x, y)`.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们可以通过编写 `Mul(x, y)` 来创建相同的对象。
 - en: '[PRE8]'
+  id: totrans-25
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Now we get to our final expression, `x**2 + x*y`. This is the addition of our
     last two objects, `Pow(x, 2)`, and `Mul(x, y)`. The SymPy class for addition is
     `Add`, so, as you might expect, to create this object, we use `Add(Pow(x, 2),
     Mul(x, y))`.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们来到我们的最终表达式，`x**2 + x*y`。这是我们最后两个对象 `Pow(x, 2)` 和 `Mul(x, y)` 的加法。SymPy 中用于加法的类是
+    `Add`，因此，正如你所预期的那样，要创建这个对象，我们使用 `Add(Pow(x, 2), Mul(x, y))`。
 - en: '[PRE9]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: SymPy expression trees can have many branches, and can be quite deep or quite
     broad. Here is a more complicated example
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: SymPy 表达式树可以有许多分支，可以非常深或非常宽。这里是一个更复杂的例子。
 - en: '[PRE10]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Here is a diagram
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是一个图示。
 - en: 'digraph{ # Graph style "rankdir"="TD" ######### # Nodes # ######### "Half()_(0,
     0)" ["color"="black", "label"="Rational(1, 2)", "shape"="ellipse"]; "Symbol(y)_(2,
     0)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "Symbol(x)_(1,
@@ -162,21 +245,63 @@
     sin(Mul(Symbol(x), Symbol(y))))_(0,)"; "Add(Mul(Half(), sin(Mul(Symbol(x), Symbol(y)))),
     Mul(NegativeOne(), Pow(Symbol(x), Integer(2))), Pow(Symbol(y), NegativeOne()))_()"
     -> "Mul(NegativeOne(), Pow(Symbol(x), Integer(2)))_(1,)"; }'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 'digraph{ # 图形样式 "rankdir"="TD" ######### # 节点 # ######### "Half()_(0, 0)" ["color"="black",
+    "label"="有理数(1, 2)", "shape"="ellipse"]; "Symbol(y)_(2, 0)" ["color"="black",
+    "label"="符号(''y'')", "shape"="ellipse"]; "Symbol(x)_(1, 1, 0)" ["color"="black",
+    "label"="符号(''x'')", "shape"="ellipse"]; "Integer(2)_(1, 1, 1)" ["color"="black",
+    "label"="整数(2)", "shape"="ellipse"]; "NegativeOne()_(2, 1)" ["color"="black",
+    "label"="整数(-1)", "shape"="ellipse"]; "NegativeOne()_(1, 0)" ["color"="black",
+    "label"="整数(-1)", "shape"="ellipse"]; "Symbol(y)_(0, 1, 0, 1)" ["color"="black",
+    "label"="符号(''y'')", "shape"="ellipse"]; "Symbol(x)_(0, 1, 0, 0)" ["color"="black",
+    "label"="符号(''x'')", "shape"="ellipse"]; "Pow(Symbol(x), Integer(2))_(1, 1)" ["color"="black",
+    "label"="Pow", "shape"="ellipse"]; "Pow(Symbol(y), NegativeOne())_(2,)" ["color"="black",
+    "label"="Pow", "shape"="ellipse"]; "Mul(Symbol(x), Symbol(y))_(0, 1, 0)" ["color"="black",
+    "label"="Mul", "shape"="ellipse"]; "sin(Mul(Symbol(x), Symbol(y)))_(0, 1)" ["color"="black",
+    "label"="sin", "shape"="ellipse"]; "Mul(Half(), sin(Mul(Symbol(x), Symbol(y))))_(0,)"
+    ["color"="black", "label"="Mul", "shape"="ellipse"]; "Mul(NegativeOne(), Pow(Symbol(x),
+    Integer(2)))_(1,)" ["color"="black", "label"="Mul", "shape"="ellipse"]; "Add(Mul(Half(),
+    sin(Mul(Symbol(x), Symbol(y)))), Mul(NegativeOne(), Pow(Symbol(x), Integer(2))),
+    Pow(Symbol(y), NegativeOne()))_()" ["color"="black", "label"="Add", "shape"="ellipse"];
+    ######### # 边缘 # ######### "Pow(Symbol(y), NegativeOne())_(2,)" -> "Symbol(y)_(2,
+    0)"; "Pow(Symbol(x), Integer(2))_(1, 1)" -> "Symbol(x)_(1, 1, 0)"; "Pow(Symbol(x),
+    Integer(2))_(1, 1)" -> "Integer(2)_(1, 1, 1)"; "Pow(Symbol(y), NegativeOne())_(2,)"
+    -> "NegativeOne()_(2, 1)"; "Mul(Symbol(x), Symbol(y))_(0, 1, 0)" -> "Symbol(x)_(0,
+    1, 0, 0)"; "Mul(Symbol(x), Symbol(y))_(0, 1, 0)" -> "Symbol(y)_(0, 1, 0, 1)";
+    "Mul(Half(), sin(Mul(Symbol(x), Symbol(y))))_(0,)" -> "Half()_(0, 0)"; "Mul(NegativeOne(),
+    Pow(Symbol(x), Integer(2)))_(1,)" -> "NegativeOne()_(1, 0)"; "sin(Mul(Symbol(x),
+    Symbol(y)))_(0, 1)" -> "Mul(Symbol(x), Symbol(y))_(0, 1, 0)"; "Mul(NegativeOne(),
+    Pow(Symbol(x), Integer(2)))_(1,)" -> "Pow(Symbol(x), Integer(2))_(1, 1)"; "Mul(Half(),
+    sin(Mul(Symbol(x), Symbol(y))))_(0,)" -> "sin(Mul(Symbol(x), Symbol(y)))_(0, 1)";
+    "Add(Mul(Half(), sin(Mul(Symbol(x), Symbol(y)))), Mul(NegativeOne(), Pow(Symbol(x),
+    Integer(2))), Pow(Symbol(y), NegativeOne()))_()" -> "Pow(Symbol(y), NegativeOne())_(2,)";
+    "Add(Mul(Half(), sin(Mul(Symbol(x), Symbol(y)))), Mul(NegativeOne(), Pow(Symbol(x),
+    Integer(2))), Pow(Symbol(y), NegativeOne()))_()" -> "Mul(Half(), sin(Mul(Symbol(x),
+    Symbol(y))))_(0,)"; "Add(Mul(Half(), sin(Mul(Symbol(x), Symbol(y)))), Mul(NegativeOne(),
+    Pow(Symbol(x), Integer(2))), Pow(Symbol(y), NegativeOne()))_()" -> "Mul(NegativeOne(),
+    Pow(Symbol(x), Integer(2)))_(1,)"; }'
 - en: This expression reveals some interesting things about SymPy expression trees.
     Let’s go through them one by one.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个表达式揭示了一些关于 SymPy 表达树的有趣事情。让我们逐一了解它们。
 - en: Let’s first look at the term `x**2`. As we expected, we see `Pow(x, 2)`. One
     level up, we see we have `Mul(-1, Pow(x, 2))`. There is no subtraction class in
     SymPy. `x - y` is represented as `x + -y`, or, more completely, `x + -1*y`, i.e.,
     `Add(x, Mul(-1, y))`.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: '-   让我们首先看看 `x**2` 项。正如我们预期的那样，我们看到 `Pow(x, 2)`。再上一层，我们有 `Mul(-1, Pow(x, 2))`。在
+    SymPy 中没有减法类。`x - y` 被表示为 `x + -y`，或者更完整地说，`x + -1*y`，即 `Add(x, Mul(-1, y))`。'
 - en: '[PRE11]'
+  id: totrans-34
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'digraph{ # Graph style "rankdir"="TD" ######### # Nodes # ######### "Symbol(x)_(1,)"
     ["color"="black", "label"="Symbol(''x'')", "shape"="ellipse"]; "Symbol(y)_(0,
     1)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "NegativeOne()_(0,
@@ -187,17 +312,33 @@
     1)"; "Mul(NegativeOne(), Symbol(y))_(0,)" -> "NegativeOne()_(0, 0)"; "Add(Mul(NegativeOne(),
     Symbol(y)), Symbol(x))_()" -> "Symbol(x)_(1,)"; "Add(Mul(NegativeOne(), Symbol(y)),
     Symbol(x))_()" -> "Mul(NegativeOne(), Symbol(y))_(0,)"; }'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 'digraph{ # 图形样式 "rankdir"="TD" ######### # 节点 # ######### "Symbol(x)_(1,)"
+    ["color"="black", "label"="Symbol(''x'')", "shape"="ellipse"]; "Symbol(y)_(0,
+    1)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "NegativeOne()_(0,
+    0)" ["color"="black", "label"="Integer(-1)", "shape"="ellipse"]; "Mul(NegativeOne(),
+    Symbol(y))_(0,)" ["color"="black", "label"="Mul", "shape"="ellipse"]; "Add(Mul(NegativeOne(),
+    Symbol(y)), Symbol(x))_()" ["color"="black", "label"="Add", "shape"="ellipse"];
+    ######### # 边 # ######### "Mul(NegativeOne(), Symbol(y))_(0,)" -> "Symbol(y)_(0,
+    1)"; "Mul(NegativeOne(), Symbol(y))_(0,)" -> "NegativeOne()_(0, 0)"; "Add(Mul(NegativeOne(),
+    Symbol(y)), Symbol(x))_()" -> "Symbol(x)_(1,)"; "Add(Mul(NegativeOne(), Symbol(y)),
+    Symbol(x))_()" -> "Mul(NegativeOne(), Symbol(y))_(0,)"; }'
 - en: Next, look at `1/y`. We might expect to see something like `Div(1, y)`, but
     similar to subtraction, there is no class in SymPy for division. Rather, division
     is represented by a power of -1\. Hence, we have `Pow(y, -1)`. What if we had
     divided something other than 1 by `y`, like `x/y`? Let’s see.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: '-   接下来，看看 `1/y`。我们可能期望看到类似 `Div(1, y)` 的东西，但类似于减法，在 SymPy 中没有除法类。相反，除法被表示为
+    `-1` 的幂。因此，我们有 `Pow(y, -1)`。如果我们将其他东西除以 `y` 而不是 `1`，例如 `x/y`，让我们看看。'
 - en: '[PRE12]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'digraph{ # Graph style "rankdir"="TD" ######### # Nodes # ######### "Symbol(x)_(0,)"
     ["color"="black", "label"="Symbol(''x'')", "shape"="ellipse"]; "Symbol(y)_(1,
     0)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "NegativeOne()_(1,
@@ -208,26 +349,46 @@
     0)"; "Pow(Symbol(y), NegativeOne())_(1,)" -> "NegativeOne()_(1, 1)"; "Mul(Symbol(x),
     Pow(Symbol(y), NegativeOne()))_()" -> "Symbol(x)_(0,)"; "Mul(Symbol(x), Pow(Symbol(y),
     NegativeOne()))_()" -> "Pow(Symbol(y), NegativeOne())_(1,)"; }'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 'digraph{ # 图形样式 "rankdir"="TD" ######### # 节点 # ######### "Symbol(x)_(0,)"
+    ["color"="black", "label"="Symbol(''x'')", "shape"="ellipse"]; "Symbol(y)_(1,
+    0)" ["color"="black", "label"="Symbol(''y'')", "shape"="ellipse"]; "NegativeOne()_(1,
+    1)" ["color"="black", "label"="Integer(-1)", "shape"="ellipse"]; "Pow(Symbol(y),
+    NegativeOne())_(1,)" ["color"="black", "label"="Pow", "shape"="ellipse"]; "Mul(Symbol(x),
+    Pow(Symbol(y), NegativeOne()))_()" ["color"="black", "label"="Mul", "shape"="ellipse"];
+    ######### # 边 # ######### "Pow(Symbol(y), NegativeOne())_(1,)" -> "Symbol(y)_(1,
+    0)"; "Pow(Symbol(y), NegativeOne())_(1,)" -> "NegativeOne()_(1, 1)"; "Mul(Symbol(x),
+    Pow(Symbol(y), NegativeOne()))_()" -> "Symbol(x)_(0,)"; "Mul(Symbol(x), Pow(Symbol(y),
+    NegativeOne()))_()" -> "Pow(Symbol(y), NegativeOne())_(1,)"; }'
 - en: We see that `x/y` is represented as `x*y**-1`, i.e., `Mul(x, Pow(y, -1))`.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: '-   我们看到 `x/y` 被表示为 `x*y**-1`，即 `Mul(x, Pow(y, -1))`。'
 - en: Finally, let’s look at the `sin(x*y)/2` term. Following the pattern of the previous
     example, we might expect to see `Mul(sin(x*y), Pow(Integer(2), -1))`. But instead,
     we have `Mul(Rational(1, 2), sin(x*y))`. Rational numbers are always combined
     into a single term in a multiplication, so that when we divide by 2, it is represented
     as multiplying by 1/2.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: '-   最后，让我们看看 `sin(x*y)/2` 项。按照前面示例的模式，我们可能期望看到 `Mul(sin(x*y), Pow(Integer(2),
+    -1))`。但实际上，我们看到的是 `Mul(Rational(1, 2), sin(x*y))`。有理数总是组合成一个乘法项，因此当我们除以2时，表示为乘以1/2。'
 - en: Finally, one last note. You may have noticed that the order we entered our expression
     and the order that it came out from `srepr` or in the graph were different. You
     may have also noticed this phenomenon earlier in the tutorial. For example
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: '-   最后，还有一点要注意。您可能已经注意到，我们输入表达式的顺序和从 `srepr` 或图形中得到的顺序不同。您可能也在本教程的早些时候注意到了这种现象。例如'
 - en: '[PRE13]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: This because in SymPy, the arguments of the commutative operations `Add` and
     `Mul` are stored in an arbitrary (but consistent!) order, which is independent
     of the order inputted (if you’re worried about noncommutative multiplication,
@@ -235,253 +396,392 @@
     and the order of multiplication for noncommutative Symbols is kept the same as
     the input). Furthermore, as we shall see in the next section, the printing order
     and the order in which things are stored internally need not be the same either.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是因为在 SymPy 中，交换操作 `Add` 和 `Mul` 的参数存储在任意（但一致！）的顺序中，这与输入的顺序无关（如果您担心非交换乘法，请放心。在
+    SymPy 中，您可以使用 `Symbol('A', commutative=False)` 创建非交换符号，并且非交换符号的乘法顺序与输入保持一致）。此外，正如我们将在下一节看到的那样，打印顺序和内部存储顺序也可能不同。
 - en: 'In general, an important thing to keep in mind when working with SymPy expression
     trees is this: the internal representation of an expression and the way it is
     printed need not be the same. The same is true for the input form. If some expression
     manipulation algorithm is not working in the way you expected it to, chances are,
     the internal representation of the object is different from what you thought it
     was.'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，在使用 SymPy 表达式树时需要记住的一件重要事情是：表达式的内部表示和打印方式可能不同。输入形式也是如此。如果某些表达式操作算法的工作方式与您预期的不同，很可能是对象的内部表示与您想象的不同。
 - en: Recursing through an Expression Tree
+  id: totrans-45
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 透过表达式树进行递归
 - en: Now that you know how expression trees work in SymPy, let’s look at how to dig
     our way through an expression tree. Every object in SymPy has two very important
     attributes, `func`, and `args`.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在您知道了 SymPy 中表达式树的工作方式，让我们看看如何通过表达式树深入了解它。SymPy 中的每个对象都有两个非常重要的属性，`func` 和
+    `args`。
 - en: func
+  id: totrans-47
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: func
 - en: '`func` is the head of the object. For example, `(x*y).func` is `Mul`. Usually
     it is the same as the class of the object (though there are exceptions to this
     rule).'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: '`func` 是对象的头部。例如，`(x*y).func` 是 `Mul`。通常它与对象的类相同（尽管有例外）。'
 - en: Two notes about `func`. First, the class of an object need not be the same as
     the one used to create it. For example
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关 `func` 的两个注意事项。首先，对象的类不一定与用于创建它的类相同。例如
 - en: '[PRE14]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: We created `Add(x, x)`, so we might expect `expr.func` to be `Add`, but instead
     we got `Mul`. Why is that? Let’s take a closer look at `expr`.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们创建了 `Add(x, x)`，所以我们可能期望 `expr.func` 是 `Add`，但实际上我们得到的是 `Mul`。为什么呢？让我们仔细看一下
+    `expr`。
 - en: '[PRE15]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: '`Add(x, x)`, i.e., `x + x`, was automatically converted into `Mul(2, x)`, i.e.,
     `2*x`, which is a `Mul`. SymPy classes make heavy use of the `__new__` class constructor,
     which, unlike `__init__`, allows a different class to be returned from the constructor.'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Add(x, x)`，即 `x + x`，自动转换为 `Mul(2, x)`，即 `2*x`，这是一个 `Mul`。SymPy 类大量使用 `__new__`
+    类构造函数，与 `__init__` 不同，它允许从构造函数返回不同的类。'
 - en: Second, some classes are special-cased, usually for efficiency reasons [[3]](#singleton-fn).
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 其次，一些类是特例，通常出于效率原因[[3]](#singleton-fn)。
 - en: '[PRE16]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: For the most part, these issues will not bother us. The special classes `Zero`,
     `One`, `NegativeOne`, and so on are subclasses of `Integer`, so as long as you
     use `isinstance`, it will not be an issue.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数情况下，这些问题不会困扰我们。特殊类 `Zero`、`One`、`NegativeOne` 等都是 `Integer` 的子类，因此只要使用 `isinstance`，这不会成为问题。
 - en: args
+  id: totrans-57
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: args
 - en: '`args` are the top-level arguments of the object. `(x*y).args` would be `(x,
     y)`. Let’s look at some examples'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '`args` 是对象的顶层参数。`(x*y).args` 将是 `(x, y)`。让我们看一些例子'
 - en: '[PRE17]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: From this, we can see that `expr == Mul(3, y**2, x)`. In fact, we can see that
     we can completely reconstruct `expr` from its `func` and its `args`.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 从这里，我们可以看到 `expr == Mul(3, y**2, x)`。事实上，我们可以完全通过其 `func` 和 `args` 重新构建 `expr`。
 - en: '[PRE18]'
+  id: totrans-61
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Note that although we entered `3*y**2*x`, the `args` are `(3, x, y**2)`. In
     a `Mul`, the Rational coefficient will come first in the `args`, but other than
     that, the order of everything else follows no special pattern. To be sure, though,
     there is an order.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意虽然我们输入了 `3*y**2*x`，但 `args` 是 `(3, x, y**2)`。在 `Mul` 中，有理数系数将首先出现在 `args`
+    中，但除此之外，其他所有顺序都没有特殊模式。但可以肯定的是，有一个顺序。
 - en: '[PRE19]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Mul’s `args` are sorted, so that the same `Mul` will have the same `args`. But
     the sorting is based on some criteria designed to make the sorting unique and
     efficient that has no mathematical significance.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Mul` 的 `args` 是排序的，因此相同的 `Mul` 将具有相同的 `args`。但是排序是基于一些旨在使排序唯一和有效的标准，没有数学意义。'
 - en: The `srepr` form of our `expr` is `Mul(3, x, Pow(y, 2))`. What if we want to
     get at the `args` of `Pow(y, 2)`. Notice that the `y**2` is in the third slot
     of `expr.args`, i.e., `expr.args[2]`.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的 `expr` 的 `srepr` 形式是 `Mul(3, x, Pow(y, 2))`。如果我们想要获取 `Pow(y, 2)` 的 `args`，请注意
+    `y**2` 在 `expr.args` 的第三个位置，即 `expr.args[2]`。
 - en: '[PRE20]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: So to get the `args` of this, we call `expr.args[2].args`.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，要获取这个的 `args`，我们调用 `expr.args[2].args`。
 - en: '[PRE21]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: Now what if we try to go deeper. What are the args of `y`. Or `2`. Let’s see.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在如果我们尝试更深入地查看。`y` 的参数是什么。或者 `2` 的。我们来看看。
 - en: '[PRE22]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: They both have empty `args`. In SymPy, empty `args` signal that we have hit
     a leaf of the expression tree.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 他们两者都具有空的 `args`。在 SymPy 中，空的 `args` 表示我们已经到达了表达式树的叶子。
 - en: So there are two possibilities for a SymPy expression. Either it has empty `args`,
     in which case it is a leaf node in any expression tree, or it has `args`, in which
     case, it is a branch node of any expression tree. When it has `args`, it can be
     completely rebuilt from its `func` and its `args`. This is expressed in the key
     invariant.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，SymPy 表达式有两种可能性。要么它具有空的 `args`，在这种情况下，它是任何表达式树中的叶子节点，要么它具有 `args`，在这种情况下，它是任何表达式树中的分支节点。当它具有
+    `args` 时，可以完全从其 `func` 和 `args` 重建它。这体现了关键不变量。
 - en: (Recall that in Python if `a` is a tuple, then `f(*a)` means to call `f` with
     arguments from the elements of `a`, e.g., `f(*(1, 2, 3))` is the same as `f(1,
     2, 3)`.)
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: （回想一下，在 Python 中，如果 `a` 是一个元组，那么 `f(*a)` 表示用元组 `a` 中的元素调用 `f`，例如，`f(*(1, 2,
+    3))` 等同于 `f(1, 2, 3)`。）
 - en: This key invariant allows us to write simple algorithms that walk expression
     trees, change them, and rebuild them into new expressions.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 这一关键不变量使我们能够编写简单的算法来遍历表达式树，修改它们，并将它们重建为新的表达式。
 - en: Walking the Tree
+  id: totrans-75
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 遍历树
 - en: With this knowledge, let’s look at how we can recurse through an expression
     tree. The nested nature of `args` is a perfect fit for recursive functions. The
     base case will be empty `args`. Let’s write a simple function that goes through
     an expression and prints all the `args` at each level.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 有了这些知识，让我们看看如何通过表达式树进行递归。`args` 的嵌套特性非常适合递归函数。基本情况将是空的 `args`。让我们编写一个简单的函数，它可以遍历表达式并在每个级别打印所有的
+    `args`。
 - en: '[PRE23]'
+  id: totrans-77
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: See how nice it is that `()` signals leaves in the expression tree. We don’t
     even have to write a base case for our recursion; it is handled automatically
     by the for loop.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 看到 `()` 如何在表达式树中表示叶子节点，我们甚至不必为递归编写基本情况；它会被 `for` 循环自动处理。
 - en: Let’s test our function.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们测试我们的函数。
 - en: '[PRE24]'
+  id: totrans-80
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Can you guess why we called our function `pre`? We just wrote a pre-order traversal
     function for our expression tree. See if you can write a post-order traversal
     function.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 你能猜到我们为什么称呼我们的函数为 `pre` 吗？我们刚刚为我们的表达式树写了一个前序遍历函数。看看你能否编写一个后序遍历函数。
 - en: Such traversals are so common in SymPy that the generator functions `preorder_traversal`
     and `postorder_traversal` are provided to make such traversals easy. We could
     have also written our algorithm as
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 SymPy 中，这种遍历非常常见，提供了生成器函数 `preorder_traversal` 和 `postorder_traversal` 来简化这种遍历过程。我们也可以将我们的算法编写为
 - en: '[PRE25]'
+  id: totrans-83
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Prevent expression evaluation
+  id: totrans-84
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 防止表达式求值
 - en: There are generally two ways to prevent the evaluation, either pass an `evaluate=False`
     parameter while constructing the expression, or create an evaluation stopper by
     wrapping the expression with `UnevaluatedExpr`.
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常有两种方法可以防止表达式求值，一种是在构建表达式时传递 `evaluate=False` 参数，另一种是通过将表达式包装在 `UnevaluatedExpr`
+    中创建一个停止求值。
 - en: 'For example:'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如：
 - en: '[PRE26]'
+  id: totrans-87
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'If you don’t remember the class corresponding to the expression you want to
     build (operator overloading usually assumes `evaluate=True`), just use `sympify`
     and pass a string:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您不记得要构建的表达式对应的类（通常假设 `evaluate=True`），只需使用 `sympify` 并传递一个字符串：
 - en: '[PRE27]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'Note that `evaluate=False` won’t prevent future evaluation in later usages
     of the expression:'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，`evaluate=False` 不会防止在后续使用表达式时进行求值：
 - en: '[PRE28]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'That’s why the class `UnevaluatedExpr` comes handy. `UnevaluatedExpr` is a
     method provided by SymPy which lets the user keep an expression unevaluated. By
     *unevaluated* it is meant that the value inside of it will not interact with the
     expressions outside of it to give simplified outputs. For example:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 这就是为什么 `UnevaluatedExpr` 类很方便。`UnevaluatedExpr` 是 SymPy 提供的一种方法，允许用户保持表达式未求值。通过
+    *未求值* 意味着其中的值不会与外部表达式交互以提供简化的输出。例如：
 - en: '[PRE29]'
+  id: totrans-93
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'The \(x\) remaining alone is the \(x\) wrapped by `UnevaluatedExpr`. To release
     it:'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 保持独立的 `x` 是由 `UnevaluatedExpr` 包裹的 `x`。要释放它：
 - en: '[PRE30]'
+  id: totrans-95
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'Other examples:'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 其他例子：
 - en: '[PRE31]'
+  id: totrans-97
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'A point to be noted is that `UnevaluatedExpr` cannot prevent the evaluation
     of an expression which is given as argument. For example:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 值得注意的是，`UnevaluatedExpr` 无法阻止作为参数给出的表达式的评估。例如：
 - en: '[PRE32]'
+  id: totrans-99
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Remember that `expr2` will be evaluated if included into another expression.
     Combine both of the methods to prevent both inside and outside evaluations:'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 记住，如果将 `expr2` 包含到另一个表达式中，它将被评估。结合这两种方法可以同时阻止内部和外部的评估：
 - en: '[PRE33]'
+  id: totrans-101
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: '`UnevaluatedExpr` is supported by SymPy printers and can be used to print the
     result in different output forms. For example'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: '`UnevaluatedExpr` 受 SymPy 打印机支持，并可用于以不同的输出形式打印结果。例如'
 - en: '[PRE34]'
+  id: totrans-103
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'In order to release the expression and get the evaluated LaTeX form, just use
     `.doit()`:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 要释放表达式并获得评估后的 LaTeX 形式，只需使用 `.doit()`：
 - en: '[PRE35]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: Footnotes
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 脚注

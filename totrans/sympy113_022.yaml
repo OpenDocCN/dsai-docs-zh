@@ -1,44 +1,67 @@
 - en: Symbolic and fuzzy booleans
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 符号与模糊布尔
 - en: 原文：[https://docs.sympy.org/latest/guides/booleans.html](https://docs.sympy.org/latest/guides/booleans.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://docs.sympy.org/latest/guides/booleans.html](https://docs.sympy.org/latest/guides/booleans.html)
 - en: This page describes what a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") in SymPy is and also how that relates to three-valued
     fuzzy-bools that are used in many parts of SymPy. It also discusses some common
     problems that arise when writing code that uses three-valued logic and how to
     handle them correctly.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 本页描述了 SymPy 中符号化 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 的含义，以及它与用于 SymPy 许多部分的三值模糊布尔的关系。还讨论了在编写使用三值逻辑的代码时可能出现的一些常见问题，以及如何正确处理它们。
 - en: Symbolic Boolean vs three valued bool
+  id: totrans-3
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 符号布尔与三值布尔
 - en: Assumptions queries like `x.ispositive` give fuzzy-bool `True`, `False` or `None`
     results [[1]](#fuzzy). These are low-level Python objects rather than SymPy’s
     symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean")
     expressions.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 像 `x.ispositive` 这样的假设查询会给出三值模糊布尔的 `True`、`False` 或 `None` 结果 [[1]](#fuzzy)。这些是低级别的
+    Python 对象，而不是 SymPy 的符号化 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 表达式。
 - en: '[PRE0]'
+  id: totrans-5
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: A `None` result as a fuzzy-bool should be interpreted as meaning “maybe” or
     “unknown”.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为三值模糊布尔的 `None` 结果应该解释为“可能”或“未知”。
 - en: 'An example of a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") class in SymPy can be found when using inequalities.
     When an inequality is not known to be true or false a [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") can represent indeterminate results symbolically:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 SymPy 中，可以在不等式中找到一个符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 类。当不等式不能确定为真或假时，[`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 可以以符号方式表示不确定的结果：
 - en: '[PRE1]'
+  id: totrans-8
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'The last example shows what happens when an inequality is indeterminate: we
     get an instance of [`StrictGreaterThan`](../modules/core.html#sympy.core.relational.StrictGreaterThan
     "sympy.core.relational.StrictGreaterThan") which represents the inequality as
@@ -47,59 +70,97 @@
     or `False` then SymPy’s symbolic `S.true` or `S.false` will be returned. If the
     result is `None` then an unevaluated [`StrictGreaterThan`](../modules/core.html#sympy.core.relational.StrictGreaterThan
     "sympy.core.relational.StrictGreaterThan") is returned as shown for `x > 0` above.'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后一个例子显示了当不等式不确定时会发生什么：我们得到一个 [`StrictGreaterThan`](../modules/core.html#sympy.core.relational.StrictGreaterThan
+    "sympy.core.relational.StrictGreaterThan") 的实例，它表示不等式作为一个符号表达式。内部当尝试评估像 `a > b`
+    这样的不等式时，SymPy 将计算 `(a - b).is_extended_positive`。如果结果是 `True` 或 `False`，则会返回 SymPy
+    的符号 `S.true` 或 `S.false`。如果结果是 `None`，则会返回一个未求值的 [`StrictGreaterThan`](../modules/core.html#sympy.core.relational.StrictGreaterThan
+    "sympy.core.relational.StrictGreaterThan")，如上面的 `x > 0` 所示。
 - en: 'It is not obvious that queries like `xpos > 0` return `S.true` rather than
     `True` because both objects display in the same way but we can check this using
     the Python `is` operator:'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 并不明显，像 `xpos > 0` 这样的查询返回的是 `S.true` 而不是 `True`，因为这两个对象在显示上相同，但我们可以使用 Python
+    的 `is` 运算符来验证：
 - en: '[PRE2]'
+  id: totrans-11
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'There is no general symbolic analogue of `None` in SymPy. In the cases where
     a low-level assumptions query gives `None` the symbolic query will result in an
     unevaluated symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") (e.g, `x > 0`). We can use a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") as part of a symbolic expression such as a [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
     "sympy.functions.elementary.piecewise.Piecewise"):'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 SymPy 中，没有 `None` 的通用符号类似物。在低级别的假设查询中返回 `None` 的情况下，符号查询将导致一个未求值的符号化 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") （例如，`x > 0`）。我们可以将符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 用作符号表达式的一部分，如 [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
+    "sympy.functions.elementary.piecewise.Piecewise")：
 - en: '[PRE3]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Here `p` represents an expression that will be equal to `1` if `x > 0` or otherwise
     it will be equal to `2`. The unevaluated [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") inequality `x > 0` represents the condition for
     deciding the value of the expression symbolically. When we substitute a value
     for `x` the inequality will resolve to `S.true` and then the [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
     "sympy.functions.elementary.piecewise.Piecewise") can evaluate to `1` or `2`.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里 `p` 表示一个表达式，如果 `x > 0` 则等于 `1`，否则将等于 `2`。未评估的 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 不等式 `x > 0` 表示决定符号表达式值的条件。当我们为 `x` 替换一个值时，不等式将解析为
+    `S.true`，然后 [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
+    "sympy.functions.elementary.piecewise.Piecewise") 可以评估为 `1` 或 `2`。
 - en: 'The same will not work when using a fuzzy-bool instead of a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean"):'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 当使用模糊布尔值而不是符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 时，同样不起作用：
 - en: '[PRE4]'
+  id: totrans-16
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: The [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
     "sympy.functions.elementary.piecewise.Piecewise") can not use `None` as the condition
     because unlike the inequality `x > 0` it gives no information. With the inequality
     it is possible to decide in future if the condition might `True` or `False` once
     a value for `x` is known. A value of `None` can not be used in that way so it
     is rejected.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
+    "sympy.functions.elementary.piecewise.Piecewise") 不能将 `None` 用作条件，因为与不等式 `x >
+    0` 不同，它没有提供任何信息。使用不等式时可以在将来决定条件是否可能为 `True` 或 `False`，一旦知道 `x` 的值。`None` 的值不能以这种方式使用，因此被拒绝。'
 - en: Note
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: We can use `True` in the [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
     "sympy.functions.elementary.piecewise.Piecewise") because `True` sympifies to
     `S.true`. Sympifying `None` just gives `None` again which is not a valid symbolic
     SymPy object.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以在 [`Piecewise`](../modules/functions/elementary.html#sympy.functions.elementary.piecewise.Piecewise
+    "sympy.functions.elementary.piecewise.Piecewise") 中使用 `True`，因为 `True` sympifies
+    为 `S.true`。将 `None` sympify 只会再次得到 `None`，这不是一个有效的符号 SymPy 对象。
 - en: 'There are many other symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") types in SymPy. The same considerations about the
     differences between fuzzy bool and symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
@@ -107,164 +168,251 @@
     "sympy.logic.boolalg.Boolean") types. To give a different example there is [`Contains`](../modules/sets.html#sympy.sets.conditionset.Contains
     "sympy.sets.conditionset.Contains") which represents the statement that an object
     is contained in a set:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: SymPy 中有许多其他符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 类型。关于模糊布尔值和符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 之间的差异的同样考虑适用于所有其他 SymPy [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 类型。举一个不同的例子，有 [`Contains`](../modules/sets.html#sympy.sets.conditionset.Contains
+    "sympy.sets.conditionset.Contains")，它表示对象包含在集合中的陈述：
 - en: '[PRE5]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'The Python operator corresponding to [`Contains`](../modules/sets.html#sympy.sets.conditionset.Contains
     "sympy.sets.conditionset.Contains") is `in`. A quirk of `in` is that it can only
     evaluate to a `bool` (`True` or `False`) so if the result is indeterminate then
     an exception will be raised:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 对应于 [`Contains`](../modules/sets.html#sympy.sets.conditionset.Contains "sympy.sets.conditionset.Contains")
+    的 Python 操作符是 `in`。`in` 的一个怪异之处在于它只能评估为 `bool`（`True` 或 `False`），所以如果结果是不确定的，则会引发异常：
 - en: '[PRE6]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: The exception can be avoided by using `Contains(x, Reals)` or `Reals.contains(x)`
     rather than `x in Reals`.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过使用 `Contains(x, Reals)` 或 `Reals.contains(x)` 而不是 `x in Reals` 来避免异常。
 - en: Three-valued logic with fuzzy bools
+  id: totrans-25
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用模糊布尔值的三值逻辑
 - en: Whether we use the fuzzy-bool or symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") we always need to be aware of the possibility that
     a query might be indeterminate. How to write code that handles this is different
     in the two cases though. We will look at fuzzy-bools first.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 无论我们使用模糊布尔值还是符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean")，我们始终需要意识到查询可能是不确定的。如何编写处理此问题的代码在两种情况下是不同的。我们先看看模糊布尔值。
 - en: 'Consider the following function:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑以下函数：
 - en: '[PRE7]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'The `both_positive` function is supposed to tell us whether or not `a` and
     `b` are both positive. However the `both_positive` function will fail if either
     of the `is_positive` queries gives `None`:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: '`both_positive`函数应告诉我们`a`和`b`是否都是正数。然而，如果任何一个`is_positive`查询返回`None`，`both_positive`函数将失败：'
 - en: '[PRE8]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Note
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: We need to sympify the arguments to this function using `S` because the assumptions
     are only defined on SymPy objects and not regular Python `int` objects.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要使用`S`对这个函数的参数进行符号化，因为假设仅在SymPy对象上定义，而不是普通的Python `int`对象上定义。
 - en: Here `False` is incorrect because it is *possible* that `x` is positive in which
     case both arguments would be positive. We get `False` here because `x.is_positive`
     gives `None` and Python will treat `None` as “falsey”.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，`False`是不正确的，因为*可能*`x`是正数，此时两个参数都可能是正数。我们得到`False`是因为`x.is_positive`返回`None`，Python会将`None`视为“假值”。
 - en: 'In order to handle all possible cases correctly we need to separate the logic
     for identifying the `True` and `False` cases. An improved function might be:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了正确处理所有可能情况，我们需要分开识别`True`和`False`情况的逻辑。一个改进的函数可能是：
 - en: '[PRE9]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'This function now can handle all cases of `True`, `False` or `None` for both
     `a` and `b` and will always return a fuzzy bool representing whether the statement
     “`a` and `b` are both positive” is true, false or unknown:'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个函数现在可以处理所有情况的`True`、`False`或`None`，对于`a`和`b`都是如此，并且总是返回一个模糊布尔值，表示语句“`a`和`b`都是正数”是真、假还是未知：
 - en: '[PRE10]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'Another case that we need to be careful of when using fuzzy-bools is negation
     with Python’s `not` operator e.g.:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用模糊布尔值时需要小心的另一种情况是与Python的`not`运算符的否定，例如：
 - en: '[PRE11]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'The correct negation of a fuzzy bool `None` is `None` again. If we do not know
     whether the statement “`x` is positive” is `True` or `False` then we also do not
     know whether its negation “`x` is not positive” is `True` or `False`. The reason
     we get `True` instead is again because `None` is considered “falsey”. When `None`
     is used with a logical operator such as `not` it will first be converted to a
     `bool` and then negated:'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 模糊布尔值`None`的正确否定再次是`None`。如果我们不知道语句“`x`是正数”是`True`还是`False`，那么我们也不知道其否定“`x`不是正数”是`True`还是`False`。之所以会得到`True`，是因为`None`被视为“假值”。当`None`与诸如`not`这样的逻辑运算符一起使用时，它首先会转换为`bool`，然后再取反：
 - en: '[PRE12]'
+  id: totrans-41
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: The fact that `None` is treated as falsey can be useful if used correctly. For
     example we may want to do something only if `x` is known to positive in which
     case we can do
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 当`None`被视为假值时，如果使用正确，这一点是有用的。例如，如果我们只想在`x`被认为是正数的情况下执行某些操作，我们可以这样做：
 - en: '[PRE13]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Provided we understand that an alternate condition branch refers to two cases
     (`False` and `None`) then this can be a useful way of writing conditionals. When
     we really do need to distinguish all cases then we need to use things like `x.is_positive
     is False`. What we need to be careful of though is using Python’s binary logic
     operators like `not` or `and` with fuzzy bools as they will not handle the indeterminate
     case correctly.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 只要我们理解备用条件分支指的是两种情况（`False`和`None`），这种写法可以是编写条件语句的一个有用方式。当我们确实需要区分所有情况时，我们需要使用诸如`x.is_positive
+    is False`之类的语句。但需要注意的是，当使用Python的二进制逻辑运算符如`not`或`and`处理模糊布尔值时，它们不能正确处理不定情况。
 - en: 'In fact SymPy has internal functions that are designed to handle fuzzy-bools
     correctly:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际上，SymPy有内部函数专门设计用于正确处理模糊布尔值：
 - en: '[PRE14]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'Using the `fuzzy_and` function we can write the `both_positive` function more
     simply:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`fuzzy_and`函数，我们可以更简单地编写`both_positive`函数：
 - en: '[PRE15]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Making use of `fuzzy_and`, `fuzzy_or` and `fuzzy_not` leads to simpler code
     and can also reduce the chance of introducing a logic error because the code can
     look more like it would in the case of ordinary binary logic.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 利用`fuzzy_and`、`fuzzy_or`和`fuzzy_not`编写更简洁的代码不仅可以减少逻辑错误的可能性，还可以使代码看起来更像普通二进制逻辑的情况。
 - en: Three-valued logic with symbolic Booleans
+  id: totrans-50
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 三值逻辑与符号布尔值
 - en: When working with symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") rather than fuzzy-bool the issue of `None` silently
     being treated as falsey does not arise so it is easier not to end up with a logic
     error. However instead the indeterminate case will often lead to an exception
     being raised if not handled carefully.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 在使用符号[`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean")而不是模糊布尔值时，`None`被隐式视为假值的问题不会出现，因此如果不小心处理，不会出现逻辑错误。然而，代之以不定情况通常会导致异常被抛出，如果不小心处理的话。
 - en: 'We will try to implement the `both_positive` function this time using symbolic
     [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean"):'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 这次我们将尝试使用符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean")
+    实现 `both_positive` 函数：
 - en: '[PRE16]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: The first difference is that we return the symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") objects `S.true` and `S.false` rather than `True`
     and `False`. The second difference is that we test e.g. `a > 0` rather than `a.is_positive`.
     Trying this out we get
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个区别是，我们返回符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 对象 `S.true` 和 `S.false` 而不是 `True` 和 `False`。第二个区别是，我们测试例如
+    `a > 0` 而不是 `a.is_positive`。尝试这样做我们得到
 - en: '[PRE17]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: What happens now is that testing `x > 0` gives an exception when `x` is not
     known to be positive or not positive. More precisely `x > 0` does not give an
     exception but `if x > 0` does and that is because the `if` statement implicitly
     calls `bool(x > 0)` which raises.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在的情况是，当 `x` 不知道是否为正数或非正数时，测试 `x > 0` 会引发异常。更准确地说，`x > 0` 不会引发异常，但是 `if x >
+    0` 会，这是因为 `if` 语句隐式调用 `bool(x > 0)`，而后者会引发异常。
 - en: '[PRE18]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: The Python expression `x > 0` creates a SymPy [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean"). Since in this case the [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") can not evaluate to `True` or `False` we get an
@@ -273,8 +421,14 @@
     with `bool(x > 0)` raises an exception. That is because a regular Python `bool`
     must be either `True` or `False` and neither of those are known to be correct
     in this case.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: Python 表达式 `x > 0` 创建了一个 SymPy [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean")。因为在这种情况下，[`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 不能评估为 `True` 或 `False`，所以我们得到了一个未评估的 [`StrictGreaterThan`](../modules/core.html#sympy.core.relational.StrictGreaterThan
+    "sympy.core.relational.StrictGreaterThan")。试图强制转换为 `bool` 类型，即 `bool(x > 0)` 会引发异常。这是因为普通的
+    Python `bool` 类型必须是 `True` 或 `False`，而在这种情况下，这两者都不确定是正确的。
 - en: 'The same kind of issue arises when using `and`, `or` or `not` with symbolic
     [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean").
     The solution is to use SymPy’s symbolic [`And`](../modules/logic.html#sympy.logic.boolalg.And
@@ -282,54 +436,88 @@
     "sympy.logic.boolalg.Or") and [`Not`](../modules/logic.html#sympy.logic.boolalg.Not
     "sympy.logic.boolalg.Not") or equivalently Python’s bitwise logical operators
     `&`, `|` and `~`:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 当使用符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean")
+    与 `and`、`or` 或 `not` 时会出现相同类型的问题。解决方案是使用 SymPy 的符号 [`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And")、[`Or`](../modules/logic.html#sympy.logic.boolalg.Or
+    "sympy.logic.boolalg.Or") 和 [`Not`](../modules/logic.html#sympy.logic.boolalg.Not
+    "sympy.logic.boolalg.Not") 或者等效的 Python 位逻辑运算符 `&`、`|` 和 `~`：
 - en: '[PRE19]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'As before we can make a better version of `both_positive` if we avoid directly
     using a SymPy [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean")
     in an `if`, `and`, `or`, or `not`. Instead we can test whether or not the [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") has evaluated to `S.true` or `S.false`:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前所述，如果避免直接在 `if`、`and`、`or` 或 `not` 中使用 SymPy 的符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean")，我们可以创建一个更好的 `both_positive` 版本，而是测试 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean") 是否评估为 `S.true` 或 `S.false`：
 - en: '[PRE20]'
+  id: totrans-62
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'Now with this version we don’t get any exceptions and if the result is indeterminate
     we will get a symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") representing the conditions under which the statement
     “`a` and `b` are both positive” would be true:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，使用这个版本，我们不会得到任何异常，如果结果是不确定的，我们将得到一个表示语句“`a` 和 `b` 都是正数”的符号 [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
+    "sympy.logic.boolalg.Boolean")：
 - en: '[PRE21]'
+  id: totrans-64
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: The last case shows that actually using the [`And`](../modules/logic.html#sympy.logic.boolalg.And
     "sympy.logic.boolalg.And") with a condition that is known to be true simplifies
     the [`And`](../modules/logic.html#sympy.logic.boolalg.And "sympy.logic.boolalg.And").
     In fact we have
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后一个案例显示，实际上使用已知为真的条件与 [`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And") 简化了 [`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And")。实际上我们有
 - en: '[PRE22]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'What this means is that we can improve `both_positive_better`. The different
     cases are not needed at all. Instead we can simply return the [`And`](../modules/logic.html#sympy.logic.boolalg.And
     "sympy.logic.boolalg.And") and let it simplify if possible:'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着我们可以改进`both_positive_better`。所有不同情况都是不必要的。我们可以简单地返回[`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And")，并让它在可能的情况下简化：
 - en: '[PRE23]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Now this will work with any symbolic real objects and produce a symbolic result.
     We can also substitute into the result to see how it would work for particular
     values:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在这将适用于任何符号实对象，并产生一个符号结果。我们还可以替换结果，看看它如何适用于特定值：
 - en: '[PRE24]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: The idea when working with symbolic [`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean
     "sympy.logic.boolalg.Boolean") objects is as much as possible to avoid trying
     to branch on them with `if/else` and other logical operators like `and` etc. Instead
@@ -338,8 +526,15 @@
     "sympy.logic.boolalg.And"), [`Or`](../modules/logic.html#sympy.logic.boolalg.Or
     "sympy.logic.boolalg.Or") and [`Not`](../modules/logic.html#sympy.logic.boolalg.Not
     "sympy.logic.boolalg.Not") can then take care of the logic for you.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 当处理符号[`Boolean`](../modules/logic.html#sympy.logic.boolalg.Boolean "sympy.logic.boolalg.Boolean")对象时，最好尽可能避免尝试使用`if/else`和其他逻辑运算符如`and`等进行分支。相反，考虑计算条件并将其作为变量传递。基本的符号操作如[`And`](../modules/logic.html#sympy.logic.boolalg.And
+    "sympy.logic.boolalg.And")、[`Or`](../modules/logic.html#sympy.logic.boolalg.Or
+    "sympy.logic.boolalg.Or")和[`Not`](../modules/logic.html#sympy.logic.boolalg.Not
+    "sympy.logic.boolalg.Not")可以为您处理逻辑。
 - en: Footnotes
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 脚注
