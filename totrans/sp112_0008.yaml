@@ -1,11 +1,15 @@
 - en: Signal Processing (scipy.signal)
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 信号处理（scipy.signal）
 - en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/tutorial/signal.html](https://docs.scipy.org/doc/scipy-1.12.0/tutorial/signal.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/tutorial/signal.html](https://docs.scipy.org/doc/scipy-1.12.0/tutorial/signal.html)
 - en: The signal processing toolbox currently contains some filtering functions, a
     limited set of filter design tools, and a few B-spline interpolation algorithms
     for 1- and 2-D data. While the B-spline algorithms could technically be placed
@@ -14,74 +18,113 @@
     formalism to provide a fast B-spline transform. To understand this section, you
     will need to understand that a signal in SciPy is an array of real or complex
     numbers.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 信号处理工具箱目前包含一些滤波函数，有限的滤波器设计工具集，以及一些用于一维和二维数据的B-样条插值算法。虽然B-样条算法技术上可以归类为插值类别，但它们包含在此处是因为它们仅适用于等间距数据，并且广泛利用滤波理论和传递函数形式学来提供快速的B-样条变换。要理解本节，您需要理解SciPy中信号是实数或复数数组。
 - en: '## B-splines'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: '## B-样条'
 - en: A B-spline is an approximation of a continuous function over a finite- domain
     in terms of B-spline coefficients and knot points. If the knot- points are equally
     spaced with spacing \(\Delta x\), then the B-spline approximation to a 1-D function
     is the finite-basis expansion.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: B-样条是在有限区间内以B-样条系数和结点点的形式对连续函数的近似。如果结点点等间距，间距为 \(\Delta x\)，那么对一维函数的B-样条近似是有限基函数展开。
 - en: \[y\left(x\right)\approx\sum_{j}c_{j}\beta^{o}\left(\frac{x}{\Delta x}-j\right).\]
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: \[y\left(x\right)\approx\sum_{j}c_{j}\beta^{o}\left(\frac{x}{\Delta x}-j\right).\]
 - en: In two dimensions with knot-spacing \(\Delta x\) and \(\Delta y\), the function
     representation is
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 在结点间距 \(\Delta x\) 和 \(\Delta y\) 的二维情况下，函数表示为
 - en: \[z\left(x,y\right)\approx\sum_{j}\sum_{k}c_{jk}\beta^{o}\left(\frac{x}{\Delta
     x}-j\right)\beta^{o}\left(\frac{y}{\Delta y}-k\right).\]
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: \[z\left(x,y\right)\approx\sum_{j}\sum_{k}c_{jk}\beta^{o}\left(\frac{x}{\Delta
+    x}-j\right)\beta^{o}\left(\frac{y}{\Delta y}-k\right).\]
 - en: In these expressions, \(\beta^{o}\left(\cdot\right)\) is the space-limited B-spline
     basis function of order \(o\). The requirement of equally-spaced knot-points and
     equally-spaced data points, allows the development of fast (inverse-filtering)
     algorithms for determining the coefficients, \(c_{j}\), from sample-values, \(y_{n}\).
     Unlike the general spline interpolation algorithms, these algorithms can quickly
     find the spline coefficients for large images.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这些表达式中，\(\beta^{o}\left(\cdot\right)\) 是阶数为 \(o\) 的空间限制B-样条基函数。等间距结点和等间距数据点的要求，允许从样本值
+    \(y_{n}\) 中相对轻松地计算系数 \(c_{j}\) 的快速（逆滤波）算法。与一般样条插值算法不同，这些算法可以快速找到大图像的样条系数。
 - en: The advantage of representing a set of samples via B-spline basis functions
     is that continuous-domain operators (derivatives, re- sampling, integral, etc.),
     which assume that the data samples are drawn from an underlying continuous function,
     can be computed with relative ease from the spline coefficients. For example,
     the second derivative of a spline is
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过B-样条基函数表示一组样本的优势在于，可以相对轻松地从样条系数中计算连续域操作（导数、重采样、积分等）。例如，样条的二阶导数是
 - en: \[y{}^{\prime\prime}\left(x\right)=\frac{1}{\Delta x^{2}}\sum_{j}c_{j}\beta^{o\prime\prime}\left(\frac{x}{\Delta
     x}-j\right).\]
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: \[y{}^{\prime\prime}\left(x\right)=\frac{1}{\Delta x^{2}}\sum_{j}c_{j}\beta^{o\prime\prime}\left(\frac{x}{\Delta
+    x}-j\right).\]
 - en: Using the property of B-splines that
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 利用B-样条的性质，
 - en: \[\frac{d^{2}\beta^{o}\left(w\right)}{dw^{2}}=\beta^{o-2}\left(w+1\right)-2\beta^{o-2}\left(w\right)+\beta^{o-2}\left(w-1\right),\]
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\frac{d^{2}\beta^{o}\left(w\right)}{dw^{2}}=\beta^{o-2}\left(w+1\right)-2\beta^{o-2}\left(w\right)+\beta^{o-2}\left(w-1\right),\]
 - en: it can be seen that
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以看出
 - en: \[y^{\prime\prime}\left(x\right)=\frac{1}{\Delta x^{2}}\sum_{j}c_{j}\left[\beta^{o-2}\left(\frac{x}{\Delta
     x}-j+1\right)-2\beta^{o-2}\left(\frac{x}{\Delta x}-j\right)+\beta^{o-2}\left(\frac{x}{\Delta
     x}-j-1\right)\right].\]
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: \[y^{\prime\prime}\left(x\right)=\frac{1}{\Delta x^{2}}\sum_{j}c_{j}\left[\beta^{o-2}\left(\frac{x}{\Delta
+    x}-j+1\right)-2\beta^{o-2}\left(\frac{x}{\Delta x}-j\right)+\beta^{o-2}\left(\frac{x}{\Delta
+    x}-j-1\right)\right].\]
 - en: 'If \(o=3\), then at the sample points:'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 \(o=3\)，则在采样点：
 - en: \begin{eqnarray*} \Delta x^{2}\left.y^{\prime}\left(x\right)\right|_{x=n\Delta
     x} & = & \sum_{j}c_{j}\delta_{n-j+1}-2c_{j}\delta_{n-j}+c_{j}\delta_{n-j-1},\\
     & = & c_{n+1}-2c_{n}+c_{n-1}.\end{eqnarray*}
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: \begin{eqnarray*} \Delta x^{2}\left.y^{\prime}\left(x\right)\right|_{x=n\Delta
+    x} & = & \sum_{j}c_{j}\delta_{n-j+1}-2c_{j}\delta_{n-j}+c_{j}\delta_{n-j-1},\\
+    & = & c_{n+1}-2c_{n}+c_{n-1}.\end{eqnarray*}
 - en: Thus, the second-derivative signal can be easily calculated from the spline
     fit. If desired, smoothing splines can be found to make the second derivative
     less sensitive to random errors.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，可以轻松地从样条拟合中计算出二阶导数信号。如果需要，可以找到平滑样条，使得二阶导数对随机误差不太敏感。
 - en: The savvy reader will have already noticed that the data samples are related
     to the knot coefficients via a convolution operator, so that simple convolution
     with the sampled B-spline function recovers the original data from the spline
@@ -91,8 +134,10 @@
     subpackage assume mirror-symmetric boundary conditions. Thus, spline coefficients
     are computed based on that assumption, and data-samples can be recovered exactly
     from the spline coefficients by assuming them to be mirror-symmetric also.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 精明的读者可能已经注意到，数据样本通过卷积算子与结节系数相关联，因此，简单地使用采样的B样条函数进行卷积可以从样条系数中恢复原始数据。卷积的输出可以根据边界处理方式而改变（随着数据集维度的增加，这一点变得越来越重要）。信号处理子包中关于B样条的算法假定镜像对称边界条件。因此，基于该假设计算样条系数，并且通过假设它们也是镜像对称的，可以精确地从样条系数中恢复数据样本。
 - en: 'Currently the package provides functions for determining second- and third-
     order cubic spline coefficients from equally-spaced samples in one and two dimensions
     ([`qspline1d`](../reference/generated/scipy.signal.qspline1d.html#scipy.signal.qspline1d
@@ -102,11 +147,20 @@
     "scipy.signal.cspline2d")). For large \(o\), the B-spline basis function can be
     approximated well by a zero-mean Gaussian function with standard-deviation equal
     to \(\sigma_{o}=\left(o+1\right)/12\) :'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 目前，该包提供了在一维和二维等间距样本中确定二阶和三阶立方样条系数的函数（[`qspline1d`](../reference/generated/scipy.signal.qspline1d.html#scipy.signal.qspline1d
+    "scipy.signal.qspline1d"), [`qspline2d`](../reference/generated/scipy.signal.qspline2d.html#scipy.signal.qspline2d
+    "scipy.signal.qspline2d"), [`cspline1d`](../reference/generated/scipy.signal.cspline1d.html#scipy.signal.cspline1d
+    "scipy.signal.cspline1d"), [`cspline2d`](../reference/generated/scipy.signal.cspline2d.html#scipy.signal.cspline2d
+    "scipy.signal.cspline2d"))。对于较大的 \(o\)，B样条基函数可以很好地近似为标准偏差为 \(\sigma_{o}=\left(o+1\right)/12\)
+    的零均值高斯函数：
 - en: \[\beta^{o}\left(x\right)\approx\frac{1}{\sqrt{2\pi\sigma_{o}^{2}}}\exp\left(-\frac{x^{2}}{2\sigma_{o}}\right).\]
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\beta^{o}\left(x\right)\approx\frac{1}{\sqrt{2\pi\sigma_{o}^{2}}}\exp\left(-\frac{x^{2}}{2\sigma_{o}}\right).\]
 - en: A function to compute this Gaussian for arbitrary \(x\) and \(o\) is also available
     ( [`gauss_spline`](../reference/generated/scipy.signal.gauss_spline.html#scipy.signal.gauss_spline
     "scipy.signal.gauss_spline") ). The following code and figure use spline-filtering
@@ -118,42 +172,73 @@
     for reconstructing samples from spline coefficients and is faster than [`convolve2d`](../reference/generated/scipy.signal.convolve2d.html#scipy.signal.convolve2d
     "scipy.signal.convolve2d"), which convolves arbitrary 2-D filters and allows for
     choosing mirror-symmetric boundary conditions.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 可用于任意 \(x\) 和 \(o\) 计算该高斯函数的函数为 [`gauss_spline`](../reference/generated/scipy.signal.gauss_spline.html#scipy.signal.gauss_spline
+    "scipy.signal.gauss_spline") 。以下代码和图像使用样条滤波计算浣熊面部的边缘图像（平滑样条的二阶导数），浣熊面部是通过命令 [`scipy.datasets.face`](../reference/generated/scipy.datasets.face.html#scipy.datasets.face
+    "scipy.datasets.face") 返回的数组。命令 [`sepfir2d`](../reference/generated/scipy.signal.sepfir2d.html#scipy.signal.sepfir2d
+    "scipy.signal.sepfir2d") 用于应用具有镜像对称边界条件的可分离2-D FIR滤波器到样条系数。该函数非常适合从样条系数中重建样本，并且比
+    [`convolve2d`](../reference/generated/scipy.signal.convolve2d.html#scipy.signal.convolve2d
+    "scipy.signal.convolve2d") 更快，后者可以卷积任意2-D滤波器并允许选择镜像对称边界条件。
 - en: '[PRE0]'
+  id: totrans-22
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '[PRE1]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Alternatively, we could have done:'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者，我们可以这样做：
 - en: '[PRE2]'
+  id: totrans-25
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: '[PRE3]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: '!["This code displays two plots. The first plot is a normal grayscale photo
     of a raccoon climbing on a palm plant. The second plot has the 2-D spline filter
     applied to the photo and is completely grey except the edges of the photo have
     been emphasized, especially on the raccoon fur and palm fronds."](../Images/6afce5c3a77c44be51837f10c7459f44.png)'
+  id: totrans-27
   prefs: []
   type: TYPE_IMG
+  zh: '!["This code displays two plots. The first plot is a normal grayscale photo
+    of a raccoon climbing on a palm plant. The second plot has the 2-D spline filter
+    applied to the photo and is completely grey except the edges of the photo have
+    been emphasized, especially on the raccoon fur and palm fronds."](../Images/6afce5c3a77c44be51837f10c7459f44.png)'
 - en: '[PRE4]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: '!["This code displays two plots. The first plot is a normal grayscale photo
     of a raccoon climbing on a palm plant. The second plot has the 2-D spline filter
     applied to the photo and is completely grey except the edges of the photo have
     been emphasized, especially on the raccoon fur and palm fronds."](../Images/2d7bb4e70d091dce966908ca963a5b43.png)'
+  id: totrans-29
   prefs: []
   type: TYPE_IMG
+  zh: '!["This code displays two plots. The first plot is a normal grayscale photo
+    of a raccoon climbing on a palm plant. The second plot has the 2-D spline filter
+    applied to the photo and is completely grey except the edges of the photo have
+    been emphasized, especially on the raccoon fur and palm fronds."](../Images/2d7bb4e70d091dce966908ca963a5b43.png)'
 - en: Filtering
+  id: totrans-30
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 过滤
 - en: 'Filtering is a generic name for any system that modifies an input signal in
     some way. In SciPy, a signal can be thought of as a NumPy array. There are different
     kinds of filters for different kinds of operations. There are two broad kinds
@@ -167,40 +252,61 @@
     elements. At 4 bytes per element this would require \(256\textrm{GB}\) of memory.
     In most applications, most of the elements of this matrix are zero and a different
     method for computing the output of the filter is employed.'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 过滤是修改输入信号的任何系统的通用名称。在 SciPy 中，信号可以被看作是一个 NumPy 数组。有不同类型的滤波器用于不同类型的操作。有两种广泛的滤波操作：线性和非线性。线性滤波器总是可以简化为通过适当矩阵的乘积来实现另一个扁平化的
+    NumPy 数组。当然，这通常不是计算滤波器的最佳方式，因为涉及的矩阵和向量可能非常庞大。例如，使用这种方法对 \(512 \times 512\) 图像进行滤波将需要将
+    \(512^2 \times 512^2\) 矩阵与 \(512^2\) 向量相乘。仅尝试使用标准 NumPy 数组存储 \(512^2 \times 512^2\)
+    矩阵将需要 \(68,719,476,736\) 个元素。每个元素占 4 字节，这将需要 \(256\textrm{GB}\) 内存。在大多数应用中，该矩阵的大多数元素为零，并且采用了不同的方法来计算滤波器的输出。
 - en: Convolution/Correlation
+  id: totrans-32
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 卷积/相关
 - en: Many linear filters also have the property of shift-invariance. This means that
     the filtering operation is the same at different locations in the signal and it
     implies that the filtering matrix can be constructed from knowledge of one row
     (or column) of the matrix alone. In this case, the matrix multiplication can be
     accomplished using Fourier transforms.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多线性滤波器还具有平移不变性的特性。这意味着滤波操作在信号的不同位置上是相同的，并且这意味着可以仅从矩阵的一行（或列）的知识构造滤波矩阵。在这种情况下，可以使用傅里叶变换来实现矩阵乘法。
 - en: Let \(x\left[n\right]\) define a 1-D signal indexed by the integer \(n.\) Full
     convolution of two 1-D signals can be expressed as
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 让 \(x\left[n\right]\) 定义为以整数 \(n\) 为索引的一维信号。两个一维信号的完全卷积可以表示为
 - en: \[y\left[n\right]=\sum_{k=-\infty}^{\infty}x\left[k\right]h\left[n-k\right].\]
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: \[y\left[n\right]=\sum_{k=-\infty}^{\infty}x\left[k\right]h\left[n-k\right].\]
 - en: This equation can only be implemented directly if we limit the sequences to
     finite-support sequences that can be stored in a computer, choose \(n=0\) to be
     the starting point of both sequences, let \(K+1\) be that value for which \(x\left[n\right]=0\)
     for all \(n\geq K+1\) and \(M+1\) be that value for which \(h\left[n\right]=0\)
     for all \(n\geq M+1\), then the discrete convolution expression is
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 只有在我们将序列限制为可以存储在计算机中的有限支持序列时，才能直接实现此方程。选择 \(n=0\) 作为两个序列的起始点，让 \(K+1\) 是使得对所有
+    \(n\geq K+1\) 有 \(x\left[n\right]=0\) 的值，\(M+1\) 是使得对所有 \(n\geq M+1\) 有 \(h\left[n\right]=0\)
+    的值，那么离散卷积表达式为
 - en: \[y\left[n\right]=\sum_{k=\max\left(n-M,0\right)}^{\min\left(n,K\right)}x\left[k\right]h\left[n-k\right].\]
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: \[y\left[n\right]=\sum_{k=\max\left(n-M,0\right)}^{\min\left(n,K\right)}x\left[k\right]h\left[n-k\right].\]
 - en: For convenience, assume \(K\geq M.\) Then, more explicitly, the output of this
     operation is
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了方便起见，假设 \(K\geq M.\) 那么，更明确地，此操作的输出是
 - en: \begin{eqnarray*} y\left[0\right] & = & x\left[0\right]h\left[0\right]\\ y\left[1\right]
     & = & x\left[0\right]h\left[1\right]+x\left[1\right]h\left[0\right]\\ y\left[2\right]
     & = & x\left[0\right]h\left[2\right]+x\left[1\right]h\left[1\right]+x\left[2\right]h\left[0\right]\\
@@ -210,17 +316,32 @@
     y\left[K+1\right] & = & x\left[K+1-M\right]h\left[M\right]+\cdots+x\left[K\right]h\left[1\right]\\
     \vdots & \vdots & \vdots\\ y\left[K+M-1\right] & = & x\left[K-1\right]h\left[M\right]+x\left[K\right]h\left[M-1\right]\\
     y\left[K+M\right] & = & x\left[K\right]h\left[M\right].\end{eqnarray*}
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: \begin{eqnarray*} y\left[0\right] & = & x\left[0\right]h\left[0\right]\\ y\left[1\right]
+    & = & x\left[0\right]h\left[1\right]+x\left[1\right]h\left[0\right]\\ y\left[2\right]
+    & = & x\left[0\right]h\left[2\right]+x\left[1\right]h\left[1\right]+x\left[2\right]h\left[0\right]\\
+    \vdots & \vdots & \vdots\\ y\left[M\right] & = & x\left[0\right]h\left[M\right]+x\left[1\right]h\left[M-1\right]+\cdots+x\left[M\right]h\left[0\right]\\
+    y\left[M+1\right] & = & x\left[1\right]h\left[M\right]+x\left[2\right]h\left[M-1\right]+\cdots+x\left[M+1\right]h\left[0\right]\\
+    \vdots & \vdots & \vdots\\ y\left[K\right] & = & x\left[K-M\right]h\left[M\right]+\cdots+x\left[K\right]h\left[0\right]\\
+    y\left[K+1\right] & = & x\left[K+1-M\right]h\left[M\right]+\cdots+x\left[K\right]h\left[1\right]\\
+    \vdots & \vdots & \vdots\\ y\left[K+M-1\right] & = & x\left[K-1\right]h\left[M\right]+x\left[K\right]h\left[M-1\right]\\
+    y\left[K+M\right] & = & x\left[K\right]h\left[M\right].\end{eqnarray*}
 - en: Thus, the full discrete convolution of two finite sequences of lengths \(K+1\)
     and \(M+1\), respectively, results in a finite sequence of length \(K+M+1=\left(K+1\right)+\left(M+1\right)-1.\)
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，两个长度分别为\(K+1\)和\(M+1\)的有限序列的完全离散卷积结果是一个长度为\(K+M+1=\left(K+1\right)+\left(M+1\right)-1\)的有限序列。
 - en: 1-D convolution is implemented in SciPy with the function [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
     "scipy.signal.convolve"). This function takes as inputs the signals \(x,\) \(h\),
     and two optional flags ‘mode’ and ‘method’, and returns the signal \(y.\)
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: SciPy中实现了1-D卷积，使用函数[`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
+    "scipy.signal.convolve")。此函数接受信号\(x\)、\(h\)和两个可选标志‘mode’和‘method’作为输入，并返回信号\(y\)。
 - en: The first optional flag, ‘mode’, allows for the specification of which part
     of the output signal to return. The default value of ‘full’ returns the entire
     signal. If the flag has a value of ‘same’, then only the middle \(K\) values are
@@ -230,8 +351,11 @@
     output values are returned, where \(z\) depends on all of the values of the smallest
     input from \(h\left[0\right]\) to \(h\left[M\right].\) In other words, only the
     values \(y\left[M\right]\) to \(y\left[K\right]\) inclusive are returned.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个可选标志‘mode’允许指定要返回的输出信号的哪个部分。默认值‘full’返回整个信号。如果标志的值为‘same’，则只返回长度与第一个输入相同的中间\(K\)个值，从\(y\left[\left\lfloor
+    \frac{M-1}{2}\right\rfloor \right]\)开始。如果标志的值为‘valid’，则只返回中间\(K-M+1=\left(K+1\right)-\left(M+1\right)+1\)个输出值，其中\(z\)取决于从\(h\left[0\right]\)到\(h\left[M\right]\)的最小输入的所有值。换句话说，只返回\(y\left[M\right]\)到\(y\left[K\right]\)（含）的值。
 - en: The second optional flag, ‘method’, determines how the convolution is computed,
     either through the Fourier transform approach with [`fftconvolve`](../reference/generated/scipy.signal.fftconvolve.html#scipy.signal.fftconvolve
     "scipy.signal.fftconvolve") or through the direct method. By default, it selects
@@ -240,42 +364,64 @@
     and the value of \(N\), one of these two methods may be faster. The default value,
     ‘auto’, performs a rough calculation and chooses the expected faster method, while
     the values ‘direct’ and ‘fft’ force computation with the other two methods.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 第二个可选标志‘method’确定如何计算卷积，可以通过傅里叶变换方法使用[`fftconvolve`](../reference/generated/scipy.signal.fftconvolve.html#scipy.signal.fftconvolve
+    "scipy.signal.fftconvolve")或直接方法。默认情况下，选择预期较快的方法。傅里叶变换方法的时间复杂度为\(O(N\log N)\)，而直接方法的时间复杂度为\(O(N^2)\)。根据大O常数和\(N\)的值，其中一种方法可能更快。默认值‘auto’执行粗略计算并选择预期较快的方法，而值‘direct’和‘fft’则强制使用另外两种方法计算。
 - en: 'The code below shows a simple example for convolution of 2 sequences:'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的代码展示了两个序列的卷积的简单示例：
 - en: '[PRE5]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: This same function [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
     "scipy.signal.convolve") can actually take N-D arrays as inputs and will return
     the N-D convolution of the two arrays, as is shown in the code example below.
     The same input flags are available for that case as well.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个相同的函数[`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
+    "scipy.signal.convolve")实际上可以接受N-D数组作为输入，并返回两个数组的N-D卷积，如下面的代码示例所示。对于这种情况，相同的输入标志也是可用的。
 - en: '[PRE6]'
+  id: totrans-47
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Correlation is very similar to convolution except that the minus sign becomes
     a plus sign. Thus,
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 相关性非常类似于卷积，只是减号变为加号。因此，
 - en: \[w\left[n\right]=\sum_{k=-\infty}^{\infty}y\left[k\right]x\left[n+k\right],\]
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: \[w\left[n\right]=\sum_{k=-\infty}^{\infty}y\left[k\right]x\left[n+k\right],\]
 - en: is the (cross) correlation of the signals \(y\) and \(x.\) For finite-length
     signals with \(y\left[n\right]=0\) outside of the range \(\left[0,K\right]\) and
     \(x\left[n\right]=0\) outside of the range \(\left[0,M\right],\) the summation
     can simplify to
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 是信号\(y\)和\(x\)的(交)相关性。对于长度有限的信号，其中\(y\left[n\right]=0\)超出范围\(\left[0,K\right]\)，\(x\left[n\right]=0\)超出范围\(\left[0,M\right]\)，求和可以简化为
 - en: \[w\left[n\right]=\sum_{k=\max\left(0,-n\right)}^{\min\left(K,M-n\right)}y\left[k\right]x\left[n+k\right].\]
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: \[w\left[n\right]=\sum_{k=\max\left(0,-n\right)}^{\min\left(K,M-n\right)}y\left[k\right]x\left[n+k\right].\]
 - en: Assuming again that \(K\geq M\), this is
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 再次假设\(K\geq M\)，这是
 - en: \begin{eqnarray*} w\left[-K\right] & = & y\left[K\right]x\left[0\right]\\ w\left[-K+1\right]
     & = & y\left[K-1\right]x\left[0\right]+y\left[K\right]x\left[1\right]\\ \vdots
     & \vdots & \vdots\\ w\left[M-K\right] & = & y\left[K-M\right]x\left[0\right]+y\left[K-M+1\right]x\left[1\right]+\cdots+y\left[K\right]x\left[M\right]\\
@@ -286,8 +432,19 @@
     w\left[2\right] & = & y\left[0\right]x\left[2\right]+y\left[1\right]x\left[3\right]+\cdots+y\left[M-2\right]x\left[M\right]\\
     \vdots & \vdots & \vdots\\ w\left[M-1\right] & = & y\left[0\right]x\left[M-1\right]+y\left[1\right]x\left[M\right]\\
     w\left[M\right] & = & y\left[0\right]x\left[M\right].\end{eqnarray*}
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: \begin{eqnarray*} w\left[-K\right] & = & y\left[K\right]x\left[0\right]\\ w\left[-K+1\right]
+    & = & y\left[K-1\right]x\left[0\right]+y\left[K\right]x\left[1\right]\\ \vdots
+    & \vdots & \vdots\\ w\left[M-K\right] & = & y\left[K-M\right]x\left[0\right]+y\left[K-M+1\right]x\left[1\right]+\cdots+y\left[K\right]x\left[M\right]\\
+    w\left[M-K+1\right] & = & y\left[K-M-1\right]x\left[0\right]+\cdots+y\left[K-1\right]x\left[M\right]\\
+    \vdots & \vdots & \vdots\\ w\left[-1\right] & = & y\left[1\right]x\left[0\right]+y\left[2\right]x\left[1\right]+\cdots+y\left[M+1\right]x\left[M\right]\\
+    w\left[0\right] & = & y\left[0\right]x\left[0\right]+y\left[1\right]x\left[1\right]+\cdots+y\left[M\right]x\left[M\right]\\
+    w\left[1\right] & = & y\left[0\right]x\left[1\right]+y\left[1\right]x\left[2\right]+\cdots+y\left[M-1\right]x\left[M\right]\\
+    w\left[2\right] & = & y\left[0\right]x\left[2\right]+y\left[1\right]x\left[3\right]+\cdots+y\left[M-2\right]x\left[M\right]\\
+    \vdots & \vdots & \vdots\\ w\left[M-1\right] & = & y\left[0\right]x\left[M-1\right]+y\left[1\right]x\left[M\right]\\
+    w\left[M\right] & = & y\left[0\right]x\left[M\right].\end{eqnarray*}
 - en: The SciPy function [`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
     "scipy.signal.correlate") implements this operation. Equivalent flags are available
     for this operation to return the full \(K+M+1\) length sequence (‘full’) or a
@@ -295,43 +452,66 @@
     \frac{M-1}{2}\right\rfloor \right]\) (‘same’) or a sequence where the values depend
     on all the values of the smallest sequence (‘valid’). This final option returns
     the \(K-M+1\) values \(w\left[M-K\right]\) to \(w\left[0\right]\) inclusive.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: SciPy函数[`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
+    "scipy.signal.correlate")实现了这个操作。同样的标志也适用于此操作，以返回完整的\(K+M+1\)长度序列（‘full’），或一个从\(w\left[-K+\left\lfloor
+    \frac{M-1}{2}\right\rfloor \right]\)开始大小相同的序列（‘same’），或一个值取决于最小序列所有值的序列（‘valid’）。最后一种选项返回从\(w\left[M-K\right]\)到\(w\left[0\right]\)（包括）的\(K-M+1\)个值。
 - en: The function [`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
     "scipy.signal.correlate") can also take arbitrary N-D arrays as input and return
     the N-D convolution of the two arrays on output.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数[`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
+    "scipy.signal.correlate")还可以接受任意的N-D数组作为输入，并返回两个数组的N-D卷积。
 - en: When \(N=2,\) [`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
     "scipy.signal.correlate") and/or [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
     "scipy.signal.convolve") can be used to construct arbitrary image filters to perform
     actions such as blurring, enhancing, and edge-detection for an image.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 当 \(N=2,\) 可以使用[`correlate`](../reference/generated/scipy.signal.correlate.html#scipy.signal.correlate
+    "scipy.signal.correlate") 和/或 [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
+    "scipy.signal.convolve") 构建任意图像滤波器，执行模糊化、增强和边缘检测等操作。
 - en: '[PRE7]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: '[PRE8]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '[PRE9]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: '!["This code displays two plots. The first plot is the familiar photo of a
     raccoon climbing on a palm. The second plot has the FIR filter applied and has
     the two copies of the photo superimposed due to the twin peaks manually set in
     the filter kernel definition."](../Images/a031ed887fc96d3573976234c0dfd09c.png)'
+  id: totrans-60
   prefs: []
   type: TYPE_IMG
+  zh: '!["此代码显示两个图。第一张图是熟悉的浣熊攀爬在棕榈树上的照片。第二张图应用了FIR滤波器，并且由于在滤波核定义中手动设置的双峰，照片被叠加显示了两份。"](../Images/a031ed887fc96d3573976234c0dfd09c.png)'
 - en: '[PRE10]'
+  id: totrans-61
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: '!["This code displays two plots. The first plot is the familiar photo of a
     raccoon climbing on a palm. The second plot has the FIR filter applied and has
     the two copies of the photo superimposed due to the twin peaks manually set in
     the filter kernel definition."](../Images/4b0f1c5eb2856c5db5187362206d3d41.png)'
+  id: totrans-62
   prefs: []
   type: TYPE_IMG
+  zh: '!["此代码显示两个图。第一张图是熟悉的浣熊攀爬在棕榈树上的照片。第二张图应用了FIR滤波器，并且由于在滤波核定义中手动设置的双峰，照片被叠加显示了两份。"](../Images/4b0f1c5eb2856c5db5187362206d3d41.png)'
 - en: Calculating the convolution in the time domain as above is mainly used for filtering
     when one of the signals is much smaller than the other ( \(K\gg M\) ), otherwise
     linear filtering is more efficiently calculated in the frequency domain provided
@@ -339,60 +519,95 @@
     "scipy.signal.fftconvolve"). By default, [`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
     "scipy.signal.convolve") estimates the fastest method using [`choose_conv_method`](../reference/generated/scipy.signal.choose_conv_method.html#scipy.signal.choose_conv_method
     "scipy.signal.choose_conv_method").
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 在时间域中计算卷积，通常用于当信号之一远小于另一个时进行滤波（ \(K\gg M\) ），否则提供由函数[`fftconvolve`](../reference/generated/scipy.signal.fftconvolve.html#scipy.signal.fftconvolve
+    "scipy.signal.fftconvolve") 提供的频域进行线性滤波计算更有效。默认情况下，[`convolve`](../reference/generated/scipy.signal.convolve.html#scipy.signal.convolve
+    "scipy.signal.convolve") 使用[`choose_conv_method`](../reference/generated/scipy.signal.choose_conv_method.html#scipy.signal.choose_conv_method
+    "scipy.signal.choose_conv_method") 估算最快的方法。
 - en: If the filter function \(w[n,m]\) can be factored according to
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果滤波函数 \(w[n,m]\) 可以按如下分解：
 - en: \[h[n, m] = h_1[n] h_2[m],\]
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: \[h[n, m] = h_1[n] h_2[m],\]
 - en: convolution can be calculated by means of the function [`sepfir2d`](../reference/generated/scipy.signal.sepfir2d.html#scipy.signal.sepfir2d
     "scipy.signal.sepfir2d"). As an example, we consider a Gaussian filter [`gaussian`](../reference/generated/scipy.signal.windows.gaussian.html#scipy.signal.windows.gaussian
     "scipy.signal.windows.gaussian")
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 卷积可以通过函数[`sepfir2d`](../reference/generated/scipy.signal.sepfir2d.html#scipy.signal.sepfir2d
+    "scipy.signal.sepfir2d") 计算。例如，我们考虑一个高斯滤波器[`gaussian`](../reference/generated/scipy.signal.windows.gaussian.html#scipy.signal.windows.gaussian
+    "scipy.signal.windows.gaussian")。
 - en: \[h[n, m] \propto e^{-x^2-y^2} = e^{-x^2} e^{-y^2},\]
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: \[h[n, m] \propto e^{-x^2-y^2} = e^{-x^2} e^{-y^2},\]
 - en: which is often used for blurring.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常用于模糊处理。
 - en: '[PRE11]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: '[PRE12]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '[PRE13]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: '!["This code displays two plots. The first plot is a grayscale photo of two
     people climbing a wooden staircase taken from below. The second plot has the 2-D
     gaussian FIR window applied and appears very blurry. You can still tell it''s
     a photo but the subject is ambiguous."](../Images/59bdee04f14114a099cb447b708f1ddc.png)'
+  id: totrans-72
   prefs: []
   type: TYPE_IMG
+  zh: '!["此代码显示两个图。第一张图是从下方拍摄的两人攀爬木楼梯的灰度照片。第二张图应用了2-D高斯FIR窗口，看起来非常模糊。你仍然可以看出这是一张照片，但主题不太明确。"](../Images/59bdee04f14114a099cb447b708f1ddc.png)'
 - en: '[PRE14]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: '!["This code displays two plots. The first plot is a grayscale photo of two
     people climbing a wooden staircase taken from below. The second plot has the 2-D
     gaussian FIR window applied and appears very blurry. You can still tell it''s
     a photo but the subject is ambiguous."](../Images/2c9cde3dce93eb73a57f57a70703af7f.png)'
+  id: totrans-74
   prefs: []
   type: TYPE_IMG
+  zh: '!["此代码显示两个图。第一张图是从下方拍摄的两人攀爬木楼梯的灰度照片。第二张图应用了2-D高斯FIR窗口，看起来非常模糊。你仍然可以看出这是一张照片，但主题不太明确。"](../Images/2c9cde3dce93eb73a57f57a70703af7f.png)'
 - en: Difference-equation filtering
+  id: totrans-75
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 差分方程滤波
 - en: A general class of linear 1-D filters (that includes convolution filters) are
     filters described by the difference equation
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 一般的线性1-D滤波器类（包括卷积滤波器）由差分方程描述。
 - en: \[\sum_{k=0}^{N}a_{k}y\left[n-k\right]=\sum_{k=0}^{M}b_{k}x\left[n-k\right],\]
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\sum_{k=0}^{N}a_{k}y\left[n-k\right]=\sum_{k=0}^{M}b_{k}x\left[n-k\right],\]
 - en: where \(x\left[n\right]\) is the input sequence and \(y\left[n\right]\) is the
     output sequence. If we assume initial rest so that \(y\left[n\right]=0\) for \(n<0\),
     then this kind of filter can be implemented using convolution. However, the convolution
@@ -400,36 +615,57 @@
     In addition, this general class of linear filter allows initial conditions to
     be placed on \(y\left[n\right]\) for \(n<0\) resulting in a filter that cannot
     be expressed using convolution.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 \(x\left[n\right]\) 是输入序列，\(y\left[n\right]\) 是输出序列。如果假定初始休息使得对于 \(n<0\)，\(y\left[n\right]=0\)，那么这种类型的滤波器可以使用卷积来实现。然而，如果
+    \(a_{k}\neq0\) 对于 \(k\geq1\)，则卷积滤波器序列 \(h\left[n\right]\) 可能是无限的。此外，这种一般的线性滤波器允许对
+    \(y\left[n\right]\) 的初始条件进行放置，以使得对于 \(n<0\) 的滤波器不能使用卷积来表示。
 - en: The difference equation filter can be thought of as finding \(y\left[n\right]\)
     recursively in terms of its previous values
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 差分方程滤波器可以被视为在前一个值的基础上递归地找到 \(y\left[n\right]\)。
 - en: \[a_{0}y\left[n\right]=-a_{1}y\left[n-1\right]-\cdots-a_{N}y\left[n-N\right]+\cdots+b_{0}x\left[n\right]+\cdots+b_{M}x\left[n-M\right].\]
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: \[a_{0}y\left[n\right]=-a_{1}y\left[n-1\right]-\cdots-a_{N}y\left[n-N\right]+\cdots+b_{0}x\left[n\right]+\cdots+b_{M}x\left[n-M\right].\]
 - en: 'Often, \(a_{0}=1\) is chosen for normalization. The implementation in SciPy
     of this general difference equation filter is a little more complicated than would
     be implied by the previous equation. It is implemented so that only one signal
     needs to be delayed. The actual implementation equations are (assuming \(a_{0}=1\)
     ):'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常情况下，选择 \(a_{0}=1\) 进行归一化。SciPy中这种一般差分方程滤波器的实现比前述方程复杂一些。实现方式是只需要延迟一个信号。实际的实现方程为（假设
+    \(a_{0}=1\) ）：
 - en: \begin{eqnarray*} y\left[n\right] & = & b_{0}x\left[n\right]+z_{0}\left[n-1\right]\\
     z_{0}\left[n\right] & = & b_{1}x\left[n\right]+z_{1}\left[n-1\right]-a_{1}y\left[n\right]\\
     z_{1}\left[n\right] & = & b_{2}x\left[n\right]+z_{2}\left[n-1\right]-a_{2}y\left[n\right]\\
     \vdots & \vdots & \vdots\\ z_{K-2}\left[n\right] & = & b_{K-1}x\left[n\right]+z_{K-1}\left[n-1\right]-a_{K-1}y\left[n\right]\\
     z_{K-1}\left[n\right] & = & b_{K}x\left[n\right]-a_{K}y\left[n\right],\end{eqnarray*}
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: \begin{eqnarray*} y\left[n\right] & = & b_{0}x\left[n\right]+z_{0}\left[n-1\right]\\
+    z_{0}\left[n\right] & = & b_{1}x\left[n\right]+z_{1}\left[n-1\right]-a_{1}y\left[n\right]\\
+    z_{1}\left[n\right] & = & b_{2}x\left[n\right]+z_{2}\left[n-1\right]-a_{2}y\left[n\right]\\
+    \vdots & \vdots & \vdots\\ z_{K-2}\left[n\right] & = & b_{K-1}x\left[n\right]+z_{K-1}\left[n-1\right]-a_{K-1}y\left[n\right]\\
+    z_{K-1}\left[n\right] & = & b_{K}x\left[n\right]-a_{K}y\left[n\right],\end{eqnarray*}
 - en: where \(K=\max\left(N,M\right).\) Note that \(b_{K}=0\) if \(K>M\) and \(a_{K}=0\)
     if \(K>N.\) In this way, the output at time \(n\) depends only on the input at
     time \(n\) and the value of \(z_{0}\) at the previous time. This can always be
     calculated as long as the \(K\) values \(z_{0}\left[n-1\right]\ldots z_{K-1}\left[n-1\right]\)
     are computed and stored at each time step.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里 \(K=\max\left(N,M\right)\)。注意，如果 \(K>M\) 则 \(b_{K}=0\)，如果 \(K>N\) 则 \(a_{K}=0\)。因此，输出在时间
+    \(n\) 只依赖于时间 \(n\) 的输入以及前一个时间的 \(z_{0}\) 的值。只要计算和存储每个时间步骤中的 \(K\) 值 \(z_{0}\left[n-1\right]\ldots
+    z_{K-1}\left[n-1\right]\)，就可以始终计算这些值。
 - en: The difference-equation filter is called using the command [`lfilter`](../reference/generated/scipy.signal.lfilter.html#scipy.signal.lfilter
     "scipy.signal.lfilter") in SciPy. This command takes as inputs the vector \(b,\)
     the vector, \(a,\) a signal \(x\) and returns the vector \(y\) (the same length
@@ -439,8 +675,13 @@
     or else it will be assumed that they are all zero. If initial conditions are provided,
     then the final conditions on the intermediate variables are also returned. These
     could be used, for example, to restart the calculation in the same state.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 在SciPy中，可以使用命令[`lfilter`](../reference/generated/scipy.signal.lfilter.html#scipy.signal.lfilter
+    "scipy.signal.lfilter")调用这种差分方程滤波器。该命令的输入为向量 \(b\)、向量 \(a\)、信号 \(x\)，并返回与上述方程计算出的长度相同的向量
+    \(y\)。如果 \(x\) 是 N-D，则沿提供的轴计算滤波器。如果需要，可以提供初始条件，以提供 \(z_{0}\left[-1\right]\) 到
+    \(z_{K-1}\left[-1\right]\) 的值，否则将假定它们全部为零。如果提供了初始条件，则中间变量的最终条件也会被返回。例如，这些条件可以用来在相同状态下重新启动计算。
 - en: Sometimes, it is more convenient to express the initial conditions in terms
     of the signals \(x\left[n\right]\) and \(y\left[n\right].\) In other words, perhaps
     you have the values of \(x\left[-M\right]\) to \(x\left[-1\right]\) and the values
@@ -448,415 +689,650 @@
     values of \(z_{m}\left[-1\right]\) should be delivered as initial conditions to
     the difference-equation filter. It is not difficult to show that, for \(0\leq
     m<K,\)
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时，用信号\(x\left[n\right]\)和\(y\left[n\right]\)来表达初始条件更加方便。换句话说，也许你有\(x\left[-M\right]\)到\(x\left[-1\right]\)的值和\(y\left[-N\right]\)到\(y\left[-1\right]\)的值，希望确定应该作为差分方程滤波器初始条件的\(z_{m}\left[-1\right]\)的值。不难证明，对于\(0\leq
+    m<K\)，
 - en: \[z_{m}\left[n\right]=\sum_{p=0}^{K-m-1}\left(b_{m+p+1}x\left[n-p\right]-a_{m+p+1}y\left[n-p\right]\right).\]
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: \[z_{m}\left[n\right]=\sum_{p=0}^{K-m-1}\left(b_{m+p+1}x\left[n-p\right]-a_{m+p+1}y\left[n-p\right]\right).\]
 - en: Using this formula, we can find the initial-condition vector \(z_{0}\left[-1\right]\)
     to \(z_{K-1}\left[-1\right]\) given initial conditions on \(y\) (and \(x\) ).
     The command [`lfiltic`](../reference/generated/scipy.signal.lfiltic.html#scipy.signal.lfiltic
     "scipy.signal.lfiltic") performs this function.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这个公式，我们可以找到给定\(y\)（和\(x\))的初始条件向量\(z_{0}\left[-1\right]\)到\(z_{K-1}\left[-1\right]\)。命令[`lfiltic`](../reference/generated/scipy.signal.lfiltic.html#scipy.signal.lfiltic
+    "scipy.signal.lfiltic")执行此功能。
 - en: 'As an example, consider the following system:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，考虑以下系统：
 - en: \[y[n] = \frac{1}{2} x[n] + \frac{1}{4} x[n-1] + \frac{1}{3} y[n-1]\]
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: \[y[n] = \frac{1}{2} x[n] + \frac{1}{4} x[n-1] + \frac{1}{3} y[n-1]\]
 - en: The code calculates the signal \(y[n]\) for a given signal \(x[n]\); first for
     initial conditions \(y[-1] = 0\) (default case), then for \(y[-1] = 2\) by means
     of [`lfiltic`](../reference/generated/scipy.signal.lfiltic.html#scipy.signal.lfiltic
     "scipy.signal.lfiltic").
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 该代码计算给定信号\(x[n]\)的信号\(y[n]\)；首先对于初始条件\(y[-1] = 0\)（默认情况），然后通过[`lfiltic`](../reference/generated/scipy.signal.lfiltic.html#scipy.signal.lfiltic
+    "scipy.signal.lfiltic")将其设置为\(y[-1] = 2\)。
 - en: '[PRE15]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: '[PRE16]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Note that the output signal \(y[n]\) has the same length as the length as the
     input signal \(x[n]\).
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，输出信号\(y[n]\)的长度与输入信号\(x[n]\)的长度相同。
 - en: Analysis of Linear Systems
+  id: totrans-94
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 线性系统分析
 - en: Linear system described a linear-difference equation can be fully described
     by the coefficient vectors \(a\) and \(b\) as was done above; an alternative representation
     is to provide a factor \(k\), \(N_z\) zeros \(z_k\) and \(N_p\) poles \(p_k\),
     respectively, to describe the system by means of its transfer function \(H(z)\),
     according to
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 描述线性差分方程的线性系统可以完全由上述系数向量\(a\)和\(b\)描述；另一种表示是通过其传递函数\(H(z)\)提供因子\(k\)、\(N_z\)个零点\(z_k\)和\(N_p\)个极点\(p_k\)。
 - en: \[H(z) = k \frac{ (z-z_1)(z-z_2)...(z-z_{N_z})}{ (z-p_1)(z-p_2)...(z-p_{N_p})}.\]
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: \[H(z) = k \frac{ (z-z_1)(z-z_2)...(z-z_{N_z})}{ (z-p_1)(z-p_2)...(z-p_{N_p})}.\]
 - en: This alternative representation can be obtained with the scipy function [`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
     "scipy.signal.tf2zpk"); the inverse is provided by [`zpk2tf`](../reference/generated/scipy.signal.zpk2tf.html#scipy.signal.zpk2tf
     "scipy.signal.zpk2tf").
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种替代表示可以通过SciPy函数[`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
+    "scipy.signal.tf2zpk")获得；逆操作由[`zpk2tf`](../reference/generated/scipy.signal.zpk2tf.html#scipy.signal.zpk2tf
+    "scipy.signal.zpk2tf")提供。
 - en: For the above example we have
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于上述例子，我们有
 - en: '[PRE17]'
+  id: totrans-99
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: i.e., the system has a zero at \(z=-1/2\) and a pole at \(z=1/3\).
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 即，该系统在\(z=-1/2\)处有一个零点，在\(z=1/3\)处有一个极点。
 - en: The scipy function [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
     "scipy.signal.freqz") allows calculation of the frequency response of a system
     described by the coefficients \(a_k\) and \(b_k\). See the help of the [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
     "scipy.signal.freqz") function for a comprehensive example.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: SciPy函数[`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
+    "scipy.signal.freqz")允许计算由系数\(a_k\)和\(b_k\)描述的系统的频率响应。查看[`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
+    "scipy.signal.freqz")函数的帮助以获取详细示例。
 - en: Filter Design
+  id: totrans-102
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 滤波器设计
 - en: Time-discrete filters can be classified into finite response (FIR) filters and
     infinite response (IIR) filters. FIR filters can provide a linear phase response,
     whereas IIR filters cannot. SciPy provides functions for designing both types
     of filters.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间离散滤波器可以分为有限响应（FIR）滤波器和无限响应（IIR）滤波器。FIR滤波器可以提供线性相位响应，而IIR滤波器则不能。SciPy提供了设计这两种类型滤波器的函数。
 - en: FIR Filter
+  id: totrans-104
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: FIR滤波器
 - en: The function [`firwin`](../reference/generated/scipy.signal.firwin.html#scipy.signal.firwin
     "scipy.signal.firwin") designs filters according to the window method. Depending
     on the provided arguments, the function returns different filter types (e.g.,
     low-pass, band-pass…).
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数 [`firwin`](../reference/generated/scipy.signal.firwin.html#scipy.signal.firwin
+    "scipy.signal.firwin") 根据窗口方法设计滤波器。根据提供的参数，函数返回不同类型的滤波器（如低通、带通等）。
 - en: The example below designs a low-pass and a band-stop filter, respectively.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的示例分别设计了低通和带阻滤波器。
 - en: '[PRE18]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: '[PRE19]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: '[PRE20]'
+  id: totrans-109
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: '!["This code displays an X-Y plot with the amplitude response on the Y axis
     vs frequency on the X axis. The first (low-pass) trace in blue starts with a pass-band
     at 0 dB and curves down around halfway through with some ripple in the stop-band
     about 80 dB down. The second (band-stop) trace in red starts and ends at 0 dB,
     but the middle third is down about 60 dB from the peak with some ripple where
     the filter would suppress a signal."](../Images/66ab465cd54eb94754df36204b24c4b0.png)'
+  id: totrans-110
   prefs: []
   type: TYPE_IMG
+  zh: '!["此代码显示了一个振幅响应在 Y 轴上 vs 频率在 X 轴上的 X-Y 图。第一个（低通）蓝色迹线从 0 dB 的通带开始，并在中途左右开始下降，阻带约下降
+    80 dB。第二个（带阻）红色迹线从 0 dB 开始并结束，但中间部分从峰值下降约 60 dB，滤波器会抑制信号时带有波动。"](../Images/66ab465cd54eb94754df36204b24c4b0.png)'
 - en: Note that [`firwin`](../reference/generated/scipy.signal.firwin.html#scipy.signal.firwin
     "scipy.signal.firwin") uses, per default, a normalized frequency defined such
     that the value \(1\) corresponds to the Nyquist frequency, whereas the function
     [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz "scipy.signal.freqz")
     is defined such that the value \(\pi\) corresponds to the Nyquist frequency.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意 [`firwin`](../reference/generated/scipy.signal.firwin.html#scipy.signal.firwin
+    "scipy.signal.firwin") 默认使用归一化频率，其中值 \(1\) 对应于 Nyquist 频率，而函数 [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
+    "scipy.signal.freqz") 定义为值 \(\pi\) 对应于 Nyquist 频率。
 - en: The function [`firwin2`](../reference/generated/scipy.signal.firwin2.html#scipy.signal.firwin2
     "scipy.signal.firwin2") allows design of almost arbitrary frequency responses
     by specifying an array of corner frequencies and corresponding gains, respectively.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数 [`firwin2`](../reference/generated/scipy.signal.firwin2.html#scipy.signal.firwin2
+    "scipy.signal.firwin2") 允许通过指定一组角频率和对应增益来设计几乎任意频率响应。
 - en: The example below designs a filter with such an arbitrary amplitude response.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的示例设计了一个具有任意振幅响应的滤波器。
 - en: '[PRE21]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: '[PRE22]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: '[PRE23]'
+  id: totrans-116
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: '!["This code displays an X-Y plot with amplitude response on the Y axis vs
     frequency on the X axis. A single trace forms a shape similar to a heartbeat signal."](../Images/b7567b74c92211d8eb58a2663a7bb2fa.png)'
+  id: totrans-117
   prefs: []
   type: TYPE_IMG
+  zh: '!["此代码显示了一个振幅响应在 Y 轴上 vs 频率在 X 轴上的 X-Y 图。单个迹线形状类似于心跳信号。"](../Images/b7567b74c92211d8eb58a2663a7bb2fa.png)'
 - en: Note the linear scaling of the y-axis and the different definition of the Nyquist
     frequency in [`firwin2`](../reference/generated/scipy.signal.firwin2.html#scipy.signal.firwin2
     "scipy.signal.firwin2") and [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
     "scipy.signal.freqz") (as explained above).
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意 [`firwin2`](../reference/generated/scipy.signal.firwin2.html#scipy.signal.firwin2
+    "scipy.signal.firwin2") 和 [`freqz`](../reference/generated/scipy.signal.freqz.html#scipy.signal.freqz
+    "scipy.signal.freqz") 的 y 轴的线性缩放以及 Nyquist 频率的不同定义（如上所述）。
 - en: IIR Filter
+  id: totrans-119
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: IIR 滤波器
 - en: SciPy provides two functions to directly design IIR [`iirdesign`](../reference/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign
     "scipy.signal.iirdesign") and [`iirfilter`](../reference/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter
     "scipy.signal.iirfilter"), where the filter type (e.g., elliptic) is passed as
     an argument and several more filter design functions for specific filter types,
     e.g., [`ellip`](../reference/generated/scipy.signal.ellip.html#scipy.signal.ellip
     "scipy.signal.ellip").
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: SciPy 提供了两个函数来直接设计 IIR 滤波器 [`iirdesign`](../reference/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign
+    "scipy.signal.iirdesign") 和 [`iirfilter`](../reference/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter
+    "scipy.signal.iirfilter")，其中滤波器类型（如椭圆）作为参数传递，并提供了几个特定类型滤波器设计函数，例如 [`ellip`](../reference/generated/scipy.signal.ellip.html#scipy.signal.ellip
+    "scipy.signal.ellip")。
 - en: The example below designs an elliptic low-pass filter with defined pass-band
     and stop-band ripple, respectively. Note the much lower filter order (order 4)
     compared with the FIR filters from the examples above in order to reach the same
     stop-band attenuation of \(\approx 60\) dB.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的示例设计了一个椭圆低通滤波器，并分别定义了通带和阻带波动。请注意，为了达到相同的阻带衰减（约 60 dB），滤波器阶数（4 阶）比上面示例中的 FIR
+    滤波器低得多。
 - en: '[PRE24]'
+  id: totrans-122
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '[PRE25]'
+  id: totrans-123
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: '[PRE26]'
+  id: totrans-124
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: '!["This code generates an X-Y plot with amplitude response on the Y axis vs
     Frequency on the X axis. A single trace shows a smooth low-pass filter with the
     left third passband near 0 dB. The right two-thirds are about 60 dB down with
     two sharp narrow valleys dipping down to -100 dB."](../Images/61983117829df044b63c4428667f34f3.png)'
+  id: totrans-125
   prefs: []
   type: TYPE_IMG
+  zh: '!["此代码生成一个振幅响应在X轴上频率的X-Y图。单个迹线显示一个平滑的低通滤波器，左侧的第三个通带接近0 dB。右侧的三分之二约为60 dB，有两个锐利的狭窄谷，向下跌至-100
+    dB。"](../Images/61983117829df044b63c4428667f34f3.png)'
 - en: Filter Coefficients
+  id: totrans-126
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 滤波器系数
 - en: 'Filter coefficients can be stored in several different formats:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 滤波器系数可以用几种不同的格式存储：
 - en: ‘ba’ or ‘tf’ = transfer function coefficients
+  id: totrans-128
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ‘ba’ 或 ‘tf’ = 传递函数系数
 - en: ‘zpk’ = zeros, poles, and overall gain
+  id: totrans-129
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ‘zpk’ = 零点、极点和总增益
 - en: ‘ss’ = state-space system representation
+  id: totrans-130
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ‘ss’ = 状态空间系统表示
 - en: ‘sos’ = transfer function coefficients of second-order sections
+  id: totrans-131
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ‘sos’ = 二阶段传递函数系数
 - en: Functions, such as [`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
     "scipy.signal.tf2zpk") and [`zpk2ss`](../reference/generated/scipy.signal.zpk2ss.html#scipy.signal.zpk2ss
     "scipy.signal.zpk2ss"), can convert between them.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数，如 [`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
+    "scipy.signal.tf2zpk") 和 [`zpk2ss`](../reference/generated/scipy.signal.zpk2ss.html#scipy.signal.zpk2ss
+    "scipy.signal.zpk2ss")，可以在它们之间进行转换。
 - en: Transfer function representation
+  id: totrans-133
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 传递函数表示
 - en: 'The `ba` or `tf` format is a 2-tuple `(b, a)` representing a transfer function,
     where *b* is a length `M+1` array of coefficients of the *M*-order numerator polynomial,
     and *a* is a length `N+1` array of coefficients of the *N*-order denominator,
     as positive, descending powers of the transfer function variable. So the tuple
     of \(b = [b_0, b_1, ..., b_M]\) and \(a =[a_0, a_1, ..., a_N]\) can represent
     an analog filter of the form:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: '`ba` 或 `tf` 格式是一个 2 元组 `(b, a)`，表示传递函数，其中 *b* 是长度为 `M+1` 的系数数组，表示 *M* 阶分子多项式，*a*
+    是长度为 `N+1` 的系数数组，表示 *N* 阶分母多项式，系数按传递函数变量的正降幂排列。因此，元组 \(b = [b_0, b_1, ..., b_M]\)
+    和 \(a =[a_0, a_1, ..., a_N]\) 可以表示形如下的模拟滤波器：'
 - en: \[H(s) = \frac {b_0 s^M + b_1 s^{(M-1)} + \cdots + b_M} {a_0 s^N + a_1 s^{(N-1)}
     + \cdots + a_N} = \frac {\sum_{i=0}^M b_i s^{(M-i)}} {\sum_{i=0}^N a_i s^{(N-i)}}\]
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: \[H(s) = \frac {b_0 s^M + b_1 s^{(M-1)} + \cdots + b_M} {a_0 s^N + a_1 s^{(N-1)}
+    + \cdots + a_N} = \frac {\sum_{i=0}^M b_i s^{(M-i)}} {\sum_{i=0}^N a_i s^{(N-i)}}\]
 - en: 'or a discrete-time filter of the form:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者离散时间滤波器的形式：
 - en: \[H(z) = \frac {b_0 z^M + b_1 z^{(M-1)} + \cdots + b_M} {a_0 z^N + a_1 z^{(N-1)}
     + \cdots + a_N} = \frac {\sum_{i=0}^M b_i z^{(M-i)}} {\sum_{i=0}^N a_i z^{(N-i)}}.\]
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: \[H(z) = \frac {b_0 z^M + b_1 z^{(M-1)} + \cdots + b_M} {a_0 z^N + a_1 z^{(N-1)}
+    + \cdots + a_N} = \frac {\sum_{i=0}^M b_i z^{(M-i)}} {\sum_{i=0}^N a_i z^{(N-i)}}.\]
 - en: 'This “positive powers” form is found more commonly in controls engineering.
     If *M* and *N* are equal (which is true for all filters generated by the bilinear
     transform), then this happens to be equivalent to the “negative powers” discrete-time
     form preferred in DSP:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 此“正幂”形式在控制工程中更常见。如果 *M* 和 *N* 相等（这对所有通过双线性变换生成的滤波器都是真的），则这等同于 DSP 中首选的“负幂”离散时间形式：
 - en: \[H(z) = \frac {b_0 + b_1 z^{-1} + \cdots + b_M z^{-M}} {a_0 + a_1 z^{-1} +
     \cdots + a_N z^{-N}} = \frac {\sum_{i=0}^M b_i z^{-i}} {\sum_{i=0}^N a_i z^{-i}}.\]
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: \[H(z) = \frac {b_0 + b_1 z^{-1} + \cdots + b_M z^{-M}} {a_0 + a_1 z^{-1} +
+    \cdots + a_N z^{-N}} = \frac {\sum_{i=0}^M b_i z^{-i}} {\sum_{i=0}^N a_i z^{-i}}.\]
 - en: Although this is true for common filters, remember that this is not true in
     the general case. If *M* and *N* are not equal, the discrete-time transfer function
     coefficients must first be converted to the “positive powers” form before finding
     the poles and zeros.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管这对于常见的滤波器是真的，但请记住，这在一般情况下并非如此。如果 *M* 和 *N* 不相等，则在找到极点和零点之前，必须先将离散时间传递函数系数转换为“正幂”形式。
 - en: This representation suffers from numerical error at higher orders, so other
     formats are preferred when possible.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 此表示在高阶存在数值误差，因此在可能的情况下，更喜欢使用其他格式。
 - en: Zeros and poles representation
+  id: totrans-142
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 零点和极点表示
 - en: 'The `zpk` format is a 3-tuple `(z, p, k)`, where *z* is an *M*-length array
     of the complex zeros of the transfer function \(z = [z_0, z_1, ..., z_{M-1}]\),
     *p* is an *N*-length array of the complex poles of the transfer function \(p =
     [p_0, p_1, ..., p_{N-1}]\), and *k* is a scalar gain. These represent the digital
     transfer function:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: '`zpk` 格式是一个 3 元组 `(z, p, k)`，其中 *z* 是长度为 *M* 的复零点数组 \(z = [z_0, z_1, ..., z_{M-1}]\)，*p*
+    是长度为 *N* 的复极点数组 \(p = [p_0, p_1, ..., p_{N-1}]\)，*k* 是标量增益。这些表示数字传递函数：'
 - en: \[H(z) = k \cdot \frac {(z - z_0) (z - z_1) \cdots (z - z_{(M-1)})} {(z - p_0)
     (z - p_1) \cdots (z - p_{(N-1)})} = k \frac {\prod_{i=0}^{M-1} (z - z_i)} {\prod_{i=0}^{N-1}
     (z - p_i)}\]
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: \[H(z) = k \cdot \frac {(z - z_0) (z - z_1) \cdots (z - z_{(M-1)})} {(z - p_0)
+    (z - p_1) \cdots (z - p_{(N-1)})} = k \frac {\prod_{i=0}^{M-1} (z - z_i)} {\prod_{i=0}^{N-1}
+    (z - p_i)}\]
 - en: 'or the analog transfer function:'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者模拟传递函数：
 - en: \[H(s) = k \cdot \frac {(s - z_0) (s - z_1) \cdots (s - z_{(M-1)})} {(s - p_0)
     (s - p_1) \cdots (s - p_{(N-1)})} = k \frac {\prod_{i=0}^{M-1} (s - z_i)} {\prod_{i=0}^{N-1}
     (s - p_i)}.\]
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: \[H(s) = k \cdot \frac {(s - z_0) (s - z_1) \cdots (s - z_{(M-1)})} {(s - p_0)
+    (s - p_1) \cdots (s - p_{(N-1)})} = k \frac {\prod_{i=0}^{M-1} (s - z_i)} {\prod_{i=0}^{N-1}
+    (s - p_i)}.\]
 - en: 'Although the sets of roots are stored as ordered NumPy arrays, their ordering
     does not matter: `([-1, -2], [-3, -4], 1)` is the same filter as `([-2, -1], [-4,
     -3], 1)`.'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管根集存储为有序的 NumPy 数组，但它们的顺序并不重要： `([-1, -2], [-3, -4], 1)` 和 `([-2, -1], [-4,
+    -3], 1)` 是相同的滤波器。
 - en: State-space system representation
+  id: totrans-148
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 状态空间系统表示
 - en: 'The `ss` format is a 4-tuple of arrays `(A, B, C, D)` representing the state-space
     of an *N*-order digital/discrete-time system of the form:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: '`ss` 格式是一个四元组 `(A, B, C, D)`，表示一个 *N* 阶数字/离散时间系统的状态空间形式：'
 - en: \[\begin{split}\mathbf{x}[k+1] = A \mathbf{x}[k] + B \mathbf{u}[k]\\ \mathbf{y}[k]
     = C \mathbf{x}[k] + D \mathbf{u}[k]\end{split}\]
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\mathbf{x}[k+1] = A \mathbf{x}[k] + B \mathbf{u}[k]\\ \mathbf{y}[k]
+    = C \mathbf{x}[k] + D \mathbf{u}[k]\end{split}\]
 - en: 'or a continuous/analog system of the form:'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者连续/模拟系统的形式：
 - en: \[\begin{split}\dot{\mathbf{x}}(t) = A \mathbf{x}(t) + B \mathbf{u}(t)\\ \mathbf{y}(t)
     = C \mathbf{x}(t) + D \mathbf{u}(t),\end{split}\]
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\dot{\mathbf{x}}(t) = A \mathbf{x}(t) + B \mathbf{u}(t)\\ \mathbf{y}(t)
+    = C \mathbf{x}(t) + D \mathbf{u}(t),\end{split}\]
 - en: 'with *P* inputs, *Q* outputs and *N* state variables, where:'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 具有 *P* 输入，*Q* 输出和 *N* 状态变量的系统，其中：
 - en: '*x* is the state vector'
+  id: totrans-154
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*x* 是状态向量'
 - en: '*y* is the output vector of length *Q*'
+  id: totrans-155
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*y* 是长度为 *Q* 的输出向量'
 - en: '*u* is the input vector of length *P*'
+  id: totrans-156
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*u* 是长度为 *P* 的输入向量'
 - en: '*A* is the state matrix, with shape `(N, N)`'
+  id: totrans-157
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*A* 是状态矩阵，形状为 `(N, N)`'
 - en: '*B* is the input matrix with shape `(N, P)`'
+  id: totrans-158
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*B* 是形状为`(N, P)`的输入矩阵'
 - en: '*C* is the output matrix with shape `(Q, N)`'
+  id: totrans-159
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*C* 是形状为`(Q, N)`的输出矩阵'
 - en: '*D* is the feedthrough or feedforward matrix with shape `(Q, P)`. (In cases
     where the system does not have a direct feedthrough, all values in *D* are zero.)'
+  id: totrans-160
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*D* 是形状为`(Q, P)`的前馈或反馈矩阵。 （在系统没有直接前馈的情况下，*D* 中的所有值均为零。）'
 - en: State-space is the most general representation and the only one that allows
     for multiple-input, multiple-output (MIMO) systems. There are multiple state-space
     representations for a given transfer function. Specifically, the “controllable
     canonical form” and “observable canonical form” have the same coefficients as
     the `tf` representation, and, therefore, suffer from the same numerical errors.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 状态空间是最一般的表示形式，也是唯一允许多输入多输出（MIMO）系统的表示形式。 对于给定的传递函数，有多种状态空间表示。 具体来说，“可控规范形式”和“可观测规范形式”的系数与
+    `tf` 表示相同，因此会遭受相同的数值误差。
 - en: Second-order sections representation
+  id: totrans-162
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 二阶段表示
 - en: 'The `sos` format is a single 2-D array of shape `(n_sections, 6)`, representing
     a sequence of second-order transfer functions which, when cascaded in series,
     realize a higher-order filter with minimal numerical error. Each row corresponds
     to a second-order `tf` representation, with the first three columns providing
     the numerator coefficients and the last three providing the denominator coefficients:'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: '`sos` 格式是形状为`(n_sections, 6)`的单个二维数组，表示串联的二阶传递函数序列，以最小的数值误差实现更高阶的滤波器。 每行对应于一个二阶
+    `tf` 表示，前三列提供分子系数，后三列提供分母系数：'
 - en: \[[b_0, b_1, b_2, a_0, a_1, a_2]\]
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: \[[b_0, b_1, b_2, a_0, a_1, a_2]\]
 - en: The coefficients are typically normalized, such that \(a_0\) is always 1. The
     section order is usually not important with floating-point computation; the filter
     output will be the same, regardless of the order.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 系数通常是标准化的，使得 \(a_0\) 始终为1。 在浮点计算中通常不重要，滤波器输出将相同，无论顺序如何。
 - en: Filter transformations
+  id: totrans-166
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 滤波器转换
 - en: 'The IIR filter design functions first generate a prototype analog low-pass
     filter with a normalized cutoff frequency of 1 rad/sec. This is then transformed
     into other frequencies and band types using the following substitutions:'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: IIR 滤波器设计函数首先生成一个标准化截止频率为1 rad/sec 的模拟低通滤波器原型。 然后使用以下替换将其转换为其他频率和带类型：
 - en: '| Type | Transformation |'
+  id: totrans-168
   prefs: []
   type: TYPE_TB
+  zh: '| 类型 | 转换 |'
 - en: '| --- | --- |'
+  id: totrans-169
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- |'
 - en: '| [`lp2lp`](../reference/generated/scipy.signal.lp2lp.html#scipy.signal.lp2lp
     "scipy.signal.lp2lp") | \(s \rightarrow \frac{s}{\omega_0}\) |'
+  id: totrans-170
   prefs: []
   type: TYPE_TB
+  zh: '| [`lp2lp`](../reference/generated/scipy.signal.lp2lp.html#scipy.signal.lp2lp
+    "scipy.signal.lp2lp") | \(s \rightarrow \frac{s}{\omega_0}\) |'
 - en: '| [`lp2hp`](../reference/generated/scipy.signal.lp2hp.html#scipy.signal.lp2hp
     "scipy.signal.lp2hp") | \(s \rightarrow \frac{\omega_0}{s}\) |'
+  id: totrans-171
   prefs: []
   type: TYPE_TB
+  zh: '| [`lp2hp`](../reference/generated/scipy.signal.lp2hp.html#scipy.signal.lp2hp
+    "scipy.signal.lp2hp") | \(s \rightarrow \frac{\omega_0}{s}\) |'
 - en: '| [`lp2bp`](../reference/generated/scipy.signal.lp2bp.html#scipy.signal.lp2bp
     "scipy.signal.lp2bp") | \(s \rightarrow \frac{s^2 + {\omega_0}^2}{s \cdot \mathrm{BW}}\)
     |'
+  id: totrans-172
   prefs: []
   type: TYPE_TB
+  zh: '| [`lp2bp`](../reference/generated/scipy.signal.lp2bp.html#scipy.signal.lp2bp
+    "scipy.signal.lp2bp") | \(s \rightarrow \frac{s^2 + {\omega_0}^2}{s \cdot \mathrm{BW}}\)
+    |'
 - en: '| [`lp2bs`](../reference/generated/scipy.signal.lp2bs.html#scipy.signal.lp2bs
     "scipy.signal.lp2bs") | \(s \rightarrow \frac{s \cdot \mathrm{BW}}{s^2 + {\omega_0}^2}\)
     |'
+  id: totrans-173
   prefs: []
   type: TYPE_TB
+  zh: '| [`lp2bs`](../reference/generated/scipy.signal.lp2bs.html#scipy.signal.lp2bs
+    "scipy.signal.lp2bs") | \(s \rightarrow \frac{s \cdot \mathrm{BW}}{s^2 + {\omega_0}^2}\)
+    |'
 - en: Here, \(\omega_0\) is the new cutoff or center frequency, and \(\mathrm{BW}\)
     is the bandwidth. These preserve symmetry on a logarithmic frequency axis.
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，\(\omega_0\) 是新的截止频率或中心频率，而 \(\mathrm{BW}\) 是带宽。这些在对数频率轴上保持对称。
 - en: 'To convert the transformed analog filter into a digital filter, the [`bilinear`](../reference/generated/scipy.signal.bilinear.html#scipy.signal.bilinear
     "scipy.signal.bilinear") transform is used, which makes the following substitution:'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 要将转换后的模拟滤波器转换为数字滤波器，使用 [`bilinear`](../reference/generated/scipy.signal.bilinear.html#scipy.signal.bilinear
+    "scipy.signal.bilinear") 变换，进行以下替换：
 - en: \[s \rightarrow \frac{2}{T} \frac{z - 1}{z + 1},\]
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: \[s \rightarrow \frac{2}{T} \frac{z - 1}{z + 1},\]
 - en: where T is the sampling time (the inverse of the sampling frequency).
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 当中 T 是采样时间（采样频率的倒数）。
 - en: Other filters
+  id: totrans-178
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 其他滤波器
 - en: The signal processing package provides many more filters as well.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 信号处理包还提供了许多其他滤波器。
 - en: Median Filter
+  id: totrans-180
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 中值滤波器
 - en: A median filter is commonly applied when noise is markedly non-Gaussian or when
     it is desired to preserve edges. The median filter works by sorting all of the
     array pixel values in a rectangular region surrounding the point of interest.
@@ -868,12 +1344,19 @@
     "scipy.signal.medfilt"). A specialized version that works only for 2-D arrays
     is available as [`medfilt2d`](../reference/generated/scipy.signal.medfilt2d.html#scipy.signal.medfilt2d
     "scipy.signal.medfilt2d").
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 当噪声明显非高斯或者希望保留边缘时，通常会应用中值滤波器。中值滤波器通过对感兴趣点周围的像素值进行排序来工作。这个邻域像素值列表的样本中位数被用作输出数组的值。如果邻域中有偶数个元素，则使用中间两个值的平均值作为中位数。一个适用于
+    N-D 数组的通用中值滤波器是 [`medfilt`](../reference/generated/scipy.signal.medfilt.html#scipy.signal.medfilt
+    "scipy.signal.medfilt")。一个专门针对 2-D 数组的版本是 [`medfilt2d`](../reference/generated/scipy.signal.medfilt2d.html#scipy.signal.medfilt2d
+    "scipy.signal.medfilt2d")。
 - en: Order Filter
+  id: totrans-182
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 顺序滤波器
 - en: A median filter is a specific example of a more general class of filters called
     order filters. To compute the output at a particular pixel, all order filters
     use the array values in a region surrounding that pixel. These array values are
@@ -886,73 +1369,111 @@
     neighbor array values should be used as the output. The command to perform an
     order filter is [`order_filter`](../reference/generated/scipy.signal.order_filter.html#scipy.signal.order_filter
     "scipy.signal.order_filter").
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 中值滤波器是更一般的称为顺序滤波器的滤波器类的一个特定示例。要计算特定像素的输出，所有顺序滤波器使用周围区域内的数组值。这些数组值被排序，然后从中选择一个作为输出值。对于中值滤波器，数组值列表的样本中位数用作输出。一般顺序滤波器允许用户选择在排序值中哪一个作为输出。例如，可以选择在列表中选择最大值或最小值。顺序滤波器除了输入数组和区域掩码之外，还接受一个指定哪些邻居数组值在排序列表中应该作为输出的元素。执行顺序滤波器的命令是[`order_filter`](../reference/generated/scipy.signal.order_filter.html#scipy.signal.order_filter
+    "scipy.signal.order_filter").
 - en: Wiener filter
+  id: totrans-184
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: Wiener滤波器
 - en: The Wiener filter is a simple deblurring filter for denoising images. This is
     not the Wiener filter commonly described in image-reconstruction problems but,
     instead, it is a simple, local-mean filter. Let \(x\) be the input signal, then
     the output is
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: Wiener滤波器是一种简单的去模糊滤波器，用于图像去噪。这不是通常描述的图像重建问题中的Wiener滤波器，而是一种简单的局部均值滤波器。设\(x\)为输入信号，则输出为
 - en: \[\begin{split}y=\left\{ \begin{array}{cc} \frac{\sigma^{2}}{\sigma_{x}^{2}}m_{x}+\left(1-\frac{\sigma^{2}}{\sigma_{x}^{2}}\right)x
     & \sigma_{x}^{2}\geq\sigma^{2},\\ m_{x} & \sigma_{x}^{2}<\sigma^{2},\end{array}\right.\end{split}\]
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}y=\left\{ \begin{array}{cc} \frac{\sigma^{2}}{\sigma_{x}^{2}}m_{x}+\left(1-\frac{\sigma^{2}}{\sigma_{x}^{2}}\right)x
+    & \sigma_{x}^{2}\geq\sigma^{2},\\ m_{x} & \sigma_{x}^{2}<\sigma^{2},\end{array}\right.\end{split}\]
 - en: where \(m_{x}\) is the local estimate of the mean and \(\sigma_{x}^{2}\) is
     the local estimate of the variance. The window for these estimates is an optional
     input parameter (default is \(3\times3\) ). The parameter \(\sigma^{2}\) is a
     threshold noise parameter. If \(\sigma\) is not given, then it is estimated as
     the average of the local variances.
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中\(m_{x}\)是均值的局部估计，\(\sigma_{x}^{2}\)是方差的局部估计。这些估计的窗口是一个可选的输入参数（默认为\(3\times3\)）。参数\(\sigma^{2}\)是一个阈值噪声参数。如果未提供\(\sigma\)，则将其估计为局部方差的平均值。
 - en: Hilbert filter
+  id: totrans-188
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: Hilbert滤波器
 - en: The Hilbert transform constructs the complex-valued analytic signal from a real
     signal. For example, if \(x=\cos\omega n\), then \(y=\textrm{hilbert}\left(x\right)\)
     would return (except near the edges) \(y=\exp\left(j\omega n\right).\) In the
     frequency domain, the hilbert transform performs
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: Hilbert变换从实信号构造复值解析信号。例如，如果\(x=\cos\omega n\)，那么\(y=\textrm{hilbert}\left(x\right)\)会返回（除了接近边缘的地方）\(y=\exp\left(j\omega
+    n\right)\)。在频率域中，Hilbert变换执行
 - en: \[Y=X\cdot H,\]
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: \[Y=X\cdot H,\]
 - en: where \(H\) is \(2\) for positive frequencies, \(0\) for negative frequencies,
     and \(1\) for zero-frequencies.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中\(H\)对于正频率为\(2\)，对于负频率为\(0\)，对于零频率为\(1\)。
 - en: Analog Filter Design
+  id: totrans-192
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 模拟滤波器设计
 - en: The functions [`iirdesign`](../reference/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign
     "scipy.signal.iirdesign"), [`iirfilter`](../reference/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter
     "scipy.signal.iirfilter"), and the filter design functions for specific filter
     types (e.g., [`ellip`](../reference/generated/scipy.signal.ellip.html#scipy.signal.ellip
     "scipy.signal.ellip")) all have a flag *analog*, which allows the design of analog
     filters as well.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数[`iirdesign`](../reference/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign
+    "scipy.signal.iirdesign")、[`iirfilter`](../reference/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter
+    "scipy.signal.iirfilter")以及特定滤波器类型的滤波器设计函数（例如[`ellip`](../reference/generated/scipy.signal.ellip.html#scipy.signal.ellip
+    "scipy.signal.ellip")）都具有一个*analog*标志，允许设计模拟滤波器。
 - en: The example below designs an analog (IIR) filter, obtains via [`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
     "scipy.signal.tf2zpk") the poles and zeros and plots them in the complex s-plane.
     The zeros at \(\omega \approx 150\) and \(\omega \approx 300\) can be clearly
     seen in the amplitude response.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的示例设计了一个模拟（IIR）滤波器，通过[`tf2zpk`](../reference/generated/scipy.signal.tf2zpk.html#scipy.signal.tf2zpk
+    "scipy.signal.tf2zpk")获得极点和零点，并在复平面中绘制它们。在幅度响应中可以清楚地看到大约在\(\omega \approx 150\)和\(\omega
+    \approx 300\)处的零点。
 - en: '[PRE27]'
+  id: totrans-195
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: '[PRE28]'
+  id: totrans-196
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: '[PRE29]'
+  id: totrans-197
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: '!["This code displays two plots. The first plot is an IIR filter response as
     an X-Y plot with amplitude response on the Y axis vs frequency on the X axis.
     The low-pass filter shown has a passband from 0 to 100 Hz with 0 dB response and
@@ -962,17 +1483,27 @@
     The filter has four zeros near [300+0j, 175+0j, -175+0j, -300+0j] shown as blue
     X markers. The filter also has four poles near [50-30j, -50-30j, 100-8j, -100-8j]
     shown as red dots."](../Images/ef56198e3fe8c328f78fd995cbf8b28c.png)'
+  id: totrans-198
   prefs: []
   type: TYPE_IMG
+  zh: '![这段代码显示了两个图。第一个图是IIR滤波器响应的X-Y图，其中Y轴是幅度响应，X轴是频率。所示的低通滤波器在0到100 Hz的通带内具有0 dB响应，并且在约175
+    Hz到1 KHz之间的阻带下降约40 dB。滤波器在约175 Hz和300 Hz附近有两个明显的不连续点。第二个图是在复平面上显示传递函数的X-Y图。Y轴是实值，X轴是复值。滤波器在[300+0j,
+    175+0j, -175+0j, -300+0j]附近有四个零点，显示为蓝色X标记。滤波器还在[50-30j, -50-30j, 100-8j, -100-8j]附近有四个极点，显示为红色点。](../Images/ef56198e3fe8c328f78fd995cbf8b28c.png)'
 - en: '[PRE30]'
+  id: totrans-199
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: '[PRE31]'
+  id: totrans-200
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: '[PRE32]'
+  id: totrans-201
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: '!["This code displays two plots. The first plot is an IIR filter response as
     an X-Y plot with amplitude response on the Y axis vs frequency on the X axis.
     The low-pass filter shown has a passband from 0 to 100 Hz with 0 dB response and
@@ -982,146 +1513,228 @@
     The filter has four zeros near [300+0j, 175+0j, -175+0j, -300+0j] shown as blue
     X markers. The filter also has four poles near [50-30j, -50-30j, 100-8j, -100-8j]
     shown as red dots."](../Images/866a45da1ada45b6dc922f9841041db2.png)'
+  id: totrans-202
   prefs: []
   type: TYPE_IMG
+  zh: '![这段代码显示了两个图。第一个图是IIR滤波器响应的X-Y图，其中Y轴是幅度响应，X轴是频率。所示的低通滤波器在0到100 Hz的通带内具有0 dB响应，并且在约175
+    Hz到1 KHz之间的阻带下降约40 dB。滤波器在约175 Hz和300 Hz附近有两个明显的不连续点。第二个图是在复平面上显示传递函数的X-Y图。Y轴是实值，X轴是复值。滤波器在[300+0j,
+    175+0j, -175+0j, -300+0j]附近有四个零点，显示为蓝色X标记。滤波器还在[50-30j, -50-30j, 100-8j, -100-8j]附近有四个极点，显示为红色点。](../Images/866a45da1ada45b6dc922f9841041db2.png)'
 - en: Spectral Analysis
+  id: totrans-203
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 频谱分析
 - en: Periodogram Measurements
+  id: totrans-204
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 周期图测量
 - en: The scipy function [`periodogram`](../reference/generated/scipy.signal.periodogram.html#scipy.signal.periodogram
     "scipy.signal.periodogram") provides a method to estimate the spectral density
     using the periodogram method.
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: scipy函数[`periodogram`](../reference/generated/scipy.signal.periodogram.html#scipy.signal.periodogram
+    "scipy.signal.periodogram")提供了使用周期图方法估算频谱密度的方法。
 - en: The example below calculates the periodogram of a sine signal in white Gaussian
     noise.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的示例计算了白高斯噪声中正弦信号的周期图。
 - en: '[PRE33]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: '[PRE34]'
+  id: totrans-208
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: '[PRE35]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: '[PRE36]'
+  id: totrans-210
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: '!["This code displays a single X-Y log-linear plot with the power spectral
     density on the Y axis vs frequency on the X axis. A single blue trace shows a
     noise floor with a power level of 1e-3 with a single peak at 1270 Hz up to a power
     of 1\. The noise floor measurements appear noisy and oscillate down to 1e-7."](../Images/bd13d12026ea7a24dbdb043941cc7cde.png)'
+  id: totrans-211
   prefs: []
   type: TYPE_IMG
+  zh: '![这段代码显示了单个X-Y对数线性图，其中Y轴上的功率谱密度与X轴上的频率相对应。单条蓝色曲线显示了一个功率级别为1e-3的噪声底线，1270 Hz处有一个功率为1的单峰。噪声底线的测量显示噪声波动下降到1e-7。](../Images/bd13d12026ea7a24dbdb043941cc7cde.png)'
 - en: Spectral Analysis using Welch’s Method
+  id: totrans-212
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用Welch方法进行频谱分析
 - en: An improved method, especially with respect to noise immunity, is Welch’s method,
     which is implemented by the scipy function [`welch`](../reference/generated/scipy.signal.welch.html#scipy.signal.welch
     "scipy.signal.welch").
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 特别是在抗噪性方面改进的方法是Welch方法，由scipy函数[`welch`](../reference/generated/scipy.signal.welch.html#scipy.signal.welch
+    "scipy.signal.welch")实现。
 - en: The example below estimates the spectrum using Welch’s method and uses the same
     parameters as the example above. Note the much smoother noise floor of the spectrogram.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的示例使用了**Welch方法**来估算频谱，并使用与上述示例相同的参数。请注意频谱图的噪声底线要平滑得多。
 - en: '[PRE37]'
+  id: totrans-215
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: '[PRE38]'
+  id: totrans-216
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: '[PRE39]'
+  id: totrans-217
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: '[PRE40]'
+  id: totrans-218
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: '!["This code displays a single X-Y log-linear plot with the power spectral
     density on the Y axis vs frequency on the X axis. A single blue trace shows a
     smooth noise floor at a power level of 6e-2 with a single peak up to a power level
     of 2 at 1270 Hz."](../Images/70e228d72e7156d89e9a53245321fc30.png)'
+  id: totrans-219
   prefs: []
   type: TYPE_IMG
+  zh: '!["此代码显示一个X-Y对数线性图，Y轴上是功率谱密度，X轴上是频率。单个蓝色追踪显示了一个平滑的噪声底部，功率水平为6e-2，一个峰值功率高达2，频率为1270
+    Hz。"](../Images/70e228d72e7156d89e9a53245321fc30.png)'
 - en: Lomb-Scargle Periodograms ([`lombscargle`](../reference/generated/scipy.signal.lombscargle.html#scipy.signal.lombscargle
     "scipy.signal.lombscargle"))
+  id: totrans-220
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 朗伯-斯卡戈尔周期图 ([`lombscargle`](../reference/generated/scipy.signal.lombscargle.html#scipy.signal.lombscargle
+    "scipy.signal.lombscargle"))
 - en: Least-squares spectral analysis (LSSA) [[1]](#id11) [[2]](#id12) is a method
     of estimating a frequency spectrum, based on a least-squares fit of sinusoids
     to data samples, similar to Fourier analysis. Fourier analysis, the most used
     spectral method in science, generally boosts long-periodic noise in long-gapped
     records; LSSA mitigates such problems.
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 最小二乘谱分析（LSSA）[[1]](#id11) [[2]](#id12) 是一种基于对数据样本进行正弦拟合的最小二乘拟合来估计频谱的方法，类似于傅里叶分析。傅里叶分析是科学中使用最广泛的谱方法，通常会增加长周期噪声在长时间间隔记录中；LSSA减少了这类问题。
 - en: The Lomb-Scargle method performs spectral analysis on unevenly-sampled data
     and is known to be a powerful way to find, and test the significance of, weak
     periodic signals.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 朗伯-斯卡戈尔方法对不均匀采样数据执行频谱分析，已知是发现和检验弱周期信号的有效方法。
 - en: For a time series comprising \(N_{t}\) measurements \(X_{j}\equiv X(t_{j})\)
     sampled at times \(t_{j}\), where \((j = 1, \ldots, N_{t})\), assumed to have
     been scaled and shifted, such that its mean is zero and its variance is unity,
     the normalized Lomb-Scargle periodogram at frequency \(f\) is
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于包含\(N_{t}\)个测量\(X_{j}\equiv X(t_{j})\)的时间序列，采样时间为\(t_{j}\)，假设已经进行了缩放和移位，使其平均值为零，方差为单位，频率为\(f\)的归一化朗伯-斯卡戈尔周期图为
 - en: \[P_{n}(f) = \frac{1}{2}\left\{\frac{\left[\sum_{j}^{N_{t}}X_{j}\cos\omega(t_{j}-\tau)\right]^{2}}{\sum_{j}^{N_{t}}\cos^{2}\omega(t_{j}-\tau)}+\frac{\left[\sum_{j}^{N_{t}}X_{j}\sin\omega(t_{j}-\tau)\right]^{2}}{\sum_{j}^{N_{t}}\sin^{2}\omega(t_{j}-\tau)}\right\}.\]
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: \[P_{n}(f) = \frac{1}{2}\left\{\frac{\left[\sum_{j}^{N_{t}}X_{j}\cos\omega(t_{j}-\tau)\right]^{2}}{\sum_{j}^{N_{t}}\cos^{2}\omega(t_{j}-\tau)}+\frac{\left[\sum_{j}^{N_{t}}X_{j}\sin\omega(t_{j}-\tau)\right]^{2}}{\sum_{j}^{N_{t}}\sin^{2}\omega(t_{j}-\tau)}\right\}.\]
 - en: Here, \(\omega \equiv 2\pi f\) is the angular frequency. The frequency-dependent
     time offset \(\tau\) is given by
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，\(\omega \equiv 2\pi f\) 是角频率。频率依赖的时间偏移 \(\tau\) 由以下公式给出
 - en: \[\tan 2\omega\tau = \frac{\sum_{j}^{N_{t}}\sin 2\omega t_{j}}{\sum_{j}^{N_{t}}\cos
     2\omega t_{j}}.\]
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\tan 2\omega\tau = \frac{\sum_{j}^{N_{t}}\sin 2\omega t_{j}}{\sum_{j}^{N_{t}}\cos
+    2\omega t_{j}}.\]
 - en: The [`lombscargle`](../reference/generated/scipy.signal.lombscargle.html#scipy.signal.lombscargle
     "scipy.signal.lombscargle") function calculates the periodogram using a slightly
     modified algorithm due to Townsend [[3]](#id13), which allows the periodogram
     to be calculated using only a single pass through the input arrays for each frequency.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`lombscargle`](../reference/generated/scipy.signal.lombscargle.html#scipy.signal.lombscargle
+    "scipy.signal.lombscargle")函数使用了由汤森德[[3]](#id13)提出的稍微修改的算法，允许在每个频率下通过输入数组的单次遍历计算周期图。'
 - en: 'The equation is refactored as:'
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 方程被重构为：
 - en: \[P_{n}(f) = \frac{1}{2}\left[\frac{(c_{\tau}XC + s_{\tau}XS)^{2}}{c_{\tau}^{2}CC
     + 2c_{\tau}s_{\tau}CS + s_{\tau}^{2}SS} + \frac{(c_{\tau}XS - s_{\tau}XC)^{2}}{c_{\tau}^{2}SS
     - 2c_{\tau}s_{\tau}CS + s_{\tau}^{2}CC}\right]\]
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: \[P_{n}(f) = \frac{1}{2}\left[\frac{(c_{\tau}XC + s_{\tau}XS)^{2}}{c_{\tau}^{2}CC
+    + 2c_{\tau}s_{\tau}CS + s_{\tau}^{2}SS} + \frac{(c_{\tau}XS - s_{\tau}XC)^{2}}{c_{\tau}^{2}SS
+    - 2c_{\tau}s_{\tau}CS + s_{\tau}^{2}CC}\right]\]
 - en: and
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 和
 - en: \[\tan 2\omega\tau = \frac{2CS}{CC-SS}.\]
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\tan 2\omega\tau = \frac{2CS}{CC-SS}.\]
 - en: Here,
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，
 - en: \[c_{\tau} = \cos\omega\tau,\qquad s_{\tau} = \sin\omega\tau,\]
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: \[c_{\tau} = \cos\omega\tau,\qquad s_{\tau} = \sin\omega\tau,\]
 - en: while the sums are
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 当求和时
 - en: \[\begin{split}XC &= \sum_{j}^{N_{t}} X_{j}\cos\omega t_{j}\\ XS &= \sum_{j}^{N_{t}}
     X_{j}\sin\omega t_{j}\\ CC &= \sum_{j}^{N_{t}} \cos^{2}\omega t_{j}\\ SS &= \sum_{j}^{N_{t}}
     \sin^{2}\omega t_{j}\\ CS &= \sum_{j}^{N_{t}} \cos\omega t_{j}\sin\omega t_{j}.\end{split}\]
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}XC &= \sum_{j}^{N_{t}} X_{j}\cos\omega t_{j}\\ XS &= \sum_{j}^{N_{t}}
+    X_{j}\sin\omega t_{j}\\ CC &= \sum_{j}^{N_{t}} \cos^{2}\omega t_{j}\\ SS &= \sum_{j}^{N_{t}}
+    \sin^{2}\omega t_{j}\\ CS &= \sum_{j}^{N_{t}} \cos\omega t_{j}\sin\omega t_{j}.\end{split}\]
 - en: This requires \(N_{f}(2N_{t}+3)\) trigonometric function evaluations giving
     a factor of \(\sim 2\) speed increase over the straightforward implementation.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要进行\(N_{f}(2N_{t}+3)\)次三角函数求值，相较于简单实现，速度提升约\(\sim 2\)倍。
 - en: '\[% LaTeX Macros to make the LaTeX formulas more readable: \newcommand{\IC}{{\mathbb{C}}}
     % set of complex numbers \newcommand{\IN}{{\mathbb{N}}} % set of natural numbers
     \newcommand{\IR}{{\mathbb{R}}} % set of real numbers \newcommand{\IZ}{{\mathbb{Z}}}
@@ -1132,19 +1745,32 @@
     inverse % Since the physics package is not loaded, we define the macros ourselves:
     \newcommand{\vb}[1]{\mathbf{#1}} % vectors and matrices are bold\] ## Short-Time
     Fourier Transform'
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: '\[% LaTeX 宏使 LaTeX 公式更易读： \newcommand{\IC}{{\mathbb{C}}} % 复数集合 \newcommand{\IN}{{\mathbb{N}}}
+    % 自然数集合 \newcommand{\IR}{{\mathbb{R}}} % 实数集合 \newcommand{\IZ}{{\mathbb{Z}}} %
+    整数集合 \newcommand{\jj}{{\mathbb{j}}} % 虚数单位 \newcommand{\e}{\operatorname{e}} %
+    自然对数的底 \newcommand{\dd}{\operatorname{d}} % 无穷小算子 \newcommand{\conj}[1]{\overline{#1}}
+    % 复共轭 \newcommand{\conjT}[1]{\overline{#1^T}} % 转置复共轭 \newcommand{\inv}[1]{\left(#1\right)^{\!-1}}
+    % 逆 % 因为未加载物理包，我们自己定义宏： \newcommand{\vb}[1]{\mathbf{#1}} % 向量和矩阵加粗\] ## 短时傅里叶变换'
 - en: 'This section gives some background information on using the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT") class: The short-time Fourier transform (STFT) can
     be utilized to analyze the spectral properties of signals over time. It divides
     a signal into overlapping chunks by utilizing a sliding window and calculates
     the Fourier transform of each chunk. For a continuous-time complex-valued signal
     \(x(t)\) the STFT is defined [[4]](#id14) as'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 这一节提供了有关使用[`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
+    "scipy.signal.ShortTimeFFT")类的一些背景信息：短时傅里叶变换（STFT）可用于分析信号随时间的频谱特性。它通过滑动窗口将信号分成重叠的块，并计算每个块的傅里叶变换。对于连续时间的复值信号
+    \(x(t)\)，STFT 定义为[[4]](#id14)
 - en: \[S(f, t) := \int_\IR x(\xi)\, \conj{w(\xi-t)}\,\e^{-\jj2\pi f \xi}\dd\xi\ ,\]
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: \[S(f, t) := \int_\IR x(\xi)\, \conj{w(\xi-t)}\,\e^{-\jj2\pi f \xi}\dd\xi\ ,\]
 - en: where \(w(t)\) is a complex-valued window function with its complex conjugate
     being \(\conj{w(t)}\). It can be interpreted as determining the scalar product
     of \(x\) with the window \(w\) which is translated by the time \(t\) and then
@@ -1154,12 +1780,21 @@
     "scipy.signal.ShortTimeFFT.fs")), the discrete version, i.e., only evaluating
     the STFT at discrete grid points \(S[q, p] := S(q \Delta f, p\Delta t)\), \(q,p\in\IZ\),
     needs to be used. It can be formulated as
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 \(w(t)\) 是复值窗口函数，其复共轭为 \(\conj{w(t)}\)。可以解释为确定 \(x\) 与窗口 \(w\) 的标量积，该窗口由时间
+    \(t\) 平移，然后被频率 \(f\) 调制（即频移）。对于采样信号 \(x[k] := x(kT)\)，\(k\in\IZ\)，采样间隔 \(T\)（即采样频率
+    [`fs`](../reference/generated/scipy.signal.ShortTimeFFT.fs.html#scipy.signal.ShortTimeFFT.fs
+    "scipy.signal.ShortTimeFFT.fs") 的倒数），需要使用离散版本，即仅在离散网格点 \(S[q, p] := S(q \Delta
+    f, p\Delta t)\)，\(q,p\in\IZ\) 上进行评估。可以表达为
 - en: (1)\[S[q,p] = \sum_{k=0}^{N-1} x[k]\,\conj{w[k-p h]}\, \e^{-\jj2\pi q k / N}\
     , \quad q,p\in\IZ\ ,\]
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: (1)\[S[q,p] = \sum_{k=0}^{N-1} x[k]\,\conj{w[k-p h]}\, \e^{-\jj2\pi q k / N}\
+    , \quad q,p\in\IZ\ ,\]
 - en: with *p* representing the time index of \(S\) with time interval \(\Delta t
     := h T\), \(h\in\IN\) (see [`delta_t`](../reference/generated/scipy.signal.ShortTimeFFT.delta_t.html#scipy.signal.ShortTimeFFT.delta_t
     "scipy.signal.ShortTimeFFT.delta_t")), which can be expressed as the [`hop`](../reference/generated/scipy.signal.ShortTimeFFT.hop.html#scipy.signal.ShortTimeFFT.hop
@@ -1167,11 +1802,19 @@
     index of \(S\) with step size \(\Delta f := 1 / (N T)\) (see [`delta_f`](../reference/generated/scipy.signal.ShortTimeFFT.delta_f.html#scipy.signal.ShortTimeFFT.delta_f
     "scipy.signal.ShortTimeFFT.delta_f")), which makes it FFT compatible. \(w[m] :=
     w(mT)\), \(m\in\IZ\) is the sampled window function.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 *p* 表示 \(S\) 的时间索引，时间间隔为 \(\Delta t := h T\)，\(h\in\IN\)（参见 [`delta_t`](../reference/generated/scipy.signal.ShortTimeFFT.delta_t.html#scipy.signal.ShortTimeFFT.delta_t
+    "scipy.signal.ShortTimeFFT.delta_t")），它可以表达为 \(h\) 个样本的 [`hop`](../reference/generated/scipy.signal.ShortTimeFFT.hop.html#scipy.signal.ShortTimeFFT.hop
+    "scipy.signal.ShortTimeFFT.hop") 大小。\(q\) 表示 \(S\) 的频率索引，步长为 \(\Delta f := 1 /
+    (N T)\)（参见 [`delta_f`](../reference/generated/scipy.signal.ShortTimeFFT.delta_f.html#scipy.signal.ShortTimeFFT.delta_f
+    "scipy.signal.ShortTimeFFT.delta_f")），使其与 FFT 兼容。\(w[m] := w(mT)\)，\(m\in\IZ\)
+    是采样窗口函数。
 - en: 'To be more aligned to the implementation of [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT"), it makes sense to reformulate Eq. [(1)](#equation-eq-dstft)
     as a two-step process:'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
 - en: Extract the \(p\)-th slice by windowing with the window \(w[m]\) made up of
@@ -1179,11 +1822,13 @@
     "scipy.signal.ShortTimeFFT.m_num")) centered at \(t[p] := p \Delta t = h T\) (see
     [`delta_t`](../reference/generated/scipy.signal.ShortTimeFFT.delta_t.html#scipy.signal.ShortTimeFFT.delta_t
     "scipy.signal.ShortTimeFFT.delta_t")), i.e.,
+  id: totrans-244
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: (2)\[x_p[m] = x\!\big[m - \lfloor M/2\rfloor + h p\big]\, \conj{w[m]}\ , \quad
     m = 0, \ldots M-1\ ,\]
+  id: totrans-245
   prefs:
   - PREF_IND
   - PREF_BQ
@@ -1193,16 +1838,19 @@
     "scipy.signal.ShortTimeFFT.m_num_mid")). For notational convenience, \(x[k]:=0\)
     for \(k\not\in\{0, 1, \ldots, N-1\}\) is assumed. In the subsection [Sliding Windows](#tutorial-stft-sliding-win)
     the indexing of the slices is discussed in more detail.
+  id: totrans-246
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: Then perform a discrete Fourier transform (i.e., an [FFT](fft.html#tutorial-fft))
     of \(x_p[m]\).
+  id: totrans-247
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: (3)\[S[q, p] = \sum_{m=0}^{M-1} x_p[m] \exp\!\big\{% -2\jj\pi (q + \phi_m)\,
     m / M\big\}\ .\]
+  id: totrans-248
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
@@ -1216,34 +1864,41 @@
     "scipy.signal.ShortTimeFFT.m_num")—this sets \(M\) to [`mfft`](../reference/generated/scipy.signal.ShortTimeFFT.mfft.html#scipy.signal.ShortTimeFFT.mfft
     "scipy.signal.ShortTimeFFT.mfft") (implying that also \(w[m]:=0\) for \(m\not\in\{0,
     1, \ldots, M-1\}\) holds).
+  id: totrans-249
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: 'The inverse short-time Fourier transform ([`istft`](../reference/generated/scipy.signal.ShortTimeFFT.istft.html#scipy.signal.ShortTimeFFT.istft
     "scipy.signal.ShortTimeFFT.istft")) is implemented by reversing these two steps:'
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: Perform the inverse discrete Fourier transform, i.e.,
+  id: totrans-251
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: \[x_p[m] = \frac{1}{M}\sum_{q=0}^M S[q, p]\, \exp\!\big\{ 2\jj\pi (q + \phi_m)\,
     m / M\big\}\ .\]
+  id: totrans-252
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: Sum the shifted slices weighted by \(w_d[m]\) to reconstruct the original signal,
     i.e.,
+  id: totrans-253
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: \[x[k] = \sum_p x_p\!\big[\mu_p(k)\big]\, w_d\!\big[\mu_p(k)\big]\ ,\quad \mu_p(k)
     = k + \lfloor M/2\rfloor - h p\]
+  id: totrans-254
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: for \(k \in [0, \ldots, n-1]\). \(w_d[m]\) is the so-called canonical dual window
     of \(w[m]\) and is also made up of \(M\) samples.
+  id: totrans-255
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
@@ -1254,9 +1909,11 @@
     (see [`check_NOLA`](../reference/generated/scipy.signal.check_NOLA.html#scipy.signal.check_NOLA
     "scipy.signal.check_NOLA")). Some more details are given in the subsection [Inverse
     STFT and Dual Windows](#tutorial-stft-dual-win).
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
 - en: '### Sliding Windows'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
 - en: 'This subsection discusses how the sliding window is indexed in the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
@@ -1266,9 +1923,11 @@
     "scipy.signal.ShortTimeFFT.T") of one, e.g., `ShortTimeFFT (np.ones(6), 2, fs=1)`.
     The following image schematically depicts the first four window positions also
     named time slices:'
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
 - en: '[![../_images/tutorial_stft_sliding_win_start.svg](../Images/590d72d6177cc14fc3a3fabdc9c4e8db.png)](../_images/tutorial_stft_sliding_win_start.svg)'
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
 - en: The x-axis denotes the time \(t\), which corresponds to the sample index *k*
@@ -1285,13 +1944,16 @@
     a slice not sticking out to the left of the signal is \(p_{lb} = 2\) and the first
     sample index unaffected by border effects is \(k_{lb} = 5\). The property [`lower_border_end`](../reference/generated/scipy.signal.ShortTimeFFT.lower_border_end.html#scipy.signal.ShortTimeFFT.lower_border_end
     "scipy.signal.ShortTimeFFT.lower_border_end") returns the tuple \((k_{lb}, p_{lb})\).
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: 'The behavior at the end of the signal is depicted for a signal with \(n=50\)
     samples below, as indicated by the blue background:'
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
 - en: '[![../_images/tutorial_stft_sliding_win_stop.svg](../Images/02f510b38185a0f60e9de8ba3c331a6f.png)](../_images/tutorial_stft_sliding_win_stop.svg)'
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
 - en: 'Here the last slice has index \(p=26\). Hence, following Python convention
@@ -1303,20 +1965,24 @@
     [`upper_border_begin`](../reference/generated/scipy.signal.ShortTimeFFT.upper_border_begin.html#scipy.signal.ShortTimeFFT.upper_border_begin
     "scipy.signal.ShortTimeFFT.upper_border_begin") returns the tuple \((k_{ub}, p_{ub})\).  ###
     Inverse STFT and Dual Windows'
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
 - en: The term dual window stems from frame theory [[5]](#id15) where a frame is a
     series expansion which can represent any function in a given Hilbert space. There
     the expansions \(\{g_k\}\) and \(\{h_k\}\) are dual frames if for all functions
     \(f\) in the given Hilbert space \(\mathcal{H}\)
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
 - en: \[f = \sum_{k\in\IN} \langle f, g_k\rangle h_k = \sum_{k\in\IN} \langle f, h_k\rangle
     g_k\ , \quad f \in \mathcal{H}\ ,\]
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
 - en: holds, where \(\langle ., .\rangle\) denotes the scalar product of \(\mathcal{H}\).
     All frames have dual frames [[5]](#id15).
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
 - en: 'An STFT evaluated only at discrete grid points \(S(q \Delta f, p\Delta t)\)
@@ -1327,6 +1993,7 @@
     and can be calculated by means of inverting a diagonal matrix. A rough derivation
     only requiring some understanding of manipulating matrices will be sketched out
     in the following:'
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
 - en: Since the STFT given in Eq. [(1)](#equation-eq-dstft) is a linear mapping in
@@ -1334,108 +2001,132 @@
     the inverse via the formal solution of the linear least squares method (as in
     [`lstsq`](../reference/generated/scipy.linalg.lstsq.html#scipy.linalg.lstsq "scipy.linalg.lstsq")),
     which leads to a beautiful and simple result.
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
 - en: We begin by reformulating the windowing of Eq. [(2)](#equation-eq-stft-windowing)
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
 - en: (4)\[\begin{split} \vb{x}_p = \vb{W}_{\!p}\,\vb{x} = \begin{bmatrix} \cdots
     & 0 & w[0] & 0 & \cdots&&&\\ & \cdots & 0 & w[1] & 0 & \cdots&&\\ & & & & \ddots&&&\\
     &&\cdots & 0 & 0 & w[M-1] & 0 & \cdots \end{bmatrix}\begin{bmatrix} x[0]\\ x[1]\\
     \vdots\\ x[N-1] \end{bmatrix}\ ,\end{split}\]
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
 - en: where the \(M\times N\) matrix \(\vb{W}_{\!p}\) has only non-zeros entries on
     the \((ph)\)-th minor diagonal, i.e.,
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
 - en: (5)\[\begin{split} W_p[m,k] = w[m]\, \delta_{m+ph,k}\ ,\quad \delta_{k,l} &=
     \begin{cases} 1 & \text{ for } k=l\ ,\\ 0 & \text{ elsewhere ,} \end{cases}\end{split}\]
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
 - en: with \(\delta_{k,l}\) being the Kronecker Delta. Eq. [(3)](#equation-eq-stft-dft)
     can be expressed as
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
 - en: \[\vb{s}_p = \vb{F}\,\vb{x}_p \quad\text{with}\quad F[q,m] =\exp\!\big\{-2\jj\pi
     (q + \phi_m)\, m / M\big\}\ ,\]
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
 - en: which allows the STFT of the \(p\)-th slice to be written as
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
 - en: '(6)\[\vb{s}_p = \vb{F}\vb{W}_{\!p}\,\vb{x} =: \vb{G}_p\,\vb{x} \quad\text{with}\quad
     s_p[q] = S[p,q]\ .\]'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
 - en: Note that \(\vb{F}\) is unitary, i.e., the inverse equals its conjugate transpose
     meaning \(\conjT{\vb{F}}\vb{F} = \vb{I}\).
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
 - en: To obtain a single vector-matrix equation for the STFT, the slices are stacked
     into one vector, i.e.,
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
 - en: '\[\begin{split}\vb{s} := \begin{bmatrix} \vb{s}_0\\ \vb{s}_1\\ \vdots\\ \vb{s}_{P-1}
     \end{bmatrix} = \begin{bmatrix} \vb{G}_0\\ \vb{G}_1\\ \vdots\\ \vb{G}_{P-1} \end{bmatrix}\,
     \vb{x} =: \vb{G}\, \vb{x}\ ,\end{split}\]'
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
 - en: where \(P\) is the number of columns of the resulting STFT. To invert this equation
     the Moore-Penrose inverse \(\vb{G}^\dagger\) can be utilized
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
 - en: '(7)\[\vb{x} = \inv{\conjT{\vb{G}}\vb{G}}\, \conjT{\vb{G}} \vb{s} =: \vb{G}^\dagger
     \vb{s}\ ,\]'
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
 - en: which exists if
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
 - en: \[\begin{split}\vb{D} := \conjT{\vb{G}}\vb{G} = \begin{bmatrix} \conjT{\vb{G}_0}&
     \conjT{\vb{G}_1}& \cdots & \conjT{\vb{G}_{P-1}} \end{bmatrix}^T \begin{bmatrix}
     \vb{G}_0\\ \vb{G}_1\\ \vdots\\ \vb{G}_{P-1} \end{bmatrix} = \sum_{p=0}^{P-1} \conjT{\vb{G}_p}\vb{G}_p
     \ .\end{split}\]
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
 - en: is invertible. Then \(\vb{x} = \vb{G}^\dagger\vb{G}\,\vb{x} = \inv{\conjT{\vb{G}}\vb{G}}\,\conjT{\vb{G}}\vb{G}\,\vb{x}\)
     obviously holds. \(\vb{D}\) is always a diagonal matrix with non-negative diagonal
     entries. This becomes clear, when simplifying \(\vb{D}\) further to
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
 - en: '(8)\[\vb{D} = \sum_{p=0}^{P-1} \conjT{\vb{G}_p}\vb{G}_p = \sum_{p=0}^{P-1}
     \conjT{(\vb{F}\,\vb{W}_{\!p})}\, \vb{F}\,\vb{W}_{\!p} = \sum_{p=0}^{P-1} \conjT{\vb{W}_{\!p}}\vb{W}_{\!p}
     =: \sum_{p=0}^{P-1} \vb{D}_p\]'
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
 - en: due to \(\vb{F}\) being unitary. Furthermore
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
 - en: (9)\[\begin{split}D_p[r,s] &= \sum_{m=0}^{M-1} \conj{W_p^T[r,m]}\,W_p[m,s] =
     \sum_{m=0}^{M-1} \left(\conj{w[m]}\, \delta_{m+ph,r}\right) \left(w[m]\, \delta_{m+ph,s}\right)\\
     &= \sum_{m=0}^{M-1} \big|w[m]\big|^2\, \delta_{r,s}\, \delta_{r,m+ph}\ .\end{split}\]
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
 - en: shows that \(\vb{D}_p\) is a diagonal matrix with non-negative entries. Hence,
     summing \(\vb{D}_p\) preserves that property. This allows to simplify Eq. [(7)](#equation-eq-stft-moorepenrose)
     further, i.e,
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
 - en: '(10)\[\begin{split}\vb{x} &= \vb{D}^{-1} \conjT{\vb{G}}\vb{s} = \sum_{p=0}^{P-1}
     \vb{D}^{-1}\conjT{\vb{W}_{\!p}}\, \conjT{\vb{F}}\vb{s}_p = \sum_{p=0}^{P-1} (\conj{\vb{W}_{\!p}\vb{D}^{-1}})^T\,
     \conjT{\vb{F}}\vb{s}_p\\ &=: \sum_{p=0}^{P-1}\conjT{\vb{U}_p}\,\conjT{\vb{F}}\vb{s}_p\
     .\end{split}\]'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
 - en: Utilizing Eq. [(5)](#equation-eq-stft-winmatrix1), [(8)](#equation-eq-stft-diagm2),
     [(9)](#equation-eq-stft-diagm3), \(\vb{U}_p=\vb{W}_{\!p}\vb{D}^{-1}\) can be expressed
     as
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
 - en: (11)\[\begin{split}U_p[m, k] &= W[m,k]\, D^{-1}[k,k] = \left(w[m] \delta_{m+ph,k}\right)
     \inv{\sum_{\eta=0}^{P-1} \vb{D}_\eta[k,k]} \delta_{m+ph,k}\\ &= w[m] \inv{\sum_{\eta=0}^{P-1}\sum_{\mu=0}^{M-1}
     \big|w[\mu]\big|^2\,\delta_{m+ph, \mu+\eta h}} \delta_{m+ph,k}\\ &= w[m] \inv{\sum_{\eta=0}^{P-1}
     \big|w[m+(p-\eta)h]\big|^2} \delta_{m+ph,k} \ .\end{split}\]
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
 - en: This shows \(\vb{U}_p\) has the identical structure as \(\vb{W}_p\) in Eq. [(5)](#equation-eq-stft-winmatrix1),
@@ -1445,19 +2136,23 @@
     have an effect. Hence, all \(U_p[m, k]\) far enough from the border are identical
     windows. To circumvent border effects, \(x[k]\) is padded with zeros, enlarging
     \(\vb{U}\) so all slices which touch \(x[k]\) contain the identical dual window
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
 - en: \[w_d[m] = w[m] \inv{\sum_{\eta\in\IZ} \big|w[m + \eta\, h]\big|^2}\ .\]
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
 - en: Since \(w[m] = 0\) holds for \(m \not\in\{0, \ldots, M-1\}\), it is only required
     to sum over the indexes \(\eta\) fulfilling \(|\eta| < M/h\). The name dual window
     can be justified by inserting Eq. [(6)](#equation-eq-stft-slice-p) into Eq. [(10)](#equation-eq-stft-istftm),
     i.e.,
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
 - en: \[\vb{x} = \sum_{p=0}^{P-1} \conjT{\vb{U}_p}\,\conjT{\vb{F}}\, \vb{F}\,\vb{W}_{\!p}\,\vb{x}
     = \left(\sum_{p=0}^{P-1} \conjT{\vb{U}_p}\,\vb{W}_{\!p}\right)\vb{x}\ ,\]
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
 - en: 'showing that \(\vb{U}_p\) and \(\vb{W}_{\!p}\) are interchangeable. Hence,
@@ -1466,6 +2161,7 @@
     \(\vb{x}\). It can be shown, that \(w_d[m]\) has the minimal energy (or \(L_2\)
     norm) [[4](#id14)], which is the reason for being named the “canonical dual window”.  ###
     Comparison with Legacy Implementation'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
 - en: The functions [`stft`](../reference/generated/scipy.signal.stft.html#scipy.signal.stft
@@ -1479,16 +2175,21 @@
     not be done in a sane way without breaking compatibility. This opened the opportunity
     for rethinking the code structure and the parametrization, thus making some implicit
     behavior more explicit.
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
 - en: 'The following example compares the two STFTs of a complex valued chirp signal
     with a negative slope:'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE41]'
+  id: totrans-299
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: '![../_images/signal-10.png](../Images/92e6559bfae39d3827d8e9f0d15bc682.png)'
+  id: totrans-300
   prefs: []
   type: TYPE_IMG
 - en: That the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
@@ -1499,43 +2200,56 @@
     the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT") code example. Furthermore, using all touching slices
     makes the ISTFT more robust in the case of windows that are zero somewhere.
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
 - en: 'Note that the slices with identical time stamps produce equal results (up to
     numerical accuracy), i.e.:'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE42]'
+  id: totrans-303
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: 'Generally, those additional slices contain non-zero values. Due to the large
     overlap in our example, they are quite small. E.g.:'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE43]'
+  id: totrans-305
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'The ISTFT can be utilized to reconstruct the original signal:'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE44]'
+  id: totrans-307
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: Note that the legacy implementation returns a signal which is longer than the
     original. On the other hand, the new [`istft`](../reference/generated/scipy.signal.ShortTimeFFT.istft.html#scipy.signal.ShortTimeFFT.istft
     "scipy.signal.ShortTimeFFT.istft") allows to explicitly specify the start index
     *k0* and the end index *k1* of the reconstructed signal. The length discrepancy
     in the old implementation is caused by the fact that the signal length is not
     a multiple of the slices.
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
 - en: 'Further differences between the new and legacy versions in this example are:'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: The parameter `fft_mode='centered'` ensures that the zero frequency is vertically
     centered for two-sided FFTs in the plot. With the legacy implementation, [`fftshift`](../reference/generated/scipy.fft.fftshift.html#scipy.fft.fftshift
     "scipy.fft.fftshift") needs to be utilized. `fft_mode='twosided'` produces the
     same behavior as the old version.
+  id: totrans-310
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1543,6 +2257,7 @@
     [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT")’s default value of `0` produces STFT slices with
     an additional linear phase term.
+  id: totrans-311
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1550,11 +2265,14 @@
     [`spectrogram`](../reference/generated/scipy.signal.ShortTimeFFT.spectrogram.html#scipy.signal.ShortTimeFFT.spectrogram
     "scipy.signal.ShortTimeFFT.spectrogram") provided by the [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT") sticks to that definition, i.e.:'
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE45]'
+  id: totrans-313
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'On the other hand, the legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
     "scipy.signal.spectrogram") provides another STFT implementation with the key
     difference being the different handling of the signal borders. The following example
@@ -1562,21 +2280,28 @@
     "scipy.signal.ShortTimeFFT") to obtain an identical SFT as produced with the legacy
     [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
     "scipy.signal.spectrogram"):'
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE46]'
+  id: totrans-315
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: 'The difference from the other STFTs is that the time slices do not start at
     0 but at `nperseg//2`, i.e.:'
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE47]'
+  id: totrans-317
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: Furthermore, only slices which do not stick out to the right are returned, centering
     the last slice at 4.875 s, which makes it shorter than with the default [`stft`](../reference/generated/scipy.signal.ShortTimeFFT.stft.html#scipy.signal.ShortTimeFFT.stft
     "scipy.signal.ShortTimeFFT.stft") parametrization.
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: 'Using the `mode` parameter, the legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
@@ -1590,61 +2315,79 @@
     [`scaling`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
     "scipy.signal.ShortTimeFFT.scaling") of the window at all. The following table
     shows those correspondences:'
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
 - en: '| Legacy [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
     "scipy.signal.spectrogram") |  | [`ShortTimeFFT`](../reference/generated/scipy.signal.ShortTimeFFT.html#scipy.signal.ShortTimeFFT
     "scipy.signal.ShortTimeFFT") |'
+  id: totrans-320
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- |'
+  id: totrans-321
   prefs: []
   type: TYPE_TB
 - en: '| mode | scaling | return_onesided |  | [`fft_mode`](../reference/generated/scipy.signal.ShortTimeFFT.fft_mode.html#scipy.signal.ShortTimeFFT.fft_mode
     "scipy.signal.ShortTimeFFT.fft_mode") | [`scaling`](../reference/generated/scipy.signal.ShortTimeFFT.scaling.html#scipy.signal.ShortTimeFFT.scaling
     "scipy.signal.ShortTimeFFT.scaling") |'
+  id: totrans-322
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- | --- | --- | --- |'
+  id: totrans-323
   prefs: []
   type: TYPE_TB
 - en: '| psd | density | True |  | onesided2X | psd |'
+  id: totrans-324
   prefs: []
   type: TYPE_TB
 - en: '| psd | density | False |  | twosided | psd |'
+  id: totrans-325
   prefs: []
   type: TYPE_TB
 - en: '| magnitude | spectrum | True |  | onesided | magnitude |'
+  id: totrans-326
   prefs: []
   type: TYPE_TB
 - en: '| magnitude | spectrum | False |  | twosided | magnitude |'
+  id: totrans-327
   prefs: []
   type: TYPE_TB
 - en: '| complex | spectrum | True |  | onesided | magnitude |'
+  id: totrans-328
   prefs: []
   type: TYPE_TB
 - en: '| complex | spectrum | False |  | twosided | magnitude |'
+  id: totrans-329
   prefs: []
   type: TYPE_TB
 - en: '| psd | spectrum | True |  | — | — |'
+  id: totrans-330
   prefs: []
   type: TYPE_TB
 - en: '| psd | spectrum | False |  | — | — |'
+  id: totrans-331
   prefs: []
   type: TYPE_TB
 - en: '| complex | density | True |  | — | — |'
+  id: totrans-332
   prefs: []
   type: TYPE_TB
 - en: '| complex | density | False |  | — | — |'
+  id: totrans-333
   prefs: []
   type: TYPE_TB
 - en: '| magnitude | density | True |  | — | — |'
+  id: totrans-334
   prefs: []
   type: TYPE_TB
 - en: '| magnitude | density | False |  | — | — |'
+  id: totrans-335
   prefs: []
   type: TYPE_TB
 - en: '| — | — | — |  | `*` | `None` |'
+  id: totrans-336
   prefs: []
   type: TYPE_TB
 - en: When using `onesided` output on complex-valued input signals, the old [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
@@ -1655,41 +2398,54 @@
     of Github issue [14903](https://github.com/scipy/scipy/issues/14903) discusses
     variations of the old [`spectrogram`](../reference/generated/scipy.signal.spectrogram.html#scipy.signal.spectrogram
     "scipy.signal.spectrogram") parameters for a single cosine input.
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
 - en: Detrend
+  id: totrans-338
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: SciPy provides the function [`detrend`](../reference/generated/scipy.signal.detrend.html#scipy.signal.detrend
     "scipy.signal.detrend") to remove a constant or linear trend in a data series
     in order to see effect of higher order.
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
 - en: The example below removes the constant and linear trend of a second-order polynomial
     time series and plots the remaining signal components.
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE48]'
+  id: totrans-341
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: '[PRE49]'
+  id: totrans-342
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: '[PRE50]'
+  id: totrans-343
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: '!["This code generates an X-Y plot with no units. A red trace corresponding
     to the original signal curves from the bottom left to the top right. A blue trace
     has the constant detrend applied and is below the red trace with zero Y offset.
     The last black trace has the linear detrend applied and is almost flat from left
     to right highlighting the curve of the original signal. This last trace has an
     average slope of zero and looks very different."](../Images/490b1d459a50a325dd605fac2835b18a.png)'
+  id: totrans-344
   prefs: []
   type: TYPE_IMG
 - en: References
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
 - en: 'Some further reading and related software:'
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
