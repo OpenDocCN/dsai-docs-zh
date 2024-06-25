@@ -130,7 +130,7 @@
 +   [`scipy.integrate.tplquad`](sp112_0129.md)
 +   [`scipy.integrate.nquad`](sp112_0130.md)
 +   [`scipy.integrate.fixed_quad`](sp112_0131.md)
-+   [scipy.integrate.quadrature 函数。](sp112_0132.md)
++   [`scipy.integrate.quadrature`](sp112_0132.md)
 +   [`scipy.integrate.romberg`](sp112_0133.md)
 +   [`scipy.integrate.newton_cotes`](sp112_0134.md)
 +   [`scipy.integrate.qmc_quad`](sp112_0135.md)
