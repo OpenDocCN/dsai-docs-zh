@@ -1,31 +1,46 @@
 - en: Code Generation
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.sympy.org/latest/modules/codegen.html](https://docs.sympy.org/latest/modules/codegen.html)
+  zh: 代码生成
+- en: Original text：[https://docs.sympy.org/latest/modules/codegen.html](https://docs.sympy.org/latest/modules/codegen.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原始文档：[https://docs.sympy.org/latest/modules/codegen.html](https://docs.sympy.org/latest/modules/codegen.html)
 - en: Several submodules in SymPy allow one to generate directly compilable and executable
     code in a variety of different programming languages from SymPy expressions. In
     addition, there are functions that generate Python importable objects that can
     evaluate SymPy expressions very efficiently.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: SymPy 的多个子模块允许直接从 SymPy 表达式生成可直接编译和执行的代码，支持多种不同的编程语言。此外，还有一些函数生成 Python 可导入的对象，能够高效地评估
+    SymPy 表达式。
 - en: We will start with a brief introduction to the components that make up the code
     generation capabilities of SymPy.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将从简要介绍构成 SymPy 代码生成功能的组件开始。
 - en: Introduction
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 介绍
 - en: 'There are four main levels of abstractions:'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 有四个主要的抽象层次：
 - en: '[PRE0]'
+  id: totrans-6
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '[`sympy.utilities.autowrap`](utilities/autowrap.html#module-sympy.utilities.autowrap
     "sympy.utilities.autowrap") uses codegen, and codegen uses the code printers.
     [`sympy.utilities.autowrap`](utilities/autowrap.html#module-sympy.utilities.autowrap
@@ -33,35 +48,55 @@
     to numerical function in the same Python process in one step. Codegen is actual
     code generation, i.e., to compile and use later, or to include in some larger
     project.'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`sympy.utilities.autowrap`](https://docs.sympy.org/latest/modules/utilities/autowrap.html#module-sympy.utilities.autowrap
+    "sympy.utilities.autowrap") 使用了 codegen，而 codegen 又使用了代码打印机。[`sympy.utilities.autowrap`](https://docs.sympy.org/latest/modules/utilities/autowrap.html#module-sympy.utilities.autowrap
+    "sympy.utilities.autowrap") 实现了一步到位：在同一个 Python 进程中，它让您能够从 SymPy 表达式转换为数值函数。 Codegen
+    是实际的代码生成，即编译和以后使用，或者包含在某个更大的项目中。'
 - en: The code printers translate the SymPy objects into actual code, like `abs(x)
     -> fabs(x)` (for C).
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码打印机将 SymPy 对象翻译成实际的代码，如 `abs(x) -> fabs(x)`（用于 C）。
 - en: The code printers don’t print optimal code in many cases. An example of this
     is powers in C. `x**2` prints as `pow(x, 2)` instead of `x*x`. Other optimizations
     (like mathematical simplifications) should happen before the code printers.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 在许多情况下，代码打印机并不输出最优的代码。例如，在 C 中，幂运算 `x**2` 输出为 `pow(x, 2)` 而不是 `x*x`。其他优化（如数学简化）应该在代码打印机之前进行。
 - en: Currently, [`sympy.simplify.cse_main.cse()`](simplify/simplify.html#sympy.simplify.cse_main.cse
     "sympy.simplify.cse_main.cse") is not applied automatically anywhere in this chain.
     It ideally happens at the codegen level, or somewhere above it.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 目前，在此链中自动应用 [`sympy.simplify.cse_main.cse()`](https://docs.sympy.org/latest/modules/simplify/simplify.html#sympy.simplify.cse_main.cse
+    "sympy.simplify.cse_main.cse") 尚未发生。理想情况下，它应该在代码生成级别或其上某处发生。
 - en: We will iterate through the levels below.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将逐级介绍以下内容。
 - en: 'The following three lines will be used to setup each example:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下三行将用于设置每个示例：
 - en: '[PRE1]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Code printers (sympy.printing)
+  id: totrans-14
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 代码打印机（sympy.printing）
 - en: This is where the meat of code generation is; the translation of SymPy actually
     more like a lightweight version of codegen for Python, and Python ([`sympy.printing.pycode.pycode()`](printing.html#sympy.printing.pycode.pycode
     "sympy.printing.pycode.pycode")), and [`sympy.printing.lambdarepr.lambdarepr()`](printing.html#sympy.printing.lambdarepr.lambdarepr
@@ -69,130 +104,199 @@
     and Aesara ([`sympy.printing.aesaracode.aesara_function()`](printing.html#sympy.printing.aesaracode.aesara_function
     "sympy.printing.aesaracode.aesara_function")). The code printers are special cases
     of the other prints in SymPy (str printer, pretty printer, etc.).
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是代码生成的核心；SymPy 的翻译实际上更像是 Python 的轻量级代码生成版本，而 Python ([`sympy.printing.pycode.pycode()`](https://docs.sympy.org/latest/modules/printing.html#sympy.printing.pycode.pycode))
+    和 [`sympy.printing.lambdarepr.lambdarepr()`](https://docs.sympy.org/latest/modules/printing.html#sympy.printing.lambdarepr.lambdarepr)，支持许多库（如
+    NumPy），以及 Aesara ([`sympy.printing.aesaracode.aesara_function()`](https://docs.sympy.org/latest/modules/printing.html#sympy.printing.aesaracode.aesara_function
+    "sympy.printing.aesaracode.aesara_function"))。代码打印机是 SymPy 中其他打印机（如字符串打印机、美观打印机等）的特殊情况。
 - en: 'An important distinction is that the code printer has to deal with assignments
     (using the [`sympy.codegen.ast.Assignment`](#sympy.codegen.ast.Assignment "sympy.codegen.ast.Assignment")
     object). This serves as building blocks for the code printers and hence the `codegen`
     module. An example that shows the use of `Assignment` in C code:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个重要的区别是，代码打印机必须处理赋值（使用 [`sympy.codegen.ast.Assignment`](https://docs.sympy.org/latest/modules/codegen.html#sympy.codegen.ast.Assignment
+    "sympy.codegen.ast.Assignment") 对象）。这作为代码打印机及其 `codegen` 模块的构建块。以下是在 C 代码中使用 `Assignment`
+    的示例：
 - en: '[PRE2]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Here is another simple example of printing a C version of a SymPy expression:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是另一个打印 SymPy 表达式 C 版本的简单示例：
 - en: '[PRE3]'
+  id: totrans-19
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'To generate code with some math functions provided by e.g. the C99 standard
     we need to import functions from [`sympy.codegen.cfunctions`](#module-sympy.codegen.cfunctions
     "sympy.codegen.cfunctions"):'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 要生成使用例如C99标准提供的一些数学函数的代码，我们需要从[`sympy.codegen.cfunctions`](https://example.org/module-sympy.codegen.cfunctions)导入函数：
 - en: '[PRE4]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
     variable is provided an if statement is created, otherwise the ternary operator
     is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
     True)` then an error will be thrown. This is to prevent generating an expression
     that may not evaluate to anything. A use case for `Piecewise`:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Piecewise`表达式将转换为条件语句。如果提供了`assign_to`变量，则创建一个if语句，否则使用三元运算符。请注意，如果`Piecewise`缺少由`(expr,
+    True)`表示的默认项，则会引发错误。这是为了防止生成一个可能不会评估为任何内容的表达式。一个`Piecewise`的用例：'
 - en: '[PRE5]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'The various printers also tend to support `Indexed` objects well. With `contract=True`
     these expressions will be turned into loops, whereas `contract=False` will just
     print the assignment expression that should be looped over:'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 各种打印机通常也很好地支持`Indexed`对象。使用`contract=True`这些表达式将被转换为循环，而`contract=False`则只会打印应该循环的赋值表达式：
 - en: '[PRE6]'
+  id: totrans-25
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'Custom printing can be defined for certain types by passing a dictionary of
     “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
     value can be a list of tuples i.e., `[(argument_test, cfunction_string)]`. This
     can be used to call a custom Octave function:'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过将“type”：“function”字典传递给`user_functions`关键字来为某些类型定义自定义打印。或者，字典值可以是元组列表，即`[(argument_test,
+    cfunction_string)]`。这可以用于调用自定义Octave函数：
 - en: '[PRE7]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'An example of Mathematica code printer:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: Mathematica代码打印机示例：
 - en: '[PRE8]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'We can go through a common expression in different languages we support and
     see how it works:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过我们支持的不同语言中的常见表达式并看看它是如何工作的：
 - en: '[PRE9]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Codegen (sympy.utilities.codegen)
+  id: totrans-32
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Codegen（sympy.utilities.codegen）
 - en: This module deals with creating compilable code from SymPy expressions. This
     is lower level than autowrap, as it doesn’t actually attempt to compile the code,
     but higher level than the printers, as it generates compilable files (including
     header files), rather than just code snippets.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 此模块处理从SymPy表达式创建可编译代码。这比autowrap更低级，因为它实际上不尝试编译代码，但比打印机更高级，因为它生成可编译的文件（包括头文件），而不仅仅是代码片段。
 - en: The user friendly functions, here, are `codegen` and `make_routine`. `codegen`
     takes a list of `(variable, expression)` pairs and a language (C, F95, and Octave/Matlab
     are supported). It returns, as strings, a code file and a header file (for relevant
     languages). The variables are created as functions that return the value of the
     expression as output.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里友好的函数是`codegen`和`make_routine`。`codegen`接受`(variable, expression)`对的列表和语言（支持C、F95和Octave/Matlab）。它返回一个代码文件和一个头文件的字符串，对应于相关语言。这些变量被创建为返回表达式值的函数输出。
 - en: Note
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The `codegen` callable is not in the sympy namespace automatically, to use it
     you must first import `codegen` from `sympy.utilities.codegen`
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 可调用的`codegen`不会自动存在于sympy命名空间中，要使用它，必须首先从`sympy.utilities.codegen`导入`codegen`。
 - en: 'For instance:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如：
 - en: '[PRE10]'
+  id: totrans-38
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Various flags to `codegen` let you modify things. The project name for preprocessor
     instructions can be varied using `project`. Variables listed as global variables
     in arg `global_vars` will not show up as function arguments.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 各种标志可以让您修改`codegen`中的事物。使用`project`可以变化项目名称以用于预处理指令。在`global_vars`参数中列出的全局变量将不会显示为函数参数。
 - en: '`language` is a case-insensitive string that indicates the source code language.
     Currently, `C`, `F95` and `Octave` are supported. `Octave` generates code compatible
     with both Octave and Matlab.'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: '`language`是一个不区分大小写的字符串，表示源代码语言。目前支持`C`、`F95`和`Octave`。`Octave`生成与Octave和Matlab兼容的代码。'
 - en: '`header` when True, a header is written on top of each source file. `empty`
     when True, empty lines are used to structure the code. With `argument_sequence`
     a sequence of arguments for the routine can be defined in a preferred order.'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 当`header`为True时，在每个源文件的顶部会写入一个头部。当`empty`为True时，使用空行来结构化代码。使用`argument_sequence`可以定义首选顺序的例程参数序列。
 - en: '`prefix` defines a prefix for the names of the files that contain the source
     code. If omitted, the name of the first name_expr tuple is used.'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: '`prefix`定义了包含源代码的文件名称的前缀。如果省略，则使用第一个`name_expr`元组的名称。'
 - en: '`to_files` when True, the code will be written to one or more files with the
     given prefix.'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 当`to_files`为True时，代码将被写入一个或多个带有给定前缀的文件。
 - en: 'Here is an example:'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是一个示例：
 - en: '[PRE11]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: The method `make_routine` creates a `Routine` object, which represents an evaluation
     routine for a set of expressions. This is only good for internal use by the CodeGen
     objects, as an intermediate representation from SymPy expression to generated
@@ -201,95 +305,147 @@
     the CodeGen object depending upon the language of choice. This creates the internal
     objects representing assignments and so on, and creates the `Routine` class with
     them.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 方法`make_routine`创建一个`Routine`对象，表示一组表达式的评估例程。这仅适用于CodeGen对象内部使用，作为从SymPy表达式到生成代码的中间表示。不建议自己创建`Routine`对象。您应该使用`make_routine`方法。`make_routine`反过来调用CodeGen对象的`routine`方法，具体取决于所选语言。这样创建表示赋值等的内部对象，并使用它们创建`Routine`类。
 - en: The various codegen objects such as `Routine` and `Variable` aren’t SymPy objects
     (they don’t subclass from Basic).
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 各种codegen对象，如`Routine`和`Variable`并非SymPy对象（它们不从Basic子类化）。
 - en: 'For example:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如：
 - en: '[PRE12]'
+  id: totrans-49
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'Another more complicated example with a mixture of specified and automatically-assigned
     names. Also has Matrix output:'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个更复杂的示例，混合指定和自动分配的名称。还有矩阵输出：
 - en: '[PRE13]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'We can examine the various arguments more closely:'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以更仔细地检查各种参数：
 - en: '[PRE14]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: The full API reference can be viewed [here](utilities/codegen.html#codegen-api).
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 完整的API参考可以在[这里](utilities/codegen.html#codegen-api)查看。
 - en: Autowrap
+  id: totrans-55
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Autowrap
 - en: Autowrap automatically generates code, writes it to disk, compiles it, and imports
     it into the current session. Main functions of this module are `autowrap`, `binary_function`,
     and `ufuncify`.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: Autowrap自动生成代码，将其写入磁盘，编译它并导入到当前会话中。本模块的主要功能是`autowrap`，`binary_function`和`ufuncify`。
 - en: It also automatically converts expressions containing `Indexed` objects into
     summations. The classes IndexedBase, Indexed and Idx represent a matrix element
     M[i, j]. See [Tensor](tensor/index.html#tensor-module) for more on this.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 它还会自动将包含`Indexed`对象的表达式转换为求和。类IndexedBase、Indexed和Idx表示矩阵元素M[i, j]。有关更多信息，请参见[Tensor](tensor/index.html#tensor-module)。
 - en: '`autowrap` creates a wrapper using f2py or Cython and creates a numerical function.'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '`autowrap`使用f2py或Cython创建包装器并创建数值函数。'
 - en: Note
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The `autowrap` callable is not in the sympy namespace automatically, to use
     it you must first import `autowrap` from `sympy.utilities.autowrap`
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 可调用的`autowrap`不会自动放置在sympy命名空间中，要使用它，您必须先从`sympy.utilities.autowrap`导入`autowrap`。
 - en: 'The callable returned from autowrap() is a binary Python function, not a SymPy
     object. For example:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: '`autowrap`返回的可调用函数是一个二进制的Python函数，而不是SymPy对象。例如：'
 - en: '[PRE15]'
+  id: totrans-62
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'The various flags available with autowrap() help to modify the services provided
     by the method. The argument `tempdir` tells autowrap to compile the code in a
     specific directory, and leave the files intact when finished. For instance:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: autowrap()提供的各种标志有助于修改方法提供的服务。参数`tempdir`告诉autowrap在特定目录中编译代码，并在完成后保留文件。例如：
 - en: '[PRE16]'
+  id: totrans-64
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'Checking the Fortran source code in the directory specified reveals this:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 检查指定目录中的Fortran源代码揭示了这一点：
 - en: '[PRE17]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'Using the argument `args` along with it changes argument sequence:'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用参数`args`与其一起改变参数序列：
 - en: '[PRE18]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'yields:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 产生：
 - en: '[PRE19]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: The argument `verbose` is boolean, optional and if True, autowrap will not mute
     the command line backends. This can be helpful for debugging.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数`verbose`是布尔值，可选，如果为True，则autowrap不会使命令行后端静音。这对调试非常有帮助。
 - en: 'The argument `language` and `backend` are used to change defaults: `Fortran`
     and `f2py` to `C` and `Cython`. The argument helpers is used to define auxiliary
     expressions needed for the main expression. If the main expression needs to call
@@ -297,2534 +453,4103 @@
     then make sure that the compiled main expression can link to the helper routine.
     Items should be tuples with `(<function_name>, <sympy_expression>, <arguments>)`.
     It is mandatory to supply an argument sequence to helper routines.'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数`language`和`backend`用于将默认值从`Fortran`和`f2py`更改为`C`和`Cython`。参数helpers用于定义主表达式所需的辅助表达式。如果主表达式需要调用特殊函数，则应将其放入helpers可迭代对象中。Autowrap将确保编译的主表达式可以链接到帮助程序例程。项目应该是带有（<function_name>，<sympy_expression>，<arguments>）的元组。必须为辅助例程提供参数序列。
 - en: 'Another method available at the `autowrap` level is `binary_function`. It returns
     a sympy function. The advantage is that we can have very fast functions as compared
     to SymPy speeds. This is because we will be using compiled functions with SymPy
     attributes and methods. An illustration:'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 `autowrap` 层面可用的另一种方法是 `binary_function`。它返回一个 sympy 函数。其优势在于，与 SymPy 速度相比，我们可以得到非常快速的函数。这是因为我们将使用带有
+    SymPy 属性和方法的编译函数。一个例子：
 - en: '[PRE20]'
+  id: totrans-74
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: While NumPy operations are very efficient for vectorized data but they sometimes
     incur unnecessary costs when chained together. Consider the following operation
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然 NumPy 操作对于矢量化数据非常高效，但在连锁操作时有时会产生不必要的成本。考虑以下操作
 - en: '[PRE21]'
+  id: totrans-76
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: The operators `sin` and `/` call routines that execute tight for loops in `C`.
     The resulting computation looks something like this
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: '`sin` 和 `/` 运算符调用执行紧密循环的 `C` 例程。得到的计算看起来像这样'
 - en: '[PRE22]'
+  id: totrans-78
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: This is slightly sub-optimal because
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 这略微不够优化，因为
 - en: We allocate an extra `temp` array
+  id: totrans-80
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们分配了额外的 `temp` 数组
 - en: We walk over `x` memory twice when once would have been sufficient
+  id: totrans-81
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 当一次就足够时，我们对 `x` 内存进行了两次遍历
 - en: A better solution would fuse both element-wise operations into a single for
     loop
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 更好的解决方案将两个逐元素操作融合为单个循环
 - en: '[PRE23]'
+  id: totrans-83
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Statically compiled projects like NumPy are unable to take advantage of such
     optimizations. Fortunately, SymPy is able to generate efficient low-level C or
     Fortran code. It can then depend on projects like `Cython` or `f2py` to compile
     and reconnect that code back up to Python. Fortunately this process is well automated
     and a SymPy user wishing to make use of this code generation should call the `ufuncify`
     function.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 像 NumPy 这样的静态编译项目无法利用这些优化。幸运的是，SymPy 能够生成高效的低级别 C 或 Fortran 代码。然后，它可以依赖于像 `Cython`
+    或 `f2py` 这样的项目来编译并重新连接该代码回到 Python。幸运的是，这个过程是自动化的，希望利用这些代码生成的 SymPy 用户应该调用 `ufuncify`
+    函数。
 - en: '`ufuncify` is the third method available with Autowrap module. It basically
     implies ‘Universal functions’ and follows an ideology set by NumPy. The main point
     of ufuncify as compared to autowrap is that it allows arrays as arguments and
     can operate in an element-by-element fashion. The core operation done element-wise
     is in accordance to Numpy’s array broadcasting rules. See [this](https://numpy.org/doc/stable/reference/ufuncs.html)
     for more.'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: '`ufuncify` 是 Aurowrap 模块的第三种可用方法。它基本上暗示了‘通用函数’，并遵循了 NumPy 设定的理念。与 autowrap
+    相比，ufuncify 的主要优点是允许数组作为参数，并且可以逐元素地进行操作。按照 NumPy 的数组广播规则逐元素进行的核心操作。查看 [此](https://numpy.org/doc/stable/reference/ufuncs.html)
+    了解更多信息。'
 - en: '[PRE24]'
+  id: totrans-86
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '[PRE25]'
+  id: totrans-87
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: This function `f` consumes and returns a NumPy array. Generally `ufuncify` performs
     at least as well as `lambdify`. If the expression is complicated then `ufuncify`
     often significantly outperforms the NumPy backed solution. Jensen has a good [blog
     post](https://ojensen.wordpress.com/2010/08/10/fast-ufunc-ish-hydrogen-solutions/)
     on this topic.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数 `f` 消耗并返回一个 NumPy 数组。通常情况下，`ufuncify` 的性能至少与 `lambdify` 相当。如果表达式复杂，则 `ufuncify`
+    通常明显优于 NumPy 支持的解决方案。Jensen 在这个主题上有一篇很好的 [博文](https://ojensen.wordpress.com/2010/08/10/fast-ufunc-ish-hydrogen-solutions/)。
 - en: 'Let us see an example for some quantitative analysis:'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看一个进行一些数量分析的示例：
 - en: '[PRE26]'
+  id: totrans-90
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: The lambdify function translates SymPy expressions into Python functions, leveraging
     a variety of numerical libraries. By default lambdify relies on implementations
     in the `math` standard library. Naturally, Raw Python is faster than SymPy. However
     it also supports `mpmath` and most notably, `numpy`. Using the NumPy library gives
     the generated function access to powerful vectorized ufuncs that are backed by
     compiled C code.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '`lambdify` 函数将 SymPy 表达式转换为 Python 函数，利用各种数值库。默认情况下，`lambdify` 依赖于 `math` 标准库中的实现。自然地，原始的
+    Python 比 SymPy 更快。但它也支持 `mpmath` 和最显著的是 `numpy`。使用 NumPy 库使生成的函数能够访问由编译的 C 代码支持的强大的矢量化
+    ufuncs。'
 - en: 'Let us compare the speeds:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们比较速度：
 - en: '[PRE27]'
+  id: totrans-93
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: The options available with ufuncify are more or less the same as those available
     with `autowrap`.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 与 `autowrap` 可用的选项基本相同。
 - en: There are other facilities available with SymPy to do efficient numeric computation.
     See [this](numeric-computation.html#numeric-computation) page for a comparison
     among them.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: SymPy 还有其他有效的数值计算工具可用。参见 [此](numeric-computation.html#numeric-computation) 页面进行比较。
 - en: '## Classes and functions for rewriting expressions (sympy.codegen.rewriting)'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 重写表达式的类和函数（sympy.codegen.rewriting）'
 - en: Classes and functions useful for rewriting expressions for optimized code generation.
     Some languages (or standards thereof), e.g. C99, offer specialized math functions
     for better performance and/or precision.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 有助于重写表达式以进行优化代码生成的类和函数。某些语言（或其标准），如C99，提供了专门的数学函数以获得更好的性能和/或精度。
 - en: 'Using the `optimize` function in this module, together with a collection of
     rules (represented as instances of `Optimization`), one can rewrite the expressions
     for this purpose:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用此模块中的`optimize`函数以及一系列规则（表示为`Optimization`实例），可以为此目的重写表达式：
 - en: '[PRE28]'
+  id: totrans-99
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'The `optims_c99` imported above is tuple containing the following instances
     (which may be imported from `sympy.codegen.rewriting`):'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 上面导入的`optims_c99`是包含以下实例的元组（可以从`sympy.codegen.rewriting`导入）：
 - en: '`expm1_opt`'
+  id: totrans-101
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`expm1_opt`'
 - en: '`log1p_opt`'
+  id: totrans-102
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`log1p_opt`'
 - en: '`exp2_opt`'
+  id: totrans-103
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`exp2_opt`'
 - en: '`log2_opt`'
+  id: totrans-104
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`log2_opt`'
 - en: '`log2const_opt`'
+  id: totrans-105
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`log2const_opt`'
 - en: '[PRE29]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: Specialization of ReplaceOptim for functions evaluating “f(x) - 1”.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 专门用于计算“f(x) - 1”的ReplaceOptim特化函数。
 - en: 'Parameters:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**func :**'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: '**函数：**'
 - en: The function which is subtracted by one.
+  id: totrans-110
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 减一的函数。
 - en: '**func_m_1 :**'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: '**func_m_1：**'
 - en: The specialized function evaluating `func(x) - 1`.
+  id: totrans-112
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 专门用于评估`func(x) - 1`的函数。
 - en: '**opportunistic** : bool'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: '**机会主义**：布尔值'
 - en: When `True`, apply the transformation as long as the magnitude of the remaining
     number terms decreases. When `False`, only apply the transformation if it completely
     eliminates the number term.
+  id: totrans-114
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为`True`时，只要剩余数字项的数量减少，则应用转换。当为`False`时，仅当完全消除数字项时才应用转换。
 - en: Explanation
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: Numerical functions which go toward one as x go toward zero is often best implemented
     by a dedicated function in order to avoid catastrophic cancellation. One such
     example is `expm1(x)` in the C standard library which evaluates `exp(x) - 1`.
     Such functions preserves many more significant digits when its argument is much
     smaller than one, compared to subtracting one afterwards.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 当x趋近于零时，以向一处收敛的数值函数通常最好通过专门的函数实现，以避免灾难性的取消。一个典型的例子是C标准库中的`expm1(x)`，它计算的是`exp(x)
+    - 1`。这种函数在其参数远小于一时能保留更多有效位数，相比之下，后续减一则无法保留这些位数。
 - en: Examples
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE30]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: '[PRE31]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: passed as second argument to Basic.replace(…)
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为第二个参数传递给Basic.replace(…)
 - en: '[PRE32]'
+  id: totrans-121
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: Abstract base class for rewriting optimization.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 重写优化的抽象基类。
 - en: Subclasses should implement `__call__` taking an expression as argument.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 子类应实现`__call__`，接受一个表达式作为参数。
 - en: 'Parameters:'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**cost_function** : callable returning number'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: '**成本函数**：返回数字的可调用对象'
 - en: '**priority** : number'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: '**优先级**：数字'
 - en: '[PRE33]'
+  id: totrans-127
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: Rewriting optimization calling replace on expressions.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 在表达式上调用replace进行重写优化。
 - en: 'Parameters:'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**query :**'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: '**查询：**'
 - en: First argument passed to replace.
+  id: totrans-131
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 替换时传递的第一个参数。
 - en: '**value :**'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: '**值：**'
 - en: Second argument passed to replace.
+  id: totrans-133
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 替换的第二个传递参数。
 - en: Explanation
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The instance can be used as a function on expressions for which it will apply
     the `replace` method (see [`sympy.core.basic.Basic.replace()`](core.html#sympy.core.basic.Basic.replace
     "sympy.core.basic.Basic.replace")).
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以将该实例用作函数，适用于表达式，它将应用于`replace`方法（参见[`sympy.core.basic.Basic.replace()`](core.html#sympy.core.basic.Basic.replace
+    "sympy.core.basic.Basic.replace")）。
 - en: Examples
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE34]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: '[PRE35]'
+  id: totrans-138
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: Creates an instance of [`ReplaceOptim`](#sympy.codegen.rewriting.ReplaceOptim
     "sympy.codegen.rewriting.ReplaceOptim") for expanding `Pow`.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 为`Pow`展开创建一个[`ReplaceOptim`](#sympy.codegen.rewriting.ReplaceOptim "sympy.codegen.rewriting.ReplaceOptim")实例。
 - en: 'Parameters:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**limit** : int'
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: '**限制**：整数'
 - en: The highest power which is expanded into multiplication.
+  id: totrans-142
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 展开为乘法的最高幂次。
 - en: '**base_req** : function returning bool'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: '**base_req**：返回布尔值的函数'
 - en: Requirement on base for expansion to happen, default is to return the `is_symbol`
     attribute of the base.
+  id: totrans-144
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 展开发生的基本要求，默认返回基数的`is_symbol`属性。
 - en: Explanation
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The requirements for expansions are that the base needs to be a symbol and the
     exponent needs to be an Integer (and be less than or equal to `limit`).
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 展开的要求是基数必须是一个符号，并且指数必须是一个整数（且小于或等于`limit`）。
 - en: Examples
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE36]'
+  id: totrans-148
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: '[PRE37]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: Apply optimizations to an expression.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 对表达式应用优化。
 - en: 'Parameters:'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : expression'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表达式**：表达式'
 - en: '**optimizations** : iterable of `Optimization` instances'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: '**优化**：`Optimization`实例的可迭代对象'
 - en: The optimizations will be sorted with respect to `priority` (highest first).
+  id: totrans-154
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 优化将根据`priority`（最高优先级在前）排序。
 - en: Examples
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE38]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: Additional AST nodes for operations on matrices. The nodes in this module are
     meant to represent optimization of matrix expressions within codegen’s target
     languages that cannot be represented by SymPy expressions.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于矩阵操作的额外AST节点。此模块中的节点旨在表示无法通过SymPy表达式表示的代码生成目标语言中的矩阵表达式的优化。
 - en: 'As an example, we can use [`sympy.codegen.rewriting.optimize()`](#sympy.codegen.rewriting.optimize
     "sympy.codegen.rewriting.optimize") and the `matin_opt` optimization provided
     in [`sympy.codegen.rewriting`](#module-sympy.codegen.rewriting "sympy.codegen.rewriting")
     to transform matrix multiplication under certain assumptions:'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，我们可以使用[`sympy.codegen.rewriting.optimize()`](#sympy.codegen.rewriting.optimize
+    "sympy.codegen.rewriting.optimize")和[`sympy.codegen.rewriting`](#module-sympy.codegen.rewriting
+    "sympy.codegen.rewriting")提供的`matin_opt`优化来在特定假设下转换矩阵乘法：
 - en: '[PRE39]'
+  id: totrans-159
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: '[PRE40]'
+  id: totrans-160
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: Represents an operation to solve a linear matrix equation.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表一个解线性矩阵方程的操作。
 - en: 'Parameters:'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**matrix** : MatrixSymbol'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: '**matrix** : MatrixSymbol'
 - en: Matrix representing the coefficients of variables in the linear equation. This
     matrix must be square and full-rank (i.e. all columns must be linearly independent)
     for the solving operation to be valid.
+  id: totrans-164
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 表示线性方程中变量系数的矩阵。该矩阵必须是方阵且满秩（即所有列必须线性独立），才能进行有效的求解操作。
 - en: '**vector** : MatrixSymbol'
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: '**vector** : MatrixSymbol'
 - en: One-column matrix representing the solutions to the equations represented in
     `matrix`.
+  id: totrans-166
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 表示在`matrix`中表示的方程的解的单列矩阵。
 - en: Examples
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE41]  ## Tools for simplifying expressions using approximations (sympy.codegen.approximations)'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE41]  ## 使用近似简化表达式的工具（sympy.codegen.approximations）'
 - en: '[PRE42]'
+  id: totrans-169
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: Approximates functions by expanding them as a series.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将它们展开为级数来近似函数。
 - en: 'Parameters:'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**bounds** : dict'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: '**bounds** : dict'
 - en: Mapping expressions to length 2 tuple of bounds (low, high).
+  id: totrans-173
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将表达式映射到长度为2的边界元组（低，高）。
 - en: '**reltol** : number'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: '**reltol** : number'
 - en: Threshold for when to ignore a term. Taken relative to the largest lower bound
     among bounds.
+  id: totrans-175
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '相对于所有边界中的最大下界时要忽略术语。 '
 - en: '**max_order** : int'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: '**max_order** : int'
 - en: Largest order to include in series expansion
+  id: totrans-177
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 包括在级数展开中的最大阶数
 - en: '**n_point_checks** : int (even)'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: '**n_point_checks** : int（偶数）'
 - en: The validity of an expansion (with respect to reltol) is checked at discrete
     points (linearly spaced over the bounds of the variable). The number of points
     used in this numerical check is given by this number.
+  id: totrans-179
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在离散点（线性间隔在变量的边界上）上检查展开的有效性（相对于reltol）。在此数值检查中使用的点数由此数字给出。
 - en: Examples
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE43]'
+  id: totrans-181
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: '[PRE44]'
+  id: totrans-182
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: Approximates sum by neglecting small terms.
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过忽略小术语来近似和。
 - en: 'Parameters:'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**bounds** : dict'
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: '**bounds** : dict'
 - en: Mapping expressions to length 2 tuple of bounds (low, high).
+  id: totrans-186
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将表达式映射到长度为2的边界元组（低，高）。
 - en: '**reltol** : number'
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: '**reltol** : number'
 - en: Threshold for when to ignore a term. Taken relative to the largest lower bound
     among bounds.
+  id: totrans-188
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '相对于所有边界中的最大下界时要忽略术语。 '
 - en: Explanation
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: If terms are expressions which can be determined to be monotonic, then bounds
     for those expressions are added.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果术语是可以确定为单调的表达式，则将这些表达式的边界添加进去。
 - en: Examples
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE45]  ## Classes for abstract syntax trees (sympy.codegen.ast)'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE45]  ## 抽象语法树类（sympy.codegen.ast）'
 - en: Types used to represent a full function/module as an Abstract Syntax Tree.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于表示完整函数/模块的AST类型。
 - en: Most types are small, and are merely used as tokens in the AST. A tree diagram
     has been included below to illustrate the relationships between the AST types.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数类型都很小，仅用作AST中的标记。下面的树形图说明了AST类型之间的关系。
 - en: AST Type Tree
+  id: totrans-195
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: AST类型树
 - en: '[PRE46]'
+  id: totrans-196
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: Predefined types
+  id: totrans-197
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 预定义类型
 - en: 'A number of `Type` instances are provided in the `sympy.codegen.ast` module
     for convenience. Perhaps the two most common ones for code-generation (of numeric
     codes) are `float32` and `float64` (known as single and double precision respectively).
     There are also precision generic versions of Types (for which the codeprinters
     selects the underlying data type at time of printing): `real`, `integer`, `complex_`,
     `bool_`.'
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: '`sympy.codegen.ast`模块提供了多种`Type`实例供方便使用。也许最常见的两种用于代码生成（数值代码）的是`float32`和`float64`（分别称为单精度和双精度）。此外，还有精确的通用类型版本（在打印时选择底层数据类型）：`real`、`integer`、`complex_`、`bool_`。'
 - en: 'The other `Type` instances defined are:'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 其他定义的`Type`实例为：
 - en: '`intc`: Integer type used by C’s “int”.'
+  id: totrans-200
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`intc`：C中使用的整数类型。'
 - en: '`intp`: Integer type used by C’s “unsigned”.'
+  id: totrans-201
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`intp`：C中使用的无符号整数类型。'
 - en: '`int8`, `int16`, `int32`, `int64`: n-bit integers.'
+  id: totrans-202
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`int8`、`int16`、`int32`、`int64`：n位整数。'
 - en: '`uint8`, `uint16`, `uint32`, `uint64`: n-bit unsigned integers.'
+  id: totrans-203
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`uint8`、`uint16`、`uint32`、`uint64`：n 位无符号整数。'
 - en: '`float80`: known as “extended precision” on modern x86/amd64 hardware.'
+  id: totrans-204
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`float80`：在现代 x86/amd64 硬件上称为“扩展精度”。'
 - en: '`complex64`: Complex number represented by two `float32` numbers'
+  id: totrans-205
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`complex64`：由两个 `float32` 数字表示的复数。'
 - en: '`complex128`: Complex number represented by two `float64` numbers'
+  id: totrans-206
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`complex128`：由两个 `float64` 数字表示的复数'
 - en: Using the nodes
+  id: totrans-207
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用节点
 - en: 'It is possible to construct simple algorithms using the AST nodes. Let’s construct
     a loop applying Newton’s method:'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用 AST 节点构造简单的算法。让我们构造一个应用牛顿法的循环：
 - en: '[PRE47]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: 'If we want to generate Fortran code for the same while loop we simple call
     `fcode`:'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们想要为相同的 while 循环生成 Fortran 代码，我们只需调用 `fcode`：
 - en: '[PRE48]'
+  id: totrans-211
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: There is a function constructing a loop (or a complete function) like this in
     [`sympy.codegen.algorithms`](#module-sympy.codegen.algorithms "sympy.codegen.algorithms").
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 有一个函数在 [`sympy.codegen.algorithms`](#module-sympy.codegen.algorithms "sympy.codegen.algorithms")
+    中构造循环（或完整函数）。
 - en: '[PRE49]'
+  id: totrans-213
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: Represents variable assignment for code generation.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表用于代码生成的变量赋值。
 - en: 'Parameters:'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**lhs** : Expr'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: '**lhs**：Expr'
 - en: SymPy object representing the lhs of the expression. These should be singular
     objects, such as one would use in writing code. Notable types include Symbol,
     MatrixSymbol, MatrixElement, and Indexed. Types that subclass these types are
     also supported.
+  id: totrans-217
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: SymPy 对象，表示表达式的左手边。这些应该是单一的对象，例如在编写代码时使用的对象。显著的类型包括 Symbol、MatrixSymbol、MatrixElement
+    和 Indexed。支持这些类型的子类也是支持的。
 - en: '**rhs** : Expr'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: '**rhs**：Expr'
 - en: SymPy object representing the rhs of the expression. This can be any type, provided
     its shape corresponds to that of the lhs. For example, a Matrix type can be assigned
     to MatrixSymbol, but not to Symbol, as the dimensions will not align.
+  id: totrans-219
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: SymPy 对象，表示表达式的右手边。可以是任何类型，只要其形状与左手边相对应。例如，Matrix 类型可以分配给 MatrixSymbol，但不能分配给
+    Symbol，因为维度不会对齐。
 - en: Examples
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE50]'
+  id: totrans-221
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: '[PRE51]'
+  id: totrans-222
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: Abstract base class for Assignment and AugmentedAssignment.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 赋值和增强赋值的抽象基类。
 - en: 'Attributes:'
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 属性：
 - en: opstr
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: opstr
 - en: Symbol for assignment operator, e.g. “=”, “+=”, etc.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于赋值操作符的符号，例如“=”，“+=”等。
 - en: '[PRE52]'
+  id: totrans-227
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: For use with [`sympy.codegen.ast.Node`](#sympy.codegen.ast.Node "sympy.codegen.ast.Node")
     (which takes instances of `Attribute` as `attrs`).
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于 [`sympy.codegen.ast.Node`](#sympy.codegen.ast.Node "sympy.codegen.ast.Node")
+    的实例（它将 `attrs` 作为 `Attribute` 的实例）。
 - en: 'Parameters:'
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**name** : str'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name**：str'
 - en: '**parameters** : Tuple'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: '**parameters**：Tuple'
 - en: Examples
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE53]'
+  id: totrans-233
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: '[PRE54]'
+  id: totrans-234
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: Base class for augmented assignments.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 增强赋值的基类。
 - en: 'Attributes:'
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 属性：
 - en: binopstr
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: binopstr
 - en: Symbol for binary operation being applied in the assignment, such as “+”, “*”,
     etc.
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于赋值操作中应用的二元操作符的符号，例如“+”，“*”等。
 - en: '[PRE55]'
+  id: totrans-239
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: Represents ‘break’ in C/Python (‘exit’ in Fortran).
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示 C/Python 中的 ‘break’（Fortran 中的 ‘exit’）。
 - en: Use the premade instance `break_` or instantiate manually.
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用预定义的实例 `break_` 或手动实例化。
 - en: Examples
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE56]'
+  id: totrans-243
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: '[PRE57]'
+  id: totrans-244
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: Represents a block of code.
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表代码块。
 - en: Explanation
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: For now only assignments are supported. This restriction will be lifted in the
     future.
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 目前仅支持赋值。这个限制将来会解除。
 - en: 'Useful attributes on this object are:'
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 此对象的有用属性包括：
 - en: '`left_hand_sides`:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: '`left_hand_sides`：'
 - en: Tuple of left-hand sides of assignments, in order.
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: 按顺序的赋值的左手边的元组。
 - en: '`left_hand_sides`:'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: '`left_hand_sides`：'
 - en: Tuple of right-hand sides of assignments, in order.
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 按顺序的右手边的赋值的元组。
 - en: '`free_symbols`: Free symbols of the expressions in the right-hand sides'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: '`free_symbols`：右侧表达式的自由符号'
 - en: which do not appear in the left-hand side of an assignment.
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 在赋值的左手边未出现的符号。
 - en: 'Useful methods on this object are:'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 此对象的有用方法包括：
 - en: '`topological_sort`:'
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: '`topological_sort`：'
 - en: Class method. Return a CodeBlock with assignments sorted so that variables are
     assigned before they are used.
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 类方法。返回一个按照变量被赋值前使用的顺序排序的代码块。
 - en: '`cse`:'
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: '`cse`：'
 - en: Return a new CodeBlock with common subexpressions eliminated and pulled out
     as assignments.
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回一个新的代码块，消除常见子表达式并将其作为赋值语句提取出来。
 - en: Examples
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE58]'
+  id: totrans-261
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: '[PRE59]'
+  id: totrans-262
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: Return a new code block with common subexpressions eliminated.
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回一个新的代码块，消除常见的子表达式。
 - en: Explanation
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: See the docstring of [`sympy.simplify.cse_main.cse()`](simplify/simplify.html#sympy.simplify.cse_main.cse
     "sympy.simplify.cse_main.cse") for more information.
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看 [`sympy.simplify.cse_main.cse()`](simplify/simplify.html#sympy.simplify.cse_main.cse
+    "sympy.simplify.cse_main.cse") 的文档字符串获取更多信息。
 - en: Examples
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE60]'
+  id: totrans-267
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: '[PRE61]'
+  id: totrans-268
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: '[PRE62]'
+  id: totrans-269
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: Return a CodeBlock with topologically sorted assignments so that variables are
     assigned before they are used.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回一个按拓扑顺序排序的代码块，以便变量在使用之前被赋值。
 - en: Examples
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: The existing order of assignments is preserved as much as possible.
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽可能保持现有的赋值顺序。
 - en: This function assumes that variables are assigned to only once.
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数假设变量只被分配一次。
 - en: This is a class constructor so that the default constructor for CodeBlock can
     error when variables are used before they are assigned.
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是一个类构造函数，因此当变量在分配之前被使用时，默认构造函数可以报错。
 - en: '[PRE63]'
+  id: totrans-275
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: '[PRE64]'
+  id: totrans-276
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: '[PRE65]'
+  id: totrans-277
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: Represents a comment.
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示一个注释。
 - en: '[PRE66]'
+  id: totrans-279
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: Represents a complex floating point number.
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示复杂的浮点数。
 - en: '[PRE67]'
+  id: totrans-281
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: Represents ‘continue’ in C/Python (‘cycle’ in Fortran)
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 在C/Python中表示‘continue’（在Fortran中表示‘cycle’）
 - en: Use the premade instance `continue_` or instantiate manually.
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用预制实例`continue_`或手动实例化。
 - en: Examples
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE68]'
+  id: totrans-285
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: '[PRE69]'
+  id: totrans-286
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: Represents a variable declaration
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示变量声明
 - en: 'Parameters:'
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**variable** : Variable'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: '**variable** : 变量'
 - en: Examples
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE70]'
+  id: totrans-291
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: '[PRE71]'
+  id: totrans-292
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: Element in (a possibly N-dimensional) array.
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 数组中的元素（可能是N维）。
 - en: Examples
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE72]'
+  id: totrans-295
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: '[PRE73]'
+  id: totrans-296
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: Represents a floating point number type.
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示浮点数类型。
 - en: '[PRE74]'
+  id: totrans-298
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: alias of [`Float`](core.html#sympy.core.numbers.Float "sympy.core.numbers.Float")
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 别名为[`Float`](core.html#sympy.core.numbers.Float "sympy.core.numbers.Float")的浮点类型
 - en: '[PRE75]'
+  id: totrans-300
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: Represents a floating point type with fixed bit width.
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示具有固定位宽的浮点类型。
 - en: Base 2 & one sign bit is assumed.
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 基数2和一个符号位是默认的。
 - en: 'Parameters:'
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**name** : str'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name** : 字符串'
 - en: Name of the type.
+  id: totrans-305
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 类型的名称。
 - en: '**nbits** : integer'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: '**nbits** : 整数'
 - en: Number of bits used (storage).
+  id: totrans-307
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于表示的位数（存储）。
 - en: '**nmant** : integer'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: '**nmant** : 整数'
 - en: Number of bits used to represent the mantissa.
+  id: totrans-309
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于表示尾数的位数。
 - en: '**nexp** : integer'
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
+  zh: '**nexp** : 整数'
 - en: Number of bits used to represent the mantissa.
+  id: totrans-311
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于表示尾数的位数。
 - en: Examples
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE76]'
+  id: totrans-313
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: '[PRE77]'
+  id: totrans-314
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: Casts without checking if out of bounds or subnormal.
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 强制转换，而不检查是否超出范围或子正常。
 - en: '[PRE78]'
+  id: totrans-316
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE78]'
 - en: Number of digits needed to store & load without loss.
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要存储和加载而不会丢失的位数。
 - en: Explanation
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: Number of decimal digits needed to guarantee that two consecutive conversions
     (float -> text -> float) to be idempotent. This is useful when one do not want
     to loose precision due to rounding errors when storing a floating point value
     as text.
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要保证两个连续的转换（浮点数 -> 文本 -> 浮点数）是幂等的十进制数字的数量。这在存储浮点值作为文本时，由于四舍五入误差而不想丢失精度时非常有用。
 - en: '[PRE79]'
+  id: totrans-320
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE79]'
 - en: Number of decimal digits that are guaranteed to be preserved in text.
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
+  zh: 保证在文本中保留的十进制数字的数量。
 - en: When converting text -> float -> text, you are guaranteed that at least `dig`
     number of digits are preserved with respect to rounding or overflow.
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
+  zh: 当转换文本 -> 浮点数 -> 文本时，可以保证至少保留`dig`位数，以便于舍入或溢出。
 - en: '[PRE80]'
+  id: totrans-323
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE80]'
 - en: Difference between 1.0 and the next representable value.
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
+  zh: 1.0与下一个可表示值之间的差异。
 - en: '[PRE81]'
+  id: totrans-325
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE81]'
 - en: Maximum value representable.
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
+  zh: 可表示的最大值。
 - en: '[PRE82]'
+  id: totrans-327
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE82]'
 - en: The largest positive number n, such that 2**(n - 1) is a representable finite
     value.
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
+  zh: 最大的正数n，使得2 ** (n - 1)是可表示的有限值。
 - en: '[PRE83]'
+  id: totrans-329
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE83]'
 - en: The lowest negative number n, such that 2**(n - 1) is a valid normalized number.
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
+  zh: 最小的负数n，使得2 ** (n - 1)是有效的正规化数。
 - en: '[PRE84]'
+  id: totrans-331
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE84]'
 - en: The minimum positive normalized value.
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
+  zh: 最小的正规化值。
 - en: '[PRE85]'
+  id: totrans-333
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE85]'
 - en: Represents a ‘for-loop’ in the code.
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: 在代码中表示‘for-loop’。
 - en: 'Expressions are of the form:'
+  id: totrans-335
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 表达式的形式：
 - en: ''
+  id: totrans-336
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: '“for target in iter:'
+  id: totrans-337
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '“for target in iter:'
 - en: ''
+  id: totrans-338
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: body…”
+  id: totrans-339
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: body…”
 - en: 'Parameters:'
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**target** : symbol'
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: '**target** : 符号'
 - en: 'iter : iterable body : CodeBlock or iterable'
+  id: totrans-342
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 'iter : 可迭代体 body : CodeBlock 或可迭代'
 - en: '**! When passed an iterable it is used to instantiate a CodeBlock.**'
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
+  zh: '**！当传入一个可迭代对象时，它用于实例化CodeBlock。**'
 - en: Examples
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE86]'
+  id: totrans-345
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE86]'
 - en: '[PRE87]'
+  id: totrans-346
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE87]'
 - en: Represents a call to a function in the code.
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示调用代码中的函数。
 - en: 'Parameters:'
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**name** : str'
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name** : 字符串'
 - en: '**function_args** : Tuple'
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
+  zh: '**function_args** : 元组'
 - en: Examples
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE88]'
+  id: totrans-352
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE88]'
 - en: '[PRE89]'
+  id: totrans-353
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE89]'
 - en: Represents a function definition in the code.
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示代码中的函数定义。
 - en: 'Parameters:'
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**return_type** : Type'
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
+  zh: '**return_type** : 类型'
 - en: '**name** : str'
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name** : 字符串'
 - en: '**parameters: iterable of Variable instances**'
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
+  zh: '**parameters: 变量实例的可迭代对象**'
 - en: '**body** : CodeBlock or iterable'
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
+  zh: '**body** : CodeBlock 或可迭代'
 - en: '**attrs** : iterable of Attribute instances'
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
+  zh: '**attrs** : 属性实例的可迭代对象'
 - en: Examples
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE90]'
+  id: totrans-362
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE90]'
 - en: '[PRE91]'
+  id: totrans-363
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE91]'
 - en: Represents a function prototype
+  id: totrans-364
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示函数原型
 - en: Allows the user to generate forward declaration in e.g. C/C++.
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
+  zh: 允许用户生成例如C/C++中的前向声明。
 - en: 'Parameters:'
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**return_type** : Type'
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
+  zh: '**return_type** : 类型'
 - en: '**name** : str'
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name** : 字符串'
 - en: '**parameters: iterable of Variable instances**'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
+  zh: '**parameters: 变量实例的可迭代对象**'
 - en: '**attrs** : iterable of Attribute instances'
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
+  zh: '**attrs** : 属性实例的可迭代对象'
 - en: Examples
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE92]'
+  id: totrans-372
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE92]'
 - en: '[PRE93]'
+  id: totrans-373
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE93]'
 - en: Integer base type, contains no size information.
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
+  zh: 整数基本类型，不包含大小信息。
 - en: '[PRE94]'
+  id: totrans-375
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE94]'
 - en: Subclass of Token, carrying the attribute ‘attrs’ (Tuple)
+  id: totrans-376
   prefs: []
   type: TYPE_NORMAL
+  zh: Token的子类，携带属性‘attrs’（元组）
 - en: Examples
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE95]'
+  id: totrans-378
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE95]'
 - en: '[PRE96]'
+  id: totrans-379
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE96]'
 - en: Returns the parameters of the Attribute with name `looking_for` in self.attrs
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回self.attrs中名为`looking_for`的属性的参数。
 - en: '[PRE97]'
+  id: totrans-381
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE97]'
 - en: The AST equivalence of Python’s NoneType
+  id: totrans-382
   prefs: []
   type: TYPE_NORMAL
+  zh: Python的NoneType的AST等价物
 - en: The corresponding instance of Python’s `None` is `none`.
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
+  zh: Python中对应的`None`的实例是`none`。
 - en: Examples
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE98]'
+  id: totrans-385
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE98]'
 - en: '[PRE99]'
+  id: totrans-386
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE99]'
 - en: Represents a pointer. See `Variable`.
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示指针。参见 `Variable`。
 - en: Examples
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: 'Can create instances of `Element`:'
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以创建 `Element` 的实例：
 - en: '[PRE100]'
+  id: totrans-390
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE100]'
 - en: '[PRE101]'
+  id: totrans-391
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE101]'
 - en: Represents print command in the code.
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示代码中的打印命令。
 - en: 'Parameters:'
+  id: totrans-393
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**formatstring** : str'
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
+  zh: '**formatstring** : 字符串'
 - en: '***args** : Basic instances (or convertible to such through sympify)'
+  id: totrans-395
   prefs: []
   type: TYPE_NORMAL
+  zh: '***args** : Basic 实例（或通过 sympify 转换为这样的实例）'
 - en: Examples
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE102]'
+  id: totrans-397
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE102]'
 - en: '[PRE103]'
+  id: totrans-398
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE103]'
 - en: Represents a string which should be printed with quotes.
+  id: totrans-399
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示应使用引号打印的字符串。
 - en: '[PRE104]'
+  id: totrans-400
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE104]'
 - en: Prints as ‘raise …’ in Python, ‘throw …’ in C++
+  id: totrans-401
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 Python 中打印为 ‘raise …’，在 C++ 中为 ‘throw …’。
 - en: '[PRE105]'
+  id: totrans-402
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE105]'
 - en: Represents a return command in the code.
+  id: totrans-403
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示代码中的返回命令。
 - en: 'Parameters:'
+  id: totrans-404
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**return** : Basic'
+  id: totrans-405
   prefs: []
   type: TYPE_NORMAL
+  zh: '**return** : Basic'
 - en: Examples
+  id: totrans-406
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE106]'
+  id: totrans-407
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE106]'
 - en: '[PRE107]'
+  id: totrans-408
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE107]'
 - en: Represents ‘std::runtime_error’ in C++ and ‘RuntimeError’ in Python.
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 C++ 中表示 ‘std::runtime_error’，在 Python 中表示 ‘RuntimeError’。
 - en: Note that the latter is uncommon, and you might want to use e.g. ValueError.
+  id: totrans-410
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意后者不常见，你可能想使用例如 ValueError。
 - en: '[PRE108]'
+  id: totrans-411
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE108]'
 - en: Represents a scope in the code.
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示代码中的作用域。
 - en: 'Parameters:'
+  id: totrans-413
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**body** : CodeBlock or iterable'
+  id: totrans-414
   prefs: []
   type: TYPE_NORMAL
+  zh: '**body** : CodeBlock 或可迭代对象'
 - en: When passed an iterable it is used to instantiate a CodeBlock.
+  id: totrans-415
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当传递一个可迭代对象时，它用于实例化一个 CodeBlock。
 - en: '[PRE109]'
+  id: totrans-416
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE109]'
 - en: Represents a signed integer type.
+  id: totrans-417
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示有符号整数类型。
 - en: '[PRE110]'
+  id: totrans-418
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE110]'
 - en: Represents a stream.
+  id: totrans-419
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示流。
 - en: There are two predefined Stream instances `stdout` & `stderr`.
+  id: totrans-420
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两个预定义的 Stream 实例 `stdout` 和 `stderr`。
 - en: 'Parameters:'
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**name** : str'
+  id: totrans-422
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name** : str'
 - en: Examples
+  id: totrans-423
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE111]'
+  id: totrans-424
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE111]'
 - en: '[PRE112]'
+  id: totrans-425
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE112]'
 - en: SymPy object representing a string.
+  id: totrans-426
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示字符串的 SymPy 对象。
 - en: Atomic object which is not an expression (as opposed to Symbol).
+  id: totrans-427
   prefs: []
   type: TYPE_NORMAL
+  zh: 不是表达式的原子对象（与 Symbol 相反）。
 - en: 'Parameters:'
+  id: totrans-428
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**text** : str'
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
+  zh: '**text** : 字符串'
 - en: Examples
+  id: totrans-430
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE113]'
+  id: totrans-431
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE113]'
 - en: '[PRE114]'
+  id: totrans-432
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE114]'
 - en: Base class for the AST types.
+  id: totrans-433
   prefs: []
   type: TYPE_NORMAL
+  zh: AST 类型的基类。
 - en: Explanation
+  id: totrans-434
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: Defining fields are set in `_fields`. Attributes (defined in _fields) are only
     allowed to contain instances of Basic (unless atomic, see `String`). The arguments
     to `__new__()` correspond to the attributes in the order defined in [PRE115] class
     attribute is a dictionary mapping attribute names to their default values.
+  id: totrans-435
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 `_fields` 中设置定义字段。属性（在 _fields 中定义）只允许包含 Basic 的实例（除非是原子的，见 `String`）。`__new__()`
+    的参数与按 [PRE115] 类属性中定义顺序的属性相对应的顺序一致，是一个将属性名称映射到其默认值的字典的类属性。
 - en: Subclasses should not need to override the `__new__()` method. They may define
     a class or static method named `_construct_<attr>` for each attribute to process
     the value passed to `__new__()`. Attributes listed in the class attribute `not_in_args`
     are not passed to [`Basic`](core.html#sympy.core.basic.Basic "sympy.core.basic.Basic").
+  id: totrans-436
   prefs: []
   type: TYPE_NORMAL
+  zh: 子类不应需要覆盖 `__new__()` 方法。它们可以为传递给 `__new__()` 的每个属性定义名为 `_construct_<attr>` 的类或静态方法，以处理传递给
+    [`Basic`](core.html#sympy.core.basic.Basic "sympy.core.basic.Basic") 的值。列在类属性
+    `not_in_args` 中的属性不会传递给。
 - en: '[PRE116]'
+  id: totrans-437
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE116]'
 - en: Get instance’s attributes as dict of keyword arguments.
+  id: totrans-438
   prefs: []
   type: TYPE_NORMAL
+  zh: 将实例的属性作为关键字参数的字典获取。
 - en: 'Parameters:'
+  id: totrans-439
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**exclude** : collection of str'
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
+  zh: '**exclude** : 字符串集合'
 - en: Collection of keywords to exclude.
+  id: totrans-441
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要排除的关键字集合。
 - en: '**apply** : callable, optional'
+  id: totrans-442
   prefs: []
   type: TYPE_NORMAL
+  zh: '**apply** : 可调用对象，可选'
 - en: Function to apply to all values.
+  id: totrans-443
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 应用于所有值的函数。
 - en: '[PRE117]'
+  id: totrans-444
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE117]'
 - en: Represents a type.
+  id: totrans-445
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示类型。
 - en: 'Parameters:'
+  id: totrans-446
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**name** : str'
+  id: totrans-447
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name** : 字符串'
 - en: Name of the type, e.g. `object`, `int16`, `float16` (where the latter two would
     use the `Type` sub-classes `IntType` and `FloatType` respectively). If a `Type`
     instance is given, the said instance is returned.
+  id: totrans-448
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 类型的名称，例如 `object`，`int16`，`float16`（后两者将分别使用 `Type` 子类 `IntType` 和 `FloatType`）。如果给定
+    `Type` 实例，则返回该实例。
 - en: Explanation
+  id: totrans-449
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The naming is a super-set of NumPy naming. Type has a classmethod `from_expr`
     which offer type deduction. It also has a method `cast_check` which casts the
     argument to its type, possibly raising an exception if rounding error is not within
     tolerances, or if the value is not representable by the underlying data type (e.g.
     unsigned integers).
+  id: totrans-450
   prefs: []
   type: TYPE_NORMAL
+  zh: 命名是 NumPy 命名的超集。Type 类具有类方法 `from_expr`，用于提供类型推导。它还具有 `cast_check` 方法，用于将参数强制转换为其类型，如果舍入误差不在容差范围内或者值无法由底层数据类型表示（例如无符号整数），可能会引发异常。
 - en: Examples
+  id: totrans-451
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE118]'
+  id: totrans-452
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE118]'
 - en: References
+  id: totrans-453
   prefs: []
   type: TYPE_NORMAL
+  zh: 引用
 - en: '[[R39](#id2)]'
+  id: totrans-454
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[R39](#id2)]'
 - en: '[https://numpy.org/doc/stable/user/basics.types.html](https://numpy.org/doc/stable/user/basics.types.html)'
+  id: totrans-455
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://numpy.org/doc/stable/user/basics.types.html](https://numpy.org/doc/stable/user/basics.types.html)'
 - en: '[PRE119]'
+  id: totrans-456
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE119]'
 - en: Casts a value to the data type of the instance.
+  id: totrans-457
   prefs: []
   type: TYPE_NORMAL
+  zh: 将值转换为实例的数据类型。
 - en: 'Parameters:'
+  id: totrans-458
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**value** : number'
+  id: totrans-459
   prefs: []
   type: TYPE_NORMAL
+  zh: '**value** : 数字'
 - en: '**rtol** : floating point number'
+  id: totrans-460
   prefs: []
   type: TYPE_NORMAL
+  zh: '**rtol** : 浮点数'
 - en: Relative tolerance. (will be deduced if not given).
+  id: totrans-461
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 相对容差。（如果未给出则将推导）
 - en: '**atol** : floating point number'
+  id: totrans-462
   prefs: []
   type: TYPE_NORMAL
+  zh: '**atol** : 浮点数'
 - en: Absolute tolerance (in addition to `rtol`).
+  id: totrans-463
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 绝对容差（除了 `rtol`）。
 - en: '**type_aliases** : dict'
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
+  zh: '**type_aliases** : dict'
 - en: 'Maps substitutions for Type, e.g. {integer: int64, real: float32}'
+  id: totrans-465
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '用于类型映射的替换，例如 {integer: int64, real: float32}'
 - en: Examples
+  id: totrans-466
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE120]'
+  id: totrans-467
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE120]'
 - en: '[PRE121]'
+  id: totrans-468
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE121]'
 - en: Deduces type from an expression or a `Symbol`.
+  id: totrans-469
   prefs: []
   type: TYPE_NORMAL
+  zh: 从表达式或`Symbol`推断类型。
 - en: 'Parameters:'
+  id: totrans-470
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : number or SymPy object'
+  id: totrans-471
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** : 数字或SymPy对象'
 - en: The type will be deduced from type or properties.
+  id: totrans-472
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 类型将从类型或属性推断。
 - en: 'Raises:'
+  id: totrans-473
   prefs: []
   type: TYPE_NORMAL
+  zh: 引发：
 - en: '**ValueError when type deduction fails.**'
+  id: totrans-474
   prefs: []
   type: TYPE_NORMAL
+  zh: '**类型推断失败时引发ValueError。**'
 - en: Examples
+  id: totrans-475
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE122]'
+  id: totrans-476
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE122]'
 - en: '[PRE123]'
+  id: totrans-477
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE123]'
 - en: Represents an unsigned integer type.
+  id: totrans-478
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示一个无符号整数类型。
 - en: '[PRE124]'
+  id: totrans-479
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE124]'
 - en: Represents a variable.
+  id: totrans-480
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示一个变量。
 - en: 'Parameters:'
+  id: totrans-481
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**symbol** : Symbol'
+  id: totrans-482
   prefs: []
   type: TYPE_NORMAL
+  zh: '**symbol** : Symbol'
 - en: '**type** : Type (optional)'
+  id: totrans-483
   prefs: []
   type: TYPE_NORMAL
+  zh: '**type** : Type（可选）'
 - en: Type of the variable.
+  id: totrans-484
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 变量的类型。
 - en: '**attrs** : iterable of Attribute instances'
+  id: totrans-485
   prefs: []
   type: TYPE_NORMAL
+  zh: '**attrs** : 可迭代的Attribute实例'
 - en: Will be stored as a Tuple.
+  id: totrans-486
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将被存储为元组。
 - en: Examples
+  id: totrans-487
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE125]'
+  id: totrans-488
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE125]'
 - en: 'One may also construct a `Variable` instance with the type deduced from assumptions
     about the symbol using the `deduced` classmethod:'
+  id: totrans-489
   prefs: []
   type: TYPE_NORMAL
+  zh: 也可以通过对符号的假设推断出的类型使用`deduced`类方法构造`Variable`实例：
 - en: '[PRE126]'
+  id: totrans-490
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE126]'
 - en: '[PRE127]'
+  id: totrans-491
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE127]'
 - en: Convenience method for creating a Declaration instance.
+  id: totrans-492
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建Declaration实例的便利方法。
 - en: Explanation
+  id: totrans-493
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: If the variable of the Declaration need to wrap a modified variable keyword
     arguments may be passed (overriding e.g. the `value` of the Variable instance).
+  id: totrans-494
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果声明的变量需要包装一个修改后的变量关键字参数（例如覆盖变量实例的`value`），可以传递。
 - en: Examples
+  id: totrans-495
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE128]'
+  id: totrans-496
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE128]'
 - en: '[PRE129]'
+  id: totrans-497
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE129]'
 - en: Alt. constructor with type deduction from `Type.from_expr`.
+  id: totrans-498
   prefs: []
   type: TYPE_NORMAL
+  zh: 从`Type.from_expr`推断类型的替代构造函数。
 - en: Deduces type primarily from `symbol`, secondarily from `value`.
+  id: totrans-499
   prefs: []
   type: TYPE_NORMAL
+  zh: 主要从`symbol`推断类型，次要从`value`推断。
 - en: 'Parameters:'
+  id: totrans-500
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**symbol** : Symbol'
+  id: totrans-501
   prefs: []
   type: TYPE_NORMAL
+  zh: '**symbol** : Symbol'
 - en: '**value** : expr'
+  id: totrans-502
   prefs: []
   type: TYPE_NORMAL
+  zh: '**value** : expr'
 - en: (optional) value of the variable.
+  id: totrans-503
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: （可选）变量的值。
 - en: '**attrs** : iterable of Attribute instances'
+  id: totrans-504
   prefs: []
   type: TYPE_NORMAL
+  zh: '**attrs** : 可迭代的Attribute实例'
 - en: '**cast_check** : bool'
+  id: totrans-505
   prefs: []
   type: TYPE_NORMAL
+  zh: '**cast_check** : bool'
 - en: Whether to apply `Type.cast_check` on `value`.
+  id: totrans-506
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 是否在`value`上应用`Type.cast_check`。
 - en: Examples
+  id: totrans-507
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE130]'
+  id: totrans-508
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE130]'
 - en: '[PRE131]'
+  id: totrans-509
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE131]'
 - en: Represents a ‘for-loop’ in the code.
+  id: totrans-510
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示代码中的‘for-loop’。
 - en: 'Expressions are of the form:'
+  id: totrans-511
   prefs: []
   type: TYPE_NORMAL
+  zh: 表达式的形式为：
 - en: '“while condition:'
+  id: totrans-512
   prefs: []
   type: TYPE_NORMAL
+  zh: '“while condition:'
 - en: body…”
+  id: totrans-513
   prefs: []
   type: TYPE_NORMAL
+  zh: body…”
 - en: 'Parameters:'
+  id: totrans-514
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**condition** : expression convertible to Boolean'
+  id: totrans-515
   prefs: []
   type: TYPE_NORMAL
+  zh: '**condition** : 可转换为布尔值的表达式'
 - en: '**body** : CodeBlock or iterable'
+  id: totrans-516
   prefs: []
   type: TYPE_NORMAL
+  zh: '**body** : CodeBlock或可迭代对象'
 - en: When passed an iterable it is used to instantiate a CodeBlock.
+  id: totrans-517
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当传递一个可迭代对象时，用于实例化`CodeBlock`。
 - en: Examples
+  id: totrans-518
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE132]'
+  id: totrans-519
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE132]'
 - en: '[PRE133]'
+  id: totrans-520
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE133]'
 - en: Create ‘lhs op= rhs’.
+  id: totrans-521
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建‘lhs op= rhs’。
 - en: 'Parameters:'
+  id: totrans-522
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**lhs** : Expr'
+  id: totrans-523
   prefs: []
   type: TYPE_NORMAL
+  zh: '**lhs** : Expr'
 - en: SymPy object representing the lhs of the expression. These should be singular
     objects, such as one would use in writing code. Notable types include Symbol,
     MatrixSymbol, MatrixElement, and Indexed. Types that subclass these types are
     also supported.
+  id: totrans-524
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 表示表达式左手边的SymPy对象。这些应该是单数对象，如编写代码时所用。显著的类型包括`Symbol`、`MatrixSymbol`、`MatrixElement`和`Indexed`。支持这些类型的子类也被支持。
 - en: '**op** : str'
+  id: totrans-525
   prefs: []
   type: TYPE_NORMAL
+  zh: '**op** : str'
 - en: Operator (+, -, /, *, %).
+  id: totrans-526
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 运算符（+、-、/、*、%）。
 - en: '**rhs** : Expr'
+  id: totrans-527
   prefs: []
   type: TYPE_NORMAL
+  zh: '**rhs** : Expr'
 - en: SymPy object representing the rhs of the expression. This can be any type, provided
     its shape corresponds to that of the lhs. For example, a Matrix type can be assigned
     to MatrixSymbol, but not to Symbol, as the dimensions will not align.
+  id: totrans-528
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 表示表达式右手边的SymPy对象。这可以是任何类型，只要其形状与左手边对应即可。例如，Matrix类型可以分配给MatrixSymbol，但不能分配给Symbol，因为维度不会对齐。
 - en: Explanation
+  id: totrans-529
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: Represents augmented variable assignment for code generation. This is a convenience
     function. You can also use the AugmentedAssignment classes directly, like AddAugmentedAssignment(x,
     y).
+  id: totrans-530
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示用于代码生成的增强变量赋值。这是一个便利函数。你也可以直接使用增强赋值类，比如`AddAugmentedAssignment(x, y)`。
 - en: Examples
+  id: totrans-531
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE134]  ## Special C math functions (sympy.codegen.cfunctions)'
+  id: totrans-532
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE134]  ## 特殊的C数学函数（sympy.codegen.cfunctions）'
 - en: This module contains SymPy functions mathcin corresponding to special math functions
     in the C standard library (since C99, also available in C++11).
+  id: totrans-533
   prefs: []
   type: TYPE_NORMAL
+  zh: 此模块包含SymPy函数，与C标准库中的特殊数学函数相对应（自C99起，也可在C++11中使用）。
 - en: The functions defined in this module allows the user to express functions such
     as `expm1` as a SymPy function for symbolic manipulation.
+  id: totrans-534
   prefs: []
   type: TYPE_NORMAL
+  zh: 该模块中定义的函数允许用户将`expm1`之类的函数表达为SymPy函数，以进行符号操作。
 - en: '[PRE135]'
+  id: totrans-535
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE135]'
 - en: Represents the cube root function.
+  id: totrans-536
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示立方根函数。
 - en: Explanation
+  id: totrans-537
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The reason why one would use `Cbrt(x)` over `cbrt(x)` is that the latter is
     internally represented as `Pow(x, Rational(1, 3))` which may not be what one wants
     when doing code-generation.
+  id: totrans-538
   prefs: []
   type: TYPE_NORMAL
+  zh: 选择`Cbrt(x)`而不是`cbrt(x)`的原因是后者在内部表示为`Pow(x, Rational(1, 3))`，这在进行代码生成时可能不是想要的结果。
 - en: Examples
+  id: totrans-539
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE136]'
+  id: totrans-540
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE136]'
 - en: See also
+  id: totrans-541
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`Sqrt`](#sympy.codegen.cfunctions.Sqrt "sympy.codegen.cfunctions.Sqrt")'
+  id: totrans-542
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`Sqrt`](#sympy.codegen.cfunctions.Sqrt "sympy.codegen.cfunctions.Sqrt")'
 - en: '[PRE137]'
+  id: totrans-543
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE137]'
 - en: Returns the first derivative of this function.
+  id: totrans-544
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回此函数的一阶导数。
 - en: '[PRE138]'
+  id: totrans-545
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE138]'
 - en: Represents the square root function.
+  id: totrans-546
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示平方根函数。
 - en: Explanation
+  id: totrans-547
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The reason why one would use `Sqrt(x)` over `sqrt(x)` is that the latter is
     internally represented as `Pow(x, S.Half)` which may not be what one wants when
     doing code-generation.
+  id: totrans-548
   prefs: []
   type: TYPE_NORMAL
+  zh: 为什么应该使用`Sqrt(x)`而不是`sqrt(x)`的原因是，后者在内部表示为`Pow(x, S.Half)`，这可能不符合代码生成时的期望。
 - en: Examples
+  id: totrans-549
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE139]'
+  id: totrans-550
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE139]'
 - en: See also
+  id: totrans-551
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参见
 - en: '[`Cbrt`](#sympy.codegen.cfunctions.Cbrt "sympy.codegen.cfunctions.Cbrt")'
+  id: totrans-552
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`Cbrt`](#sympy.codegen.cfunctions.Cbrt "sympy.codegen.cfunctions.Cbrt")'
 - en: '[PRE140]'
+  id: totrans-553
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE140]'
 - en: Returns the first derivative of this function.
+  id: totrans-554
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回此函数的一阶导数。
 - en: '[PRE141]'
+  id: totrans-555
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE141]'
 - en: Represents the exponential function with base two.
+  id: totrans-556
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表以二为基数的指数函数。
 - en: Explanation
+  id: totrans-557
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The benefit of using `exp2(x)` over `2**x` is that the latter is not as efficient
     under finite precision arithmetic.
+  id: totrans-558
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`exp2(x)`而不是`2**x`的好处在于，在有限精度算术下，后者效率不高。
 - en: Examples
+  id: totrans-559
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE142]'
+  id: totrans-560
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE142]'
 - en: See also
+  id: totrans-561
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参见
 - en: '[`log2`](#sympy.codegen.cfunctions.log2 "sympy.codegen.cfunctions.log2")'
+  id: totrans-562
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`log2`](#sympy.codegen.cfunctions.log2 "sympy.codegen.cfunctions.log2")'
 - en: '[PRE143]'
+  id: totrans-563
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE143]'
 - en: Returns the first derivative of this function.
+  id: totrans-564
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回此函数的一阶导数。
 - en: '[PRE144]'
+  id: totrans-565
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE144]'
 - en: Represents the exponential function minus one.
+  id: totrans-566
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表以自然指数减一的指数函数。
 - en: Explanation
+  id: totrans-567
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The benefit of using `expm1(x)` over `exp(x) - 1` is that the latter is prone
     to cancellation under finite precision arithmetic when x is close to zero.
+  id: totrans-568
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`expm1(x)`而不是`exp(x) - 1`的好处在于，后者在x接近零时容易出现取消精度问题。
 - en: Examples
+  id: totrans-569
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE145]'
+  id: totrans-570
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE145]'
 - en: See also
+  id: totrans-571
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参见
 - en: '[`log1p`](#sympy.codegen.cfunctions.log1p "sympy.codegen.cfunctions.log1p")'
+  id: totrans-572
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`log1p`](#sympy.codegen.cfunctions.log1p "sympy.codegen.cfunctions.log1p")'
 - en: '[PRE146]'
+  id: totrans-573
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE146]'
 - en: Returns the first derivative of this function.
+  id: totrans-574
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回此函数的一阶导数。
 - en: '[PRE147]'
+  id: totrans-575
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE147]'
 - en: Represents “fused multiply add”.
+  id: totrans-576
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表“融合乘加”。
 - en: Explanation
+  id: totrans-577
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The benefit of using `fma(x, y, z)` over `x*y + z` is that, under finite precision
     arithmetic, the former is supported by special instructions on some CPUs.
+  id: totrans-578
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`fma(x, y, z)`而不是`x*y + z`的好处在于，在有限精度算术下，前者受某些CPU的特殊指令支持。
 - en: Examples
+  id: totrans-579
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE148]'
+  id: totrans-580
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE148]'
 - en: '[PRE149]'
+  id: totrans-581
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE149]'
 - en: Returns the first derivative of this function.
+  id: totrans-582
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回此函数的一阶导数。
 - en: '[PRE150]'
+  id: totrans-583
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE150]'
 - en: Represents the hypotenuse function.
+  id: totrans-584
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表求直角三角形斜边长度的函数。
 - en: Explanation
+  id: totrans-585
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The hypotenuse function is provided by e.g. the math library in the C99 standard,
     hence one may want to represent the function symbolically when doing code-generation.
+  id: totrans-586
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，在进行代码生成时，由C99标准的数学库提供直角三角形函数，因此可能希望在符号化表示函数时使用该函数。
 - en: Examples
+  id: totrans-587
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE151]'
+  id: totrans-588
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE151]'
 - en: '[PRE152]'
+  id: totrans-589
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE152]'
 - en: Returns the first derivative of this function.
+  id: totrans-590
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回此函数的一阶导数。
 - en: '[PRE153]'
+  id: totrans-591
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE153]'
 - en: Represents the logarithm function with base ten.
+  id: totrans-592
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表以十为底数的对数函数。
 - en: Examples
+  id: totrans-593
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE154]'
+  id: totrans-594
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE154]'
 - en: See also
+  id: totrans-595
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参见
 - en: '[`log2`](#sympy.codegen.cfunctions.log2 "sympy.codegen.cfunctions.log2")'
+  id: totrans-596
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`log2`](#sympy.codegen.cfunctions.log2 "sympy.codegen.cfunctions.log2")'
 - en: '[PRE155]'
+  id: totrans-597
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE155]'
 - en: Returns the first derivative of this function.
+  id: totrans-598
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回此函数的一阶导数。
 - en: '[PRE156]'
+  id: totrans-599
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE156]'
 - en: Represents the natural logarithm of a number plus one.
+  id: totrans-600
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表对数加一的自然对数。
 - en: Explanation
+  id: totrans-601
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The benefit of using `log1p(x)` over `log(x + 1)` is that the latter is prone
     to cancellation under finite precision arithmetic when x is close to zero.
+  id: totrans-602
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`log1p(x)`而不是`log(x + 1)`的好处在于，后者在x接近零时容易出现取消精度问题。
 - en: Examples
+  id: totrans-603
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE157]'
+  id: totrans-604
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE157]'
 - en: See also
+  id: totrans-605
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参见
 - en: '[`expm1`](#sympy.codegen.cfunctions.expm1 "sympy.codegen.cfunctions.expm1")'
+  id: totrans-606
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`expm1`](#sympy.codegen.cfunctions.expm1 "sympy.codegen.cfunctions.expm1")'
 - en: '[PRE158]'
+  id: totrans-607
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE158]'
 - en: Returns the first derivative of this function.
+  id: totrans-608
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回此函数的一阶导数。
 - en: '[PRE159]'
+  id: totrans-609
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE159]'
 - en: Represents the logarithm function with base two.
+  id: totrans-610
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表以二为底数的对数函数。
 - en: Explanation
+  id: totrans-611
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: The benefit of using `log2(x)` over `log(x)/log(2)` is that the latter is not
     as efficient under finite precision arithmetic.
+  id: totrans-612
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`log2(x)`而不是`log(x)/log(2)`的好处在于，在有限精度算术下，后者效率不高。
 - en: Examples
+  id: totrans-613
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE160]'
+  id: totrans-614
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE160]'
 - en: See also
+  id: totrans-615
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参见
 - en: '[`exp2`](#sympy.codegen.cfunctions.exp2 "sympy.codegen.cfunctions.exp2"), [`log10`](#sympy.codegen.cfunctions.log10
     "sympy.codegen.cfunctions.log10")'
+  id: totrans-616
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`exp2`](#sympy.codegen.cfunctions.exp2 "sympy.codegen.cfunctions.exp2"), [`log10`](#sympy.codegen.cfunctions.log10
+    "sympy.codegen.cfunctions.log10")'
 - en: '[PRE161]'
+  id: totrans-617
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE161]'
 - en: 'Returns the first derivative of this function.  ## C specific AST nodes (sympy.codegen.cnodes)'
+  id: totrans-618
   prefs: []
   type: TYPE_NORMAL
+  zh: '返回此函数的一阶导数。  ## C特定AST节点（sympy.codegen.cnodes）'
 - en: AST nodes specific to the C family of languages
+  id: totrans-619
   prefs: []
   type: TYPE_NORMAL
+  zh: 适用于C系语言特定的AST节点
 - en: '[PRE162]'
+  id: totrans-620
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE162]'
 - en: Represents the comma operator in C
+  id: totrans-621
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表C语言中的逗号运算符
 - en: '[PRE163]'
+  id: totrans-622
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE163]'
 - en: Label for use with e.g. goto statement.
+  id: totrans-623
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于例如goto语句的标签。
 - en: Examples
+  id: totrans-624
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE164]'
+  id: totrans-625
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE164]'
 - en: '[PRE165]'
+  id: totrans-626
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE165]'
 - en: Represents the post-decrement operator
+  id: totrans-627
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表后自减运算符
 - en: Examples
+  id: totrans-628
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE166]'
+  id: totrans-629
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE166]'
 - en: '[PRE167]'
+  id: totrans-630
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE167]'
 - en: Represents the post-increment operator
+  id: totrans-631
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表后自增运算符
 - en: Examples
+  id: totrans-632
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE168]'
+  id: totrans-633
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE168]'
 - en: '[PRE169]'
+  id: totrans-634
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE169]'
 - en: Represents the pre-decrement operator
+  id: totrans-635
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表前自减运算符
 - en: Examples
+  id: totrans-636
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE170]'
+  id: totrans-637
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE170]'
 - en: '[PRE171]'
+  id: totrans-638
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE171]'
 - en: Represents the pre-increment operator
+  id: totrans-639
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表前自增运算符
 - en: Examples
+  id: totrans-640
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE172]'
+  id: totrans-641
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE172]'
 - en: '[PRE173]'
+  id: totrans-642
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE173]'
 - en: Generate of FunctionCall instance for calling ‘alignof’
+  id: totrans-643
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成调用‘alignof’的FunctionCall实例
 - en: '[PRE174]'
+  id: totrans-644
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE174]'
 - en: Represents goto in C
+  id: totrans-645
   prefs: []
   type: TYPE_NORMAL
+  zh: 代表C语言中的goto
 - en: '[PRE175]'
+  id: totrans-646
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE175]'
 - en: Generate of FunctionCall instance for calling ‘sizeof’
+  id: totrans-647
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成调用‘sizeof’的FunctionCall实例
 - en: Examples
+  id: totrans-648
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE176]'
+  id: totrans-649
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE176]'
 - en: '[PRE177]'
+  id: totrans-650
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE177]'
 - en: Represents a struct in C
+  id: totrans-651
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示C中的结构
 - en: '[PRE178]'
+  id: totrans-652
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE178]'
 - en: 'Represents a union in C  ## C++ specific AST nodes (sympy.codegen.cxxnodes)'
+  id: totrans-653
   prefs: []
   type: TYPE_NORMAL
+  zh: '表示C中的联合  ## C++特定的AST节点（sympy.codegen.cxxnodes）'
 - en: AST nodes specific to C++.
+  id: totrans-654
   prefs: []
   type: TYPE_NORMAL
+  zh: 专用于C++的AST节点。
 - en: '[PRE179]'
+  id: totrans-655
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE179]'
 - en: 'Represents a ‘using’ statement in C++  ## Fortran specific AST nodes (sympy.codegen.fnodes)'
+  id: totrans-656
   prefs: []
   type: TYPE_NORMAL
+  zh: '表示C++中的‘using’语句  ## Fortran特定的AST节点（sympy.codegen.fnodes）'
 - en: AST nodes specific to Fortran.
+  id: totrans-657
   prefs: []
   type: TYPE_NORMAL
+  zh: 专用于Fortran的AST节点。
 - en: The functions defined in this module allows the user to express functions such
     as `dsign` as a SymPy function for symbolic manipulation.
+  id: totrans-658
   prefs: []
   type: TYPE_NORMAL
+  zh: 该模块中定义的函数允许用户将诸如`dsign`之类的函数表达为SymPy函数以进行符号操作。
 - en: '[PRE180]'
+  id: totrans-659
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE180]'
 - en: Represents an array constructor.
+  id: totrans-660
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示一个数组构造器。
 - en: Examples
+  id: totrans-661
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE181]'
+  id: totrans-662
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE181]'
 - en: '[PRE182]'
+  id: totrans-663
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE182]'
 - en: Represents a Do loop in in Fortran.
+  id: totrans-664
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中的Do循环。
 - en: Examples
+  id: totrans-665
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE183]'
+  id: totrans-666
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE183]'
 - en: '[PRE184]'
+  id: totrans-667
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE184]'
 - en: Represents a dimension extent.
+  id: totrans-668
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示一个维度范围。
 - en: Examples
+  id: totrans-669
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE185]'
+  id: totrans-670
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE185]'
 - en: '[PRE186]'
+  id: totrans-671
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE186]'
 - en: AST node explicitly mapped to a fortran “return”.
+  id: totrans-672
   prefs: []
   type: TYPE_NORMAL
+  zh: 明确映射到Fortran“return”的AST节点。
 - en: Explanation
+  id: totrans-673
   prefs: []
   type: TYPE_NORMAL
+  zh: 说明
 - en: Because a return statement in fortran is different from C, and in order to aid
     reuse of our codegen ASTs the ordinary `.codegen.ast.Return` is interpreted as
     assignment to the result variable of the function. If one for some reason needs
     to generate a fortran RETURN statement, this node should be used.
+  id: totrans-674
   prefs: []
   type: TYPE_NORMAL
+  zh: 因为Fortran中的返回语句与C中的不同，并且为了帮助重用我们的代码生成AST，普通的`.codegen.ast.Return`被解释为对函数的结果变量的赋值。如果由于某种原因需要生成一个Fortran
+    RETURN语句，应使用此节点。
 - en: Examples
+  id: totrans-675
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE187]'
+  id: totrans-676
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE187]'
 - en: '[PRE188]'
+  id: totrans-677
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE188]'
 - en: Represents a goto statement in Fortran
+  id: totrans-678
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中的goto语句
 - en: Examples
+  id: totrans-679
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE189]'
+  id: totrans-680
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE189]'
 - en: '[PRE190]'
+  id: totrans-681
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE190]'
 - en: Represents an implied do loop in Fortran.
+  id: totrans-682
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中的隐含do循环。
 - en: Examples
+  id: totrans-683
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE191]'
+  id: totrans-684
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE191]'
 - en: '[PRE192]'
+  id: totrans-685
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE192]'
 - en: Represents a module in Fortran.
+  id: totrans-686
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中的模块。
 - en: Examples
+  id: totrans-687
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE193]'
+  id: totrans-688
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE193]'
 - en: '[PRE194]'
+  id: totrans-689
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE194]'
 - en: Represents a ‘program’ block in Fortran.
+  id: totrans-690
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中的‘program’块。
 - en: Examples
+  id: totrans-691
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE195]'
+  id: totrans-692
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE195]'
 - en: '[PRE196]'
+  id: totrans-693
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE196]'
 - en: Represents a subroutine in Fortran.
+  id: totrans-694
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中的子程序。
 - en: Examples
+  id: totrans-695
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE197]'
+  id: totrans-696
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE197]'
 - en: '[PRE198]'
+  id: totrans-697
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE198]'
 - en: Represents a call to a subroutine in Fortran.
+  id: totrans-698
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中的子程序调用。
 - en: Examples
+  id: totrans-699
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE199]'
+  id: totrans-700
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE199]'
 - en: '[PRE200]'
+  id: totrans-701
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE200]'
 - en: Creates an AST node for a function call to Fortran’s “allocated(…)”
+  id: totrans-702
   prefs: []
   type: TYPE_NORMAL
+  zh: 为Fortran的“allocated(…)”创建一个函数调用的AST节点。
 - en: Examples
+  id: totrans-703
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE201]'
+  id: totrans-704
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE201]'
 - en: '[PRE202]'
+  id: totrans-705
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE202]'
 - en: Convenience function for creating a Variable instance for a Fortran array.
+  id: totrans-706
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于为Fortran数组创建一个变量实例的便利函数。
 - en: 'Parameters:'
+  id: totrans-707
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**symbol** : symbol'
+  id: totrans-708
   prefs: []
   type: TYPE_NORMAL
+  zh: '**symbol**：符号'
 - en: '**dim** : Attribute or iterable'
+  id: totrans-709
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dim**：属性或可迭代对象'
 - en: If dim is an `Attribute` it need to have the name ‘dimension’. If it is not
     an `Attribute`, then it is passed to [`dimension()`](#sympy.codegen.fnodes.dimension
     "sympy.codegen.fnodes.dimension") as `*dim`
+  id: totrans-710
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果dim是一个`Attribute`，它需要具有名称‘dimension’。如果它不是一个`Attribute`，那么它将作为`*dim`传递给[`dimension()`](#sympy.codegen.fnodes.dimension
+    "sympy.codegen.fnodes.dimension")
 - en: '**intent** : str'
+  id: totrans-711
   prefs: []
   type: TYPE_NORMAL
+  zh: '**intent**：str'
 - en: 'One of: ‘in’, ‘out’, ‘inout’ or None'
+  id: totrans-712
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 其中之一：‘in’、‘out’、‘inout’或无
 - en: '****kwargs:**'
+  id: totrans-713
   prefs: []
   type: TYPE_NORMAL
+  zh: '****kwargs:**'
 - en: Keyword arguments for `Variable` (‘type’ & ‘value’)
+  id: totrans-714
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '`Variable`的关键字参数（‘type’和‘value’）'
 - en: Examples
+  id: totrans-715
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE203]'
+  id: totrans-716
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE203]'
 - en: '[PRE204]'
+  id: totrans-717
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE204]'
 - en: Creates an Attribute `bind_C` with a name.
+  id: totrans-718
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建一个带有名称的属性`bind_C`。
 - en: 'Parameters:'
+  id: totrans-719
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**name** : str'
+  id: totrans-720
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name**：str'
 - en: Examples
+  id: totrans-721
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE205]'
+  id: totrans-722
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE205]'
 - en: '[PRE206]'
+  id: totrans-723
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE206]'
 - en: Fortran complex conversion function.
+  id: totrans-724
   prefs: []
   type: TYPE_NORMAL
+  zh: Fortran复数转换函数。
 - en: '[PRE207]'
+  id: totrans-725
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE207]'
 - en: Creates a ‘dimension’ Attribute with (up to 7) extents.
+  id: totrans-726
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建一个带有（最多7个）范围的‘dimension’属性。
 - en: Examples
+  id: totrans-727
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE208]'
+  id: totrans-728
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE208]'
 - en: '[PRE209]'
+  id: totrans-729
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE209]'
 - en: Fortran sign intrinsic for double precision arguments.
+  id: totrans-730
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于双精度参数的Fortran符号内置函数。
 - en: '[PRE210]'
+  id: totrans-731
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE210]'
 - en: Fortran sign intrinsic for integer arguments.
+  id: totrans-732
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于整数参数的Fortran符号内置函数。
 - en: '[PRE211]'
+  id: totrans-733
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE211]'
 - en: Fortran kind function.
+  id: totrans-734
   prefs: []
   type: TYPE_NORMAL
+  zh: Fortran kind函数。
 - en: '[PRE212]'
+  id: totrans-735
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE212]'
 - en: Creates an AST node for a function call to Fortran’s “lbound(…)”
+  id: totrans-736
   prefs: []
   type: TYPE_NORMAL
+  zh: 为Fortran的“lbound(…)”创建一个函数调用的AST节点。
 - en: 'Parameters:'
+  id: totrans-737
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**array** : Symbol or String'
+  id: totrans-738
   prefs: []
   type: TYPE_NORMAL
+  zh: '**array**：符号或字符串'
 - en: '**dim** : expr'
+  id: totrans-739
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dim**：表达式'
 - en: '**kind** : expr'
+  id: totrans-740
   prefs: []
   type: TYPE_NORMAL
+  zh: '**kind**：表达式'
 - en: Examples
+  id: totrans-741
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE213]'
+  id: totrans-742
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE213]'
 - en: '[PRE214]'
+  id: totrans-743
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE214]'
 - en: Fortran double precision real literal
+  id: totrans-744
   prefs: []
   type: TYPE_NORMAL
+  zh: Fortran双精度实数字面量
 - en: '[PRE215]'
+  id: totrans-745
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE215]'
 - en: Fortran single precision real literal
+  id: totrans-746
   prefs: []
   type: TYPE_NORMAL
+  zh: Fortran单精度实数字面量
 - en: '[PRE216]'
+  id: totrans-747
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE216]'
 - en: Fortran merge function
+  id: totrans-748
   prefs: []
   type: TYPE_NORMAL
+  zh: Fortran合并函数
 - en: '[PRE217]'
+  id: totrans-749
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE217]'
 - en: Creates an AST node for a function call to Fortran’s “reshape(…)”
+  id: totrans-750
   prefs: []
   type: TYPE_NORMAL
+  zh: 为Fortran的“reshape(…)”创建一个函数调用的AST节点。
 - en: 'Parameters:'
+  id: totrans-751
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**source** : Symbol or String'
+  id: totrans-752
   prefs: []
   type: TYPE_NORMAL
+  zh: '**source**：符号或字符串'
 - en: '**shape** : ArrayExpr'
+  id: totrans-753
   prefs: []
   type: TYPE_NORMAL
+  zh: '**shape**：ArrayExpr'
 - en: '[PRE218]'
+  id: totrans-754
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE218]'
 - en: Creates an AST node for a function call to Fortran’s “shape(…)”
+  id: totrans-755
   prefs: []
   type: TYPE_NORMAL
+  zh: 为Fortran的“shape(…)”创建一个函数调用的AST节点。
 - en: 'Parameters:'
+  id: totrans-756
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**source** : Symbol or String'
+  id: totrans-757
   prefs: []
   type: TYPE_NORMAL
+  zh: '**source**：符号或字符串'
 - en: '**kind** : expr'
+  id: totrans-758
   prefs: []
   type: TYPE_NORMAL
+  zh: '**kind**：表达式'
 - en: Examples
+  id: totrans-759
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE219]'
+  id: totrans-760
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE219]'
 - en: '[PRE220]'
+  id: totrans-761
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE220]'
 - en: Creates an AST node for a function call to Fortran’s “size(…)”
+  id: totrans-762
   prefs: []
   type: TYPE_NORMAL
+  zh: 为Fortran的“size(…)”创建一个函数调用的AST节点。
 - en: Examples
+  id: totrans-763
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE221]'
+  id: totrans-764
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE221]'
 - en: '[PRE222]'
+  id: totrans-765
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE222]'
 - en: Represents a use statement in Fortran.
+  id: totrans-766
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中的use语句。
 - en: Examples
+  id: totrans-767
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE223]'
+  id: totrans-768
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE223]'
 - en: '[PRE224]'
+  id: totrans-769
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE224]'
 - en: Represents a renaming in a use statement in Fortran.
+  id: totrans-770
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示Fortran中use语句中的重命名。
 - en: Examples
+  id: totrans-771
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE225]  ## Algorithms (sympy.codegen.algorithms)'
+  id: totrans-772
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE225]  ## 算法（sympy.codegen.algorithms）'
 - en: '[PRE226]'
+  id: totrans-773
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE226]'
 - en: Generates an AST for Newton-Raphson method (a root-finding algorithm).
+  id: totrans-774
   prefs: []
   type: TYPE_NORMAL
+  zh: 为Newton-Raphson方法（一种寻根算法）生成AST。
 - en: 'Parameters:'
+  id: totrans-775
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : expression'
+  id: totrans-776
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：表达式'
 - en: '**wrt** : Symbol'
+  id: totrans-777
   prefs: []
   type: TYPE_NORMAL
+  zh: '**wrt**：符号'
 - en: With respect to, i.e. what is the variable.
+  id: totrans-778
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 关于，即变量是什么。
 - en: '**atol** : number or expression'
+  id: totrans-779
   prefs: []
   type: TYPE_NORMAL
+  zh: '**atol**：数字或表达式'
 - en: Absolute tolerance (stopping criterion)
+  id: totrans-780
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 绝对容差（停止准则）
 - en: '**rtol** : number or expression'
+  id: totrans-781
   prefs: []
   type: TYPE_NORMAL
+  zh: '**rtol** : 数字或表达式'
 - en: Relative tolerance (stopping criterion)
+  id: totrans-782
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 相对容差（停止准则）
 - en: '**delta** : Symbol'
+  id: totrans-783
   prefs: []
   type: TYPE_NORMAL
+  zh: '**delta** : 符号'
 - en: Will be a `Dummy` if `None`.
+  id: totrans-784
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 `None`，将是一个 `Dummy`。
 - en: '**debug** : bool'
+  id: totrans-785
   prefs: []
   type: TYPE_NORMAL
+  zh: '**debug** : 布尔值'
 - en: Whether to print convergence information during iterations
+  id: totrans-786
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 是否在迭代过程中打印收敛信息
 - en: '**itermax** : number or expr'
+  id: totrans-787
   prefs: []
   type: TYPE_NORMAL
+  zh: '**itermax** : 数字或表达式'
 - en: Maximum number of iterations.
+  id: totrans-788
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 迭代的最大次数。
 - en: '**counter** : Symbol'
+  id: totrans-789
   prefs: []
   type: TYPE_NORMAL
+  zh: '**counter** : 符号'
 - en: Will be a `Dummy` if `None`.
+  id: totrans-790
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 `None`，将是一个 `Dummy`。
 - en: '**delta_fn: Callable[[Expr, Symbol], Expr]**'
+  id: totrans-791
   prefs: []
   type: TYPE_NORMAL
+  zh: '**delta_fn: Callable[[Expr, Symbol], Expr]**'
 - en: 'computes the step, default is newtons method. For e.g. Halley’s method use
     delta_fn=lambda e, x: -2*e*e.diff(x)/(2*e.diff(x)**2 - e*e.diff(x, 2))'
+  id: totrans-792
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '计算步骤，默认为牛顿法。例如，对于 Halley 方法，使用 `delta_fn=lambda e, x: -2*e*e.diff(x)/(2*e.diff(x)**2
+    - e*e.diff(x, 2))`'
 - en: '**cse: bool**'
+  id: totrans-793
   prefs: []
   type: TYPE_NORMAL
+  zh: '**cse: 布尔值**'
 - en: Perform common sub-expression elimination on delta expression
+  id: totrans-794
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在 `delta` 表达式上执行常见子表达式消除
 - en: '**handle_nan: Token**'
+  id: totrans-795
   prefs: []
   type: TYPE_NORMAL
+  zh: '**handle_nan: 令牌**'
 - en: How to handle occurrence of not-a-number (NaN).
+  id: totrans-796
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如何处理非数值（NaN）的出现。
 - en: '**bounds: Optional[tuple[Expr, Expr]]**'
+  id: totrans-797
   prefs: []
   type: TYPE_NORMAL
+  zh: '**bounds: Optional[tuple[Expr, Expr]]**'
 - en: Perform optimization within bounds
+  id: totrans-798
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在界限内执行优化
 - en: Explanation
+  id: totrans-799
   prefs: []
   type: TYPE_NORMAL
+  zh: 解释
 - en: Returns an abstract syntax tree (AST) based on `sympy.codegen.ast` for Netwon’s
     method of root-finding.
+  id: totrans-800
   prefs: []
   type: TYPE_NORMAL
+  zh: 基于 `sympy.codegen.ast` 生成的牛顿法根查找的抽象语法树（AST）。
 - en: Examples
+  id: totrans-801
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE227]'
+  id: totrans-802
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE227]'
 - en: References
+  id: totrans-803
   prefs: []
   type: TYPE_NORMAL
+  zh: 参考
 - en: '[[R40](#id3)]'
+  id: totrans-804
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[R40](#id3)]'
 - en: '[https://en.wikipedia.org/wiki/Newton%27s_method](https://en.wikipedia.org/wiki/Newton%27s_method)'
+  id: totrans-805
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://en.wikipedia.org/wiki/Newton%27s_method](https://en.wikipedia.org/wiki/Newton%27s_method)'
 - en: '[PRE228]'
+  id: totrans-806
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE228]'
 - en: Generates an AST for a function implementing the Newton-Raphson method.
+  id: totrans-807
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成实现牛顿-拉弗森方法的函数的 AST。
 - en: 'Parameters:'
+  id: totrans-808
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : expression'
+  id: totrans-809
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** : 表达式'
 - en: '**wrt** : Symbol'
+  id: totrans-810
   prefs: []
   type: TYPE_NORMAL
+  zh: '**wrt** : 符号'
 - en: With respect to, i.e. what is the variable
+  id: totrans-811
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 关于，即是变量是什么
 - en: '**params** : iterable of symbols'
+  id: totrans-812
   prefs: []
   type: TYPE_NORMAL
+  zh: '**params** : 符号的可迭代对象'
 - en: Symbols appearing in expr that are taken as constants during the iterations
     (these will be accepted as parameters to the generated function).
+  id: totrans-813
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在表达式中出现且在迭代过程中被视为常数的符号（这些将被接受为生成函数的参数）。
 - en: '**func_name** : str'
+  id: totrans-814
   prefs: []
   type: TYPE_NORMAL
+  zh: '**func_name** : 字符串'
 - en: Name of the generated function.
+  id: totrans-815
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 生成函数的名称。
 - en: '**attrs** : Tuple'
+  id: totrans-816
   prefs: []
   type: TYPE_NORMAL
+  zh: '**attrs** : 元组'
 - en: Attribute instances passed as `attrs` to `FunctionDefinition`.
+  id: totrans-817
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 `FunctionDefinition` 的 `attrs` 属性实例。
 - en: '****kwargs :**'
+  id: totrans-818
   prefs: []
   type: TYPE_NORMAL
+  zh: '****kwargs :**'
 - en: Keyword arguments passed to [`sympy.codegen.algorithms.newtons_method()`](#sympy.codegen.algorithms.newtons_method
     "sympy.codegen.algorithms.newtons_method").
+  id: totrans-819
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 [`sympy.codegen.algorithms.newtons_method()`](#sympy.codegen.algorithms.newtons_method
+    "sympy.codegen.algorithms.newtons_method") 的关键字参数。
 - en: Examples
+  id: totrans-820
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE229]'
+  id: totrans-821
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE229]'
 - en: See also
+  id: totrans-822
   prefs: []
   type: TYPE_NORMAL
+  zh: 参见
 - en: '[`sympy.codegen.algorithms.newtons_method`](#sympy.codegen.algorithms.newtons_method
     "sympy.codegen.algorithms.newtons_method")  ## Python utilities (sympy.codegen.pyutils)'
+  id: totrans-823
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`sympy.codegen.algorithms.newtons_method`](#sympy.codegen.algorithms.newtons_method
+    "sympy.codegen.algorithms.newtons_method")  ## Python 实用工具（sympy.codegen.pyutils）'
 - en: '[PRE230]'
+  id: totrans-824
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE230]'
 - en: Renders Python code as a module (with the required imports).
+  id: totrans-825
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 Python 代码呈现为模块（带有必要的导入）。
 - en: 'Parameters:'
+  id: totrans-826
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**standard :**'
+  id: totrans-827
   prefs: []
   type: TYPE_NORMAL
+  zh: '**standard :**'
 - en: 'See the parameter `standard` in [`sympy.printing.pycode.pycode()`](printing.html#sympy.printing.pycode.pycode
     "sympy.printing.pycode.pycode")  ## C utilities (sympy.codegen.cutils)'
+  id: totrans-828
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '查看 [`sympy.printing.pycode.pycode()`](printing.html#sympy.printing.pycode.pycode
+    "sympy.printing.pycode.pycode") 中的参数`standard`  ## C 实用工具（sympy.codegen.cutils）'
 - en: '[PRE231]'
+  id: totrans-829
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE231]'
 - en: 'Renders a C source file (with required #include statements)  ## Fortran utilities
     (sympy.codegen.futils)'
+  id: totrans-830
   prefs: []
   type: TYPE_NORMAL
+  zh: '渲染为 C 源文件（带有必要的 #include 语句）  ## Fortran 实用工具（sympy.codegen.futils）'
 - en: '[PRE232]'
+  id: totrans-831
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE232]'
 - en: Creates a `Module` instance and renders it as a string.
+  id: totrans-832
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建 `Module` 实例并将其呈现为字符串。
 - en: This generates Fortran source code for a module with the correct `use` statements.
+  id: totrans-833
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将生成带有正确 `use` 语句的 Fortran 源代码模块。
 - en: 'Parameters:'
+  id: totrans-834
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**definitions** : iterable'
+  id: totrans-835
   prefs: []
   type: TYPE_NORMAL
+  zh: '**definitions** : 可迭代对象'
 - en: Passed to [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module").
+  id: totrans-836
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module")。
 - en: '**name** : str'
+  id: totrans-837
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name** : 字符串'
 - en: Passed to [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module").
+  id: totrans-838
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module")。
 - en: '**declarations** : iterable'
+  id: totrans-839
   prefs: []
   type: TYPE_NORMAL
+  zh: '**declarations** : 可迭代对象'
 - en: Passed to [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module").
     It will be extended with use statements, ‘implicit none’ and public list generated
     from `definitions`.
+  id: totrans-840
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 [`sympy.codegen.fnodes.Module`](#sympy.codegen.fnodes.Module "sympy.codegen.fnodes.Module")。它将通过
+    `definitions` 生成 `use` 语句、‘implicit none’ 和 public 列表扩展。
 - en: '**printer_settings** : dict'
+  id: totrans-841
   prefs: []
   type: TYPE_NORMAL
+  zh: '**printer_settings** : 字典'
 - en: 'Passed to `FCodePrinter` (default: `{''standard'': 2003, ''source_format'':
     ''free''}`).'
+  id: totrans-842
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '传递给 `FCodePrinter`（默认：`{''standard'': 2003, ''source_format'': ''free''}`）。'

@@ -1,1113 +1,1709 @@
 - en: Codegen
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.sympy.org/latest/modules/utilities/codegen.html](https://docs.sympy.org/latest/modules/utilities/codegen.html)
+  zh: Codegen
+- en: Original text：[https://docs.sympy.org/latest/modules/utilities/codegen.html](https://docs.sympy.org/latest/modules/utilities/codegen.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://docs.sympy.org/latest/modules/utilities/codegen.html](https://docs.sympy.org/latest/modules/utilities/codegen.html)
 - en: This module provides functionality to generate directly compilable code from
     SymPy expressions. The `codegen` function is the user interface to the code generation
     functionality in SymPy. Some details of the implementation is given below for
     advanced users that may want to use the framework directly.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 此模块提供功能，可以从SymPy表达式直接生成可编译的代码。`codegen`函数是SymPy中代码生成功能的用户界面。以下是实现的一些细节，供希望直接使用该框架的高级用户参考。
 - en: Note
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The `codegen` callable is not in the sympy namespace automatically, to use it
     you must first execute
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: '`codegen`可调用项不会自动位于sympy命名空间中，要使用它，您必须先执行'
 - en: '[PRE0]'
+  id: totrans-5
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Implementation Details
+  id: totrans-6
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 实现细节
 - en: Here we present the most important pieces of the internal structure, as advanced
     users may want to use it directly, for instance by subclassing a code generator
     for a specialized application. **It is very likely that you would prefer to use
     the codegen() function documented above.**
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 在此，我们介绍了内部结构的最重要部分，因为高级用户可能希望直接使用它，例如通过为专业应用程序的代码生成器创建子类。**很可能您更喜欢使用上面记录的codegen()函数。**
 - en: 'Basic assumptions:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 基本假设：
 - en: A generic Routine data structure describes the routine that must be translated
     into C/Fortran/… code. This data structure covers all features present in one
     or more of the supported languages.
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通用的Routine数据结构描述了必须转换为C/Fortran/...代码的例程。此数据结构涵盖了一个或多个支持语言中存在的所有特性。
 - en: Descendants from the CodeGen class transform multiple Routine instances into
     compilable code. Each derived class translates into a specific language.
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: CodeGen类的后代将多个Routine实例转换为可编译的代码。每个派生类将其转换为特定语言。
 - en: In many cases, one wants a simple workflow. The friendly functions in the last
     part are a simple api on top of the Routine/CodeGen stuff. They are easier to
     use, but are less powerful.
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在许多情况下，人们希望有一个简单的工作流程。最后部分的友好功能是Routine/CodeGen的简单API。它们使用起来更简单，但功能较弱。
 - en: Routine
+  id: totrans-12
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Routine
 - en: The Routine class is a very important piece of the codegen module. Viewing the
     codegen utility as a translator of mathematical expressions into a set of statements
     in a programming language, the Routine instances are responsible for extracting
     and storing information about how the math can be encapsulated in a function call.
     Thus, it is the Routine constructor that decides what arguments the routine will
     need and if there should be a return value.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Routine`类是codegen模块非常重要的一部分。将codegen实用程序视为将数学表达式转换为编程语言中的一组语句的翻译器，`Routine`实例负责提取和存储关于如何将数学内容封装为函数调用的信息。因此，是`Routine`构造函数决定例程将需要什么参数，以及是否应该有返回值。'
 - en: '## API Reference'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: '## API参考'
 - en: module for generating C, C++, Fortran77, Fortran90, Julia, Rust and Octave/Matlab
     routines that evaluate SymPy expressions. This module is work in progress. Only
     the milestones with a ‘+’ character in the list below have been completed.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于生成评估SymPy表达式的C、C++、Fortran77、Fortran90、Julia、Rust和Octave/Matlab例程的模块。该模块正在开发中。下面列表中带有‘+’字符的里程碑已经完成。
 - en: — How is sympy.utilities.codegen different from sympy.printing.ccode? —
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: — sympy.utilities.codegen与sympy.printing.ccode有何不同？—
 - en: 'We considered the idea to extend the printing routines for SymPy functions
     in such a way that it prints complete compilable code, but this leads to a few
     unsurmountable issues that can only be tackled with dedicated code generator:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们考虑了扩展SymPy函数的打印例程的想法，使其打印完整的可编译代码，但这导致了一些无法克服的问题，只能用专用代码生成器来解决：
 - en: For C, one needs both a code and a header file, while the printing routines
     generate just one string. This code generator can be extended to support .pyf
     files for f2py.
+  id: totrans-18
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对于C语言，需要同时有代码文件和头文件，而打印例程只生成一个字符串。这个代码生成器可以扩展为支持.pyf文件用于f2py。
 - en: SymPy functions are not concerned with programming-technical issues, such as
     input, output and input-output arguments. Other examples are contiguous or non-contiguous
     arrays, including headers of other libraries such as gsl or others.
+  id: totrans-19
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: SymPy函数不涉及编程技术问题，如输入、输出和输入-输出参数。其他示例是连续或非连续的数组，包括其他库的头文件，如gsl或其他库。
 - en: It is highly interesting to evaluate several SymPy functions in one C routine,
     eventually sharing common intermediate results with the help of the cse routine.
     This is more than just printing.
+  id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在一个 C 例程中评估多个 SymPy 函数非常有趣，最终可以借助 cse 例程共享共同的中间结果。这不仅仅是打印。
 - en: From the programming perspective, expressions with constants should be evaluated
     in the code generator as much as possible. This is different for printing.
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 从编程角度来看，应尽可能在代码生成器中评估带有常量的表达式。这在打印时是不同的。
 - en: — Basic assumptions —
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: — 基本假设 —
 - en: A generic Routine data structure describes the routine that must be translated
     into C/Fortran/… code. This data structure covers all features present in one
     or more of the supported languages.
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通用的 Routine 数据结构描述了必须转换为 C/Fortran/… 代码的例程。此数据结构涵盖了所有支持语言中的一个或多个特性。
 - en: Descendants from the CodeGen class transform multiple Routine instances into
     compilable code. Each derived class translates into a specific language.
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 派生自 CodeGen 类的后代将多个 Routine 实例转换为可编译代码。每个派生类都会翻译成特定语言。
 - en: In many cases, one wants a simple workflow. The friendly functions in the last
     part are a simple api on top of the Routine/CodeGen stuff. They are easier to
     use, but are less powerful.
+  id: totrans-25
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在许多情况下，人们希望有一个简单的工作流程。最后部分的友好函数是 Routine/CodeGen 系统之上的简单 API。它们更易于使用，但功能较弱。
 - en: — Milestones —
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: — 里程碑 —
 - en: First working version with scalar input arguments, generating C code, tests
+  id: totrans-27
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 第一个工作版本使用标量输入参数，生成 C 代码和测试。
 - en: Friendly functions that are easier to use than the rigorous Routine/CodeGen
     workflow.
+  id: totrans-28
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 友好函数，比严格的 Routine/CodeGen 工作流程更易于使用。
 - en: Integer and Real numbers as input and output
+  id: totrans-29
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 整数和实数作为输入和输出
 - en: Output arguments
+  id: totrans-30
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 输出参数
 - en: InputOutput arguments
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 输入输出参数
 - en: Sort input/output arguments properly
+  id: totrans-32
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 适当排序输入/输出参数
 - en: Contiguous array arguments (numpy matrices)
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 连续数组参数（numpy 矩阵）
 - en: Also generate .pyf code for f2py (in autowrap module)
+  id: totrans-34
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 同时生成 .pyf 代码以供 f2py 使用（在 autowrap 模块中）
 - en: Isolate constants and evaluate them beforehand in double precision
+  id: totrans-35
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 孤立常量并在双精度中预先评估它们
 - en: Fortran 90
+  id: totrans-36
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Fortran 90
 - en: Octave/Matlab
+  id: totrans-37
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Octave/Matlab
 - en: Common Subexpression Elimination
+  id: totrans-38
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 公共子表达式消除
 - en: User defined comments in the generated code
+  id: totrans-39
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在生成的代码中用户定义的注释
 - en: Optional extra include lines for libraries/objects that can eval special functions
+  id: totrans-40
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 可选的额外包含用于评估特殊函数的库/对象的行
 - en: 'Test other C compilers and libraries: gcc, tcc, libtcc, gcc+gsl, …'
+  id: totrans-41
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 测试其他 C 编译器和库：gcc、tcc、libtcc、gcc+gsl 等
 - en: Contiguous array arguments (SymPy matrices)
+  id: totrans-42
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 连续数组参数（SymPy 矩阵）
 - en: Non-contiguous array arguments (SymPy matrices)
+  id: totrans-43
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 非连续数组参数（SymPy 矩阵）
 - en: ccode must raise an error when it encounters something that cannot be translated
     into c. ccode(integrate(sin(x)/x, x)) does not make sense.
+  id: totrans-44
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ccode 在遇到无法转换为 C 代码的情况时必须引发错误。`ccode(integrate(sin(x)/x, x))` 没有意义。
 - en: Complex numbers as input and output
+  id: totrans-45
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 复数作为输入和输出
 - en: A default complex datatype
+  id: totrans-46
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 默认的复杂数据类型
 - en: 'Include extra information in the header: date, user, hostname, sha1 hash, …'
+  id: totrans-47
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在头文件中包含额外信息：日期、用户、主机名、sha1 哈希等
 - en: Fortran 77
+  id: totrans-48
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Fortran 77
 - en: C++
+  id: totrans-49
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: C++
 - en: Python
+  id: totrans-50
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Python
 - en: Julia
+  id: totrans-51
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Julia
 - en: Rust
+  id: totrans-52
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Rust
 - en: …
+  id: totrans-53
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: …
 - en: '[PRE1]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'An abstract Argument data structure: a name and a data type.'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 抽象的 Argument 数据结构：名称和数据类型。
 - en: This structure is refined in the descendants below.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 此结构在下面的后代中得到细化。
 - en: '[PRE2]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Generator for C code.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: C 代码生成器。
 - en: The .write() method inherited from CodeGen will output a code file and an interface
     file, <prefix>.c and <prefix>.h respectively.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '`.write()` 方法从 CodeGen 继承，将输出一个代码文件和一个接口文件，分别为 `<prefix>.c` 和 `<prefix>.h`。'
 - en: '[PRE3]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Write the code by calling language specific methods.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过调用特定于语言的方法编写代码。
 - en: The generated file contains all the definitions of the routines in low-level
     code and refers to the header file if appropriate.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的文件包含低级代码中所有例程的定义，并在适当时引用头文件。
 - en: 'Parameters:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: '**routines** : 列表'
 - en: A list of Routine instances.
+  id: totrans-65
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个 Routine 实例列表。
 - en: '**f** : file-like'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f** : 类文件对象'
 - en: Where to write the file.
+  id: totrans-67
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件写入位置。
 - en: '**prefix** : string'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix** : 字符串'
 - en: The filename prefix, used to refer to the proper header file. Only the basename
     of the prefix is used.
+  id: totrans-69
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名前缀，用于引用正确的头文件。仅使用前缀的基本名称。
 - en: '**header** : bool, optional'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header** : 布尔型，可选'
 - en: 'When True, a header comment is included on top of each source file. [default
     : True]'
+  id: totrans-71
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为 True 时，将在每个源文件顶部包含一个头注释。[默认值：True]
 - en: '**empty** : bool, optional'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty** : 布尔型，可选'
 - en: 'When True, empty lines are included to structure the source files. [default
     : True]'
+  id: totrans-73
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为 True 时，包括空行以结构化源文件。[默认值：True]
 - en: '[PRE4]'
+  id: totrans-74
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Writes the C header file.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 写入 C 头文件。
 - en: This file contains all the function declarations.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 此文件包含所有函数声明。
 - en: 'Parameters:'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: '**routines**：列表'
 - en: A list of Routine instances.
+  id: totrans-79
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一组Routine实例。
 - en: '**f** : file-like'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f**：类似文件的'
 - en: Where to write the file.
+  id: totrans-81
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 写入文件的位置。
 - en: '**prefix** : string'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix**：字符串'
 - en: The filename prefix, used to construct the include guards. Only the basename
     of the prefix is used.
+  id: totrans-83
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名前缀，用于构建包含保护。仅使用前缀的基本名称。
 - en: '**header** : bool, optional'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header comment is included on top of each source file. [default
     : True]'
+  id: totrans-85
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，在每个源文件顶部包括头部注释。[默认：True]
 - en: '**empty** : bool, optional'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are included to structure the source files. [default
     : True]'
+  id: totrans-87
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，包括空行以结构化源文件。[默认：True]
 - en: '[PRE5]'
+  id: totrans-88
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Returns a string for the function prototype of the routine.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回例程的函数原型字符串。
 - en: If the routine has multiple result objects, an CodeGenError is raised.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果例程具有多个结果对象，则引发CodeGenError。
 - en: 'See: [https://en.wikipedia.org/wiki/Function_prototype](https://en.wikipedia.org/wiki/Function_prototype)'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 参见：[https://zh.wikipedia.org/wiki/%E5%87%BD%E6%95%B0%E5%8E%9F%E5%9E%8B](https://zh.wikipedia.org/wiki/%E5%87%BD%E6%95%B0%E5%8E%9F%E5%9E%8B)
 - en: '[PRE6]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Abstract class for the code generators.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码生成器的抽象类。
 - en: '[PRE7]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Write the code by calling language specific methods.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 写入代码时，请调用特定语言的方法。
 - en: The generated file contains all the definitions of the routines in low-level
     code and refers to the header file if appropriate.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的文件包含低级代码中所有例程的定义，并在适当时引用头文件。
 - en: 'Parameters:'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: '**routines**：列表'
 - en: A list of Routine instances.
+  id: totrans-99
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一组Routine实例。
 - en: '**f** : file-like'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f**：类似文件的'
 - en: Where to write the file.
+  id: totrans-101
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 写入文件的位置。
 - en: '**prefix** : string'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix**：字符串'
 - en: The filename prefix, used to refer to the proper header file. Only the basename
     of the prefix is used.
+  id: totrans-103
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名前缀，用于引用正确的头文件。仅使用前缀的基本名称。
 - en: '**header** : bool, optional'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header comment is included on top of each source file. [default
     : True]'
+  id: totrans-105
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，在每个源文件顶部包括头部注释。[默认：True]
 - en: '**empty** : bool, optional'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are included to structure the source files. [default
     : True]'
+  id: totrans-107
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，包括空行以结构化源文件。[默认：True]
 - en: '[PRE8]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Creates an Routine object that is appropriate for this language.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建适合该语言的Routine对象。
 - en: This implementation is appropriate for at least C/Fortran. Subclasses can override
     this if necessary.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 至少对于C/Fortran适用的此实现。如有必要，子类可以覆盖这一点。
 - en: Here, we assume at most one return value (the l-value) which must be scalar.
     Additional outputs are OutputArguments (e.g., pointers on right-hand-side or pass-by-reference).
     Matrices are always returned via OutputArguments. If `argument_sequence` is None,
     arguments will be ordered alphabetically, but with all InputArguments first, and
     then OutputArgument and InOutArguments.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们假设最多有一个返回值（左值），它必须是标量。额外的输出是OutputArguments（例如右手边的指针或通过引用传递）。矩阵始终通过OutputArguments返回。如果`argument_sequence`为None，则参数将按字母顺序排序，但所有InputArguments首先，然后是OutputArgument和InOutArguments。
 - en: '[PRE9]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Writes all the source code files for the given routines.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 写入所有给定例程的源代码文件。
 - en: The generated source is returned as a list of (filename, contents) tuples, or
     is written to files (see below). Each filename consists of the given prefix, appended
     with an appropriate extension.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的源代码作为（文件名，内容）元组列表返回，或写入文件（见下文）。每个文件名由给定前缀加上适当的扩展名组成。
 - en: 'Parameters:'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: '**routines**：列表'
 - en: A list of Routine instances to be written
+  id: totrans-117
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要写入的Routine实例列表
 - en: '**prefix** : string'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix**：字符串'
 - en: The prefix for the output files
+  id: totrans-119
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 输出文件的前缀
 - en: '**to_files** : bool, optional'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: '**to_files**：布尔值，可选'
 - en: 'When True, the output is written to files. Otherwise, a list of (filename,
     contents) tuples is returned. [default: False]'
+  id: totrans-121
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，将输出写入文件。否则，将返回（文件名，内容）元组的列表。[默认：False]
 - en: '**header** : bool, optional'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header comment is included on top of each source file. [default:
     True]'
+  id: totrans-123
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，在每个源文件顶部包括头部注释。[默认：True]
 - en: '**empty** : bool, optional'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are included to structure the source files. [default:
     True]'
+  id: totrans-125
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，包括空行以结构化源文件。[默认：True]
 - en: '[PRE10]'
+  id: totrans-126
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Holds strings for a certain datatype in different languages.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 在不同语言中为某种数据类型保存字符串。
 - en: '[PRE11]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Generator for Fortran 95 code
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成Fortran 95代码的生成器
 - en: The .write() method inherited from CodeGen will output a code file and an interface
     file, <prefix>.f90 and <prefix>.h respectively.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 继承自CodeGen的.write()方法将输出一个代码文件和一个接口文件，分别为<prefix>.f90和<prefix>.h。
 - en: '[PRE12]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Write the code by calling language specific methods.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 写入代码时，请调用特定语言的方法。
 - en: The generated file contains all the definitions of the routines in low-level
     code and refers to the header file if appropriate.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的文件包含低级代码中所有例程的定义，并在适当时引用头文件。
 - en: 'Parameters:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: '**routines**：列表'
 - en: A list of Routine instances.
+  id: totrans-136
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例程实例列表。
 - en: '**f** : file-like'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f**：类似文件'
 - en: Where to write the file.
+  id: totrans-138
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 写入文件的位置。
 - en: '**prefix** : string'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix**：字符串'
 - en: The filename prefix, used to refer to the proper header file. Only the basename
     of the prefix is used.
+  id: totrans-140
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名前缀，用于引用适当的头文件。只使用前缀的基本名称。
 - en: '**header** : bool, optional'
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header comment is included on top of each source file. [default
     : True]'
+  id: totrans-142
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，在每个源文件顶部包括一个头注释。[默认：True]
 - en: '**empty** : bool, optional'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are included to structure the source files. [default
     : True]'
+  id: totrans-144
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，包括空行以结构化源文件。[默认：True]
 - en: '[PRE13]'
+  id: totrans-145
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Writes the interface to a header file.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 写入接口到头文件。
 - en: This file contains all the function declarations.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 此文件包含所有函数声明。
 - en: 'Parameters:'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: '**routines**：列表'
 - en: A list of Routine instances.
+  id: totrans-150
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例程实例列表。
 - en: '**f** : file-like'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f**：类似文件'
 - en: Where to write the file.
+  id: totrans-152
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 写入文件的位置。
 - en: '**prefix** : string'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix**：字符串'
 - en: The filename prefix.
+  id: totrans-154
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名前缀。
 - en: '**header** : bool, optional'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header comment is included on top of each source file. [default
     : True]'
+  id: totrans-156
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，在每个源文件顶部包括一个头注释。[默认：True]
 - en: '**empty** : bool, optional'
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are included to structure the source files. [default
     : True]'
+  id: totrans-158
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，包括空行以结构化源文件。[默认：True]
 - en: '[PRE14]'
+  id: totrans-159
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Returns a string for the function interface.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回函数接口的字符串。
 - en: The routine should have a single result object, which can be None. If the routine
     has multiple result objects, a CodeGenError is raised.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 例程应具有单个结果对象，可以为None。如果例程具有多个结果对象，则会引发CodeGenError。
 - en: 'See: [https://en.wikipedia.org/wiki/Function_prototype](https://en.wikipedia.org/wiki/Function_prototype)'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 参见：[https://zh.wikipedia.org/wiki/函数原型](https://zh.wikipedia.org/wiki/函数原型)
 - en: '[PRE15]'
+  id: totrans-163
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Generator for Julia code.
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: Julia代码生成器。
 - en: The .write() method inherited from CodeGen will output a code file <prefix>.jl.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 从CodeGen继承的.write()方法将输出一个代码文件 <prefix>.jl。
 - en: '[PRE16]'
+  id: totrans-166
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Write the code by calling language specific methods.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过调用特定于语言的方法编写代码。
 - en: The generated file contains all the definitions of the routines in low-level
     code and refers to the header file if appropriate.
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的文件包含低级代码中所有例程的定义，并在适当时引用头文件。
 - en: 'Parameters:'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: '**routines**：列表'
 - en: A list of Routine instances.
+  id: totrans-171
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例程实例列表。
 - en: '**f** : file-like'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f**：类似文件'
 - en: Where to write the file.
+  id: totrans-173
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 写入文件的位置。
 - en: '**prefix** : string'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix**：字符串'
 - en: The filename prefix, used to refer to the proper header file. Only the basename
     of the prefix is used.
+  id: totrans-175
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名前缀，用于引用适当的头文件。只使用前缀的基本名称。
 - en: '**header** : bool, optional'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header comment is included on top of each source file. [default
     : True]'
+  id: totrans-177
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，在每个源文件顶部包括一个头注释。[默认：True]
 - en: '**empty** : bool, optional'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are included to structure the source files. [default
     : True]'
+  id: totrans-179
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当为True时，包括空行以结构化源文件。[默认：True]
 - en: '[PRE17]'
+  id: totrans-180
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Specialized Routine creation for Julia.
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: Julia专用例程创建。
 - en: '[PRE18]'
+  id: totrans-182
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Generator for Octave code.
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: Octave代码生成器。
 - en: The .write() method inherited from CodeGen will output a code file <prefix>.m.
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 从CodeGen继承的.write()方法将输出一个代码文件 <prefix>.m。
 - en: Octave .m files usually contain one function. That function name should match
     the filename (`prefix`). If you pass multiple `name_expr` pairs, the latter ones
     are presumed to be private functions accessed by the primary function.
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: Octave .m文件通常只包含一个函数。该函数名称应与文件名（`prefix`）匹配。如果传递多个`name_expr`对，则后面的被假定为由主函数访问的私有函数。
 - en: 'You should only pass inputs to `argument_sequence`: outputs are ordered according
     to their order in `name_expr`.'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 你应该只将输入传递给`argument_sequence`：输出按照它们在`name_expr`中的顺序排序。
 - en: '[PRE19]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Write the code by calling language specific methods.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过调用特定于语言的方法编写代码。
 - en: The generated file contains all the definitions of the routines in low-level
     code and refers to the header file if appropriate.
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的文件包含低级代码中所有例程的定义，并在适当时引用头文件。
 - en: 'Parameters:'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: '**routines**：列表'
 - en: A list of Routine instances.
+  id: totrans-192
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例程实例列表。
 - en: '**f** : file-like'
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f**：类似文件'
 - en: Where to write the file.
+  id: totrans-194
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 写入文件的位置。
 - en: '**prefix** : string'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix**：字符串'
 - en: The filename prefix, used to refer to the proper header file. Only the basename
     of the prefix is used.
+  id: totrans-196
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名前缀，用于引用适当的头文件。只使用前缀的基本名称。
 - en: '**header** : bool, optional'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header comment is included on top of each source file. [default
     : True]'
+  id: totrans-198
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当设置为True时，在每个源文件的顶部包含一个头部注释。[默认值：True]
 - en: '**empty** : bool, optional'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are included to structure the source files. [default
     : True]'
+  id: totrans-200
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当设置为True时，包括空行以结构化源文件。[默认值：True]
 - en: '[PRE20]'
+  id: totrans-201
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: Specialized Routine creation for Octave.
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 为Octave创建专用的例程。
 - en: '[PRE21]'
+  id: totrans-203
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: OutputArgument are always initialized in the routine.
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: OutputArgument在例程中始终被初始化。
 - en: '[PRE22]'
+  id: totrans-205
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: An expression for a return value.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回值的表达式。
 - en: The name result is used to avoid conflicts with the reserved word “return” in
     the Python language. It is also shorter than ReturnValue.
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 在Python语言中，名称“result”用于避免与保留字“return”发生冲突。它也比“ReturnValue”更短。
 - en: These may or may not need a name in the destination (e.g., “return(x*y)” might
     return a value without ever naming it).
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 在目标中可能需要这些名称（例如，“return(x*y)”可能会返回一个值，但从未命名它）。
 - en: '[PRE23]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Generic description of evaluation routine for set of expressions.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 对一组表达式进行评估例程的通用描述。
 - en: 'A CodeGen class can translate instances of this class into code in a particular
     language. The routine specification covers all the features present in these languages.
     The CodeGen part must raise an exception when certain features are not present
     in the target language. For example, multiple return values are possible in Python,
     but not in C or Fortran. Another example: Fortran and Python support complex numbers,
     while C does not.'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: CodeGen类可以将此类的实例转换为特定语言的代码。例程规范涵盖了这些语言中所有存在的特性。CodeGen部分在目标语言中缺少某些特性时必须引发异常。例如，Python中可能存在多个返回值，但C或Fortran中不存在。另一个例子是Fortran和Python支持复数，而C不支持。
 - en: '[PRE24]'
+  id: totrans-212
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Returns a list of OutputArgument, InOutArgument and Result.
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回OutputArgument、InOutArgument和Result的列表。
 - en: If return values are present, they are at the end of the list.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果存在返回值，则它们位于列表的末尾。
 - en: '[PRE25]'
+  id: totrans-215
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Returns a set of all variables possibly used in the routine.
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回可能在例程中使用的所有变量的集合。
 - en: For routines with unnamed return values, the dummies that may or may not be
     used will be included in the set.
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于具有无名称返回值的例程，可能或可能不会使用的虚拟变量将包含在集合中。
 - en: '[PRE26]'
+  id: totrans-218
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Generator for Rust code.
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: Rust代码生成器。
 - en: The .write() method inherited from CodeGen will output a code file <prefix>.rs
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 从CodeGen继承的.write()方法将输出一个名为<prefix>.rs的代码文件。
 - en: '[PRE27]'
+  id: totrans-221
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: Write the code by calling language specific methods.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过调用特定于语言的方法编写代码。
 - en: The generated file contains all the definitions of the routines in low-level
     code and refers to the header file if appropriate.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的文件包含所有低级代码中的例程定义，并在适当时引用头文件。
 - en: 'Parameters:'
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**routines** : list'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: '**例程**：列表'
 - en: A list of Routine instances.
+  id: totrans-226
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一组例程实例的列表。
 - en: '**f** : file-like'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f**：类似文件'
 - en: Where to write the file.
+  id: totrans-228
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 写入文件的位置。
 - en: '**prefix** : string'
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: '**前缀**：字符串'
 - en: The filename prefix, used to refer to the proper header file. Only the basename
     of the prefix is used.
+  id: totrans-230
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名前缀，用于引用适当的头文件。仅使用前缀的基本名称。
 - en: '**header** : bool, optional'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header comment is included on top of each source file. [default
     : True]'
+  id: totrans-232
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当设置为True时，在每个源文件的顶部包含一个头部注释。[默认值：True]
 - en: '**empty** : bool, optional'
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are included to structure the source files. [default
     : True]'
+  id: totrans-234
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当设置为True时，包括空行以结构化源文件。[默认值：True]
 - en: '[PRE28]'
+  id: totrans-235
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: Returns a string for the function prototype of the routine.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回例程的函数原型字符串。
 - en: If the routine has multiple result objects, an CodeGenError is raised.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果例程具有多个结果对象，则引发CodeGenError。
 - en: 'See: [https://en.wikipedia.org/wiki/Function_prototype](https://en.wikipedia.org/wiki/Function_prototype)'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 参见：[https://zh.wikipedia.org/wiki/函式原型](https://zh.wikipedia.org/wiki/函式原型)
 - en: '[PRE29]'
+  id: totrans-239
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: Specialized Routine creation for Rust.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 为Rust创建专用的例程。
 - en: '[PRE30]'
+  id: totrans-241
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: Generate source code for expressions in a given language.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 为给定语言中的表达式生成源代码。
 - en: 'Parameters:'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**name_expr** : tuple, or list of tuples'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name_expr**：元组或元组列表'
 - en: A single (name, expression) tuple or a list of (name, expression) tuples. Each
     tuple corresponds to a routine. If the expression is an equality (an instance
     of class Equality) the left hand side is considered an output argument. If expression
     is an iterable, then the routine will have multiple outputs.
+  id: totrans-245
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 单个（名称，表达式）元组或（名称，表达式）元组列表。每个元组对应一个例程。如果表达式是等式（Equality类的实例），则左侧被视为输出参数。如果表达式是可迭代的，则例程将具有多个输出。
 - en: '**language** : string,'
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: '**language**：字符串，'
 - en: A string that indicates the source code language. This is case insensitive.
     Currently, ‘C’, ‘F95’ and ‘Octave’ are supported. ‘Octave’ generates code compatible
     with both Octave and Matlab.
+  id: totrans-247
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 表示源代码语言的字符串。不区分大小写。目前支持'C'、'F95'和'Octave'。'Octave'生成与Octave和Matlab兼容的代码。
 - en: '**prefix** : string, optional'
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prefix**：字符串，可选'
 - en: A prefix for the names of the files that contain the source code. Language-dependent
     suffixes will be appended. If omitted, the name of the first name_expr tuple is
     used.
+  id: totrans-249
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 文件名称的前缀，用于包含源代码的文件。语言相关的后缀将被附加。如果省略，则使用第一个name_expr元组的名称。
 - en: '**project** : string, optional'
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: '**project**：字符串，可选'
 - en: 'A project name, used for making unique preprocessor instructions. [default:
     “project”]'
+  id: totrans-251
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 项目名称，用于生成唯一的预处理器指令。[默认值：“project”]
 - en: '**to_files** : bool, optional'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: '**to_files**：布尔值，可选'
 - en: 'When True, the code will be written to one or more files with the given prefix,
     otherwise strings with the names and contents of these files are returned. [default:
     False]'
+  id: totrans-253
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当设置为True时，代码将被写入一个或多个具有给定前缀的文件中，否则将返回包含这些文件名称和内容的字符串。[默认值：False]
 - en: '**header** : bool, optional'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: '**header**：布尔值，可选'
 - en: 'When True, a header is written on top of each source file. [default: True]'
+  id: totrans-255
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当设置为True时，在每个源文件顶部写入头文件。[默认值：True]
 - en: '**empty** : bool, optional'
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: '**empty**：布尔值，可选'
 - en: 'When True, empty lines are used to structure the code. [default: True]'
+  id: totrans-257
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当设置为True时，空行用于代码的结构化。[默认值：True]
 - en: '**argument_sequence** : iterable, optional'
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: '**argument_sequence**：可迭代对象，可选'
 - en: Sequence of arguments for the routine in a preferred order. A CodeGenError is
     raised if required arguments are missing. Redundant arguments are used without
     warning. If omitted, arguments will be ordered alphabetically, but with all input
     arguments first, and then output or in-out arguments.
+  id: totrans-259
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 按照首选顺序为例程的参数序列。如果缺少必需的参数，则引发CodeGenError。冗余的参数将不会有警告。如果省略，则参数将按字母顺序排列，但所有输入参数先排列，然后是输出或输入输出参数。
 - en: '**global_vars** : iterable, optional'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: '**global_vars**：可迭代对象，可选'
 - en: Sequence of global variables used by the routine. Variables listed here will
     not show up as function arguments.
+  id: totrans-261
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例程使用的全局变量序列。此处列出的变量不会显示为函数参数。
 - en: '**standard** : string, optional'
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: '**standard**：字符串，可选'
 - en: '**code_gen** : CodeGen instance, optional'
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: '**code_gen**：CodeGen实例，可选'
 - en: An instance of a CodeGen subclass. Overrides `language`.
+  id: totrans-264
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个CodeGen子类的实例。覆盖`language`。
 - en: '**printer** : Printer instance, optional'
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: '**printer**：Printer实例，可选'
 - en: An instance of a Printer subclass.
+  id: totrans-266
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个Printer子类的实例。
 - en: Examples
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE31]'
+  id: totrans-268
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Another example using Equality objects to give named outputs. Here the filename
     (prefix) is taken from the first (name, expr) pair.
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个使用Equality对象的示例，以给出具有命名输出的例程。这里的文件名（前缀）来自第一个（name，expr）对。
 - en: '[PRE32]'
+  id: totrans-270
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: If the generated function(s) will be part of a larger project where various
     global variables have been defined, the ‘global_vars’ option can be used to remove
     the specified variables from the function signature
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果生成的函数将成为一个更大项目的一部分，其中定义了各种全局变量，则可以使用‘global_vars’选项从函数签名中移除指定的变量。
 - en: '[PRE33]'
+  id: totrans-272
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: '[PRE34]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: Derives an appropriate datatype based on the expression.
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 基于表达式推导出适当的数据类型。
 - en: '[PRE35]'
+  id: totrans-275
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: A factory that makes an appropriate Routine from an expression.
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: 从表达式生成适当的Routine的工厂。
 - en: 'Parameters:'
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**name** : string'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name**：字符串'
 - en: The name of this routine in the generated code.
+  id: totrans-279
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在生成的代码中此例程的名称。
 - en: '**expr** : expression or list/tuple of expressions'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：表达式或表达式列表/元组'
 - en: A SymPy expression that the Routine instance will represent. If given a list
     or tuple of expressions, the routine will be considered to have multiple return
     values and/or output arguments.
+  id: totrans-281
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: Routine实例将表示的SymPy表达式。如果给定一个表达式列表或元组，则认为该例程具有多个返回值和/或输出参数。
 - en: '**argument_sequence** : list or tuple, optional'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: '**argument_sequence**：列表或元组，可选'
 - en: List arguments for the routine in a preferred order. If omitted, the results
     are language dependent, for example, alphabetical order or in the same order as
     the given expressions.
+  id: totrans-283
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 按首选顺序列出例程的列表参数。如果省略，则结果依赖于语言，例如按字母顺序或按给定表达式的相同顺序。
 - en: '**global_vars** : iterable, optional'
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: '**global_vars**：可迭代对象，可选'
 - en: Sequence of global variables used by the routine. Variables listed here will
     not show up as function arguments.
+  id: totrans-285
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例程使用的全局变量序列。此处列出的变量不会显示为函数参数。
 - en: '**language** : string, optional'
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: '**language**：字符串，可选'
 - en: 'Specify a target language. The Routine itself should be language-agnostic but
     the precise way one is created, error checking, etc depend on the language. [default:
     “F95”].'
+  id: totrans-287
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 指定目标语言。例程本身应该是语言无关的，但是创建方式、错误检查等依赖于语言。[默认值：“F95”]。
 - en: Notes
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: A decision about whether to use output arguments or return values is made depending
     on both the language and the particular mathematical expressions. For an expression
     of type Equality, the left hand side is typically made into an OutputArgument
     (or perhaps an InOutArgument if appropriate). Otherwise, typically, the calculated
     expression is made a return values of the routine.
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据语言和具体的数学表达式，决定是使用输出参数还是返回值。对于类型为Equality的表达式，通常左侧会被转换为一个输出参数（或者在合适的情况下是一个InOutArgument）。否则，通常计算后的表达式会成为例程的返回值。
 - en: Examples
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE36]'
+  id: totrans-291
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: Another more complicated example with a mixture of specified and automatically-assigned
     names. Also has Matrix output.
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个更复杂的示例，混合了指定和自动分配的名称。还具有矩阵输出。
 - en: '[PRE37]'
+  id: totrans-293
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'We can examine the various arguments more closely:'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以更仔细地检查各种参数：
 - en: '[PRE38]'
+  id: totrans-295
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: '[PRE39]'
+  id: totrans-296
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: '[PRE40]'
+  id: totrans-297
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'

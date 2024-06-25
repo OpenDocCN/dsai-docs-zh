@@ -1,242 +1,370 @@
 - en: Linearization in Physics/Mechanics
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.sympy.org/latest/modules/physics/mechanics/linearize.html](https://docs.sympy.org/latest/modules/physics/mechanics/linearize.html)
+  zh: 物理/力学中的线性化
+- en: Original text：[https://docs.sympy.org/latest/modules/physics/mechanics/linearize.html](https://docs.sympy.org/latest/modules/physics/mechanics/linearize.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://docs.sympy.org/latest/modules/physics/mechanics/linearize.html](https://docs.sympy.org/latest/modules/physics/mechanics/linearize.html)
 - en: '[`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics "sympy.physics.mechanics")
     includes methods for linearizing the generated equations of motion (EOM) about
     an operating point (also known as the trim condition). Note that this operating
     point doesn’t have to be an equilibrium position, it just needs to satisfy the
     equations of motion.'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics "sympy.physics.mechanics")
+    包括了关于操作点（也称为平衡条件）附近生成的运动方程（EOM）的线性化方法。注意，这个操作点不必是一个平衡位置，它只需满足运动方程。'
 - en: Linearization is accomplished by taking the first order Taylor expansion of
     the EOM about the operating point. When there are no dependent coordinates or
     speeds this is simply the jacobian of the right hand side about \(q\) and \(u\).
     However, in the presence of constraints more care needs to be taken. The linearization
     methods provided here handle these constraints correctly.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过对绕操作点的 EOM 进行一阶泰勒展开来完成线性化。当没有依赖坐标或速度时，这只是关于 \(q\) 和 \(u\) 的右手边雅可比矩阵。然而，在存在约束条件时，需要更加小心。此处提供的线性化方法可以正确处理这些约束。
 - en: Background
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 背景
 - en: 'In [`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics "sympy.physics.mechanics")
     we assume all systems can be represented in the following general form:'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 [`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics "sympy.physics.mechanics")
+    中，我们假设所有系统可以用以下一般形式表示：
 - en: \[\begin{split}f_{c}(q, t) &= 0_{l \times 1}\\ f_{v}(q, u, t) &= 0_{m \times
     1}\\ f_{a}(q, \dot{q}, u, \dot{u}, t) &= 0_{m \times 1}\\ f_{0}(q, \dot{q}, t)
     + f_{1}(q, u, t) &= 0_{n \times 1}\\ f_{2}(q, u, \dot{u}, t) + f_{3}(q, \dot{q},
     u, r, t) + f_{4}(q, \lambda, t) &= 0_{(o-m+k) \times 1}\end{split}\]
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}f_{c}(q, t) &= 0_{l \times 1}\\ f_{v}(q, u, t) &= 0_{m \times
+    1}\\ f_{a}(q, \dot{q}, u, \dot{u}, t) &= 0_{m \times 1}\\ f_{0}(q, \dot{q}, t)
+    + f_{1}(q, u, t) &= 0_{n \times 1}\\ f_{2}(q, u, \dot{u}, t) + f_{3}(q, \dot{q},
+    u, r, t) + f_{4}(q, \lambda, t) &= 0_{(o-m+k) \times 1}\end{split}\]
 - en: where
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中
 - en: \[\begin{split}q, \dot{q} & \in \mathbb{R}^n\\ u, \dot{u} & \in \mathbb{R}^o\\
     r & \in \mathbb{R}^s\\ \lambda & \in \mathbb{R}^k\end{split}\]
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}q, \dot{q} & \in \mathbb{R}^n\\ u, \dot{u} & \in \mathbb{R}^o\\
+    r & \in \mathbb{R}^s\\ \lambda & \in \mathbb{R}^k\end{split}\]
 - en: In this form,
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种形式中，
 - en: \(f_{c}\) represents the configuration constraint equations
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(f_{c}\) 表示配置约束方程。
 - en: \(f_{v}\) represents the velocity constraint equations
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(f_{v}\) 表示速度约束方程。
 - en: \(f_{a}\) represents the acceleration constraint equations
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(f_{a}\) 表示加速度约束方程。
 - en: \(f_{0}\) and \(f_{1}\) form the kinematic differential equations
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(f_{0}\) 和 \(f_{1}\) 形成了运动学微分方程。
 - en: \(f_{2}\), \(f_{3}\), and \(f_{4}\) form the dynamic differential equations
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(f_{2}\), \(f_{3}\) 和 \(f_{4}\) 形成了动态微分方程。
 - en: \(q\) and \(\dot{q}\) are the generalized coordinates and their derivatives
+  id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(q\) 和 \(\dot{q}\) 是广义坐标及其导数。
 - en: \(u\) and \(\dot{u}\) are the generalized speeds and their derivatives
+  id: totrans-16
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(u\) 和 \(\dot{u}\) 是广义速度及其导数。
 - en: \(r\) is the system inputs
+  id: totrans-17
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(r\) 是系统输入。
 - en: \(\lambda\) is the Lagrange multipliers
+  id: totrans-18
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \(\lambda\) 是拉格朗日乘子。
 - en: This generalized form is held inside the `Linearizer` class, which performs
     the actual linearization. Both `KanesMethod` and `LagrangesMethod` objects have
     methods for forming the linearizer using the `to_linearizer` class method.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种广义形式包含在 `Linearizer` 类中，它执行实际的线性化。`KanesMethod` 和 `LagrangesMethod` 对象都有使用
+    `to_linearizer` 类方法形成线性化器的方法。
 - en: 'Once the system is coerced into the generalized form, the linearized EOM can
     be solved for. The methods provided in [`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics
     "sympy.physics.mechanics") allow for two different forms of the linearized EOM:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦系统被强制转换为广义形式，可以解出线性化的 EOM。[`sympy.physics.mechanics`](index.html#module-sympy.physics.mechanics
+    "sympy.physics.mechanics") 中提供的方法允许两种不同形式的线性化 EOM：
 - en: \(M\), \(A\), and \(B\)
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: \(M\), \(A\), 和 \(B\)
 - en: 'In this form, the forcing matrix is linearized into two separate matrices \(A\)
     and \(B\). This is the default form of the linearized EOM. The resulting equations
     are:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种形式中，强制矩阵被线性化为两个独立的矩阵 \(A\) 和 \(B\)。这是线性化 EOM 的默认形式。得到的方程为：
 - en: \[\begin{split}M \begin{bmatrix} \delta \dot{q} \\ \delta \dot{u} \\ \delta
     \lambda \end{bmatrix} = A \begin{bmatrix} \delta q_i \\ \delta u_i \end{bmatrix}
     + B \begin{bmatrix} \delta r \end{bmatrix}\end{split}\]
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}M \begin{bmatrix} \delta \dot{q} \\ \delta \dot{u} \\ \delta
+    \lambda \end{bmatrix} = A \begin{bmatrix} \delta q_i \\ \delta u_i \end{bmatrix}
+    + B \begin{bmatrix} \delta r \end{bmatrix}\end{split}\]
 - en: where
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中
 - en: \[\begin{split}M &\in \mathbb{R}^{(n+o+k) \times (n+o+k)}\\ A &\in \mathbb{R}^{(n+o+k)
     \times (n-l+o-m)}\\ B &\in \mathbb{R}^{(n+o+k) \times s}\end{split}\]
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}M &\in \mathbb{R}^{(n+o+k) \times (n+o+k)}\\ A &\in \mathbb{R}^{(n+o+k)
+    \times (n-l+o-m)}\\ B &\in \mathbb{R}^{(n+o+k) \times s}\end{split}\]
 - en: Note that \(q_i\) and \(u_i\) are just the independent coordinates and speeds,
     while \(q\) and \(u\) contains both the independent and dependent coordinates
     and speeds.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意\(q_i\)和\(u_i\)只是独立坐标和速度，而\(q\)和\(u\)包含独立和依赖坐标和速度。
 - en: \(A\) and \(B\)
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: \(A\)和\(B\)
 - en: 'In this form, the linearized EOM are brought into explicit first order form,
     in terms of just the independent coordinates and speeds. This form is often used
     in stability analysis or control theory. The resulting equations are:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 在此形式中，线性化的运动方程被带入明确的一阶形式，仅以独立坐标和速度来表示。此形式经常用于稳定性分析或控制理论。得到的方程如下：
 - en: \[\begin{split}\begin{bmatrix} \delta \dot{q_i} \\ \delta \dot{u_i} \end{bmatrix}
     = A \begin{bmatrix} \delta q_i \\ \delta u_i \end{bmatrix} + B \begin{bmatrix}
     \delta r \end{bmatrix}\end{split}\]
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}\begin{bmatrix} \delta \dot{q_i} \\ \delta \dot{u_i} \end{bmatrix}
+    = A \begin{bmatrix} \delta q_i \\ \delta u_i \end{bmatrix} + B \begin{bmatrix}
+    \delta r \end{bmatrix}\end{split}\]
 - en: where
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中
 - en: \[\begin{split}A &\in \mathbb{R}^{(n-l+o-m) \times (n-l+o-m)}\\ B &\in \mathbb{R}^{(n-l+o-m)
     \times s}\end{split}\]
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: \[\begin{split}A &\in \mathbb{R}^{(n-l+o-m) \times (n-l+o-m)}\\ B &\in \mathbb{R}^{(n-l+o-m)
+    \times s}\end{split}\]
 - en: To use this form set `A_and_B=True` in the `linearize` class method.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 要使用此形式，请在`linearize`类方法中设置`A_and_B=True`。
 - en: Linearizing Kane’s Equations
+  id: totrans-33
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 线性化Kane方程
 - en: 'After initializing the `KanesMethod` object and forming \(F_r\) and \(F_r^*\)
     using the `kanes_equations` class method, linearization can be accomplished in
     a couple ways. The different methods will be demonstrated with a simple pendulum
     system:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 初始化`KanesMethod`对象并使用`kanes_equations`类方法形成\(F_r\)和\(F_r^*\)后，可以通过几种方法完成线性化。不同的方法将在简单摆系统中进行演示：
 - en: '[PRE0]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '1\. Using the `Linearizer` class directly:'
+  id: totrans-36
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 1\. 直接使用`Linearizer`类：
 - en: A linearizer object can be created using the `to_linearizer` class method. This
     coerces the representation found in the `KanesMethod` object into the generalized
     form described above. As the independent and dependent coordinates and speeds
     are specified upon creation of the KanesMethod object, there is no need to specify
     them here.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用`to_linearizer`类方法创建一个`linearizer`对象。这将强制`KanesMethod`对象中找到的表示形式转换为上述的广义形式。由于在创建`KanesMethod`对象时已经指定了独立和依赖坐标和速度，因此无需在此处指定它们。
 - en: '[PRE1]'
+  id: totrans-38
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'The linearized EOM can then be formed with the `linearize` method of the `Linearizer`
     object:'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后可以使用`Linearizer`对象的`linearize`方法形成线性化的运动方程：
 - en: '[PRE2]'
+  id: totrans-40
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Alternatively, the \(A\) and \(B\) form can be generated instead by specifying
     `A_and_B=True`:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者，可以通过指定`A_and_B=True`来生成\(A\)和\(B\)形式：
 - en: '[PRE3]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'An operating point can also be specified as a dictionary or an iterable of
     dictionaries. This will evaluate the linearized form at the specified point before
     returning the matrices:'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 还可以将操作点指定为字典或字典集合。这将在返回矩阵之前在指定点评估线性化形式：
 - en: '[PRE4]'
+  id: totrans-44
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Note that the same effect can be had by applying `msubs` to the matrices generated
     without the `op_point` kwarg:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，通过在生成的矩阵上应用`msubs`而不使用`op_point`关键字也可以达到相同的效果：
 - en: '[PRE5]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Sometimes the returned matrices may not be in the most simplified form. Simplification
     can be performed after the fact, or the `Linearizer` object can be made to perform
     simplification internally by setting the `simplify` kwarg to `True`.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时返回的矩阵可能不是最简化的形式。可以在事后执行简化，或者通过将`simplify`关键字设置为`True`使`Linearizer`对象在内部执行简化。
 - en: '2\. Using the `linearize` class method:'
+  id: totrans-48
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 2\. 使用`linearize`类方法：
 - en: 'The `linearize` method of the `KanesMethod` class is provided as a nice wrapper
     that calls `to_linearizer` internally, performs the linearization, and returns
     the result. Note that all the kwargs available in the `linearize` method described
     above are also available here:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: '`KanesMethod`类的`linearize`方法作为一个便捷的包装器提供，内部调用`to_linearizer`，执行线性化并返回结果。请注意，`linearize`方法中描述的所有关键字参数在此处也是可用的：'
 - en: '[PRE6]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'The additional output `inp_vec` is a vector containing all found `dynamicsymbols`
     not included in the generalized coordinate or speed vectors. These are assumed
     to be inputs to the system, forming the \(r\) vector described in the background
     above. In this example there are no inputs, so the vector is empty:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 附加输出`inp_vec`是一个包含所有未包含在广义坐标或速度向量中的`dynamicsymbols`的向量。这些被假定为系统的输入，形成了上述背景中描述的向量\(r\)。在这个例子中没有输入，因此向量为空：
 - en: '[PRE7]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Linearizing Lagrange’s Equations
+  id: totrans-53
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 线性化Lagrange方程
 - en: 'Linearization of Lagrange’s equations proceeds much the same as that of Kane’s
     equations. As before, the process will be demonstrated with a simple pendulum
     system:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: Lagrange方程的线性化过程与Kane方程的线性化过程基本相同。与之前一样，该过程将通过一个简单的摆系统进行演示：
 - en: '[PRE8]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '1\. Using the `Linearizer` class directly:'
+  id: totrans-56
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 1\. 直接使用`Linearizer`类：
 - en: 'A `Linearizer` object can be formed from a `LagrangesMethod` object using the
     `to_linearizer` class method. The only difference between this process and that
     of the `KanesMethod` class is that the `LagrangesMethod` object doesn’t already
@@ -244,115 +372,167 @@
     These must be specified in the call to `to_linearizer`. In this example there
     are no dependent coordinates and speeds, but if there were they would be included
     in the `q_dep` and `qd_dep` kwargs:'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用`to_linearizer`类方法从`LagrangesMethod`对象形成一个`Linearizer`对象。这个过程与`KanesMethod`类的过程唯一的区别在于，`LagrangesMethod`对象在内部没有指定其独立和依赖坐标和速度。这些必须在调用`to_linearizer`时指定。在这个例子中没有依赖的坐标和速度，但如果有的话，它们将包含在`q_dep`和`qd_dep`关键字参数中：
 - en: '[PRE9]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'Once in this form, everything is the same as it was before with the `KanesMethod`
     example:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦进入这种形式，一切就像之前的`KanesMethod`示例一样：
 - en: '[PRE10]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: '2\. Using the `linearize` class method:'
+  id: totrans-61
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 2\. 使用`linearize`类方法：
 - en: 'Similar to `KanesMethod`, the `LagrangesMethod` class also provides a `linearize`
     method as a nice wrapper that calls `to_linearizer` internally, performs the linearization,
     and returns the result. As before, the only difference is that the independent
     and dependent coordinates and speeds must be specified in the call as well:'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 与`KanesMethod`类似，`LagrangesMethod`类还提供了一个`linearize`方法作为一个方便的包装器，内部调用`to_linearizer`，执行线性化并返回结果。与之前一样，唯一的区别是必须在调用中指定独立和依赖的坐标和速度：
 - en: '[PRE11]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Potential Issues
+  id: totrans-64
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 潜在问题
 - en: While the `Linearizer` class *should* be able to linearize all systems, there
     are some potential issues that could occur. These are discussed below, along with
     some troubleshooting tips for solving them.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然`Linearizer`类*应该*能够线性化所有系统，但可能会出现一些潜在问题。下面讨论这些问题，并提供一些解决方法的故障排除提示。
 - en: 1\. Symbolic linearization with `A_and_B=True` is slow
+  id: totrans-66
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 1\. 使用`A_and_B=True`的符号线性化速度较慢
 - en: 'This could be due to a number of things, but the most likely one is that solving
     a large linear system symbolically is an expensive operation. Specifying an operating
     point will reduce the expression size and speed this up. If a purely symbolic
     solution is desired though (for application of many operating points at a later
     period, for example) a way to get around this is to evaluate with `A_and_B=False`,
     and then solve manually after applying the operating point:'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 这可能由多种原因引起，但最有可能的原因是，符号求解一个大型线性系统是一项昂贵的操作。指定一个操作点将减小表达式的大小并加快速度。然而，如果需要纯符号解（例如稍后应用多个操作点的应用），可以通过在`A_and_B=False`下评估，然后在应用操作点后手动求解来解决这个问题：
 - en: '[PRE12]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: The fewer symbols in `A` and `M` before solving, the faster this solution will
     be. Thus, for large expressions, it may be to your benefit to delay conversion
     to the \(A\) and \(B\) form until most symbols are subbed in for their numeric
     values.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 在求解前，`A`和`M`中的符号越少，解决方案的速度就越快。因此，对于大型表达式，延迟到大多数符号被替换为它们的数值之后再转换为\(A\)和\(B\)形式可能会对你有利。
 - en: 2\. The linearized form has `nan`, `zoo`, or `oo` as matrix elements
+  id: totrans-70
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 2\. 线性化形式的矩阵元素为`nan`、`zoo`或`oo`
 - en: There are two potential causes for this. The first (and the one you should check
     first) is that some choices of dependent coordinates will result in singularities
     at certain operating points. Coordinate partitioning in a systemic manner to avoid
     this is beyond the scope of this guide; see [[Blajer1994]](reference.html#blajer1994)
     for more information.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 这有两个潜在原因。首先（也是你应该首先检查的原因）是，在某些操作点上，某些依赖坐标的选择会导致奇点。系统性地进行坐标分区以避免这种情况超出了本指南的范围；详细信息请参见[[Blajer1994]](reference.html#blajer1994)。
 - en: 'The other potential cause for this is that the matrices may not have been in
     the most reduced form before the operating point was substituted in. A simple
     example of this behavior is:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个潜在的原因是在操作点替换之前，矩阵可能没有处于最简形式。这种行为的简单示例是：
 - en: '[PRE13]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Note that if this expression was simplified before substitution, the correct
     value results:'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，如果在替换之前简化了这个表达式，将得到正确的值：
 - en: '[PRE14]'
+  id: totrans-75
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: A good way of avoiding this hasn’t been found yet. For expressions of reasonable
     size, using `msubs` with `smart=True` will apply an algorithm that tries to avoid
     these conditions. For large expressions though this is extremely time consuming.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 目前还没有找到避免这种情况的好方法。对于大小合理的表达式，使用`msubs`和`smart=True`将应用一种算法，试图避免这些条件。但对于大型表达式，这会非常耗时。
 - en: '[PRE15]'
+  id: totrans-77
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Further Examples
+  id: totrans-78
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 更多示例
 - en: 'The pendulum example used above was simple, but didn’t include any dependent
     coordinates or speeds. For a more thorough example, the same pendulum was linearized
     with dependent coordinates using both Kane’s and Lagrange’s methods:'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述摆例子很简单，但没有包含任何依赖坐标或速度。为了更详细的例子，同一个摆通过凯恩和拉格朗日方法使用依赖坐标进行了线性化：
 - en: '[Nonminimal Coordinates Pendulum](examples/lin_pend_nonmin_example.html)'
+  id: totrans-80
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[非最小坐标摆](examples/lin_pend_nonmin_example.html)'
 - en: '[Kane’s Method](examples/lin_pend_nonmin_example.html#kane-s-method)'
+  id: totrans-81
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[凯恩方法](examples/lin_pend_nonmin_example.html#kane-s-method)'
 - en: '[Lagrange’s Method](examples/lin_pend_nonmin_example.html#lagrange-s-method)'
+  id: totrans-82
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[拉格朗日方法](examples/lin_pend_nonmin_example.html#lagrange-s-method)'

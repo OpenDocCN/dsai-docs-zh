@@ -1,763 +1,1212 @@
 - en: Hongguang Fu’s Trigonometric Simplification
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.sympy.org/latest/modules/simplify/fu.html](https://docs.sympy.org/latest/modules/simplify/fu.html)
+  zh: 《洪光·傅的三角简化》
+- en: Original text：[https://docs.sympy.org/latest/modules/simplify/fu.html](https://docs.sympy.org/latest/modules/simplify/fu.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://docs.sympy.org/latest/modules/simplify/fu.html](https://docs.sympy.org/latest/modules/simplify/fu.html)
 - en: Implementation of the trigsimp algorithm by Fu et al.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: Fu等人的三角简化算法实现
 - en: The idea behind the Fu algorithm is to use a sequence of rules that students
     learn during their pre-calculus courses. The rules are applied heuristically and
     it uses a greedy algorithm to apply multiple rules simultaneously and choose the
     result with the least leaf counts.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: Fu算法的核心思想是利用学生在预微积分课程中学到的一系列规则。这些规则是启发式应用的，它使用贪婪算法同时应用多个规则，并选择具有最少叶子节点的结果。
 - en: There are transform rules in which a single rule is applied to the expression
     tree. The following are just mnemonic in nature; see the docstrings for examples.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 存在一些转换规则，其中单个规则应用于表达树。以下仅仅是助记性质的；详细示例请参见文档字符串。
 - en: '[`TR0()`](#sympy.simplify.fu.TR0 "sympy.simplify.fu.TR0") - simplify expression'
+  id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR0()`](#sympy.simplify.fu.TR0 "sympy.simplify.fu.TR0") - 简化表达式'
 - en: '[`TR1()`](#sympy.simplify.fu.TR1 "sympy.simplify.fu.TR1") - sec-csc to cos-sin'
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR1()`](#sympy.simplify.fu.TR1 "sympy.simplify.fu.TR1") - sec-csc到cos-sin'
 - en: '[`TR2()`](#sympy.simplify.fu.TR2 "sympy.simplify.fu.TR2") - tan-cot to sin-cos
     ratio'
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR2()`](#sympy.simplify.fu.TR2 "sympy.simplify.fu.TR2") - tan-cot到sin-cos的比率'
 - en: '[`TR2i()`](#sympy.simplify.fu.TR2i "sympy.simplify.fu.TR2i") - sin-cos ratio
     to tan'
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR2i()`](#sympy.simplify.fu.TR2i "sympy.simplify.fu.TR2i") - sin-cos的比率到tan'
 - en: '[`TR3()`](#sympy.simplify.fu.TR3 "sympy.simplify.fu.TR3") - angle canonicalization'
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR3()`](#sympy.simplify.fu.TR3 "sympy.simplify.fu.TR3") - 角度规范化'
 - en: '[`TR4()`](#sympy.simplify.fu.TR4 "sympy.simplify.fu.TR4") - functions at special
     angles'
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR4()`](#sympy.simplify.fu.TR4 "sympy.simplify.fu.TR4") - 特定角度上的函数'
 - en: '[`TR5()`](#sympy.simplify.fu.TR5 "sympy.simplify.fu.TR5") - powers of sin to
     powers of cos'
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR5()`](#sympy.simplify.fu.TR5 "sympy.simplify.fu.TR5") - sin的幂到cos的幂'
 - en: '[`TR6()`](#sympy.simplify.fu.TR6 "sympy.simplify.fu.TR6") - powers of cos to
     powers of sin'
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR6()`](#sympy.simplify.fu.TR6 "sympy.simplify.fu.TR6") - cos的幂到sin的幂'
 - en: '[`TR7()`](#sympy.simplify.fu.TR7 "sympy.simplify.fu.TR7") - reduce cos power
     (increase angle)'
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR7()`](#sympy.simplify.fu.TR7 "sympy.simplify.fu.TR7") - 减少cos的幂（增加角度）'
 - en: '[`TR8()`](#sympy.simplify.fu.TR8 "sympy.simplify.fu.TR8") - expand products
     of sin-cos to sums'
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR8()`](#sympy.simplify.fu.TR8 "sympy.simplify.fu.TR8") - 展开sin-cos的乘积为和'
 - en: '[`TR9()`](#sympy.simplify.fu.TR9 "sympy.simplify.fu.TR9") - contract sums of
     sin-cos to products'
+  id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR9()`](#sympy.simplify.fu.TR9 "sympy.simplify.fu.TR9") - 将sin-cos的和约简为乘积'
 - en: '[`TR10()`](#sympy.simplify.fu.TR10 "sympy.simplify.fu.TR10") - separate sin-cos
     arguments'
+  id: totrans-16
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR10()`](#sympy.simplify.fu.TR10 "sympy.simplify.fu.TR10") - 分离sin-cos的参数'
 - en: '[`TR10i()`](#sympy.simplify.fu.TR10i "sympy.simplify.fu.TR10i") - collect sin-cos
     arguments'
+  id: totrans-17
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR10i()`](#sympy.simplify.fu.TR10i "sympy.simplify.fu.TR10i") - 收集sin-cos的参数'
 - en: '[`TR11()`](#sympy.simplify.fu.TR11 "sympy.simplify.fu.TR11") - reduce double
     angles'
+  id: totrans-18
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR11()`](#sympy.simplify.fu.TR11 "sympy.simplify.fu.TR11") - 减少双角度'
 - en: '[`TR12()`](#sympy.simplify.fu.TR12 "sympy.simplify.fu.TR12") - separate tan
     arguments'
+  id: totrans-19
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR12()`](#sympy.simplify.fu.TR12 "sympy.simplify.fu.TR12") - 分离tan的参数'
 - en: '[`TR12i()`](#sympy.simplify.fu.TR12i "sympy.simplify.fu.TR12i") - collect tan
     arguments'
+  id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR12i()`](#sympy.simplify.fu.TR12i "sympy.simplify.fu.TR12i") - 收集tan的参数'
 - en: '[`TR13()`](#sympy.simplify.fu.TR13 "sympy.simplify.fu.TR13") - expand product
     of tan-cot'
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR13()`](#sympy.simplify.fu.TR13 "sympy.simplify.fu.TR13") - 展开tan-cot的乘积'
 - en: '[`TRmorrie()`](#sympy.simplify.fu.TRmorrie "sympy.simplify.fu.TRmorrie") -
     prod(cos(x*2**i), (i, 0, k - 1)) -> sin(2**k*x)/(2**k*sin(x))'
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TRmorrie()`](#sympy.simplify.fu.TRmorrie "sympy.simplify.fu.TRmorrie") -
+    prod(cos(x*2**i), (i, 0, k - 1)) -> sin(2**k*x)/(2**k*sin(x))'
 - en: '[`TR14()`](#sympy.simplify.fu.TR14 "sympy.simplify.fu.TR14") - factored powers
     of sin or cos to cos or sin power'
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR14()`](#sympy.simplify.fu.TR14 "sympy.simplify.fu.TR14") - sin或cos的幂的因式分解到cos或sin的幂'
 - en: '[`TR15()`](#sympy.simplify.fu.TR15 "sympy.simplify.fu.TR15") - negative powers
     of sin to cot power'
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR15()`](#sympy.simplify.fu.TR15 "sympy.simplify.fu.TR15") - sin的负幂到cot的幂'
 - en: '[`TR16()`](#sympy.simplify.fu.TR16 "sympy.simplify.fu.TR16") - negative powers
     of cos to tan power'
+  id: totrans-25
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR16()`](#sympy.simplify.fu.TR16 "sympy.simplify.fu.TR16") - cos的负幂到tan的幂'
 - en: '[`TR22()`](#sympy.simplify.fu.TR22 "sympy.simplify.fu.TR22") - tan-cot powers
     to negative powers of sec-csc functions'
+  id: totrans-26
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR22()`](#sympy.simplify.fu.TR22 "sympy.simplify.fu.TR22") - tan-cot的幂到sec-csc函数的负幂'
 - en: '[`TR111()`](#sympy.simplify.fu.TR111 "sympy.simplify.fu.TR111") - negative
     sin-cos-tan powers to csc-sec-cot'
+  id: totrans-27
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[`TR111()`](#sympy.simplify.fu.TR111 "sympy.simplify.fu.TR111") - sin-cos-tan的负幂到csc-sec-cot'
 - en: There are 4 combination transforms (CTR1 - CTR4) in which a sequence of transformations
     are applied and the simplest expression is selected from a few options.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 存在4种组合转换（CTR1 - CTR4），其中应用一系列转换，并从几个选项中选择最简表达式。
 - en: Finally, there are the 2 rule lists (RL1 and RL2), which apply a sequence of
     transformations and combined transformations, and the `fu` algorithm itself, which
     applies rules and rule lists and selects the best expressions. There is also a
     function `L` which counts the number of trigonometric functions that appear in
     the expression.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，有两个规则列表（RL1和RL2），它们应用一系列转换和组合转换，以及`fu`算法本身，它应用规则和规则列表并选择最佳表达式。还有一个函数`L`，它计算表达式中出现的三角函数的数量。
 - en: Other than TR0, re-writing of expressions is not done by the transformations.
     e.g. TR10i finds pairs of terms in a sum that are in the form like `cos(x)*cos(y)
     + sin(x)*sin(y)`. Such expression are targeted in a bottom-up traversal of the
     expression, but no manipulation to make them appear is attempted. For example,
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了TR0外，转换不会重新编写表达式。例如，TR10i找到了一个形式为`cos(x)*cos(y) + sin(x)*sin(y)`的和的项对。这类表达式在对表达式进行自下而上的遍历时被针对，但不会尝试操纵它们使其出现。例如，
 - en: 'Set-up for examples below:'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 为下面的示例做准备：
 - en: '[PRE0]'
+  id: totrans-32
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '[PRE1]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'If the expression is put in “normal” form (with a common denominator) then
     the transformation is successful:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果将表达式放在“正常”形式（具有共同的分母）中，则转换是成功的：
 - en: '[PRE2]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: TR11’s behavior is similar. It rewrites double angles as smaller angles but
     doesn’t do any simplification of the result.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: TR11的行为类似。它将双角重新写成较小的角度，但不对结果进行任何简化。
 - en: '[PRE3]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'The temptation is to try make these TR rules “smarter” but that should really
     be done at a higher level; the TR rules should try maintain the “do one thing
     well” principle. There is one exception, however. In TR10i and TR9 terms are recognized
     even when they are each multiplied by a common factor:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 诱惑是尝试使这些TR规则“更智能化”，但实际上应该在更高的层次上完成；TR规则应尝试保持“专注于一件事”的原则。然而，有一个例外。在TR10i和TR9中，即使它们各自乘以一个公因子，也会识别到术语：
 - en: '[PRE4]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Factoring with `factor_terms` is used but it is “JIT”-like, being delayed until
     it is deemed necessary. Furthermore, if the factoring does not help with the simplification,
     it is not retained, so `a*cos(x)*cos(y) + a*sin(x)*sin(z)` does not become a factored
     (but unsimplified in the trigonometric sense) expression:'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`factor_terms`进行因式分解，但它类似于“即时”执行，直到被认为有必要才执行。此外，如果因式分解对简化没有帮助，则不会保留它，因此`a*cos(x)*cos(y)
+    + a*sin(x)*sin(z)`不会变成一个因式分解（但在三角函数意义上未简化）的表达式：
 - en: '[PRE5]'
+  id: totrans-41
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'In some cases factoring might be a good idea, but the user is left to make
     that decision. For example:'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，因式分解可能是一个好主意，但用户需要自行决定。例如：
 - en: '[PRE6]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'In the expanded state, there are nearly 1000 trig functions:'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 在展开状态下，有近1000个三角函数：
 - en: '[PRE7]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'If the expression were factored first, this would take time but the resulting
     expression would be transformed very quickly:'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果首先对表达式进行因式分解，这将花费时间，但生成的表达式将非常快速地被转换：
 - en: '[PRE8]'
+  id: totrans-47
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'If the unexpanded expression is used, the transformation takes longer but not
     as long as it took to factor it and then transform it:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果使用未展开的表达式，则转换时间较长，但不如因式分解和转换所需的时间长：
 - en: '[PRE9]'
+  id: totrans-49
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'So neither expansion nor factoring is used in `TR10i`: if the expression is
     already factored (or partially factored) then expansion with `trig=True` would
     destroy what is already known and take longer; if the expression is expanded,
     factoring may take longer than simply applying the transformation itself.'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，在`TR10i`中既不使用展开也不使用因式分解：如果表达式已经被因式分解（或部分因式分解），那么带有`trig=True`的展开会破坏已知内容并且需要更长时间；如果表达式已经展开，进行因式分解可能比简单应用转换本身还要花费更长时间。
 - en: 'Although the algorithms should be canonical, always giving the same result,
     they may not yield the best result. This, in general, is the nature of simplification
     where searching all possible transformation paths is very expensive. Here is a
     simple example. There are 6 terms in the following sum:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管算法应该是规范的，总是给出相同的结果，但它们可能不会产生最佳结果。这一般是简化的本质，因为搜索所有可能的转换路径非常昂贵。这里有一个简单的例子。以下和有6项的和：
 - en: '[PRE10]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'Serendipitously, fu gives the best result:'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 出乎意料地，`fu`提供了最佳结果：
 - en: '[PRE11]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'But if different terms were combined, a less-optimal result might be obtained,
     requiring some additional work to get better simplification, but still less than
     optimal. The following shows an alternative form of `expr` that resists optimal
     simplification once a given step is taken since it leads to a dead end:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，如果合并不同的项，则可能得到一个次优结果，需要额外的工作来获得更好的简化，但仍然不是最优的。以下显示了一种`expr`的另一种形式，一旦采取某个步骤，则阻碍最优简化，因为它导致了死胡同：
 - en: '[PRE12]'
+  id: totrans-56
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'Here is a smaller expression that exhibits the same behavior:'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里有一个展示相同行为的较小表达式：
 - en: '[PRE13]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Without getting lucky or trying all possible pairings of arguments, the final
     result may be less than optimal and impossible to find without better heuristics
     or brute force trial of all possibilities.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 在没有侥幸或尝试所有可能的参数对的情况下，最终结果可能不太理想，并且没有更好的启发法或所有可能性的暴力试验，无法找到。
 - en: Rules
+  id: totrans-60
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 规则
 - en: '[PRE14]'
+  id: totrans-61
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Simplification of rational polynomials, trying to simplify the expression, e.g.
     combine things like 3*x + 2*x, etc….
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 简化有理多项式，尝试简化表达式，例如组合像3*x + 2*x这样的东西等……
 - en: '[PRE15]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Replace sec, csc with 1/cos, 1/sin
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 用1/cos和1/sin替换sec和csc
 - en: Examples
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE16]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: '[PRE17]'
+  id: totrans-67
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Replace tan and cot with sin/cos and cos/sin
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 用sin/cos和cos/sin替换tan和cot
 - en: Examples
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE18]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: '[PRE19]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'Converts ratios involving sin and cos as follows::'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 将涉及sin和cos的比率转换为：
 - en: sin(x)/cos(x) -> tan(x) sin(x)/(cos(x) + 1) -> tan(x/2) if half=True
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: sin(x)/cos(x) -> tan(x) sin(x)/(cos(x) + 1) -> tan(x/2)，如果half=True
 - en: Examples
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE20]'
+  id: totrans-75
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: Powers of the numerator and denominator are also recognized
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 分子和分母的幂也会被识别
 - en: '[PRE21]'
+  id: totrans-77
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: The transformation does not take place unless assumptions allow (i.e. the base
     must be positive or the exponent must be an integer for both numerator and denominator)
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 除非假设允许（即基数必须为正或指数必须为分子和分母的整数），否则转换不会发生。
 - en: '[PRE22]'
+  id: totrans-79
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: '[PRE23]'
+  id: totrans-80
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Induced formula: example sin(-a) = -sin(a)'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 引出的公式：例子sin(-a) = -sin(a)
 - en: Examples
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE24]'
+  id: totrans-83
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '[PRE25]'
+  id: totrans-84
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Identify values of special angles.
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 识别特殊角度的值。
 - en: A= 0 Pi/6 Pi/4 Pi/3 Pi/2
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: A= 0 Pi/6 Pi/4 Pi/3 Pi/2
 - en: sin(a) 0 1/2 sqrt(2)/2 sqrt(3)/2 1 cos(a) 1 sqrt(3)/2 sqrt(2)/2 1/2 0 tan(a)
     0 sqt(3)/3 1 sqrt(3) –
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: sin(a) 0 1/2 sqrt(2)/2 sqrt(3)/2 1 cos(a) 1 sqrt(3)/2 sqrt(2)/2 1/2 0 tan(a)
+    0 sqt(3)/3 1 sqrt(3) –
 - en: Examples
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE26]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: '[PRE27]'
+  id: totrans-90
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: Replacement of sin**2 with 1 - cos(x)**2.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 用1 - cos(x)**2替换sin**2。
 - en: See _TR56 docstring for advanced use of `max` and `pow`.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看_TR56文档字符串以了解`max`和`pow`的高级用法。
 - en: Examples
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE28]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: '[PRE29]'
+  id: totrans-95
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: Replacement of cos**2 with 1 - sin(x)**2.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 用1 - sin(x)**2替换cos**2。
 - en: See _TR56 docstring for advanced use of `max` and `pow`.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看_TR56文档字符串以了解`max`和`pow`的高级用法。
 - en: Examples
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE30]'
+  id: totrans-99
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: '[PRE31]'
+  id: totrans-100
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Lowering the degree of cos(x)**2.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 降低cos(x)**2的度数。
 - en: Examples
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE32]'
+  id: totrans-103
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: '[PRE33]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: Converting products of `cos` and/or `sin` to a sum or difference of `cos` and
     or `sin` terms.
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 将`cos`和/或`sin`的乘积转换为`cos`和/或`sin`项的和或差。
 - en: Examples
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE34]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: '[PRE35]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: Sum of `cos` or `sin` terms as a product of `cos` or `sin`.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: '`cos`或`sin`项的和作为`cos`或`sin`的乘积。'
 - en: Examples
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE36]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'If no change is made by TR9, no re-arrangement of the expression will be made.
     For example, though factoring of common term is attempted, if the factored expression
     was not changed, the original expression will be returned:'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果TR9没有进行任何更改，则不会重新排列表达式。例如，尽管尝试因式分解公共项，但如果因式分解的表达式没有改变，将返回原始表达式：
 - en: '[PRE37]'
+  id: totrans-113
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: '[PRE38]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: Separate sums in `cos` and `sin`.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 在`cos`和`sin`中分离求和。
 - en: Examples
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE39]'
+  id: totrans-117
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: '[PRE40]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: Sum of products to function of sum.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 产品的和到函数的简化。
 - en: Examples
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE41]'
+  id: totrans-121
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: '[PRE42]'
+  id: totrans-122
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: '[PRE43]'
+  id: totrans-123
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: Function of double angle to product. The `base` argument can be used to indicate
     what is the un-doubled argument, e.g. if 3*pi/7 is the base then cosine and sine
     functions with argument 6*pi/7 will be replaced.
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 双角函数到乘积的函数。`base`参数可用于指示未加倍的参数，例如，如果3*pi/7是基础，则参数为6*pi/7的cosine和sine函数将被替换。
 - en: Examples
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE44]'
+  id: totrans-126
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'If the arguments are simply integers, no change is made unless a base is provided:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果参数只是整数，则不会进行任何更改，除非提供基数：
 - en: '[PRE45]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: There is a subtle issue here in that autosimplification will convert some higher
     angles to lower angles
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里有一个微妙的问题，即自动简化将一些更高的角度转换为较低的角度。
 - en: '[PRE46]'
+  id: totrans-130
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: 'The 6*pi/7 angle is now pi/7 but can be targeted with TR11 by supplying the
     3*pi/7 base:'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 6*pi/7角现在是pi/7，但可以通过提供3*pi/7的基数目标到TR11：
 - en: '[PRE47]'
+  id: totrans-132
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: '[PRE48]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: Separate sums in `tan`.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 在`tan`中分离求和。
 - en: Examples
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE49]'
+  id: totrans-136
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: '[PRE50]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: Combine tan arguments as (tan(y) + tan(x))/(tan(x)*tan(y) - 1) -> -tan(x + y).
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 将tan(y) + tan(x))/(tan(x)*tan(y) - 1)组合为-tan(x + y)的参数。
 - en: Examples
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE51]'
+  id: totrans-140
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: '[PRE52]'
+  id: totrans-141
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: Change products of `tan` or `cot`.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 更改`tan`或`cot`的产品。
 - en: Examples
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE53]'
+  id: totrans-144
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: '[PRE54]'
+  id: totrans-145
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: Returns cos(x)*cos(2*x)*…*cos(2**(k-1)*x) -> sin(2**k*x)/(2**k*sin(x))
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回cos(x)*cos(2*x)*…*cos(2**(k-1)*x) -> sin(2**k*x)/(2**k*sin(x))
 - en: Examples
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE55]'
+  id: totrans-148
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: 'Sometimes autosimplification will cause a power to be not recognized. e.g.
     in the following, cos(4*pi/7) automatically simplifies to -cos(3*pi/7) so only
     2 of the 3 terms are recognized:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时，自动简化会导致某个幂不被识别。例如，在以下情况中，cos(4*pi/7)会自动简化为-cos(3*pi/7)，因此只有3个术语中的2个会被识别：
 - en: '[PRE56]'
+  id: totrans-150
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: A touch by TR8 resolves the expression to a Rational
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: TR8轻触将表达式解决为有理数
 - en: '[PRE57]'
+  id: totrans-152
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: 'In this case, if eq is unsimplified, the answer is obtained directly:'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，如果未简化等式，将直接获得答案：
 - en: '[PRE58]'
+  id: totrans-154
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'But if angles are made canonical with TR3 then the answer is not simplified
     without further work:'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是如果角度通过TR3变为规范化，则未简化的答案将直接获得：
 - en: '[PRE59]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: 'The original expression would have resolve to 1/16 directly with TR8, however:'
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 原始表达式将直接解决为1/16，但是：
 - en: '[PRE60]'
+  id: totrans-158
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: References
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 参考
 - en: '[[R852](#id1)]'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[R852](#id1)]'
 - en: '[https://en.wikipedia.org/wiki/Morrie%27s_law](https://en.wikipedia.org/wiki/Morrie%27s_law)'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://en.wikipedia.org/wiki/Morrie%27s_law](https://en.wikipedia.org/wiki/Morrie%27s_law)
+    的内容。'
 - en: '[PRE61]'
+  id: totrans-162
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: Convert factored powers of sin and cos identities into simpler expressions.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 sin 和 cos 的因式分解幂转换为更简单的表达式。
 - en: Examples
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE62]'
+  id: totrans-165
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: '[PRE63]'
+  id: totrans-166
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: Convert sin(x)**-2 to 1 + cot(x)**2.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 sin(x)**-2 转换为 1 + cot(x)**2。
 - en: See _TR56 docstring for advanced use of `max` and `pow`.
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看 _TR56 的 docstring 以了解 `max` 和 `pow` 的高级用法。
 - en: Examples
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE64]'
+  id: totrans-170
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: '[PRE65]'
+  id: totrans-171
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: Convert cos(x)**-2 to 1 + tan(x)**2.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 cos(x)**-2 转换为 1 + tan(x)**2。
 - en: See _TR56 docstring for advanced use of `max` and `pow`.
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看 _TR56 的 docstring 以了解 `max` 和 `pow` 的高级用法。
 - en: Examples
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE66]'
+  id: totrans-175
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: '[PRE67]'
+  id: totrans-176
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: 'Convert f(x)**-i to g(x)**i where either `i` is an integer or the base is positive
     and f, g are: tan, cot; sin, csc; or cos, sec.'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 f(x)**-i 转换为 g(x)**i，其中 `i` 是整数或基数为正且 f、g 是：tan、cot；sin、csc；或 cos、sec。
 - en: Examples
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE68]'
+  id: totrans-179
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: '[PRE69]'
+  id: totrans-180
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: Convert tan(x)**2 to sec(x)**2 - 1 and cot(x)**2 to csc(x)**2 - 1.
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 tan(x)**2 转换为 sec(x)**2 - 1，cot(x)**2 转换为 csc(x)**2 - 1。
 - en: See _TR56 docstring for advanced use of `max` and `pow`.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看 _TR56 的 docstring 以了解 `max` 和 `pow` 的高级用法。
 - en: Examples
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE70]'
+  id: totrans-184
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: '[PRE71]'
+  id: totrans-185
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: Convert sin(x)**n and cos(x)**n with positive n to sums.
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 sin(x)**n 和 cos(x)**n（其中 n 为正数）转换为和的形式。
 - en: Examples
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE72]'
+  id: totrans-188
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: References
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: '[[R853](#id2)]'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[R853](#id2)]'
 - en: '[https://en.wikipedia.org/wiki/List_of_trigonometric_identities#Power-reduction_formulae](https://en.wikipedia.org/wiki/List_of_trigonometric_identities#Power-reduction_formulae)'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://en.wikipedia.org/wiki/List_of_trigonometric_identities#Power-reduction_formulae](https://en.wikipedia.org/wiki/List_of_trigonometric_identities#Power-reduction_formulae)
+    的内容。'
 - en: '[PRE73]'
+  id: totrans-192
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: Attempt to simplify expression by using transformation rules given in the algorithm
     by Fu et al.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试使用 Fu 等人算法中给出的转换规则简化表达式。
 - en: '[`fu()`](#sympy.simplify.fu.fu "sympy.simplify.fu.fu") will try to minimize
     the objective function `measure`. By default this first minimizes the number of
     trig terms and then minimizes the number of total operations.'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`fu()`](#sympy.simplify.fu.fu "sympy.simplify.fu.fu") 将尝试通过最小化目标函数 `measure`
+    来简化表达式。默认情况下，首先最小化三角函数的数量，然后最小化总操作数。'
 - en: Examples
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE74]'
+  id: totrans-196
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: '[PRE75]'
+  id: totrans-197
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: CTR1 example
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: CTR1 示例
 - en: '[PRE76]'
+  id: totrans-199
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: CTR2 example
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: CTR2 示例
 - en: '[PRE77]'
+  id: totrans-201
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: CTR3 example
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: CTR3 示例
 - en: '[PRE78]'
+  id: totrans-203
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE78]'
 - en: CTR4 example
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: CTR4 示例
 - en: '[PRE79]'
+  id: totrans-205
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE79]'
 - en: Example 1
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例 1
 - en: '[PRE80]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE80]'
 - en: Example 2
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例 2
 - en: '[PRE81]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE81]'
 - en: Example 3
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例 3
 - en: '[PRE82]'
+  id: totrans-211
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE82]'
 - en: Objective function example
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 目标函数示例
 - en: '[PRE83]'
+  id: totrans-213
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE83]'
 - en: References
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: '[[R854](#id3)]'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[R854](#id3)]'
 - en: '[https://www.sciencedirect.com/science/article/pii/S0895717706001609](https://www.sciencedirect.com/science/article/pii/S0895717706001609)'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://www.sciencedirect.com/science/article/pii/S0895717706001609](https://www.sciencedirect.com/science/article/pii/S0895717706001609)
+    的内容。'
 - en: Notes
+  id: totrans-217
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 注意
 - en: This work was started by Dimitar Vlahovski at the Technological School “Electronic
     systems” (30.11.2011).
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 这项工作由 Dimitar Vlahovski 在 “Electronic systems” 技术学校（2011 年 11 月 30 日）开始。
 - en: Beyond TR13, other rules are not from the original paper, but extended in SymPy.
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: 超出 TR13，其他规则不是来自原始论文，而是在 SymPy 中扩展的。
 - en: References
+  id: totrans-220
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 参考文献

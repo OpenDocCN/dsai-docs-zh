@@ -1,32 +1,48 @@
 - en: BLAS and LAPACK
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/building/blas_lapack.html](https://docs.scipy.org/doc/scipy-1.12.0/building/blas_lapack.html)
+  zh: BLAS 和 LAPACK
+- en: Original text：[https://docs.scipy.org/doc/scipy-1.12.0/building/blas_lapack.html](https://docs.scipy.org/doc/scipy-1.12.0/building/blas_lapack.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://docs.scipy.org/doc/scipy-1.12.0/building/blas_lapack.html](https://docs.scipy.org/doc/scipy-1.12.0/building/blas_lapack.html)
 - en: '## Selecting BLAS and LAPACK libraries'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 选择 BLAS 和 LAPACK 库'
 - en: 'BLAS and LAPACK library selection, other than the OpenBLAS default, is implemented
     via Meson [build options](https://mesonbuild.com/Build-options.html#build-options).
     For example, to select plain `libblas` and `liblapack` (this is typically Netlib
     BLAS/LAPACK on Linux distros, and can be dynamically switched between implementations
     on conda-forge), use:'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了默认的 OpenBLAS，通过 Meson [构建选项](https://mesonbuild.com/Build-options.html#build-options)
+    实现 BLAS 和 LAPACK 库的选择。例如，要选择普通的 `libblas` 和 `liblapack`（这通常是 Linux 发行版上的 Netlib
+    BLAS/LAPACK，并且可以在 conda-forge 上动态切换实现），请使用：
 - en: '[PRE0]'
+  id: totrans-4
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Other options that should work (as long as they’re installed with `pkg-config`
     or CMake support) include `mkl`, `atlas` and `blis`.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 其他应该可以工作的选项（只要安装了 `pkg-config` 或 CMake 支持），包括 `mkl`、`atlas` 和 `blis`。
 - en: Using pkg-config to detect libraries in a nonstandard location
+  id: totrans-6
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用 pkg-config 在非标准位置检测库
 - en: 'The way BLAS and LAPACK detection works under the hood is that Meson tries
     to discover the specified libraries first with `pkg-config`, and then with CMake.
     If all you have is a standalone shared library file (e.g., `armpl_lp64.so` in
@@ -35,29 +51,46 @@
     name (so in this example, `armpl_lp64.pc`) and may be located anywhere. The `PKG_CONFIG_PATH`
     environment variable should be set to point to the location of the `.pc` file.
     The contents of that file should be:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: BLAS 和 LAPACK 检测的内部工作原理是 Meson 首先尝试使用 `pkg-config` 发现指定的库，然后使用 CMake。如果你只有一个独立的共享库文件（例如，在
+    `/a/random/path/lib/` 中的 `armpl_lp64.so` 和对应的头文件在 `/a/random/path/include/` 中），那么你需要自己编写一个
+    pkg-config 文件。它应该具有相同的名称（所以在这个例子中是 `armpl_lp64.pc`），可以放置在任何位置。`PKG_CONFIG_PATH`
+    环境变量应设置为指向 `.pc` 文件的位置。该文件的内容应为：
 - en: '[PRE1]'
+  id: totrans-8
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'To check that this works as expected, you should be able to run:'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 要检查这是否按预期工作，您应该能够运行：
 - en: '[PRE2]'
+  id: totrans-10
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Specifying the Fortran ABI to use
+  id: totrans-11
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 指定要使用的 Fortran ABI
 - en: Some linear algebra libraries are built with the `g77` ABI (also known as “the
     `f2c` calling convention”) and others with GFortran ABI, and these two ABIs are
     incompatible. Therefore, if you build SciPy with `gfortran` and link to a linear
     algebra library like MKL, which is built with a `g77` ABI, there’ll be an exception
     or a segfault. SciPy fixes this by using ABI wrappers which rely on the CBLAS
     API for the few functions in the BLAS API that suffer from this issue.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些线性代数库使用 `g77` ABI（也称为“`f2c` 调用约定”），其他使用 GFortran ABI，这两种 ABI 不兼容。因此，如果您使用
+    `gfortran` 构建 SciPy 并链接到像 MKL 这样使用 `g77` ABI 构建的线性代数库，将会出现异常或段错误。SciPy 通过使用 ABI
+    包装器解决了这个问题，ABI 包装器依赖于 CBLAS API 来处理 BLAS API 中少数函数存在的问题。
 - en: 'Note that SciPy needs to know at build time, what needs to be done and the
     build system will automatically check whether linear algebra library is MKL or
     Accelerate (which both always use the `g77` ABI) and if so, use the CBLAS API
@@ -65,27 +98,42 @@
     this autodetection mechanism for building against plain `libblas`/`liblapack`
     (this is what conda-forge does for example), use the `-Duse-g77-abi=true` build
     option. E.g.,:'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，SciPy 在构建时需要知道需要执行的操作，构建系统将自动检查线性代数库是否为 MKL 或 Accelerate（这两者始终使用 `g77` ABI），如果是，则使用
+    CBLAS API 而不是 BLAS API。如果自动检测失败或用户希望覆盖此自动检测机制以构建针对普通的 `libblas`/`liblapack`（例如
+    conda-forge 所做的就是这样），请使用 `-Duse-g77-abi=true` 构建选项。例如：
 - en: '[PRE3]'
+  id: totrans-14
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Work-in-progress
+  id: totrans-15
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 工作进行中
 - en: 'These options are planned to be fully supported, but currently not usable out
     of the box:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 计划完全支持这些选项，但目前不能直接使用：
 - en: 'ILP64 (64-bit integer size) builds: large parts of SciPy support using ILP64
     BLAS/LAPACK. Note that support is still incomplete, so SciPy *also* requires LP64
     (32-bit integer size) BLAS/LAPACK.'
+  id: totrans-17
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ILP64（64 位整数大小）构建：SciPy 的大部分支持使用 ILP64 BLAS/LAPACK。请注意，支持仍然不完整，因此 SciPy *还*
+    需要 LP64（32 位整数大小）BLAS/LAPACK。
 - en: Automatically selecting from multiple possible BLAS and LAPACK options, with
     a user-provided order of precedence
+  id: totrans-18
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 自动从多个可能的 BLAS 和 LAPACK 选项中选择，并按用户指定的优先顺序进行选择

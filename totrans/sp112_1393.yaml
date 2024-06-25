@@ -1,40 +1,56 @@
 - en: Introspecting build steps
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.scipy.org/doc/scipy-1.12.0/building/introspecting_a_build.html](https://docs.scipy.org/doc/scipy-1.12.0/building/introspecting_a_build.html)
+  zh: 检查构建步骤
+- en: Original text：[https://docs.scipy.org/doc/scipy-1.12.0/building/introspecting_a_build.html](https://docs.scipy.org/doc/scipy-1.12.0/building/introspecting_a_build.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://docs.scipy.org/doc/scipy-1.12.0/building/introspecting_a_build.html](https://docs.scipy.org/doc/scipy-1.12.0/building/introspecting_a_build.html)
 - en: 'When you have an issue with a particular Python extension module or other build
     target, there are a number of ways to figure out what the build system is doing
     exactly. Beyond looking at the `meson.build` content for the target of interest,
     these include:'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 当您遇到特定Python扩展模块或其他构建目标的问题时，有多种方法可以确切了解构建系统正在执行的操作。除了查看感兴趣目标的`meson.build`内容外，这些还包括：
 - en: Reading the generated `build.ninja` file in the build directory,
+  id: totrans-3
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在构建目录中阅读生成的`build.ninja`文件，
 - en: Using `meson introspect` to learn more about build options, dependencies and
     flags used for the target,
+  id: totrans-4
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用`meson introspect`了解有关目标的构建选项、依赖项和使用的标志，
 - en: Reading `<build-dir>/meson-info/*.json` for details on discovered dependencies,
     where Meson plans to install files to, etc.
+  id: totrans-5
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 阅读`<build-dir>/meson-info/*.json`以获取有关发现的依赖项、Meson文件安装位置等详细信息。
 - en: These things are all available after the configure stage of the build (i.e.,
     `meson setup`) has run. It is typically more effective to look at this information,
     rather than running the build and reading the full build log.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有这些内容都在构建的配置阶段之后（即`meson setup`运行后）可用。通常，查看此信息比运行构建并阅读完整的构建日志更有效。
 - en: The `ninja.build` file
+  id: totrans-7
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '`ninja.build`文件'
 - en: 'As an example, let’s say we are interested in `scipy.linalg._decomp_update`.
     From `scipy/linalg/meson.build` we learn that this extension is written in templated
     Cython code, and there are no special compilation flags used nor include directories
@@ -43,52 +59,77 @@
     and target-specific rules that apply (note, comments in this code block are not
     present in `build.ninja` but only added in this doc section to explain what is
     happening):'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，假设我们对`scipy.linalg._decomp_update`感兴趣。从`scipy/linalg/meson.build`我们了解到此扩展是使用模板化的Cython代码编写的，并且除了`numpy`目录外没有使用任何特殊的编译标志或包含目录。因此，下一步是查看`build.ninja`。在编辑器中打开该文件并搜索`_decomp_update`。您将找到适用的一组通用和特定目标的规则（注意，此代码块中的注释不在`build.ninja`中，仅在此文档部分中添加以解释正在发生的事情）。
 - en: '[PRE0]'
+  id: totrans-9
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Using `meson introspect`
+  id: totrans-10
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用`meson introspect`
 - en: 'If we want to look at `_decomp_update` from another perspective, we can use
     (for example) `meson introspect --targets -i <build-dir> > targets.json` to generate
     readable JSON. Searching that generated file for our target of interest shows:'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们想从另一个角度查看`_decomp_update`，可以使用（例如）`meson introspect --targets -i <build-dir>
+    > targets.json`生成可读的JSON。搜索生成的文件以查找我们感兴趣的目标显示：
 - en: '[PRE1]'
+  id: totrans-12
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: This tells us a lot of things, like which include directories will be used,
     where the Cython-generated C code can be found, and what compile flags are used.
     `meson introspect --help` has good documentation on the full range of capabilities
     and how to use them.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 这告诉我们很多信息，例如将使用哪些包含目录、Cython生成的C代码在何处找到以及使用了哪些编译标志。`meson introspect --help`对其全部功能范围和使用方法有很好的文档。
 - en: '`meson-info` JSON files'
+  id: totrans-14
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '`meson-info` JSON文件'
 - en: 'There are a number of different JSON files in `<build-dir>/meson-info/`. These
     have descriptive names, hinting at their content. For example, where the final
     `_decomp_update` extension gets installed to is described in `intro-install_plan.json`
     (note, these files aren’t prety-printed, running them through a JSON formatter
     helps):'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: '`<build-dir>/meson-info/`中有许多不同的JSON文件。这些文件具有描述性名称，暗示其内容。例如，最终的`_decomp_update`扩展安装到何处在`intro-install_plan.json`中描述（注意，这些文件未经美化打印，通过JSON格式化器运行它们有助于）：'
 - en: '[PRE2]'
+  id: totrans-16
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'We may also be interested in knowing what dependencies were detected by the
     configure stage of the build. So we look in `intro-dependencies.json`:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可能对检测到的依赖项在构建的配置阶段有何安装计划等情况感兴趣。因此，我们查看`intro-dependencies.json`：
 - en: '[PRE3]'
+  id: totrans-18
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'This tells us that we have three dependencies that were found. Note: `numpy`
     and a few other build-time dependencies are missing here because we do not (yet)
     search for those with the builtin `dependency()` Meson command.'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 这告诉我们有三个发现的依赖项。注意：`numpy`和其他几个构建时依赖项因尚未使用内置的`dependency()` Meson命令进行搜索而未列出。

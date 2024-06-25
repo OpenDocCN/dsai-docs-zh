@@ -1,1473 +1,2274 @@
 - en: Printing
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.sympy.org/latest/modules/printing.html](https://docs.sympy.org/latest/modules/printing.html)
+  zh: 打印
+- en: Original text：[https://docs.sympy.org/latest/modules/printing.html](https://docs.sympy.org/latest/modules/printing.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://docs.sympy.org/latest/modules/printing.html](https://docs.sympy.org/latest/modules/printing.html)
 - en: See the [Printing](../tutorials/intro-tutorial/printing.html#tutorial-printing)
     section in tutorial for introduction into printing.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 请参阅教程中的[Printing](../tutorials/intro-tutorial/printing.html#tutorial-printing)部分，了解有关打印的介绍。
 - en: This guide documents the printing system in SymPy and how it works internally.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 本指南记录了SymPy中的打印系统及其内部工作原理。
 - en: '## Printer Class'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 打印机类'
 - en: Printing subsystem driver
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印子系统驱动程序
 - en: 'SymPy’s printing system works the following way: Any expression can be passed
     to a designated Printer who then is responsible to return an adequate representation
     of that expression.'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: SymPy的打印系统工作方式如下：任何表达式都可以传递给指定的打印机，然后该打印机负责返回该表达式的适当表示。
 - en: '**The basic concept is the following:**'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: '**基本概念如下：**'
 - en: Let the object print itself if it knows how.
+  id: totrans-8
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果对象知道如何打印，请让其自行打印。
 - en: Take the best fitting method defined in the printer.
+  id: totrans-9
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 选择打印机中定义的最佳方法。
 - en: As fall-back use the emptyPrinter method for the printer.
+  id: totrans-10
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 作为后备，对于打印机，请使用emptyPrinter方法。
 - en: Which Method is Responsible for Printing?
+  id: totrans-11
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 哪种方法负责打印？
 - en: 'The whole printing process is started by calling `.doprint(expr)` on the printer
     which you want to use. This method looks for an appropriate method which can print
     the given expression in the given style that the printer defines. While looking
     for the method, it follows these steps:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 整个打印过程是通过在您想要使用的打印机上调用`.doprint(expr)`来启动的。此方法寻找可以按照打印机定义的给定样式打印给定表达式的适当方法。在寻找方法时，它遵循以下步骤：
 - en: '**Let the object print itself if it knows how.**'
+  id: totrans-13
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**如果对象知道如何打印，请让其自行打印。**'
 - en: The printer looks for a specific method in every object. The name of that method
     depends on the specific printer and is defined under `Printer.printmethod`. For
     example, StrPrinter calls `_sympystr` and LatexPrinter calls `_latex`. Look at
     the documentation of the printer that you want to use. The name of the method
     is specified there.
+  id: totrans-14
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 打印机在每个对象中寻找特定的方法。该方法的名称取决于特定的打印机，并在`Printer.printmethod`下定义。例如，StrPrinter调用`_sympystr`，而LatexPrinter调用`_latex`。请查看您想要使用的打印机的文档。方法的名称在那里指定。
 - en: This was the original way of doing printing in sympy. Every class had its own
     latex, mathml, str and repr methods, but it turned out that it is hard to produce
     a high quality printer, if all the methods are spread out that far. Therefore
     all printing code was combined into the different printers, which works great
     for built-in SymPy objects, but not that good for user defined classes where it
     is inconvenient to patch the printers.
+  id: totrans-15
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 这是在sympy中进行打印的原始方法。每个类都有自己的latex、mathml、str和repr方法，但事实证明，如果所有方法都分散在那么远，要生成高质量的打印机是困难的。因此，所有打印代码都合并到不同的打印机中，这对于内置的SymPy对象效果很好，但对于用户定义的类来说，这并不方便修补打印机。
 - en: '**Take the best fitting method defined in the printer.**'
+  id: totrans-16
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**选择在打印机中定义的最佳方法。**'
 - en: The printer loops through expr classes (class + its bases), and tries to dispatch
     the work to `_print_<EXPR_CLASS>`
+  id: totrans-17
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 打印机遍历expr类（类+其基类），并尝试将工作分派给`_print_<EXPR_CLASS>`
 - en: 'e.g., suppose we have the following class hierarchy:'
+  id: totrans-18
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 例如，假设我们有以下类层次结构：
 - en: '[PRE0]'
+  id: totrans-19
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'then, for `expr=Rational(...)`, the Printer will try to call printer methods
     in the order as shown in the figure below:'
+  id: totrans-20
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 然后，对于`expr=Rational(...)`，打印机将尝试按照下图所示的顺序调用打印机方法：
 - en: '[PRE1]'
+  id: totrans-21
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: if `._print_Rational` method exists in the printer, then it is called, and the
     result is returned back. Otherwise, the printer tries to call `._print_Number`
     and so on.
+  id: totrans-22
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 如果在打印机中存在`._print_Rational`方法，则调用它，并将结果返回。否则，打印机尝试调用`._print_Number`等等。
 - en: '**As a fall-back use the emptyPrinter method for the printer.**'
+  id: totrans-23
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**作为备选，对于打印机，请使用emptyPrinter方法。**'
 - en: As fall-back `self.emptyPrinter` will be called with the expression. If not
     defined in the Printer subclass this will be the same as `str(expr)`.
+  id: totrans-24
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 作为后备，将使用`self.emptyPrinter`来处理表达式。如果在打印机子类中未定义，则这将与`str(expr)`相同。
 - en: '### Example of Custom Printer'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: '### 自定义打印机示例'
 - en: In the example below, we have a printer which prints the derivative of a function
     in a shorter form.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下面的示例中，我们有一个打印机，它以更简洁的形式打印函数的导数。
 - en: '[PRE2]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'The output of the code above is:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述代码的输出是：
 - en: '[PRE3]  ### Example of Custom Printing Method'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE3]  ### 自定义打印方法示例'
 - en: In the example below, the latex printing of the modulo operator is modified.
     This is done by overriding the method `_latex` of `Mod`.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下面的示例中，修改了模数运算符的latex打印输出。这是通过重写`Mod`的`_latex`方法完成的。
 - en: '[PRE4]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: '[PRE5]'
+  id: totrans-32
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Comparing the output of our custom operator to the builtin one:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 将我们的自定义运算符的输出与内置运算符的输出进行比较：
 - en: '[PRE6]'
+  id: totrans-34
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Common mistakes
+  id: totrans-35
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 常见错误
 - en: 'It’s important to always use `self._print(obj)` to print subcomponents of an
     expression when customizing a printer. Mistakes include:'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 当自定义打印机时，始终使用`self._print(obj)`来打印表达式的子组件非常重要。错误包括：
 - en: 'Using `self.doprint(obj)` instead:'
+  id: totrans-37
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用`self.doprint(obj)`而不是：
 - en: '[PRE7]'
+  id: totrans-38
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'This fails when the `mode` argument is passed to the printer:'
+  id: totrans-39
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 当将`mode`参数传递给打印机时，这种方法会失败：
 - en: '[PRE8]'
+  id: totrans-40
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Using `str(obj)` instead:'
+  id: totrans-41
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用`str(obj)`而不是：
 - en: '[PRE9]'
+  id: totrans-42
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'This fails on nested objects:'
+  id: totrans-43
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 这在嵌套对象上失败：
 - en: '[PRE10]'
+  id: totrans-44
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Using `LatexPrinter()._print(obj)` instead.
+  id: totrans-45
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用`LatexPrinter()._print(obj)`而不是。
 - en: '[PRE11]'
+  id: totrans-46
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'This causes all the settings to be discarded in the subobjects. As an example,
     the `full_prec` setting which shows floats to full precision is ignored:'
+  id: totrans-47
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 这会导致子对象中的所有设置被丢弃。例如，完整精度设置，显示浮点数的完整精度被忽略：
 - en: '[PRE12]'
+  id: totrans-48
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'The main class responsible for printing is `Printer` (see also its [source
     code](https://github.com/sympy/sympy/blob/master/sympy/printing/printer.py)):'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 负责打印的主要类是`Printer`（还可以查看其[源代码](https://github.com/sympy/sympy/blob/master/sympy/printing/printer.py))：
 - en: '[PRE13]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Generic printer
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 通用打印机
 - en: Its job is to provide infrastructure for implementing new printers easily.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 它的工作是为轻松实现新打印机提供基础设施。
 - en: 'If you want to define your custom Printer or your custom printing method for
     your custom class then see the example above: [printer_example](#printer-example)
     .'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您想为自定义打印机或自定义类的自定义打印方法定义自定义打印机，请参见上面的示例：[printer_example](#printer-example)。
 - en: '[PRE14]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: '[PRE15]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Internal dispatcher
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 内部分发器
 - en: 'Tries the following concepts to print an expression:'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试以下概念来打印表达式：
 - en: Let the object print itself if it knows how.
+  id: totrans-58
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果对象知道如何打印自身，则让对象自己打印。
 - en: Take the best fitting method defined in the printer.
+  id: totrans-59
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用打印机中定义的最合适方法。
 - en: As fall-back use the emptyPrinter method for the printer.
+  id: totrans-60
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 作为回退，使用打印机的emptyPrinter方法。
 - en: '[PRE16]'
+  id: totrans-61
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Returns printer’s representation for expr (as a string)
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回表达式的打印机表示（作为字符串）
 - en: '[PRE17]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Set system-wide printing settings.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置系统范围的打印设置。
 - en: PrettyPrinter Class
+  id: totrans-65
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: PrettyPrinter 类
 - en: The pretty printing subsystem is implemented in `sympy.printing.pretty.pretty`
     by the `PrettyPrinter` class deriving from `Printer`. It relies on the modules
     `sympy.printing.pretty.stringPict`, and `sympy.printing.pretty.pretty_symbology`
     for rendering nice-looking formulas.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 漂亮打印子系统由`PrettyPrinter`类在`sympy.printing.pretty.pretty`中实现，从`Printer`派生。它依赖于模块`sympy.printing.pretty.stringPict`和`sympy.printing.pretty.pretty_symbology`来渲染漂亮的公式。
 - en: The module `stringPict` provides a base class `stringPict` and a derived class
     `prettyForm` that ease the creation and manipulation of formulas that span across
     multiple lines.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 模块`stringPict`提供了基类`stringPict`和派生类`prettyForm`，用于轻松创建和操作跨多行的公式。
 - en: The module `pretty_symbology` provides primitives to construct 2D shapes (hline,
     vline, etc) together with a technique to use unicode automatically when possible.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 模块`pretty_symbology`提供了构造2D形状（hline、vline等）的基元，以及一种在可能时自动使用Unicode的技术。
 - en: '[PRE18]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Printer, which converts an expression into 2D ASCII-art figure.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印机，将表达式转换为2D ASCII艺术图。
 - en: '[PRE19]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: '[PRE20]'
+  id: totrans-72
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: Returns a string containing the prettified form of expr.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回包含表达式的美化形式的字符串。
 - en: For information on keyword arguments see pretty_print function.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关关键字参数的信息，请参见pretty_print函数。
 - en: '[PRE21]'
+  id: totrans-75
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: Prints expr in pretty form.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 以漂亮的形式打印表达式。
 - en: pprint is just a shortcut for this function.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: pprint只是此函数的快捷方式。
 - en: 'Parameters:'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : expression'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：表达式'
 - en: The expression to print.
+  id: totrans-80
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要打印的表达式。
 - en: '**wrap_line** : bool, optional (default=True)'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: '**wrap_line**：bool，可选（默认为True）'
 - en: Line wrapping enabled/disabled.
+  id: totrans-82
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 启用/禁用换行。
 - en: '**num_columns** : int or None, optional (default=None)'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: '**num_columns**：int或None，可选（默认为None）'
 - en: Number of columns before line breaking (default to None which reads the terminal
     width), useful when using SymPy without terminal.
+  id: totrans-84
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在进行换行之前的列数（默认为None，读取终端宽度），在不使用终端时很有用。
 - en: '**use_unicode** : bool or None, optional (default=None)'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: '**use_unicode**：bool或None，可选（默认为None）'
 - en: Use unicode characters, such as the Greek letter pi instead of the string pi.
+  id: totrans-86
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 使用Unicode字符，如希腊字母π，而不是字符串pi。
 - en: '**full_prec** : bool or string, optional (default=”auto”)'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: '**full_prec**：bool或字符串，可选（默认为“auto”）'
 - en: Use full precision.
+  id: totrans-88
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 使用完整精度。
 - en: '**order** : bool or string, optional (default=None)'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: '**order**：bool或字符串，可选（默认为None）'
 - en: Set to ‘none’ for long expressions if slow; default is None.
+  id: totrans-90
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 设置为“none”以用于长表达式，如果慢则默认为None。
 - en: '**use_unicode_sqrt_char** : bool, optional (default=True)'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '**use_unicode_sqrt_char**：bool，可选（默认为True）'
 - en: Use compact single-character square root symbol (when unambiguous).
+  id: totrans-92
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 使用紧凑的单字符平方根符号（在不歧义的情况下）。
 - en: '**root_notation** : bool, optional (default=True)'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: '**root_notation**：布尔值，可选（默认为True）'
 - en: Set to ‘False’ for printing exponents of the form 1/n in fractional form. By
     default exponent is printed in root form.
+  id: totrans-94
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 设置为“False”以以分数形式打印形式为1/n的指数。默认情况下，指数以根式形式打印。
 - en: '**mat_symbol_style** : string, optional (default=”plain”)'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: '**mat_symbol_style**：字符串，可选（默认为“plain”）'
 - en: Set to “bold” for printing MatrixSymbols using a bold mathematical symbol face.
     By default the standard face is used.
+  id: totrans-96
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 设置为“**粗体**”以使用粗体数学符号打印MatrixSymbols。默认情况下使用标准字体。
 - en: '**imaginary_unit** : string, optional (default=”i”)'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: '**imaginary_unit**：字符串，可选（默认为”i“）'
 - en: Letter to use for imaginary unit when use_unicode is True. Can be “i” (default)
     or “j”.
+  id: totrans-98
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在use_unicode为True时使用的虚数单位的字母。可以是“i”（默认）或“j”。
 - en: '## C code printers'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: '## C代码打印机'
 - en: This class implements C code printing, i.e. it converts Python expressions to
     strings of C code (see also `C89CodePrinter`).
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 该类实现了C代码打印，即将Python表达式转换为C代码字符串（还参见`C89CodePrinter`）。
 - en: 'Usage:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 用法：
 - en: '[PRE22]'
+  id: totrans-102
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: '[PRE23]'
+  id: totrans-103
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: '[PRE24]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '[PRE25]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: A printer to convert Python expressions to strings of C code
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个打印机，用于将Python表达式转换为C代码字符串
 - en: '[PRE26]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: '[PRE27]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: Accepts a string of code or a list of code lines
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 接受代码字符串或代码行列表
 - en: '[PRE28]'
+  id: totrans-110
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: '[PRE29]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: '[PRE30]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: Converts an expr to a string of c code
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式转换为C代码的字符串
 - en: 'Parameters:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：Expr'
 - en: A SymPy expression to be converted.
+  id: totrans-116
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的SymPy表达式。
 - en: '**assign_to** : optional'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to**：可选'
 - en: When given, the argument is used as the name of the variable to which the expression
     is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
     is helpful in case of line-wrapping, or for expressions that generate multi-line
     statements.
+  id: totrans-118
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 给定时，该参数用作分配给表达式的变量的名称。可以是字符串，`Symbol`，`MatrixSymbol`或`Indexed`类型。这在换行或生成多行语句的表达式中很有帮助。
 - en: '**standard** : str, optional'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: '**standard**：字符串，可选'
 - en: String specifying the standard. If your compiler supports a more modern standard
     you may set this to ‘c99’ to allow the printer to use more math functions. [default=’c89’].
+  id: totrans-120
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 字符串，指定标准。如果您的编译器支持更现代的标准，您可以将其设置为“c99”，以允许打印机使用更多的数学函数。[default='c89']。
 - en: '**precision** : integer, optional'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: '**precision**：整数，可选'
 - en: The precision for numbers such as pi [default=17].
+  id: totrans-122
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例如π的数字精度[default=17]。
 - en: '**user_functions** : dict, optional'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: '**user_functions**：字典，可选'
 - en: A dictionary where the keys are string representations of either `FunctionClass`
     or `UndefinedFunction` instances and the values are their desired C string representations.
     Alternatively, the dictionary value can be a list of tuples i.e. [(argument_test,
     cfunction_string)] or [(argument_test, cfunction_formater)]. See below for examples.
+  id: totrans-124
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其键是`FunctionClass`或`UndefinedFunction`实例的字符串表示，值是它们期望的C字符串表示。或者，字典值可以是元组列表，即[(argument_test,
+    cfunction_string)]或[(argument_test, cfunction_formater)]。请参阅下面的示例。
 - en: '**dereference** : iterable, optional'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dereference**：可迭代对象，可选'
 - en: An iterable of symbols that should be dereferenced in the printed code expression.
     These would be values passed by address to the function. For example, if `dereference=[a]`,
     the resulting code would print `(*a)` instead of `a`.
+  id: totrans-126
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 应在打印的代码表达式中取消引用的符号的可迭代项。这些将是传递给函数的地址的值。例如，如果`dereference=[a]`，则生成的代码将打印`(*a)`而不是`a`。
 - en: '**human** : bool, optional'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: '**human**：布尔值，可选'
 - en: If True, the result is a single string that may contain some constant declarations
     for the number symbols. If False, the same information is returned in a tuple
     of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  id: totrans-128
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，则结果是一个可能包含一些常量声明的单个字符串。如果为False，则返回元组（symbols_to_declare，not_supported_functions，code_text）。[default=True]。
 - en: '**contract: bool, optional**'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: '**contract**：布尔值，可选'
 - en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
     the corresponding nested loops over indices are generated. Setting contract=False
     will not generate loops, instead the user is responsible to provide values for
     the indices in the code. [default=True].
+  id: totrans-130
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，则假定`Indexed`实例遵守张量收缩规则，并生成相应的索引嵌套循环。设置contract=False将不生成循环，而是由用户负责在代码中提供索引的值。[default=True]。
 - en: Examples
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE31]'
+  id: totrans-132
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'Simple custom printing can be defined for certain types by passing a dictionary
     of {“type” : “function”} to the `user_functions` kwarg. Alternatively, the dictionary
     value can be a list of tuples i.e. [(argument_test, cfunction_string)].'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以通过将{“type”：“function”}的字典传递给`user_functions`关键字来为某些类型定义简单的自定义打印。或者，字典值可以是元组列表，即[(argument_test,
+    cfunction_string)]。
 - en: '[PRE32]'
+  id: totrans-134
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'or if the C-function takes a subset of the original arguments:'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者如果C函数采用原始参数的子集：
 - en: '[PRE33]'
+  id: totrans-136
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
     variable is provided an if statement is created, otherwise the ternary operator
     is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
     True)` then an error will be thrown. This is to prevent generating an expression
     that may not evaluate to anything.'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Piecewise` 表达式被转换为条件语句。如果提供了 `assign_to` 变量，则创建一个 if 语句，否则使用三元运算符。注意，如果 `Piecewise`
+    缺少由 `(expr, True)` 表示的默认项，则会抛出错误。这是为了防止生成可能不会评估为任何东西的表达式。'
 - en: '[PRE34]'
+  id: totrans-138
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'Support for loops is provided through `Indexed` types. With `contract=True`
     these expressions will be turned into loops, whereas `contract=False` will just
     print the assignment expression that should be looped over:'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过 `Indexed` 类型提供循环支持。使用 `contract=True`，这些表达式将转换为循环，而 `contract=False` 只会打印应该循环的赋值表达式：
 - en: '[PRE35]'
+  id: totrans-140
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
     be provided to `assign_to`. Note that any expression that can be generated normally
     can also exist inside a Matrix:'
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 矩阵也受支持，但必须向 `assign_to` 提供相同维度的 `MatrixSymbol`。注意，任何可以正常生成的表达式也可以存在于矩阵内：
 - en: '[PRE36]'
+  id: totrans-142
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: '[PRE37]'
+  id: totrans-143
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'Prints C representation of the given expression.  ## C++ code printers'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: '打印给定表达式的 C 表示。  ## C++ 代码打印机'
 - en: This module contains printers for C++ code, i.e. functions to convert SymPy
     expressions to strings of C++ code.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 此模块包含用于 C++ 代码的打印机，即将 SymPy 表达式转换为 C++ 代码字符串的函数。
 - en: 'Usage:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 用法：
 - en: '[PRE38]'
+  id: totrans-147
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: '[PRE39]'
+  id: totrans-148
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: '[PRE40]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: '[PRE41]'
+  id: totrans-150
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: '[PRE42]'
+  id: totrans-151
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: '[PRE43]'
+  id: totrans-152
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'C++ equivalent of [`ccode()`](#sympy.printing.c.ccode "sympy.printing.c.ccode").  ##
     RCodePrinter'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`ccode()`](#sympy.printing.c.ccode "sympy.printing.c.ccode") 的 C++ 等效物。  ##
+    RCodePrinter'
 - en: This class implements R code printing (i.e. it converts Python expressions to
     strings of R code).
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 此类实现了 R 代码打印（即将 Python 表达式转换为 R 代码字符串）。
 - en: 'Usage:'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 用法：
 - en: '[PRE44]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: '[PRE45]'
+  id: totrans-157
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: '[PRE46]'
+  id: totrans-158
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: A printer to convert SymPy expressions to strings of R code
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 SymPy 表达式转换为 R 代码字符串的打印机
 - en: '[PRE47]'
+  id: totrans-160
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: '[PRE48]'
+  id: totrans-161
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: Accepts a string of code or a list of code lines
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 接受代码字符串或代码行列表
 - en: '[PRE49]'
+  id: totrans-163
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: Converts an expr to a string of r code
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式转换为 r 代码字符串
 - en: 'Parameters:'
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：表达式'
 - en: A SymPy expression to be converted.
+  id: totrans-167
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的 SymPy 表达式。
 - en: '**assign_to** : optional'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to**：可选项'
 - en: When given, the argument is used as the name of the variable to which the expression
     is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
     is helpful in case of line-wrapping, or for expressions that generate multi-line
     statements.
+  id: totrans-169
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 给定时，将其用作分配表达式的变量名称。可以是字符串、`Symbol`、`MatrixSymbol` 或 `Indexed` 类型。在换行或生成多行语句的表达式时非常有用。
 - en: '**precision** : integer, optional'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: '**精度**：整数，可选项'
 - en: The precision for numbers such as pi [default=15].
+  id: totrans-171
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 诸如 pi 等数字的精度 [默认=15]。
 - en: '**user_functions** : dict, optional'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: '**user_functions**：字典，可选项'
 - en: A dictionary where the keys are string representations of either `FunctionClass`
     or `UndefinedFunction` instances and the values are their desired R string representations.
     Alternatively, the dictionary value can be a list of tuples i.e. [(argument_test,
     rfunction_string)] or [(argument_test, rfunction_formater)]. See below for examples.
+  id: totrans-173
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 字典，其键是 `FunctionClass` 或 `UndefinedFunction` 实例的字符串表示，值是其期望的 R 字符串表示。或者，字典值可以是元组列表，即
+    [(argument_test, rfunction_string)] 或 [(argument_test, rfunction_formater)]。查看以下示例。
 - en: '**human** : bool, optional'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: '**human**：bool，可选'
 - en: If True, the result is a single string that may contain some constant declarations
     for the number symbols. If False, the same information is returned in a tuple
     of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  id: totrans-175
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则结果是一个可能包含一些常数声明的单个字符串。如果为 False，则以 (symbols_to_declare, not_supported_functions,
+    code_text) 元组形式返回相同的信息。[默认=True]。
 - en: '**contract: bool, optional**'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: '**contract: bool，可选**'
 - en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
     the corresponding nested loops over indices are generated. Setting contract=False
     will not generate loops, instead the user is responsible to provide values for
     the indices in the code. [default=True].
+  id: totrans-177
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则假定 `Indexed` 实例遵守张量收缩规则，并生成相应的索引嵌套循环。设置 contract=False 将不生成循环，而是由用户负责在代码中提供索引的值。[默认=True]。
 - en: Examples
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE50]'
+  id: totrans-179
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: 'Simple custom printing can be defined for certain types by passing a dictionary
     of {“type” : “function”} to the `user_functions` kwarg. Alternatively, the dictionary
     value can be a list of tuples i.e. [(argument_test, cfunction_string)].'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: '可以通过将 {“type” : “function”} 字典传递给 `user_functions` 关键字来定义某些类型的简单自定义打印。或者，字典值可以是元组列表，即
+    [(argument_test, cfunction_string)]。'
 - en: '[PRE51]'
+  id: totrans-181
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'or if the R-function takes a subset of the original arguments:'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者如果 R 函数使用原始参数的子集：
 - en: '[PRE52]'
+  id: totrans-183
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
     variable is provided an if statement is created, otherwise the ternary operator
     is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
     True)` then an error will be thrown. This is to prevent generating an expression
     that may not evaluate to anything.'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Piecewise` 表达式被转换为条件语句。如果提供了 `assign_to` 变量，则创建一个 if 语句，否则使用三元运算符。请注意，如果 `Piecewise`
+    缺少由 `(expr, True)` 表示的默认项，则会抛出错误。这是为了防止生成无法求值为任何东西的表达式。'
 - en: '[PRE53]'
+  id: totrans-185
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: 'Support for loops is provided through `Indexed` types. With `contract=True`
     these expressions will be turned into loops, whereas `contract=False` will just
     print the assignment expression that should be looped over:'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过 `Indexed` 类型提供对循环的支持。如果 `contract=True`，这些表达式将被转换为循环，而 `contract=False` 将仅打印应该循环的赋值表达式：
 - en: '[PRE54]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
     be provided to `assign_to`. Note that any expression that can be generated normally
     can also exist inside a Matrix:'
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 也支持矩阵，但必须提供相同维度的 `MatrixSymbol` 给 `assign_to`。请注意，通常可以生成的任何表达式也可以存在于矩阵中：
 - en: '[PRE55]'
+  id: totrans-189
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: '[PRE56]'
+  id: totrans-190
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: Prints R representation of the given expression.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印给定表达式的 R 表示。
 - en: Fortran Printing
+  id: totrans-192
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Fortran 打印
 - en: The `fcode` function translates a sympy expression into Fortran code. The main
     purpose is to take away the burden of manually translating long mathematical expressions.
     Therefore the resulting expression should also require no (or very little) manual
     tweaking to make it compilable. The optional arguments of `fcode` can be used
     to fine-tune the behavior of `fcode` in such a way that manual changes in the
     result are no longer needed.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: '`fcode` 函数将 sympy 表达式转换为 Fortran 代码。其主要目的是减少手动翻译长数学表达式的负担。因此，生成的表达式也应该不需要（或者非常少的）手动调整即可进行编译。`fcode`
+    的可选参数可用于微调其行为，以使结果不再需要手动更改。'
 - en: '[PRE57]'
+  id: totrans-194
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: Converts an expr to a string of fortran code
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式转换为 Fortran 代码的字符串
 - en: 'Parameters:'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** : Expr'
 - en: A SymPy expression to be converted.
+  id: totrans-198
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个 SymPy 表达式将被转换。
 - en: '**assign_to** : optional'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to** : 可选'
 - en: When given, the argument is used as the name of the variable to which the expression
     is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
     is helpful in case of line-wrapping, or for expressions that generate multi-line
     statements.
+  id: totrans-200
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当给出时，该参数被用作分配表达式的变量名。可以是字符串，`Symbol`，`MatrixSymbol` 或 `Indexed` 类型。对于生成多行语句或者行折叠的表达式来说非常有用。
 - en: '**precision** : integer, optional'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: '**precision** : 整数，可选'
 - en: DEPRECATED. Use type_mappings instead. The precision for numbers such as pi
     [default=17].
+  id: totrans-202
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 已弃用。使用 type_mappings 替代。诸如 pi 这样的数字的精度 [默认=17]。
 - en: '**user_functions** : dict, optional'
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: '**user_functions** : 字典，可选'
 - en: A dictionary where keys are `FunctionClass` instances and values are their string
     representations. Alternatively, the dictionary value can be a list of tuples i.e.
     [(argument_test, cfunction_string)]. See below for examples.
+  id: totrans-204
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其中键是 `FunctionClass` 实例，值是它们的字符串表示。或者，字典值可以是元组列表，例如 [(argument_test, cfunction_string)]。详见下面的例子。
 - en: '**human** : bool, optional'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: '**human** : bool, 可选'
 - en: If True, the result is a single string that may contain some constant declarations
     for the number symbols. If False, the same information is returned in a tuple
     of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  id: totrans-206
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则结果是一个包含一些常数声明的单个字符串，用于表示数字符号。如果为 False，则相同的信息以 (symbols_to_declare,
+    not_supported_functions, code_text) 的元组形式返回。[默认=True]。
 - en: '**contract: bool, optional**'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: '**contract: bool, 可选**'
 - en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
     the corresponding nested loops over indices are generated. Setting contract=False
     will not generate loops, instead the user is responsible to provide values for
     the indices in the code. [default=True].
+  id: totrans-208
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则假定 `Indexed` 实例遵守张量缩并规则，并生成相应的索引嵌套循环。设置 contract=False 将不会生成循环，而是要求用户在代码中为索引提供值。[默认=True]。
 - en: '**source_format** : optional'
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: '**source_format** : 可选'
 - en: The source format can be either ‘fixed’ or ‘free’. [default=’fixed’]
+  id: totrans-210
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 源格式可以是“fixed”或“free”。[默认='fixed']
 - en: '**standard** : integer, optional'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: '**standard** : 整数，可选'
 - en: The Fortran standard to be followed. This is specified as an integer. Acceptable
     standards are 66, 77, 90, 95, 2003, and 2008\. Default is 77. Note that currently
     the only distinction internally is between standards before 95, and those 95 and
     after. This may change later as more features are added.
+  id: totrans-212
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要遵循的 Fortran 标准。这是指定的整数。可接受的标准为 66、77、90、95、2003 和 2008。默认是 77。请注意，目前在内部唯一的区分是在
+    95 之前的标准和 95 及之后的标准之间。随着添加更多功能，这可能会发生变化。
 - en: '**name_mangling** : bool, optional'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: '**name_mangling** : 布尔值，可选'
 - en: If True, then the variables that would become identical in case-insensitive
     Fortran are mangled by appending different number of `_` at the end. If False,
     SymPy Will not interfere with naming of variables. [default=True]
+  id: totrans-214
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则在不区分大小写的 Fortran 中，会通过在末尾附加不同数量的 `_` 来搞乱变量的命名。如果为 False，则 SymPy 不会干预变量的命名。[默认=True]
 - en: Examples
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE58]'
+  id: totrans-216
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'Custom printing can be defined for certain types by passing a dictionary of
     “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
     value can be a list of tuples i.e. [(argument_test, cfunction_string)].'
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: '可通过将 “type” : “function” 字典传递给 `user_functions` 关键字来为特定类型定义自定义打印。或者，字典值可以是一个元组列表，例如
+    [(argument_test, cfunction_string)]。'
 - en: '[PRE59]'
+  id: totrans-218
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
     variable is provided an if statement is created, otherwise the ternary operator
     is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
     True)` then an error will be thrown. This is to prevent generating an expression
     that may not evaluate to anything.'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Piecewise` 表达式会转换为条件语句。如果提供了 `assign_to` 变量，则创建一个 if 语句，否则使用三元运算符。注意，如果 `Piecewise`
+    没有默认项，即 `(expr, True)`，则会抛出错误。这是为了避免生成一个可能无法求值的表达式。'
 - en: '[PRE60]'
+  id: totrans-220
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: 'Support for loops is provided through `Indexed` types. With `contract=True`
     these expressions will be turned into loops, whereas `contract=False` will just
     print the assignment expression that should be looped over:'
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过 `Indexed` 类型提供了对循环的支持。使用 `contract=True`，这些表达式将转换为循环，而 `contract=False` 只会打印应循环的赋值表达式：
 - en: '[PRE61]'
+  id: totrans-222
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
     be provided to `assign_to`. Note that any expression that can be generated normally
     can also exist inside a Matrix:'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 矩阵也受支持，但必须向 `assign_to` 提供相同维度的 `MatrixSymbol`。请注意，任何可以正常生成的表达式也可以存在于矩阵内：
 - en: '[PRE62]'
+  id: totrans-224
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: '[PRE63]'
+  id: totrans-225
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: Prints the Fortran representation of the given expression.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印给定表达式的 Fortran 表示。
 - en: See fcode for the meaning of the optional arguments.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 详细信息请参见 fcode 的可选参数含义。
 - en: '[PRE64]'
+  id: totrans-228
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: A printer to convert SymPy expressions to strings of Fortran code
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个打印机，将 SymPy 表达式转换为 Fortran 代码字符串
 - en: '[PRE65]'
+  id: totrans-230
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: '[PRE66]'
+  id: totrans-231
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: Accepts a string of code or a list of code lines
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 接受代码字符串或代码行列表
 - en: 'Two basic examples:'
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 两个基本示例：
 - en: '[PRE67]'
+  id: totrans-234
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: 'An example where line wrapping is required:'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要换行的示例：
 - en: '[PRE68]'
+  id: totrans-236
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: In case of line wrapping, it is handy to include the assignment so that lines
     are wrapped properly when the assignment part is added.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 在进行换行时，最好包含赋值部分，以便在添加赋值部分时正确换行。
 - en: '[PRE69]'
+  id: totrans-238
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: 'For piecewise functions, the `assign_to` option is mandatory:'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于分段函数，`assign_to` 选项是强制性的：
 - en: '[PRE70]'
+  id: totrans-240
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: 'Note that by default only top-level piecewise functions are supported due to
     the lack of a conditional operator in Fortran 77\. Inline conditionals can be
     supported using the `merge` function introduced in Fortran 95 by setting of the
     kwarg `standard=95`:'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，默认情况下仅支持顶级分段函数，因为 Fortran 77 中缺乏条件运算符。可以通过设置 `standard=95` 来支持使用 Fortran
+    95 中引入的 `merge` 函数进行内联条件支持：
 - en: '[PRE71]'
+  id: totrans-242
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: Loops are generated if there are Indexed objects in the expression. This also
     requires use of the assign_to option.
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果表达式中存在 Indexed 对象，则生成循环。这也需要使用 assign_to 选项。
 - en: '[PRE72]'
+  id: totrans-244
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: Repeated indices in an expression with Indexed objects are interpreted as summation.
     For instance, code for the trace of a matrix can be generated with
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 在带有 Indexed 对象的表达式中，重复的指标被解释为求和。例如，可以生成矩阵的迹的代码。
 - en: '[PRE73]'
+  id: totrans-246
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: By default, number symbols such as `pi` and `E` are detected and defined as
     Fortran parameters. The precision of the constants can be tuned with the precision
     argument. Parameter definitions are easily avoided using the `N` function.
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，如 `pi` 和 `E` 等数字符号将被检测并定义为 Fortran 参数。可以使用精度参数调整常数的精度。使用 `N` 函数可以轻松避免参数定义。
 - en: '[PRE74]'
+  id: totrans-248
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: When some functions are not part of the Fortran standard, it might be desirable
     to introduce the names of user-defined functions in the Fortran expression.
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 当某些函数不属于 Fortran 标准时，可能希望在 Fortran 表达式中引入用户定义函数的名称。
 - en: '[PRE75]'
+  id: totrans-250
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: 'However, when the user_functions argument is not provided, `fcode` will by
     default raise an Exception, but if the user intends to provide a function with
     the same name, code can still be generated, by passing the option `strict=False`.
     The code then contains a comment informing the user of the issue:'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，当未提供user_functions参数时，`fcode`默认会引发异常，但如果用户打算提供具有相同名称的函数，则仍可以生成代码，方法是通过传递选项`strict=False`。然后，代码中包含一条评论，通知用户存在的问题：
 - en: '[PRE76]'
+  id: totrans-252
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: 'The printer can be configured to omit these comments:'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印机可以配置为省略这些注释：
 - en: '[PRE77]'
+  id: totrans-254
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: 'By default the output is human readable code, ready for copy and paste. With
     the option `human=False`, the return value is suitable for post-processing with
     source code generators that write routines with multiple instructions. The return
     value is a three-tuple containing: (i) a set of number symbols that must be defined
     as ‘Fortran parameters’, (ii) a list functions that cannot be translated in pure
     Fortran and (iii) a string of Fortran code. A few examples:'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，输出是人类可读的代码，可立即复制和粘贴。通过选项`human=False`，返回值适合与编写具有多个指令的源代码生成器后处理。返回值是一个包含三个元素的三元组：（i）必须定义为“Fortran参数”的一组数值符号，（ii）无法在纯Fortran中翻译的函数列表，（iii）Fortran代码字符串。一些示例：
 - en: '[PRE78]'
+  id: totrans-256
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE78]'
 - en: '## SMT-Lib printing'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: '## SMT-Lib打印'
 - en: '[PRE79]'
+  id: totrans-258
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE79]'
 - en: '[PRE80]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE80]'
 - en: '[PRE81]'
+  id: totrans-260
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE81]'
 - en: '[PRE82]'
+  id: totrans-261
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE82]'
 - en: Converts `expr` to a string of smtlib code.
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 将`expr`转换为一串smtlib代码。
 - en: 'Parameters:'
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr | List[Expr]'
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：Expr | List[Expr]'
 - en: A SymPy expression or system to be converted.
+  id: totrans-265
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的SymPy表达式或系统。
 - en: '**auto_assert** : bool, optional'
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: '**自动断言**：布尔值，可选'
 - en: If false, do not modify expr and produce only the S-Expression equivalent of
     expr. If true, assume expr is a system and assert each boolean element.
+  id: totrans-267
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为false，则不修改expr并仅生成expr的S表达式等价物。如果为true，则假设expr是一个系统，并断言每个布尔元素。
 - en: '**auto_declare** : bool, optional'
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: '**自动声明**：布尔值，可选'
 - en: If false, do not produce declarations for the symbols used in expr. If true,
     prepend all necessary declarations for variables used in expr based on symbol_table.
+  id: totrans-269
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为false，则不要为expr中使用的符号生成声明。如果为true，则根据symbol_table预先生成expr中使用的变量的所有必要声明。
 - en: '**precision** : integer, optional'
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: '**精度**：整数，可选'
 - en: The `evalf(..)` precision for numbers such as pi.
+  id: totrans-271
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 对于如pi等数字的`evalf(..)`精度。
 - en: '**symbol_table** : dict, optional'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: '**符号表**：字典，可选'
 - en: A dictionary where keys are `Symbol` or `Function` instances and values are
     their Python type i.e. `bool`, `int`, `float`, or `Callable[...]`. If incomplete,
     an attempt will be made to infer types from `expr`.
+  id: totrans-273
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其中键为`Symbol`或`Function`实例，值为它们的Python类型，如`bool`、`int`、`float`或`Callable[...]`。如果不完整，将尝试从`expr`推断类型。
 - en: '**known_types: dict, optional**'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: '**已知类型**：字典，可选'
 - en: A dictionary where keys are `bool`, `int`, `float` etc. and values are their
     corresponding SMT type names. If not given, a partial listing compatible with
     several solvers will be used.
+  id: totrans-275
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其中键为`bool`、`int`、`float`等，值为它们对应的SMT类型名称。如果未给出，将使用与多个求解器兼容的部分列表。
 - en: '**known_functions** : dict, optional'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: '**已知函数**：字典，可选'
 - en: A dictionary where keys are `Function`, `Relational`, `BooleanFunction`, or
     `Expr` instances and values are their SMT string representations. If not given,
     a partial listing optimized for dReal solver (but compatible with others) will
     be used.
+  id: totrans-277
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其中键为`Function`、`Relational`、`BooleanFunction`或`Expr`实例，值为它们的SMT字符串表示。如果未给出，将使用针对dReal求解器优化的部分列表（但与其他求解器兼容）。
 - en: '**known_constants: dict, optional**'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: '**已知常量**：字典，可选'
 - en: A dictionary where keys are `NumberSymbol` instances and values are their SMT
     variable names. When using this feature, extra caution must be taken to avoid
     naming collisions between user symbols and listed constants. If not given, constants
     will be expanded inline i.e. `3.14159` instead of `MY_SMT_VARIABLE_FOR_PI`.
+  id: totrans-279
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其中键为`NumberSymbol`实例，值为它们的SMT变量名。在使用此功能时，必须格外小心，以避免用户符号与列出的常量之间的命名冲突。如果未给出，常量将被内联展开，例如`3.14159`而非`MY_SMT_VARIABLE_FOR_PI`。
 - en: '**prefix_expressions: list, optional**'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: '**前缀表达式**：列表，可选'
 - en: A list of lists of `str` and/or expressions to convert into SMTLib and prefix
     to the output.
+  id: totrans-281
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个列表的列表，其中包含要转换为SMTLib并附加到输出的`str`和/或表达式。
 - en: '**suffix_expressions: list, optional**'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: '**后缀表达式**：列表，可选'
 - en: A list of lists of `str` and/or expressions to convert into SMTLib and postfix
     to the output.
+  id: totrans-283
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个列表的列表，其中包含要转换为SMTLib并作为输出前缀的`str`和/或表达式。
 - en: '**log_warn: lambda function, optional**'
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: '**日志警告**：lambda函数，可选'
 - en: A function to record all warnings during potentially risky operations. Soundness
     is a core value in SMT solving, so it is good to log all assumptions made.
+  id: totrans-285
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个用于记录在可能存在风险操作期间发出的所有警告的函数。在SMT求解中，健全性是一项核心价值，因此记录所有假设是很好的。
 - en: Examples
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE83]'
+  id: totrans-287
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE83]'
 - en: '[PRE84]'
+  id: totrans-288
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE84]'
 - en: '`Piecewise` expressions are implemented with `ite` expressions by default.
     Note that if the `Piecewise` lacks a default term, represented by `(expr, True)`
     then an error will be thrown. This is to prevent generating an expression that
     may not evaluate to anything.'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Piecewise`表达式默认使用`ite`表达式实现。请注意，如果`Piecewise`缺少由`(expr, True)`表示的默认项，则会引发错误。这是为了防止生成可能不会评估为任何内容的表达式。'
 - en: '[PRE85]'
+  id: totrans-290
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE85]'
 - en: 'Custom printing can be defined for certain types by passing a dictionary of
     PythonType : “SMT Name” to the `known_types`, `known_constants`, and `known_functions`
     kwargs.'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 可通过将PythonType：“SMT Name”的字典传递给`known_types`，`known_constants`和`known_functions`
+    kwargs来定义某些类型的自定义打印。
 - en: '[PRE86]  ## Mathematica code printing'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE86]  ## Mathematica代码打印'
 - en: '[PRE87]'
+  id: totrans-293
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE87]'
 - en: '[PRE88]'
+  id: totrans-294
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE88]'
 - en: A printer to convert Python expressions to strings of the Wolfram’s Mathematica
     code
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于将Python表达式转换为Wolfram Mathematica代码的打印机
 - en: '[PRE89]'
+  id: totrans-296
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE89]'
 - en: '[PRE90]'
+  id: totrans-297
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE90]'
 - en: Converts an expr to a string of the Wolfram Mathematica code
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式转换为Wolfram Mathematica代码的字符串
 - en: Examples
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE91]  ## Maple code printing'
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE91]  ## Maple代码打印'
 - en: '[PRE92]'
+  id: totrans-301
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE92]'
 - en: Printer which converts a SymPy expression into a maple code.
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 将SymPy表达式转换为Maple代码的打印机。
 - en: '[PRE93]'
+  id: totrans-303
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE93]'
 - en: '[PRE94]'
+  id: totrans-304
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE94]'
 - en: Converts `expr` to a string of Maple code.
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 将`expr`转换为Maple代码的字符串。
 - en: 'Parameters:'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr'
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** : 表达式'
 - en: A SymPy expression to be converted.
+  id: totrans-308
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的SymPy表达式。
 - en: '**assign_to** : optional'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to** : 可选'
 - en: When given, the argument is used as the name of the variable to which the expression
     is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
     can be helpful for expressions that generate multi-line statements.
+  id: totrans-310
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果提供，则该参数用作分配表达式的变量名。可以是字符串，`Symbol`，`MatrixSymbol`或`Indexed`类型。这对于生成多行语句的表达式非常有帮助。
 - en: '**precision** : integer, optional'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: '**precision** : 整数，可选'
 - en: The precision for numbers such as pi [default=16].
+  id: totrans-312
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 像π这样的数字的精度[默认=16]。
 - en: '**user_functions** : dict, optional'
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: '**user_functions** : 字典，可选'
 - en: A dictionary where keys are `FunctionClass` instances and values are their string
     representations. Alternatively, the dictionary value can be a list of tuples i.e.
     [(argument_test, cfunction_string)]. See below for examples.
+  id: totrans-314
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其键为`FunctionClass`实例，值为它们的字符串表示。或者，字典值可以是元组的列表，即[(argument_test, cfunction_string)]。请参阅下面的示例。
 - en: '**human** : bool, optional'
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: '**human** : 布尔值，可选'
 - en: If True, the result is a single string that may contain some constant declarations
     for the number symbols. If False, the same information is returned in a tuple
     of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  id: totrans-316
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，则结果是一个可能包含一些常数声明的单字符串。如果为False，则相同的信息以(symbols_to_declare, not_supported_functions,
+    code_text)元组形式返回。[默认=True]。
 - en: '**contract: bool, optional**'
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: '**contract: bool，可选**'
 - en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
     the corresponding nested loops over indices are generated. Setting contract=False
     will not generate loops, instead the user is responsible to provide values for
     the indices in the code. [default=True].
+  id: totrans-318
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，则假定`Indexed`实例遵守张量缩并规则，并生成相应的索引嵌套循环。设置contract=False将不生成循环，而是由用户在代码中提供索引的值。[默认=True]。
 - en: '**inline: bool, optional**'
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: '**inline: bool，可选**'
 - en: If True, we try to create single-statement code instead of multiple statements.
     [default=True].
+  id: totrans-320
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，我们会尝试创建单语句代码而不是多语句。[默认=True]。
 - en: '[PRE95]'
+  id: totrans-321
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE95]'
 - en: Prints the Maple representation of the given expression.
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印给定表达式的Maple表示。
 - en: See [`maple_code()`](#sympy.printing.maple.maple_code "sympy.printing.maple.maple_code")
     for the meaning of the optional arguments.
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: 请参见[`maple_code()`](#sympy.printing.maple.maple_code "sympy.printing.maple.maple_code")以了解可选参数的含义。
 - en: Examples
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE96]  ## Javascript Code printing'
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE96]  ## JavaScript代码打印'
 - en: '[PRE97]'
+  id: totrans-326
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE97]'
 - en: '[PRE98]'
+  id: totrans-327
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE98]'
 - en: “A Printer to convert Python expressions to strings of JavaScript code
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
+  zh: “一个打印机，将Python表达式转换为JavaScript代码字符串
 - en: '[PRE99]'
+  id: totrans-329
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE99]'
 - en: '[PRE100]'
+  id: totrans-330
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE100]'
 - en: Accepts a string of code or a list of code lines
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: 接受代码字符串或代码行列表
 - en: '[PRE101]'
+  id: totrans-332
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE101]'
 - en: Converts an expr to a string of javascript code
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式转换为JavaScript代码的字符串
 - en: 'Parameters:'
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr'
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** : 表达式'
 - en: A SymPy expression to be converted.
+  id: totrans-336
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的SymPy表达式。
 - en: '**assign_to** : optional'
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to** : 可选'
 - en: When given, the argument is used as the name of the variable to which the expression
     is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
     is helpful in case of line-wrapping, or for expressions that generate multi-line
     statements.
+  id: totrans-338
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果提供，则该参数用作分配表达式的变量名。可以是字符串，`Symbol`，`MatrixSymbol`或`Indexed`类型。在换行或生成多行语句的表达式中很有帮助。
 - en: '**precision** : integer, optional'
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: '**precision** : 整数，可选'
 - en: The precision for numbers such as pi [default=15].
+  id: totrans-340
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 像π这样的数字的精度[默认=15]。
 - en: '**user_functions** : dict, optional'
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: '**user_functions** : 字典，可选'
 - en: A dictionary where keys are `FunctionClass` instances and values are their string
     representations. Alternatively, the dictionary value can be a list of tuples i.e.
     [(argument_test, js_function_string)]. See below for examples.
+  id: totrans-342
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其中键是 `FunctionClass` 实例，值是它们的字符串表示。或者，字典值可以是元组列表，即 [(argument_test, js_function_string)]。请参阅以下示例。
 - en: '**human** : bool, optional'
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
+  zh: '**human** : bool, 可选'
 - en: If True, the result is a single string that may contain some constant declarations
     for the number symbols. If False, the same information is returned in a tuple
     of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  id: totrans-344
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则结果是一个单独的字符串，其中可能包含一些常数声明用于数字符号。如果为 False，则返回一个元组 (symbols_to_declare,
+    not_supported_functions, code_text)，其中包含相同的信息。[默认=True]。
 - en: '**contract: bool, optional**'
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
+  zh: '**contract: bool, 可选**'
 - en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
     the corresponding nested loops over indices are generated. Setting contract=False
     will not generate loops, instead the user is responsible to provide values for
     the indices in the code. [default=True].
+  id: totrans-346
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则假定 `Indexed` 实例遵循张量收缩规则，并生成相应的嵌套索引循环。设置 contract=False 将不生成循环，而是由用户负责在代码中为索引提供值。[默认=True]。
 - en: Examples
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE102]'
+  id: totrans-348
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE102]'
 - en: 'Custom printing can be defined for certain types by passing a dictionary of
     “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
     value can be a list of tuples i.e. [(argument_test, js_function_string)].'
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
+  zh: '可通过将 “type” : “function” 字典传递给 `user_functions` 关键字来定义某些类型的自定义打印。或者，字典值可以是元组列表，即
+    [(argument_test, js_function_string)]。'
 - en: '[PRE103]'
+  id: totrans-350
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE103]'
 - en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
     variable is provided an if statement is created, otherwise the ternary operator
     is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
     True)` then an error will be thrown. This is to prevent generating an expression
     that may not evaluate to anything.'
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Piecewise` 表达式将转换为条件语句。如果提供了 `assign_to` 变量，则创建 if 语句，否则使用三元运算符。请注意，如果 `Piecewise`
+    缺少由 `(expr, True)` 表示的默认项，则会抛出错误。这是为了防止生成可能不会计算出任何结果的表达式。'
 - en: '[PRE104]'
+  id: totrans-352
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE104]'
 - en: 'Support for loops is provided through `Indexed` types. With `contract=True`
     these expressions will be turned into loops, whereas `contract=False` will just
     print the assignment expression that should be looped over:'
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过 `Indexed` 类型提供对循环的支持。如果 `contract=True`，则这些表达式将转换为循环，而 `contract=False` 将只打印应该循环的分配表达式：
 - en: '[PRE105]'
+  id: totrans-354
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE105]'
 - en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
     be provided to `assign_to`. Note that any expression that can be generated normally
     can also exist inside a Matrix:'
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
+  zh: 还支持矩阵，但必须为 `assign_to` 提供相同维度的 `MatrixSymbol`。请注意，任何通常可以生成的表达式也可以存在于矩阵中：
 - en: '[PRE106]  ## Julia code printing'
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE106]  ## Julia 代码打印'
 - en: '[PRE107]'
+  id: totrans-357
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE107]'
 - en: Built-in mutable sequence.
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
+  zh: 内置可变序列。
 - en: If no argument is given, the constructor creates a new empty list. The argument
     must be an iterable if specified.
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果未提供参数，则构造函数创建一个新的空列表。如果指定了参数，则必须是可迭代的。
 - en: '[PRE108]'
+  id: totrans-360
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE108]'
 - en: '[PRE109]'
+  id: totrans-361
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE109]'
 - en: A printer to convert expressions to strings of Julia code.
+  id: totrans-362
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印机，将表达式转换为 Julia 代码的字符串。
 - en: '[PRE110]'
+  id: totrans-363
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE110]'
 - en: '[PRE111]'
+  id: totrans-364
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE111]'
 - en: Accepts a string of code or a list of code lines
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
+  zh: 接受代码字符串或代码行列表
 - en: '[PRE112]'
+  id: totrans-366
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE112]'
 - en: Converts \(expr\) to a string of Julia code.
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 \(expr\) 转换为 Julia 代码的字符串。
 - en: 'Parameters:'
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
+  zh: '参数:'
 - en: '**expr** : Expr'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** : Expr'
 - en: A SymPy expression to be converted.
+  id: totrans-370
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的 SymPy 表达式。
 - en: '**assign_to** : optional'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to** : 可选'
 - en: When given, the argument is used as the name of the variable to which the expression
     is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
     can be helpful for expressions that generate multi-line statements.
+  id: totrans-372
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果提供了此参数，则用作分配表达式的变量名。可以是字符串、`Symbol`、`MatrixSymbol` 或 `Indexed` 类型。这对生成多行语句的表达式很有帮助。
 - en: '**precision** : integer, optional'
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
+  zh: '**precision** : 整数, 可选'
 - en: The precision for numbers such as pi [default=16].
+  id: totrans-374
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 诸如 pi 的数字的精度 [默认=16]。
 - en: '**user_functions** : dict, optional'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
+  zh: '**user_functions** : dict, 可选'
 - en: A dictionary where keys are `FunctionClass` instances and values are their string
     representations. Alternatively, the dictionary value can be a list of tuples i.e.
     [(argument_test, cfunction_string)]. See below for examples.
+  id: totrans-376
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其中键是 `FunctionClass` 实例，值是它们的字符串表示。或者，字典值可以是元组列表，即 [(argument_test, cfunction_string)]。请参阅以下示例。
 - en: '**human** : bool, optional'
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
+  zh: '**human** : bool, 可选'
 - en: If True, the result is a single string that may contain some constant declarations
     for the number symbols. If False, the same information is returned in a tuple
     of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  id: totrans-378
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则结果是一个可能包含一些常数声明的单字符串符号。如果为 False，则将在一个元组中返回相同的信息（symbols_to_declare,
+    not_supported_functions, code_text）。[默认为 True]。
 - en: '**contract: bool, optional**'
+  id: totrans-379
   prefs: []
   type: TYPE_NORMAL
+  zh: '**contract: bool，可选**'
 - en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
     the corresponding nested loops over indices are generated. Setting contract=False
     will not generate loops, instead the user is responsible to provide values for
     the indices in the code. [default=True].
+  id: totrans-380
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则假设 `Indexed` 实例遵守张量缩并规则，并生成相应的索引嵌套循环。设置 contract=False 将不生成循环，而是由用户负责在代码中提供索引的值。[默认为
+    True]。
 - en: '**inline: bool, optional**'
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
+  zh: '**inline: bool，可选**'
 - en: If True, we try to create single-statement code instead of multiple statements.
     [default=True].
+  id: totrans-382
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为 True，则尝试创建单语句代码而不是多语句。[默认为 True]。
 - en: Examples
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例。
 - en: '[PRE113]'
+  id: totrans-384
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE113]'
 - en: '[PRE114]'
+  id: totrans-385
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE114]'
 - en: Note that element-wise (Hadamard) operations are used by default between symbols.
     This is because its possible in Julia to write “vectorized” code. It is harmless
     if the values are scalars.
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，默认情况下，符号之间使用元素级（Hadamard）操作。这是因为在 Julia 中编写“向量化”代码是可能的。如果值是标量，则这是无害的。
 - en: '[PRE115]'
+  id: totrans-387
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE115]'
 - en: If you need a matrix product “*” or matrix power “^”, you can specify the symbol
     as a `MatrixSymbol`.
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果需要矩阵乘积 “*” 或矩阵幂 “^”，可以将符号指定为 `MatrixSymbol`。
 - en: '[PRE116]'
+  id: totrans-389
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE116]'
 - en: 'This class uses several rules to decide which symbol to use a product. Pure
     numbers use “*”, Symbols use “.*” and MatrixSymbols use “*”. A HadamardProduct
     can be used to specify componentwise multiplication “.*” of two MatrixSymbols.
@@ -1475,175 +2276,272 @@
     the code might have some minor cosmetic issues. For example, suppose x and y are
     scalars and A is a Matrix, then while a human programmer might write “(x^2*y)*A^3”,
     we generate:'
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
+  zh: 该类使用多个规则来决定使用哪个符号来表示乘积。纯数字使用 “*”，符号使用 “.*”，而 MatrixSymbols 使用 “*”。HadamardProduct
+    可用于指定两个 MatrixSymbols 的分量乘法 “.*”。目前没有简单的方法来指定标量符号，因此有时代码可能会存在一些小的美观问题。例如，假设 x
+    和 y 是标量，A 是一个矩阵，则虽然人类程序员可能会写 “(x^2*y)*A^3”，我们生成的是：
 - en: '[PRE117]'
+  id: totrans-391
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE117]'
 - en: Matrices are supported using Julia inline notation. When using `assign_to` with
     matrices, the name can be specified either as a string or as a `MatrixSymbol`.
     The dimensions must align in the latter case.
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 Julia 内联表示法支持矩阵。当与矩阵一起使用 `assign_to` 时，名称可以指定为字符串或 `MatrixSymbol`。在后一种情况下，维度必须对齐。
 - en: '[PRE118]'
+  id: totrans-393
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE118]'
 - en: '`Piecewise` expressions are implemented with logical masking by default. Alternatively,
     you can pass “inline=False” to use if-else conditionals. Note that if the `Piecewise`
     lacks a default term, represented by `(expr, True)` then an error will be thrown.
     This is to prevent generating an expression that may not evaluate to anything.'
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Piecewise` 表达式默认使用逻辑掩码实现。或者，您可以传递 “inline=False” 来使用 if-else 条件。请注意，如果 `Piecewise`
+    缺少由 `(expr, True)` 表示的默认项，则会引发错误。这是为了防止生成可能不会评估为任何东西的表达式。'
 - en: '[PRE119]'
+  id: totrans-395
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE119]'
 - en: 'Note that any expression that can be generated normally can also exist inside
     a Matrix:'
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，任何正常生成的表达式也可以存在于矩阵内：
 - en: '[PRE120]'
+  id: totrans-397
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE120]'
 - en: 'Custom printing can be defined for certain types by passing a dictionary of
     “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
     value can be a list of tuples i.e., [(argument_test, cfunction_string)]. This
     can be used to call a custom Julia function.'
+  id: totrans-398
   prefs: []
   type: TYPE_NORMAL
+  zh: '可以通过将 “type” : “function” 的字典传递给 `user_functions` kwarg 来为某些类型定义自定义打印。或者，字典值可以是元组列表，即
+    [(argument_test, cfunction_string)]。这可用于调用自定义 Julia 函数。'
 - en: '[PRE121]'
+  id: totrans-399
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE121]'
 - en: 'Support for loops is provided through `Indexed` types. With `contract=True`
     these expressions will be turned into loops, whereas `contract=False` will just
     print the assignment expression that should be looped over:'
+  id: totrans-400
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过 `Indexed` 类型提供循环支持。使用 `contract=True`，这些表达式将转换为循环，而 `contract=False` 将仅打印应循环的赋值表达式：
 - en: '[PRE122]  ## Octave (and Matlab) Code printing'
+  id: totrans-401
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE122]  ## Octave（和 Matlab）代码打印'
 - en: '[PRE123]'
+  id: totrans-402
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE123]'
 - en: Built-in mutable sequence.
+  id: totrans-403
   prefs: []
   type: TYPE_NORMAL
+  zh: 内置可变序列。
 - en: If no argument is given, the constructor creates a new empty list. The argument
     must be an iterable if specified.
+  id: totrans-404
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果未提供参数，则构造函数将创建一个新的空列表。如果指定了参数，则必须是可迭代的。
 - en: '[PRE124]'
+  id: totrans-405
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE124]'
 - en: '[PRE125]'
+  id: totrans-406
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE125]'
 - en: A printer to convert expressions to strings of Octave/Matlab code.
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印机将表达式转换为 Octave/Matlab 代码字符串。
 - en: '[PRE126]'
+  id: totrans-408
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE126]'
 - en: '[PRE127]'
+  id: totrans-409
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE127]'
 - en: Accepts a string of code or a list of code lines
+  id: totrans-410
   prefs: []
   type: TYPE_NORMAL
+  zh: 接受代码字符串或代码行列表。
 - en: '[PRE128]'
+  id: totrans-411
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE128]'
 - en: Converts \(expr\) to a string of Octave (or Matlab) code.
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 \(expr\) 转换为 Octave（或 Matlab）代码字符串。
 - en: The string uses a subset of the Octave language for Matlab compatibility.
+  id: totrans-413
   prefs: []
   type: TYPE_NORMAL
+  zh: 字符串使用Matlab兼容的Octave语言子集。
 - en: 'Parameters:'
+  id: totrans-414
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr'
+  id: totrans-415
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** : 表达式'
 - en: A SymPy expression to be converted.
+  id: totrans-416
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的SymPy表达式。
 - en: '**assign_to** : optional'
+  id: totrans-417
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to** : 可选'
 - en: When given, the argument is used as the name of the variable to which the expression
     is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
     can be helpful for expressions that generate multi-line statements.
+  id: totrans-418
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 给定时，参数用作分配表达式的变量名称。可以是字符串，`Symbol`，`MatrixSymbol`或`Indexed`类型。对于生成多行语句的表达式非常有帮助。
 - en: '**precision** : integer, optional'
+  id: totrans-419
   prefs: []
   type: TYPE_NORMAL
+  zh: '**precision** : 整数，可选'
 - en: The precision for numbers such as pi [default=16].
+  id: totrans-420
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 数字的精度，例如pi [默认=16]。
 - en: '**user_functions** : dict, optional'
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
+  zh: '**user_functions** : dict, 可选'
 - en: A dictionary where keys are `FunctionClass` instances and values are their string
     representations. Alternatively, the dictionary value can be a list of tuples i.e.
     [(argument_test, cfunction_string)]. See below for examples.
+  id: totrans-422
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 字典，其中键是`FunctionClass`实例，值是它们的字符串表示。或者，字典值可以是元组列表，即[(argument_test, cfunction_string)]。有关示例，请参见下文。
 - en: '**human** : bool, optional'
+  id: totrans-423
   prefs: []
   type: TYPE_NORMAL
+  zh: '**human** : bool, 可选'
 - en: If True, the result is a single string that may contain some constant declarations
     for the number symbols. If False, the same information is returned in a tuple
     of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  id: totrans-424
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，则结果是一个可能包含一些常数声明的单个字符串。如果为False，则返回相同的信息作为（symbols_to_declare, not_supported_functions,
+    code_text）的元组。[默认=True]。
 - en: '**contract: bool, optional**'
+  id: totrans-425
   prefs: []
   type: TYPE_NORMAL
+  zh: '**contract: bool, 可选**'
 - en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
     the corresponding nested loops over indices are generated. Setting contract=False
     will not generate loops, instead the user is responsible to provide values for
     the indices in the code. [default=True].
+  id: totrans-426
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，则假设`Indexed`实例遵循张量收缩规则，并生成相应的索引嵌套循环。设置contract=False将不会生成循环，而是由用户负责在代码中为索引提供值。[默认=True]。
 - en: '**inline: bool, optional**'
+  id: totrans-427
   prefs: []
   type: TYPE_NORMAL
+  zh: '**inline: bool, 可选**'
 - en: If True, we try to create single-statement code instead of multiple statements.
     [default=True].
+  id: totrans-428
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，则尝试创建单语句代码而不是多语句。[默认=True]。
 - en: Examples
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE129]'
+  id: totrans-430
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE129]'
 - en: '[PRE130]'
+  id: totrans-431
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE130]'
 - en: Note that element-wise (Hadamard) operations are used by default between symbols.
     This is because its very common in Octave to write “vectorized” code. It is harmless
     if the values are scalars.
+  id: totrans-432
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，符号之间使用元素级（Hadamard）操作。这是因为在Octave中编写“向量化”代码非常常见。如果值是标量，则无害。
 - en: '[PRE131]'
+  id: totrans-433
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE131]'
 - en: If you need a matrix product “*” or matrix power “^”, you can specify the symbol
     as a `MatrixSymbol`.
+  id: totrans-434
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果需要矩阵乘积“*”或矩阵幂“^”，则可以将符号指定为`MatrixSymbol`。
 - en: '[PRE132]'
+  id: totrans-435
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE132]'
 - en: 'This class uses several rules to decide which symbol to use a product. Pure
     numbers use “*”, Symbols use “.*” and MatrixSymbols use “*”. A HadamardProduct
     can be used to specify componentwise multiplication “.*” of two MatrixSymbols.
@@ -1651,193 +2549,297 @@
     the code might have some minor cosmetic issues. For example, suppose x and y are
     scalars and A is a Matrix, then while a human programmer might write “(x^2*y)*A^3”,
     we generate:'
+  id: totrans-436
   prefs: []
   type: TYPE_NORMAL
+  zh: 此类使用几个规则来决定使用哪个符号来表示乘积。纯数字使用“*”，符号使用“.*”，MatrixSymbols使用“*”。HadamardProduct可用于指定两个MatrixSymbols的逐分量乘法“.*”。目前还没有简单的方法来指定标量符号，因此有时代码可能会有些轻微的外观问题。例如，假设x和y是标量，A是矩阵，那么虽然人类程序员可能会写成“(x^2*y)*A^3”，我们生成的代码是：
 - en: '[PRE133]'
+  id: totrans-437
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE133]'
 - en: Matrices are supported using Octave inline notation. When using `assign_to`
     with matrices, the name can be specified either as a string or as a `MatrixSymbol`.
     The dimensions must align in the latter case.
+  id: totrans-438
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用Octave内联表示法支持矩阵。在使用`assign_to`与矩阵时，可以将名称指定为字符串或`MatrixSymbol`。在后一种情况下，维度必须对齐。
 - en: '[PRE134]'
+  id: totrans-439
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE134]'
 - en: '`Piecewise` expressions are implemented with logical masking by default. Alternatively,
     you can pass “inline=False” to use if-else conditionals. Note that if the `Piecewise`
     lacks a default term, represented by `(expr, True)` then an error will be thrown.
     This is to prevent generating an expression that may not evaluate to anything.'
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，`Piecewise`表达式使用逻辑掩码实现。或者，您可以传递“inline=False”来使用if-else条件语句。请注意，如果`Piecewise`缺少由`(expr,
+    True)`表示的默认项，则会抛出错误。这是为了防止生成无法评估的表达式。
 - en: '[PRE135]'
+  id: totrans-441
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE135]'
 - en: 'Note that any expression that can be generated normally can also exist inside
     a Matrix:'
+  id: totrans-442
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，通常可以生成的任何表达式也可以存在于矩阵内：
 - en: '[PRE136]'
+  id: totrans-443
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE136]'
 - en: 'Custom printing can be defined for certain types by passing a dictionary of
     “type” : “function” to the `user_functions` kwarg. Alternatively, the dictionary
     value can be a list of tuples i.e., [(argument_test, cfunction_string)]. This
     can be used to call a custom Octave function.'
+  id: totrans-444
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过向`user_functions`关键字参数传递{“type”：“function”}字典可以为特定类型定义自定义打印。或者，字典值可以是元组列表，即[(argument_test,
+    cfunction_string)]。这可以用于调用自定义Octave函数。
 - en: '[PRE137]'
+  id: totrans-445
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE137]'
 - en: 'Support for loops is provided through `Indexed` types. With `contract=True`
     these expressions will be turned into loops, whereas `contract=False` will just
     print the assignment expression that should be looped over:'
+  id: totrans-446
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过`Indexed`类型提供对循环的支持。通过`contract=True`，这些表达式将被转换为循环，而`contract=False`只会打印应该循环的赋值表达式：
 - en: '[PRE138]  ## Rust code printing'
+  id: totrans-447
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE138]  ## Rust代码打印'
 - en: '[PRE139]'
+  id: totrans-448
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE139]'
 - en: '[PRE140]'
+  id: totrans-449
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE140]'
 - en: A printer to convert SymPy expressions to strings of Rust code
+  id: totrans-450
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个打印器，将SymPy表达式转换为Rust代码的字符串
 - en: '[PRE141]'
+  id: totrans-451
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE141]'
 - en: '[PRE142]'
+  id: totrans-452
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE142]'
 - en: Accepts a string of code or a list of code lines
+  id: totrans-453
   prefs: []
   type: TYPE_NORMAL
+  zh: 接受代码字符串或代码行列表。
 - en: '[PRE143]'
+  id: totrans-454
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE143]'
 - en: Converts an expr to a string of Rust code
+  id: totrans-455
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式转换为Rust代码字符串
 - en: 'Parameters:'
+  id: totrans-456
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr'
+  id: totrans-457
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：Expr'
 - en: A SymPy expression to be converted.
+  id: totrans-458
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的SymPy表达式。
 - en: '**assign_to** : optional'
+  id: totrans-459
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to**：可选'
 - en: When given, the argument is used as the name of the variable to which the expression
     is assigned. Can be a string, `Symbol`, `MatrixSymbol`, or `Indexed` type. This
     is helpful in case of line-wrapping, or for expressions that generate multi-line
     statements.
+  id: totrans-460
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在提供时，该参数用作分配给表达式的变量的名称。可以是字符串、`Symbol`、`MatrixSymbol`或`Indexed`类型。这在换行或生成多行语句的表达式的情况下很有帮助。
 - en: '**precision** : integer, optional'
+  id: totrans-461
   prefs: []
   type: TYPE_NORMAL
+  zh: '**precision**：整数，可选'
 - en: The precision for numbers such as pi [default=15].
+  id: totrans-462
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 诸如 pi 的数字精度 [默认=15]。
 - en: '**user_functions** : dict, optional'
+  id: totrans-463
   prefs: []
   type: TYPE_NORMAL
+  zh: '**user_functions**：字典，可选'
 - en: A dictionary where the keys are string representations of either `FunctionClass`
     or `UndefinedFunction` instances and the values are their desired C string representations.
     Alternatively, the dictionary value can be a list of tuples i.e. [(argument_test,
     cfunction_string)]. See below for examples.
+  id: totrans-464
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个字典，其中键是`FunctionClass`或`UndefinedFunction`实例的字符串表示，值是它们期望的C字符串表示。或者，字典值可以是元组列表，即[(argument_test,
+    cfunction_string)]。有关示例，请参见下文。
 - en: '**dereference** : iterable, optional'
+  id: totrans-465
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dereference**：可迭代对象，可选'
 - en: An iterable of symbols that should be dereferenced in the printed code expression.
     These would be values passed by address to the function. For example, if `dereference=[a]`,
     the resulting code would print `(*a)` instead of `a`.
+  id: totrans-466
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 应在打印的代码表达式中取消引用的符号的可迭代对象。这些值通过地址传递给函数。例如，如果`dereference=[a]`，生成的代码将打印`(*a)`而不是`a`。
 - en: '**human** : bool, optional'
+  id: totrans-467
   prefs: []
   type: TYPE_NORMAL
+  zh: '**人类**：布尔值，可选'
 - en: If True, the result is a single string that may contain some constant declarations
     for the number symbols. If False, the same information is returned in a tuple
     of (symbols_to_declare, not_supported_functions, code_text). [default=True].
+  id: totrans-468
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，则结果是一个可能包含一些常量声明的单个字符串，用于数字符号。如果为False，则相同的信息以元组形式返回（symbols_to_declare,
+    not_supported_functions, code_text）。[默认=True]。
 - en: '**contract: bool, optional**'
+  id: totrans-469
   prefs: []
   type: TYPE_NORMAL
+  zh: '**合同：布尔值，可选**'
 - en: If True, `Indexed` instances are assumed to obey tensor contraction rules and
     the corresponding nested loops over indices are generated. Setting contract=False
     will not generate loops, instead the user is responsible to provide values for
     the indices in the code. [default=True].
+  id: totrans-470
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果为True，假定`Indexed`实例遵守张量收缩规则，并生成相应的索引的嵌套循环。设置`contract=False`将不生成循环，而是用户负责为代码中的索引提供值。[默认=True]。
 - en: Examples
+  id: totrans-471
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE144]'
+  id: totrans-472
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE144]'
 - en: 'Simple custom printing can be defined for certain types by passing a dictionary
     of {“type” : “function”} to the `user_functions` kwarg. Alternatively, the dictionary
     value can be a list of tuples i.e. [(argument_test, cfunction_string)].'
+  id: totrans-473
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过向`user_functions`关键字参数传递{“type”：“function”}字典可以为特定类型定义简单的自定义打印。或者，字典值可以是元组列表，即[(argument_test,
+    cfunction_string)]。
 - en: '[PRE145]'
+  id: totrans-474
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE145]'
 - en: '`Piecewise` expressions are converted into conditionals. If an `assign_to`
     variable is provided an if statement is created, otherwise the ternary operator
     is used. Note that if the `Piecewise` lacks a default term, represented by `(expr,
     True)` then an error will be thrown. This is to prevent generating an expression
     that may not evaluate to anything.'
+  id: totrans-475
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Piecewise`表达式转换为条件语句。如果提供了`assign_to`变量，则创建一个if语句，否则使用三元运算符。请注意，如果`Piecewise`缺少由`(expr,
+    True)`表示的默认项，则会引发错误。这是为了防止生成可能不会评估为任何内容的表达式。'
 - en: '[PRE146]'
+  id: totrans-476
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE146]'
 - en: 'Support for loops is provided through `Indexed` types. With `contract=True`
     these expressions will be turned into loops, whereas `contract=False` will just
     print the assignment expression that should be looped over:'
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
+  zh: 支持通过`Indexed`类型提供循环。使用`contract=True`将这些表达式转换为循环，而`contract=False`只会打印应该循环的赋值表达式：
 - en: '[PRE147]'
+  id: totrans-478
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE147]'
 - en: 'Matrices are also supported, but a `MatrixSymbol` of the same dimensions must
     be provided to `assign_to`. Note that any expression that can be generated normally
     can also exist inside a Matrix:'
+  id: totrans-479
   prefs: []
   type: TYPE_NORMAL
+  zh: 矩阵也受支持，但必须为`assign_to`提供相同维度的`MatrixSymbol`。注意，任何正常生成的表达式也可以存在于矩阵内部：
 - en: '[PRE148]  ## Aesara Code printing'
+  id: totrans-480
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE148]  ## Aesara代码打印'
 - en: '[PRE149]'
+  id: totrans-481
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE149]'
 - en: Code printer which creates Aesara symbolic expression graphs.
+  id: totrans-482
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建Aesara符号表达式图的代码打印机。
 - en: 'Parameters:'
+  id: totrans-483
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**cache** : dict'
+  id: totrans-484
   prefs: []
   type: TYPE_NORMAL
+  zh: '**cache** : 字典'
 - en: 'Cache dictionary to use. If None (default) will use the global cache. To create
     a printer which does not depend on or alter global state pass an empty dictionary.
     Note: the dictionary is not copied on initialization of the printer and will be
@@ -1846,12 +2848,18 @@
     "sympy.printing.aesaracode.aesara_code") or [`aesara_function()`](#sympy.printing.aesaracode.aesara_function
     "sympy.printing.aesaracode.aesara_function") means the cache is shared between
     all these applications.'
+  id: totrans-485
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要使用的缓存字典。如果为None（默认），将使用全局缓存。要创建不依赖或不改变全局状态的打印机，请传递一个空字典。注意：该字典在打印机初始化时不会被复制，并且将被原地更新，因此在创建多个打印机或多次调用[`aesara_code()`](#sympy.printing.aesaracode.aesara_code
+    "sympy.printing.aesaracode.aesara_code")或[`aesara_function()`](#sympy.printing.aesaracode.aesara_function
+    "sympy.printing.aesaracode.aesara_function")时，缓存在所有这些应用程序之间共享。
 - en: Attributes
+  id: totrans-486
   prefs: []
   type: TYPE_NORMAL
+  zh: 属性
 - en: '| cache | (dict) A cache of Aesara variables which have been created for SymPy
     symbol-like objects (e.g. [`sympy.core.symbol.Symbol`](core.html#sympy.core.symbol.Symbol
     "sympy.core.symbol.Symbol") or [`sympy.matrices.expressions.MatrixSymbol`](matrices/expressions.html#sympy.matrices.expressions.MatrixSymbol
@@ -1860,203 +2868,319 @@
     same Aesara variable, which is created only once. Symbols are differentiated only
     by name and type. The format of the cache’s contents should be considered opaque
     to the user. |'
+  id: totrans-487
   prefs: []
   type: TYPE_TB
+  zh: '| cache | (dict) 一个Aesara变量的缓存，已为SymPy符号样式对象（例如[`sympy.core.symbol.Symbol`](core.html#sympy.core.symbol.Symbol
+    "sympy.core.symbol.Symbol")或[`sympy.matrices.expressions.MatrixSymbol`](matrices/expressions.html#sympy.matrices.expressions.MatrixSymbol
+    "sympy.matrices.expressions.MatrixSymbol")）创建。这用于确保在表达式（或多个表达式）中对给定符号的所有引用都打印为相同的Aesara变量，该变量仅创建一次。符号仅通过名称和类型来区分。缓存内容的格式应视为对用户不透明。
+    |'
 - en: '[PRE150]'
+  id: totrans-488
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE150]'
 - en: '[PRE151]'
+  id: totrans-489
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE151]'
 - en: Convert a SymPy expression to a Aesara graph variable.
+  id: totrans-490
   prefs: []
   type: TYPE_NORMAL
+  zh: 将SymPy表达式转换为Aesara图形变量。
 - en: The `dtypes` and `broadcastables` arguments are used to specify the data type,
     dimension, and broadcasting behavior of the Aesara variables corresponding to
     the free symbols in `expr`. Each is a mapping from SymPy symbols to the value
     of the corresponding argument to `aesara.tensor.var.TensorVariable`.
+  id: totrans-491
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dtypes** 和 **broadcastables** 参数用于指定与`expr`中自由符号对应的Aesara变量的数据类型、维度和广播行为。每个都是从SymPy符号到`aesara.tensor.var.TensorVariable`相应参数的值的映射。'
 - en: See the corresponding [documentation page](https://aesara.readthedocs.io/en/latest/reference/tensor/shapes.html#broadcasting)
     for more information on broadcasting in Aesara.
+  id: totrans-492
   prefs: []
   type: TYPE_NORMAL
+  zh: 参见对应的[文档页面](https://aesara.readthedocs.io/en/latest/reference/tensor/shapes.html#broadcasting)，了解更多关于Aesara中广播的信息。
 - en: 'Parameters:'
+  id: totrans-493
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : sympy.core.expr.Expr'
+  id: totrans-494
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** : sympy.core.expr.Expr'
 - en: SymPy expression to print.
+  id: totrans-495
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要打印的SymPy表达式。
 - en: '**dtypes** : dict'
+  id: totrans-496
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dtypes** : 字典'
 - en: Mapping from SymPy symbols to Aesara datatypes to use when creating new Aesara
     variables for those symbols. Corresponds to the `dtype` argument to `aesara.tensor.var.TensorVariable`.
     Defaults to `'floatX'` for symbols not included in the mapping.
+  id: totrans-497
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 从SymPy符号到在创建与这些符号对应的新Aesara变量时使用的Aesara数据类型的映射。对应于`aesara.tensor.var.TensorVariable`的`dtype`参数。对于未包含在映射中的符号，默认为`'floatX'`。
 - en: '**broadcastables** : dict'
+  id: totrans-498
   prefs: []
   type: TYPE_NORMAL
+  zh: '**broadcastables** : 字典'
 - en: Mapping from SymPy symbols to the value of the `broadcastable` argument to `aesara.tensor.var.TensorVariable`
     to use when creating Aesara variables for those symbols. Defaults to the empty
     tuple for symbols not included in the mapping (resulting in a scalar).
+  id: totrans-499
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 从SymPy符号到`aesara.tensor.var.TensorVariable`创建Aesara变量时使用的`broadcastable`参数值的映射。对于未包含在映射中的符号，默认为空元组（结果为标量）。
 - en: 'Returns:'
+  id: totrans-500
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回：
 - en: aesara.graph.basic.Variable
+  id: totrans-501
   prefs: []
   type: TYPE_NORMAL
+  zh: aesara.graph.basic.Variable
 - en: A variable corresponding to the expression’s value in a Aesara symbolic expression
     graph.
+  id: totrans-502
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 表达式在 Aesara 符号表达式图中的值对应的变量。
 - en: '[PRE152]'
+  id: totrans-503
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE152]'
 - en: Convert a SymPy expression into a Aesara graph variable.
+  id: totrans-504
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 SymPy 表达式转换为 Aesara 图变量。
 - en: 'Parameters:'
+  id: totrans-505
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : sympy.core.expr.Expr'
+  id: totrans-506
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：sympy.core.expr.Expr'
 - en: SymPy expression object to convert.
+  id: totrans-507
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要转换的 SymPy 表达式对象。
 - en: '**cache** : dict'
+  id: totrans-508
   prefs: []
   type: TYPE_NORMAL
+  zh: '**cache**：字典'
 - en: Cached Aesara variables (see [`AesaraPrinter.cache`](#sympy.printing.aesaracode.AesaraPrinter
     "sympy.printing.aesaracode.AesaraPrinter")). Defaults to the module-level global
     cache.
+  id: totrans-509
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 缓存的 Aesara 变量（参见 [`AesaraPrinter.cache`](#sympy.printing.aesaracode.AesaraPrinter
+    "sympy.printing.aesaracode.AesaraPrinter")）。默认为模块级全局缓存。
 - en: '**dtypes** : dict'
+  id: totrans-510
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dtypes**：字典'
 - en: Passed to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
     "sympy.printing.aesaracode.AesaraPrinter.doprint").
+  id: totrans-511
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint")。
 - en: '**broadcastables** : dict'
+  id: totrans-512
   prefs: []
   type: TYPE_NORMAL
+  zh: '**broadcastables**：字典'
 - en: Passed to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
     "sympy.printing.aesaracode.AesaraPrinter.doprint").
+  id: totrans-513
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint")。
 - en: 'Returns:'
+  id: totrans-514
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回：
 - en: aesara.graph.basic.Variable
+  id: totrans-515
   prefs: []
   type: TYPE_NORMAL
+  zh: aesara.graph.basic.Variable
 - en: A variable corresponding to the expression’s value in a Aesara symbolic expression
     graph.
+  id: totrans-516
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 表达式在 Aesara 符号表达式图中的值对应的变量。
 - en: '[PRE153]'
+  id: totrans-517
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE153]'
 - en: Create a Aesara function from SymPy expressions.
+  id: totrans-518
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 SymPy 表达式创建一个 Aesara 函数。
 - en: The inputs and outputs are converted to Aesara variables using [`aesara_code()`](#sympy.printing.aesaracode.aesara_code
     "sympy.printing.aesaracode.aesara_code") and then passed to `aesara.function`.
+  id: totrans-519
   prefs: []
   type: TYPE_NORMAL
+  zh: 输入和输出使用 [`aesara_code()`](#sympy.printing.aesaracode.aesara_code "sympy.printing.aesaracode.aesara_code")
+    转换为 Aesara 变量，然后传递给 `aesara.function`。
 - en: 'Parameters:'
+  id: totrans-520
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**inputs**'
+  id: totrans-521
   prefs: []
   type: TYPE_NORMAL
+  zh: '**inputs**'
 - en: Sequence of symbols which constitute the inputs of the function.
+  id: totrans-522
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 构成函数输入的符号序列。
 - en: '**outputs**'
+  id: totrans-523
   prefs: []
   type: TYPE_NORMAL
+  zh: '**outputs**'
 - en: Sequence of expressions which constitute the outputs(s) of the function. The
     free symbols of each expression must be a subset of `inputs`.
+  id: totrans-524
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 函数输出的表达式序列。每个表达式的自由符号必须是 `inputs` 的子集。
 - en: '**scalar** : bool'
+  id: totrans-525
   prefs: []
   type: TYPE_NORMAL
+  zh: '**scalar**：布尔值'
 - en: Convert 0-dimensional arrays in output to scalars. This will return a Python
     wrapper function around the Aesara function object.
+  id: totrans-526
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将输出中的零维数组转换为标量。这将返回一个围绕 Aesara 函数对象的 Python 封装函数。
 - en: '**cache** : dict'
+  id: totrans-527
   prefs: []
   type: TYPE_NORMAL
+  zh: '**cache**：字典'
 - en: Cached Aesara variables (see [`AesaraPrinter.cache`](#sympy.printing.aesaracode.AesaraPrinter
     "sympy.printing.aesaracode.AesaraPrinter")). Defaults to the module-level global
     cache.
+  id: totrans-528
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 缓存的 Aesara 变量（参见 [`AesaraPrinter.cache`](#sympy.printing.aesaracode.AesaraPrinter
+    "sympy.printing.aesaracode.AesaraPrinter")）。默认为模块级全局缓存。
 - en: '**dtypes** : dict'
+  id: totrans-529
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dtypes**：字典'
 - en: Passed to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
     "sympy.printing.aesaracode.AesaraPrinter.doprint").
+  id: totrans-530
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint")。
 - en: '**broadcastables** : dict'
+  id: totrans-531
   prefs: []
   type: TYPE_NORMAL
+  zh: '**broadcastables**：字典'
 - en: Passed to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
     "sympy.printing.aesaracode.AesaraPrinter.doprint").
+  id: totrans-532
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 传递给 [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint")。
 - en: '**dims** : dict'
+  id: totrans-533
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dims**：字典'
 - en: Alternative to `broadcastables` argument. Mapping from elements of `inputs`
     to integers indicating the dimension of their associated arrays/tensors. Overrides
     `broadcastables` argument if given.
+  id: totrans-534
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '`broadcastables` 参数的替代方法。从 `inputs` 元素到指示其关联的数组/张量维数的整数的映射。如果给定，会覆盖 `broadcastables`
+    参数。'
 - en: '**dim** : int'
+  id: totrans-535
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dim**：整数'
 - en: 'Another alternative to the `broadcastables` argument. Common number of dimensions
     to use for all arrays/tensors. `aesara_function([x, y], [...], dim=2)` is equivalent
     to using `broadcastables={x: (False, False), y: (False, False)}`.'
+  id: totrans-536
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '`broadcastables` 参数的另一种替代方法。用于所有数组/张量的常见维数数量。`aesara_function([x, y], [...],
+    dim=2)` 等同于使用 `broadcastables={x: (False, False), y: (False, False)}`。'
 - en: 'Returns:'
+  id: totrans-537
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回：
 - en: callable
+  id: totrans-538
   prefs: []
   type: TYPE_NORMAL
+  zh: 可调用对象
 - en: A callable object which takes values of `inputs` as positional arguments and
     returns an output array for each of the expressions in `outputs`. If `outputs`
     is a single expression the function will return a Numpy array, if it is a list
@@ -2065,257 +3189,408 @@
     in a list. The returned object will either be an instance of `aesara.compile.function.types.Function`
     or a Python wrapper function around one. In both cases, the returned value will
     have a `aesara_function` attribute which points to the return value of `aesara.function`.
+  id: totrans-539
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一个可调用对象，它以 `inputs` 的值作为位置参数，并为 `outputs` 中的每个表达式返回一个输出数组。 如果 `outputs` 是单个表达式，则函数将返回一个
+    Numpy 数组；如果是多个表达式的列表，则函数将返回一个数组列表。 请参阅上面关于 `squeeze` 参数行为的描述。 返回的对象将是 `aesara.compile.function.types.Function`
+    的实例或其周围的 Python 包装函数。 在两种情况下，返回的值将具有指向 `aesara.function` 返回值的 `aesara_function`
+    属性。
 - en: Examples
+  id: totrans-540
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE154]'
+  id: totrans-541
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE154]'
 - en: 'A simple function with one input and one output:'
+  id: totrans-542
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个具有一个输入和一个输出的简单函数：
 - en: '[PRE155]'
+  id: totrans-543
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE155]'
 - en: 'A function with multiple inputs and one output:'
+  id: totrans-544
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个具有多个输入和一个输出的函数：
 - en: '[PRE156]'
+  id: totrans-545
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE156]'
 - en: 'A function with multiple inputs and multiple outputs:'
+  id: totrans-546
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个具有多个输入和多个输出的函数：
 - en: '[PRE157]'
+  id: totrans-547
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE157]'
 - en: See also
+  id: totrans-548
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`dim_handling`](#sympy.printing.aesaracode.dim_handling "sympy.printing.aesaracode.dim_handling")'
+  id: totrans-549
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`dim_handling`](#sympy.printing.aesaracode.dim_handling "sympy.printing.aesaracode.dim_handling")'
 - en: '[PRE158]'
+  id: totrans-550
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE158]'
 - en: Get value of `broadcastables` argument to [`aesara_code()`](#sympy.printing.aesaracode.aesara_code
     "sympy.printing.aesaracode.aesara_code") from keyword arguments to [`aesara_function()`](#sympy.printing.aesaracode.aesara_function
     "sympy.printing.aesaracode.aesara_function").
+  id: totrans-551
   prefs: []
   type: TYPE_NORMAL
+  zh: 从关键字参数到 [`aesara_function()`](#sympy.printing.aesaracode.aesara_function "sympy.printing.aesaracode.aesara_function")
+    的 `aesara_code()` 函数获取 `broadcastables` 参数的值。
 - en: Included for backwards compatibility.
+  id: totrans-552
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于向后兼容性。
 - en: 'Parameters:'
+  id: totrans-553
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**inputs**'
+  id: totrans-554
   prefs: []
   type: TYPE_NORMAL
+  zh: '**inputs**'
 - en: Sequence of input symbols.
+  id: totrans-555
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 输入符号的序列。
 - en: '**dim** : int'
+  id: totrans-556
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dim** : 整数'
 - en: Common number of dimensions for all inputs. Overrides other arguments if given.
+  id: totrans-557
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 所有输入的常见维数。 如果给定，则覆盖其他参数。
 - en: '**dims** : dict'
+  id: totrans-558
   prefs: []
   type: TYPE_NORMAL
+  zh: '**dims** : 字典'
 - en: Mapping from input symbols to number of dimensions. Overrides `broadcastables`
     argument if given.
+  id: totrans-559
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 将输入符号映射到维数的数量。 如果给定，则覆盖 `broadcastables` 参数。
 - en: '**broadcastables** : dict'
+  id: totrans-560
   prefs: []
   type: TYPE_NORMAL
+  zh: '**broadcastables** : 字典'
 - en: Explicit value of `broadcastables` argument to [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
     "sympy.printing.aesaracode.AesaraPrinter.doprint"). If not None function will
     return this value unchanged.
+  id: totrans-561
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 明确 `broadcastables` 参数的值为 [`AesaraPrinter.doprint()`](#sympy.printing.aesaracode.AesaraPrinter.doprint
+    "sympy.printing.aesaracode.AesaraPrinter.doprint") 的参数。 如果不为 None，则函数将以此值不变返回。
 - en: 'Returns:'
+  id: totrans-562
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回：
 - en: dict
+  id: totrans-563
   prefs: []
   type: TYPE_NORMAL
+  zh: 字典
 - en: 'Dictionary mapping elements of `inputs` to their “broadcastable” values (tuple
     of `bool`s).  ## Gtk'
+  id: totrans-564
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '字典将 `inputs` 的元素映射到它们的“广播”值（`bool` 元组）。  ## Gtk'
 - en: You can print to a gtkmathview widget using the function `print_gtk` located
     in `sympy.printing.gtk` (it requires to have installed gtkmathview and libgtkmathview-bin
     in some systems).
+  id: totrans-565
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以使用位于 `sympy.printing.gtk` 中的 `print_gtk` 函数将内容打印到 gtkmathview 小部件（某些系统中需要安装
+    gtkmathview 和 libgtkmathview-bin）。
 - en: GtkMathView accepts MathML, so this rendering depends on the MathML representation
     of the expression.
+  id: totrans-566
   prefs: []
   type: TYPE_NORMAL
+  zh: GtkMathView 接受 MathML，因此此渲染取决于表达式的 MathML 表示。
 - en: 'Usage:'
+  id: totrans-567
   prefs: []
   type: TYPE_NORMAL
+  zh: 用法：
 - en: '[PRE159]'
+  id: totrans-568
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE159]'
 - en: '[PRE160]'
+  id: totrans-569
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE160]'
 - en: Print to Gtkmathview, a gtk widget capable of rendering MathML.
+  id: totrans-570
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印到 Gtkmathview，一个能够呈现 MathML 的 gtk 小部件。
 - en: 'Needs libgtkmathview-bin  ## LambdaPrinter'
+  id: totrans-571
   prefs: []
   type: TYPE_NORMAL
+  zh: '需要 libgtkmathview-bin  ## LambdaPrinter'
 - en: This classes implements printing to strings that can be used by the [`sympy.utilities.lambdify.lambdify()`](utilities/lambdify.html#sympy.utilities.lambdify.lambdify
     "sympy.utilities.lambdify.lambdify") function.
+  id: totrans-572
   prefs: []
   type: TYPE_NORMAL
+  zh: 此类实现将表达式打印为可以由 [`sympy.utilities.lambdify.lambdify()`](utilities/lambdify.html#sympy.utilities.lambdify.lambdify
+    "sympy.utilities.lambdify.lambdify") 函数使用的字符串。
 - en: '[PRE161]'
+  id: totrans-573
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE161]'
 - en: This printer converts expressions into strings that can be used by lambdify.
+  id: totrans-574
   prefs: []
   type: TYPE_NORMAL
+  zh: 此打印机将表达式转换为可以由 lambdify 使用的字符串。
 - en: '[PRE162]'
+  id: totrans-575
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE162]'
 - en: '[PRE163]'
+  id: totrans-576
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE163]'
 - en: 'Returns a string usable for lambdifying.  ## LatexPrinter'
+  id: totrans-577
   prefs: []
   type: TYPE_NORMAL
+  zh: '返回一个可用于 lambdify 的字符串。  ## LatexPrinter'
 - en: This class implements LaTeX printing. See `sympy.printing.latex`.
+  id: totrans-578
   prefs: []
   type: TYPE_NORMAL
+  zh: 此类实现 LaTeX 打印。 参见 `sympy.printing.latex`。
 - en: '[PRE164]'
+  id: totrans-579
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE164]'
 - en: Built-in mutable sequence.
+  id: totrans-580
   prefs: []
   type: TYPE_NORMAL
+  zh: 内置可变序列。
 - en: If no argument is given, the constructor creates a new empty list. The argument
     must be an iterable if specified.
+  id: totrans-581
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果未给出参数，则构造函数将创建一个新的空列表。 如果指定，参数必须是可迭代的。
 - en: '[PRE165]'
+  id: totrans-582
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE165]'
 - en: '[PRE166]'
+  id: totrans-583
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE166]'
 - en: '[PRE167]'
+  id: totrans-584
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE167]'
 - en: Protect superscripts in s
+  id: totrans-585
   prefs: []
   type: TYPE_NORMAL
+  zh: 保护上标位于 s
 - en: If the parenthesize_super option is set, protect with parentheses, else wrap
     in braces.
+  id: totrans-586
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果设置了 parenthesize_super 选项，则用括号保护；否则用大括号包裹。
 - en: '[PRE168]'
+  id: totrans-587
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE168]'
 - en: Convert the given expression to LaTeX string representation.
+  id: totrans-588
   prefs: []
   type: TYPE_NORMAL
+  zh: 将给定表达式转换为LaTeX字符串表示。
 - en: 'Parameters:'
+  id: totrans-589
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**full_prec: boolean, optional**'
+  id: totrans-590
   prefs: []
   type: TYPE_NORMAL
+  zh: '**full_prec: 布尔值，可选**'
 - en: If set to True, a floating point number is printed with full precision.
+  id: totrans-591
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果设置为True，则浮点数将以完整精度打印。
 - en: '**fold_frac_powers** : boolean, optional'
+  id: totrans-592
   prefs: []
   type: TYPE_NORMAL
+  zh: '**fold_frac_powers** : 布尔值，可选'
 - en: Emit `^{p/q}` instead of `^{\frac{p}{q}}` for fractional powers.
+  id: totrans-593
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 以`^{p/q}`形式而不是`^{\frac{p}{q}}`形式发射分数幂。
 - en: '**fold_func_brackets** : boolean, optional'
+  id: totrans-594
   prefs: []
   type: TYPE_NORMAL
+  zh: '**fold_func_brackets** : 布尔值，可选'
 - en: Fold function brackets where applicable.
+  id: totrans-595
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 在适用的情况下折叠函数括号。
 - en: '**fold_short_frac** : boolean, optional'
+  id: totrans-596
   prefs: []
   type: TYPE_NORMAL
+  zh: '**fold_short_frac** : 布尔值，可选'
 - en: Emit `p / q` instead of `\frac{p}{q}` when the denominator is simple enough
     (at most two terms and no powers). The default value is `True` for inline mode,
     `False` otherwise.
+  id: totrans-597
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 当分母足够简单（最多两个项且没有幂）时，使用`p / q`代替`\frac{p}{q}`。默认值为行内模式下的`True`，其他情况下为`False`。
 - en: '**inv_trig_style** : string, optional'
+  id: totrans-598
   prefs: []
   type: TYPE_NORMAL
+  zh: '**inv_trig_style** : 字符串，可选'
 - en: How inverse trig functions should be displayed. Can be one of `'abbreviated'`,
     `'full'`, or `'power'`. Defaults to `'abbreviated'`.
+  id: totrans-599
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 显示反三角函数的方式。可以是`'abbreviated'`、`'full'`或`'power'`之一。默认为`'abbreviated'`。
 - en: '**itex** : boolean, optional'
+  id: totrans-600
   prefs: []
   type: TYPE_NORMAL
+  zh: '**itex** : 布尔值，可选'
 - en: Specifies if itex-specific syntax is used, including emitting `$$...$$`.
+  id: totrans-601
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 指定是否使用itex特定的语法，包括发射`$$...$$`。
 - en: '**ln_notation** : boolean, optional'
+  id: totrans-602
   prefs: []
   type: TYPE_NORMAL
+  zh: '**ln_notation** : 布尔值，可选'
 - en: If set to `True`, `\ln` is used instead of default `\log`.
+  id: totrans-603
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果设置为`True`，则使用`\ln`替代默认的`\log`。
 - en: '**long_frac_ratio** : float or None, optional'
+  id: totrans-604
   prefs: []
   type: TYPE_NORMAL
+  zh: '**long_frac_ratio** : 浮点数或None，可选'
 - en: The allowed ratio of the width of the numerator to the width of the denominator
     before the printer breaks off long fractions. If `None` (the default value), long
     fractions are not broken up.
+  id: totrans-605
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 分子宽度与分母宽度之比在打印机截断长分数之前的允许比例。如果为`None`（默认值），则不会分割长分数。
 - en: '**mat_delim** : string, optional'
+  id: totrans-606
   prefs: []
   type: TYPE_NORMAL
+  zh: '**mat_delim** : 字符串，可选'
 - en: The delimiter to wrap around matrices. Can be one of `'['`, `'('`, or the empty
     string `''`. Defaults to `'['`.
+  id: totrans-607
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于包围矩阵的定界符。可以是`'['`、`'('`或空字符串`''`。默认为`'['`。
 - en: '**mat_str** : string, optional'
+  id: totrans-608
   prefs: []
   type: TYPE_NORMAL
+  zh: '**mat_str** : 字符串，可选'
 - en: Which matrix environment string to emit. `'smallmatrix'`, `'matrix'`, `'array'`,
     etc. Defaults to `'smallmatrix'` for inline mode, `'matrix'` for matrices of no
     more than 10 columns, and `'array'` otherwise.
+  id: totrans-609
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 发出哪种矩阵环境字符串。对于行内模式，默认为`'smallmatrix'`，对于最多10列的矩阵，默认为`'matrix'`，否则默认为`'array'`。
 - en: '**mode: string, optional**'
+  id: totrans-610
   prefs: []
   type: TYPE_NORMAL
+  zh: '**mode: 字符串，可选**'
 - en: Specifies how the generated code will be delimited. `mode` can be one of `'plain'`,
     `'inline'`, `'equation'` or `'equation*'`. If `mode` is set to `'plain'`, then
     the resulting code will not be delimited at all (this is the default). If `mode`
@@ -2323,1208 +3598,1909 @@
     to `'equation'` or `'equation*'`, the resulting code will be enclosed in the `equation`
     or `equation*` environment (remember to import `amsmath` for `equation*`), unless
     the `itex` option is set. In the latter case, the `$$...$$` syntax is used.
+  id: totrans-611
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 指定生成的代码如何定界。`mode`可以是`'plain'`、`'inline'`、`'equation'`或`'equation*'`之一。如果将`mode`设置为`'plain'`，则生成的代码将不被定界（这是默认值）。如果将`mode`设置为`'inline'`，则使用行内LaTeX
+    `$...$`。如果将`mode`设置为`'equation'`或`'equation*'`，则生成的代码将被包裹在`equation`或`equation*`环境中（记得导入`amsmath`以使用`equation*`）。在后一种情况下，将使用`$$...$$`语法。
 - en: '**mul_symbol** : string or None, optional'
+  id: totrans-612
   prefs: []
   type: TYPE_NORMAL
+  zh: '**mul_symbol** : 字符串或None，可选'
 - en: The symbol to use for multiplication. Can be one of `None`, `'ldot'`, `'dot'`,
     or `'times'`.
+  id: totrans-613
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于乘法的符号。可以是`None`、`'ldot'`、`'dot'`或`'times'`之一。
 - en: '**order: string, optional**'
+  id: totrans-614
   prefs: []
   type: TYPE_NORMAL
+  zh: '**order: 字符串，可选**'
 - en: Any of the supported monomial orderings (currently `'lex'`, `'grlex'`, or `'grevlex'`),
     `'old'`, and `'none'`. This parameter does nothing for \(~.Mul\) objects. Setting
     order to `'old'` uses the compatibility ordering for `~.Add` defined in Printer.
     For very large expressions, set the `order` keyword to `'none'` if speed is a
     concern.
+  id: totrans-615
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 支持的任意单项式顺序（当前为`'lex'`、`'grlex'`或`'grevlex'`）、`'old'`和`'none'`之一。此参数对于`~.Mul`对象无效。将顺序设置为`'old'`将使用打印机中定义的`~.Add`的兼容顺序。对于非常大的表达式，如果速度是问题，则将`order`关键字设置为`'none'`。
 - en: '**symbol_names** : dictionary of strings mapped to symbols, optional'
+  id: totrans-616
   prefs: []
   type: TYPE_NORMAL
+  zh: '**symbol_names** : 可选，映射到符号的字符串字典'
 - en: Dictionary of symbols and the custom strings they should be emitted as.
+  id: totrans-617
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 符号字典及其自定义输出字符串。
 - en: '**root_notation** : boolean, optional'
+  id: totrans-618
   prefs: []
   type: TYPE_NORMAL
+  zh: '**root_notation** : 布尔值，可选'
 - en: If set to `False`, exponents of the form 1/n are printed in fractonal form.
     Default is `True`, to print exponent in root form.
+  id: totrans-619
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果设置为`False`，则形如1/n的指数以分数形式打印。默认为`True`，以根式形式打印指数。
 - en: '**mat_symbol_style** : string, optional'
+  id: totrans-620
   prefs: []
   type: TYPE_NORMAL
+  zh: '**mat_symbol_style** : string, optional'
 - en: Can be either `'plain'` (default) or `'bold'`. If set to `'bold'`, a \(~.MatrixSymbol\)
     A will be printed as `\mathbf{A}`, otherwise as `A`.
+  id: totrans-621
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 可以是 `'plain'`（默认）或 `'bold'`。如果设置为 `'bold'`，则 \(~.MatrixSymbol\) A 将打印为 `\mathbf{A}`，否则为
+    `A`。
 - en: '**imaginary_unit** : string, optional'
+  id: totrans-622
   prefs: []
   type: TYPE_NORMAL
+  zh: '**imaginary_unit** : string, optional'
 - en: String to use for the imaginary unit. Defined options are `'i'` (default) and
     `'j'`. Adding `r` or `t` in front gives `\mathrm` or `\text`, so `'ri'` leads
     to `\mathrm{i}` which gives \(\mathrm{i}\).
+  id: totrans-623
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于虚数单位的字符串。定义的选项是 `'i'`（默认）和 `'j'`。在前面添加 `r` 或 `t`，会得到 `\mathrm` 或 `\text`，因此
+    `'ri'` 将得到 `\mathrm{i}`，这将给出 \(\mathrm{i}\)。
 - en: '**gothic_re_im** : boolean, optional'
+  id: totrans-624
   prefs: []
   type: TYPE_NORMAL
+  zh: '**gothic_re_im** : boolean, optional'
 - en: If set to `True`, \(\Re\) and \(\Im\) is used for `re` and `im`, respectively.
     The default is `False` leading to \(\operatorname{re}\) and \(\operatorname{im}\).
+  id: totrans-625
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果设置为 `True`，则对于 `re` 和 `im` 使用 \(\Re\) 和 \(\Im\)，默认值为 `False`，导致对于 \(\operatorname{re}\)
+    和 \(\operatorname{im}\)。
 - en: '**decimal_separator** : string, optional'
+  id: totrans-626
   prefs: []
   type: TYPE_NORMAL
+  zh: '**decimal_separator** : string, optional'
 - en: Specifies what separator to use to separate the whole and fractional parts of
     a floating point number as in \(2.5\) for the default, `period` or \(2{,}5\) when
     `comma` is specified. Lists, sets, and tuple are printed with semicolon separating
     the elements when `comma` is chosen. For example, [1; 2; 3] when `comma` is chosen
     and [1,2,3] for when `period` is chosen.
+  id: totrans-627
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 指定浮点数的整数部分和小数部分之间的分隔符，例如默认情况下为 `period`（英文句点），或者当指定为 `comma` 时为 `2{,}5`。当选择
+    `comma` 时，列表、集合和元组的元素之间以分号分隔。例如，选择 `comma` 后，[1; 2; 3]，选择 `period` 后，[1,2,3]。
 - en: '**parenthesize_super** : boolean, optional'
+  id: totrans-628
   prefs: []
   type: TYPE_NORMAL
+  zh: '**parenthesize_super** : boolean, optional'
 - en: If set to `False`, superscripted expressions will not be parenthesized when
     powered. Default is `True`, which parenthesizes the expression when powered.
+  id: totrans-629
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果设置为 `False`，则在求幂时不会给表达式加括号。默认为 `True`，在求幂时加括号。
 - en: '**min: Integer or None, optional**'
+  id: totrans-630
   prefs: []
   type: TYPE_NORMAL
+  zh: '**min: Integer or None, optional**'
 - en: Sets the lower bound for the exponent to print floating point numbers in fixed-point
     format.
+  id: totrans-631
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 设置以固定点格式打印浮点数时指数的下限。
 - en: '**max: Integer or None, optional**'
+  id: totrans-632
   prefs: []
   type: TYPE_NORMAL
+  zh: '**max: Integer or None, optional**'
 - en: Sets the upper bound for the exponent to print floating point numbers in fixed-point
     format.
+  id: totrans-633
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 设置以固定点格式打印浮点数时指数的上限。
 - en: '**diff_operator: string, optional**'
+  id: totrans-634
   prefs: []
   type: TYPE_NORMAL
+  zh: '**diff_operator: string, optional**'
 - en: String to use for differential operator. Default is `'d'`, to print in italic
     form. `'rd'`, `'td'` are shortcuts for `\mathrm{d}` and `\text{d}`.
+  id: totrans-635
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于微分运算符的字符串。默认为 `'d'`，以斜体形式打印。`'rd'`，`'td'` 是 `\mathrm{d}` 和 `\text{d}` 的快捷方式。
 - en: '**adjoint_style: string, optional**'
+  id: totrans-636
   prefs: []
   type: TYPE_NORMAL
+  zh: '**adjoint_style: string, optional**'
 - en: String to use for the adjoint symbol. Defined options are `'dagger'` (default),``’star’[PRE169].
+  id: totrans-637
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于伴随符号的字符串。定义的选项是 `'dagger'`（默认），``’star’[PRE169]。
 - en: Notes
+  id: totrans-638
   prefs: []
   type: TYPE_NORMAL
+  zh: 注：
 - en: Not using a print statement for printing, results in double backslashes for
     latex commands since that’s the way Python escapes backslashes in strings.
+  id: totrans-639
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于这是Python在字符串中转义反斜杠的方式，因此在打印时不使用print语句会导致latex命令的双反斜杠。
 - en: '[PRE170]'
+  id: totrans-640
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE170]'
 - en: Examples
+  id: totrans-641
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE171]'
+  id: totrans-642
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE171]'
 - en: 'Basic usage:'
+  id: totrans-643
   prefs: []
   type: TYPE_NORMAL
+  zh: 基本用法：
 - en: '[PRE172]'
+  id: totrans-644
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE172]'
 - en: '`mode` and `itex` options:'
+  id: totrans-645
   prefs: []
   type: TYPE_NORMAL
+  zh: '`mode` 和 `itex` 选项：'
 - en: '[PRE173]'
+  id: totrans-646
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE173]'
 - en: 'Fraction options:'
+  id: totrans-647
   prefs: []
   type: TYPE_NORMAL
+  zh: 分数选项：
 - en: '[PRE174]'
+  id: totrans-648
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE174]'
 - en: 'Multiplication options:'
+  id: totrans-649
   prefs: []
   type: TYPE_NORMAL
+  zh: 乘法选项：
 - en: '[PRE175]'
+  id: totrans-650
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE175]'
 - en: 'Trig options:'
+  id: totrans-651
   prefs: []
   type: TYPE_NORMAL
+  zh: 三角函数选项：
 - en: '[PRE176]'
+  id: totrans-652
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE176]'
 - en: 'Matrix options:'
+  id: totrans-653
   prefs: []
   type: TYPE_NORMAL
+  zh: 矩阵选项：
 - en: '[PRE177]'
+  id: totrans-654
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE177]'
 - en: 'Custom printing of symbols:'
+  id: totrans-655
   prefs: []
   type: TYPE_NORMAL
+  zh: 自定义符号的打印：
 - en: '[PRE178]'
+  id: totrans-656
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE178]'
 - en: 'Logarithms:'
+  id: totrans-657
   prefs: []
   type: TYPE_NORMAL
+  zh: 对数：
 - en: '[PRE179]'
+  id: totrans-658
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE179]'
 - en: '`latex()` also supports the builtin container types `list`, `tuple`, and `dict`:'
+  id: totrans-659
   prefs: []
   type: TYPE_NORMAL
+  zh: '`latex()` 还支持内置的容器类型 `list`、`tuple` 和 `dict`：'
 - en: '[PRE180]'
+  id: totrans-660
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE180]'
 - en: 'Unsupported types are rendered as monospaced plaintext:'
+  id: totrans-661
   prefs: []
   type: TYPE_NORMAL
+  zh: 不支持的类型会被呈现为等宽的纯文本：
 - en: '[PRE181]'
+  id: totrans-662
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE181]'
 - en: See [Example of Custom Printing Method](#printer-method-example) for an example
     of how to override this behavior for your own types by implementing `_latex`.
+  id: totrans-663
   prefs: []
   type: TYPE_NORMAL
+  zh: 参见[自定义打印方法示例](#printer-method-example)，了解如何通过实现 `_latex` 来覆盖自己类型的此行为的示例。
 - en: 'Changed in version 1.7.0: Unsupported types no longer have their `str` representation
     treated as valid latex.'
+  id: totrans-664
   prefs: []
   type: TYPE_NORMAL
+  zh: 从版本1.7.0开始更改：不再将不支持的类型的`str`表示形式视为有效的latex。
 - en: '[PRE182]'
+  id: totrans-665
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE182]'
 - en: 'Prints LaTeX representation of the given expression. Takes the same settings
     as `latex()`.  ## MathMLPrinter'
+  id: totrans-666
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印给定表达式的 LaTeX 表示。使用与 `latex()` 相同的设置。## MathMLPrinter
 - en: This class is responsible for MathML printing. See `sympy.printing.mathml`.
+  id: totrans-667
   prefs: []
   type: TYPE_NORMAL
+  zh: 该类负责 MathML 打印。参见 `sympy.printing.mathml`。
 - en: 'More info on mathml : [https://www.w3.org/TR/MathML2](https://www.w3.org/TR/MathML2)'
+  id: totrans-668
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于mathml的更多信息：[https://www.w3.org/TR/MathML2](https://www.w3.org/TR/MathML2)
 - en: '[PRE183]'
+  id: totrans-669
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE183]'
 - en: Contains common code required for MathMLContentPrinter and MathMLPresentationPrinter.
+  id: totrans-670
   prefs: []
   type: TYPE_NORMAL
+  zh: 包含用于 MathMLContentPrinter 和 MathMLPresentationPrinter 所需的常见代码。
 - en: '[PRE184]'
+  id: totrans-671
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE184]'
 - en: Prints the expression as MathML.
+  id: totrans-672
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式打印为 MathML。
 - en: '[PRE185]'
+  id: totrans-673
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE185]'
 - en: Prints an expression to the Content MathML markup language.
+  id: totrans-674
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式打印为 Content MathML 标记语言的标记。
 - en: 'References: [https://www.w3.org/TR/MathML2/chapter4.html](https://www.w3.org/TR/MathML2/chapter4.html)'
+  id: totrans-675
   prefs: []
   type: TYPE_NORMAL
+  zh: 参考资料：[https://www.w3.org/TR/MathML2/chapter4.html](https://www.w3.org/TR/MathML2/chapter4.html)
 - en: '[PRE186]'
+  id: totrans-676
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE186]'
 - en: '[PRE187]'
+  id: totrans-677
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE187]'
 - en: Returns the MathML tag for an expression.
+  id: totrans-678
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回表达式的 MathML 标签。
 - en: '[PRE188]'
+  id: totrans-679
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE188]'
 - en: Prints an expression to the Presentation MathML markup language.
+  id: totrans-680
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式打印到 Presentation MathML 标记语言中。
 - en: 'References: [https://www.w3.org/TR/MathML2/chapter3.html](https://www.w3.org/TR/MathML2/chapter3.html)'
+  id: totrans-681
   prefs: []
   type: TYPE_NORMAL
+  zh: 参考资料：[https://www.w3.org/TR/MathML2/chapter3.html](https://www.w3.org/TR/MathML2/chapter3.html)
 - en: '[PRE189]'
+  id: totrans-682
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE189]'
 - en: '[PRE190]'
+  id: totrans-683
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE190]'
 - en: Returns the MathML tag for an expression.
+  id: totrans-684
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回表达式的 MathML 标签。
 - en: '[PRE191]'
+  id: totrans-685
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE191]'
 - en: Returns the MathML representation of expr. If printer is presentation then prints
     Presentation MathML else prints content MathML.
+  id: totrans-686
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回表达式的 MathML 表示。如果打印机是 presentation，则打印 Presentation MathML，否则打印 content MathML。
 - en: '[PRE192]'
+  id: totrans-687
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE192]'
 - en: Prints a pretty representation of the MathML code for expr. If printer is presentation
     then prints Presentation MathML else prints content MathML.
+  id: totrans-688
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印表达式的 MathML 代码的漂亮表示。如果打印机是 presentation，则打印 Presentation MathML，否则打印 content
+    MathML。
 - en: Examples
+  id: totrans-689
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE193]  ## PythonCodePrinter'
+  id: totrans-690
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE193]  ## PythonCodePrinter'
 - en: Python code printers
+  id: totrans-691
   prefs: []
   type: TYPE_NORMAL
+  zh: Python 代码打印机
 - en: This module contains Python code printers for plain Python as well as NumPy
     & SciPy enabled code.
+  id: totrans-692
   prefs: []
   type: TYPE_NORMAL
+  zh: 该模块包含适用于纯 Python 以及启用了 NumPy 和 SciPy 的代码的 Python 代码打印机。
 - en: '[PRE194]'
+  id: totrans-693
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE194]'
 - en: Lambda printer for mpmath which maintains precision for floats
+  id: totrans-694
   prefs: []
   type: TYPE_NORMAL
+  zh: mpmath 的 Lambda 打印机，为浮点数保持精度
 - en: '[PRE195]'
+  id: totrans-695
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE195]'
 - en: Converts an expr to a string of Python code
+  id: totrans-696
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式转换为 Python 代码的字符串
 - en: 'Parameters:'
+  id: totrans-697
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expr'
+  id: totrans-698
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr** ：表达式'
 - en: A SymPy expression.
+  id: totrans-699
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: SymPy 表达式。
 - en: '**fully_qualified_modules** : bool'
+  id: totrans-700
   prefs: []
   type: TYPE_NORMAL
+  zh: '**fully_qualified_modules** ：布尔型'
 - en: 'Whether or not to write out full module names of functions (`math.sin` vs.
     `sin`). default: `True`.'
+  id: totrans-701
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 是否写出函数的完整模块名称 (`math.sin` vs. `sin`). 默认值：`True`。
 - en: '**standard** : str or None, optional'
+  id: totrans-702
   prefs: []
   type: TYPE_NORMAL
+  zh: '**standard** ：str 或 None，可选'
 - en: Only ‘python3’ (default) is supported. This parameter may be removed in the
     future.
+  id: totrans-703
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 仅支持 'python3'（默认）。此参数将来可能会被移除。
 - en: Examples
+  id: totrans-704
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE196]  ## PythonPrinter'
+  id: totrans-705
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE196]  ## PythonPrinter'
 - en: 'This class implements Python printing. Usage:'
+  id: totrans-706
   prefs: []
   type: TYPE_NORMAL
+  zh: 此类实现 Python 打印。用法：
 - en: '[PRE197]  ## srepr'
+  id: totrans-707
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PRE197]  ## srepr'
 - en: This printer generates executable code. This code satisfies the identity `eval(srepr(expr))
     == expr`.
+  id: totrans-708
   prefs: []
   type: TYPE_NORMAL
+  zh: 此打印机生成可执行代码。此代码满足身份 `eval(srepr(expr)) == expr`。
 - en: '`srepr()` gives more low level textual output than `repr()`'
+  id: totrans-709
   prefs: []
   type: TYPE_NORMAL
+  zh: '`srepr()` 提供比 `repr()` 更低级的文本输出'
 - en: 'Example:'
+  id: totrans-710
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例：
 - en: '[PRE198]'
+  id: totrans-711
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE198]'
 - en: '`srepr()` gives the `repr` form, which is what `repr()` would normally give
     but for SymPy we don’t actually use `srepr()` for `__repr__` because it’s is so
     verbose, it is unlikely that anyone would want it called by default. Another reason
     is that lists call repr on their elements, like `print([a, b, c])` calls `repr(a)`,
     `repr(b)`, `repr(c)`. So if we used srepr for `__repr__` any list with SymPy objects
     would include the srepr form, even if we used `str()` or `print()`.'
+  id: totrans-712
   prefs: []
   type: TYPE_NORMAL
+  zh: '`srepr()` 给出 `repr` 形式，这是 SymPy 中通常给出的 `repr()`，但我们实际上不使用 `srepr()` 来进行 `__repr__`，因为它太冗长，不太可能默认调用它。另一个原因是列表调用其元素的
+    repr，例如 `print([a, b, c])` 调用 `repr(a)`，`repr(b)`，`repr(c)`。因此，如果我们将 `srepr` 用于
+    `__repr__`，任何包含 SymPy 对象的列表都将包含 srepr 形式，即使我们使用 `str()` 或 `print()`。'
 - en: '[PRE199]'
+  id: totrans-713
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE199]'
 - en: '[PRE200]'
+  id: totrans-714
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE200]'
 - en: '[PRE201]'
+  id: totrans-715
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE201]'
 - en: The fallback printer.
+  id: totrans-716
   prefs: []
   type: TYPE_NORMAL
+  zh: 回退打印机。
 - en: '[PRE202]'
+  id: totrans-717
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE202]'
 - en: Prints each item in \(args\) and joins them with \(sep\).
+  id: totrans-718
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印每个 \(args\) 中的项，并使用 \(sep\) 连接它们。
 - en: '[PRE203]'
+  id: totrans-719
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE203]'
 - en: 'return expr in repr form  ## StrPrinter'
+  id: totrans-720
   prefs: []
   type: TYPE_NORMAL
+  zh: '以 repr 形式返回表达式  ## StrPrinter'
 - en: This module generates readable representations of SymPy expressions.
+  id: totrans-721
   prefs: []
   type: TYPE_NORMAL
+  zh: 此模块生成 SymPy 表达式的可读表示。
 - en: '[PRE204]'
+  id: totrans-722
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE204]'
 - en: '[PRE205]'
+  id: totrans-723
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE205]'
 - en: '[PRE206]'
+  id: totrans-724
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE206]'
 - en: Returns the expression as a string.
+  id: totrans-725
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回表达式的字符串。
 - en: For large expressions where speed is a concern, use the setting order=’none’.
     If abbrev=True setting is used then units are printed in abbreviated form.
+  id: totrans-726
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于需要速度的大型表达式，使用设置 order='none'。如果使用 abbrev=True 设置，则单位以缩写形式打印。
 - en: Examples
+  id: totrans-727
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE207]'
+  id: totrans-728
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE207]'
 - en: '[PRE208]'
+  id: totrans-729
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE208]'
 - en: return expr in mixed str/repr form
+  id: totrans-730
   prefs: []
   type: TYPE_NORMAL
+  zh: 以混合 str/repr 形式返回表达式
 - en: i.e. strings are returned in repr form with quotes, and everything else is returned
     in str form.
+  id: totrans-731
   prefs: []
   type: TYPE_NORMAL
+  zh: 即，字符串以引号形式返回，其他所有内容均以字符串形式返回。
 - en: 'This function could be useful for hooking into sys.displayhook  ## Tree Printing'
+  id: totrans-732
   prefs: []
   type: TYPE_NORMAL
+  zh: '此函数可能对接入 sys.displayhook  ## 树形打印 有用'
 - en: The functions in this module create a representation of an expression as a tree.
+  id: totrans-733
   prefs: []
   type: TYPE_NORMAL
+  zh: 此模块中的函数创建表达式的树形表示。
 - en: '[PRE209]'
+  id: totrans-734
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE209]'
 - en: Prettyprints systems of nodes.
+  id: totrans-735
   prefs: []
   type: TYPE_NORMAL
+  zh: 美化节点系统。
 - en: Examples
+  id: totrans-736
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE210]'
+  id: totrans-737
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE210]'
 - en: '[PRE211]'
+  id: totrans-738
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE211]'
 - en: Returns information about the “node”.
+  id: totrans-739
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回有关“node”的信息。
 - en: This includes class name, string representation and assumptions.
+  id: totrans-740
   prefs: []
   type: TYPE_NORMAL
+  zh: 包括类名、字符串表示和假设。
 - en: 'Parameters:'
+  id: totrans-741
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**assumptions** : bool, optional'
+  id: totrans-742
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assumptions** ：布尔型，可选'
 - en: See the `assumptions` keyword in `tree`
+  id: totrans-743
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 查看 `tree` 中的 `assumptions` 关键字
 - en: '[PRE212]'
+  id: totrans-744
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE212]'
 - en: Returns a tree representation of “node” as a string.
+  id: totrans-745
   prefs: []
   type: TYPE_NORMAL
+  zh: 将“node”的树形表示作为字符串返回。
 - en: It uses print_node() together with pprint_nodes() on node.args recursively.
+  id: totrans-746
   prefs: []
   type: TYPE_NORMAL
+  zh: 它在节点.args 上递归地使用 print_node() 和 pprint_nodes()。
 - en: 'Parameters:'
+  id: totrans-747
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**asssumptions** : bool, optional'
+  id: totrans-748
   prefs: []
   type: TYPE_NORMAL
+  zh: '**asssumptions** : bool, optional'
 - en: The flag to decide whether to print out all the assumption data (such as [PRE213])
     associated with the expression or not.
+  id: totrans-749
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 标志用于决定是否打印与表达式关联的所有假设数据（例如 [PRE213]）。
 - en: ''
+  id: totrans-750
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: Enabling the flag makes the result verbose, and the printed result may not be
     determinisitic because of the randomness used in backtracing the assumptions.
+  id: totrans-751
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 启用标志会使结果冗长，并且由于在回溯假设时使用的随机性，打印结果可能不确定。
 - en: See also
+  id: totrans-752
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`print_tree`](#sympy.printing.tree.print_tree "sympy.printing.tree.print_tree")'
+  id: totrans-753
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`print_tree`](#sympy.printing.tree.print_tree "sympy.printing.tree.print_tree")'
 - en: '[PRE214]'
+  id: totrans-754
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE214]'
 - en: Prints a tree representation of “node”.
+  id: totrans-755
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印 “node” 的树形表示。
 - en: 'Parameters:'
+  id: totrans-756
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**asssumptions** : bool, optional'
+  id: totrans-757
   prefs: []
   type: TYPE_NORMAL
+  zh: '**asssumptions** : bool, optional'
 - en: The flag to decide whether to print out all the assumption data (such as [PRE215])
     associated with the expression or not.
+  id: totrans-758
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 标志决定是否打印与表达式关联的所有假设数据（例如 [PRE215]）。
 - en: ''
+  id: totrans-759
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: Enabling the flag makes the result verbose, and the printed result may not be
     determinisitic because of the randomness used in backtracing the assumptions.
+  id: totrans-760
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 启用标志会使结果冗长，并且由于在回溯假设时使用的随机性，打印结果可能不确定。
 - en: Examples
+  id: totrans-761
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE216]'
+  id: totrans-762
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE216]'
 - en: 'Printing with full assumptions information:'
+  id: totrans-763
   prefs: []
   type: TYPE_NORMAL
+  zh: 打印具有完整假设信息：
 - en: '[PRE217]'
+  id: totrans-764
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE217]'
 - en: 'Hiding the assumptions:'
+  id: totrans-765
   prefs: []
   type: TYPE_NORMAL
+  zh: 隐藏假设：
 - en: '[PRE218]'
+  id: totrans-766
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE218]'
 - en: See also
+  id: totrans-767
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`tree`](#sympy.printing.tree.tree "sympy.printing.tree.tree")'
+  id: totrans-768
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`tree`](#sympy.printing.tree.tree "sympy.printing.tree.tree")'
 - en: Preview
+  id: totrans-769
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 预览
 - en: 'A useful function is `preview`:'
+  id: totrans-770
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个有用的函数是 `preview`：
 - en: '[PRE219]'
+  id: totrans-771
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE219]'
 - en: View expression or LaTeX markup in PNG, DVI, PostScript or PDF form.
+  id: totrans-772
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看表达式或 LaTeX 标记以 PNG、DVI、PostScript 或 PDF 形式。
 - en: If the expr argument is an expression, it will be exported to LaTeX and then
     compiled using the available TeX distribution. The first argument, ‘expr’, may
     also be a LaTeX string. The function will then run the appropriate viewer for
     the given output format or use the user defined one. By default png output is
     generated.
+  id: totrans-773
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果表达式参数是一个表达式，则将其导出到 LaTeX，然后使用可用的 TeX 发行版进行编译。第一个参数 ‘expr’ 也可以是 LaTeX 字符串。然后函数将运行给定输出格式的适当查看器或使用用户定义的查看器。默认生成
+    png 输出。
 - en: By default pretty Euler fonts are used for typesetting (they were used to typeset
     the well known “Concrete Mathematics” book). For that to work, you need the ‘eulervm.sty’
     LaTeX style (in Debian/Ubuntu, install the texlive-fonts-extra package). If you
     prefer default AMS fonts or your system lacks ‘eulervm’ LaTeX package then unset
     the ‘euler’ keyword argument.
+  id: totrans-774
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，用于排版的漂亮 Euler 字体（用于排版著名的 “Concrete Mathematics” 书籍）。为此工作，您需要 ‘eulervm.sty’
+    LaTeX 样式（在 Debian/Ubuntu 中，安装 texlive-fonts-extra 包）。如果您更喜欢默认的 AMS 字体或者您的系统缺少
+    ‘eulervm’ LaTeX 包，则取消 ‘euler’ 关键字参数。
 - en: To use viewer auto-detection, lets say for ‘png’ output, issue
+  id: totrans-775
   prefs: []
   type: TYPE_NORMAL
+  zh: 要使用查看器自动检测，比如对于 ‘png’ 输出，发出
 - en: '[PRE220]'
+  id: totrans-776
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE220]'
 - en: '[PRE221]'
+  id: totrans-777
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE221]'
 - en: This will choose ‘pyglet’ by default. To select a different one, do
+  id: totrans-778
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下将选择 ‘pyglet’。要选择其他不同的，请执行
 - en: '[PRE222]'
+  id: totrans-779
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE222]'
 - en: The ‘png’ format is considered special. For all other formats the rules are
     slightly different. As an example we will take ‘dvi’ output format. If you would
     run
+  id: totrans-780
   prefs: []
   type: TYPE_NORMAL
+  zh: ‘png’ 格式被认为是特殊的。对于所有其他格式，规则略有不同。例如，我们将采用 ‘dvi’ 输出格式。如果您运行
 - en: '[PRE223]'
+  id: totrans-781
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE223]'
 - en: then ‘view’ will look for available ‘dvi’ viewers on your system (predefined
     in the function, so it will try evince, first, then kdvi and xdvi). If nothing
     is found, it will fall back to using a system file association (via `open` and
     `xdg-open`). To always use your system file association without searching for
     the above readers, use
+  id: totrans-782
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后 ‘view’ 将在您的系统上查找可用的 ‘dvi’ 查看器（在函数中预定义，因此首先尝试 evince，然后是 kdvi 和 xdvi）。如果找不到任何内容，它将退回到使用系统文件关联（通过
+    `open` 和 `xdg-open`）。要始终使用您的系统文件关联而不搜索上述读取器，请使用
 - en: '[PRE224]'
+  id: totrans-783
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE224]'
 - en: If this still does not find the viewer you want, it can be set explicitly.
+  id: totrans-784
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这仍然找不到您想要的查看器，可以显式设置。
 - en: '[PRE225]'
+  id: totrans-785
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE225]'
 - en: This will skip auto-detection and will run user specified ‘superior-dvi-viewer’.
     If `view` fails to find it on your system it will gracefully raise an exception.
+  id: totrans-786
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将跳过自动检测，并运行用户指定的 ‘superior-dvi-viewer’。如果 `view` 在您的系统上找不到它，它将优雅地引发异常。
 - en: You may also enter `'file'` for the viewer argument. Doing so will cause this
     function to return a file object in read-only mode, if `filename` is unset. However,
     if it was set, then ‘preview’ writes the generated file to this filename instead.
+  id: totrans-787
   prefs: []
   type: TYPE_NORMAL
+  zh: 您也可以输入 `'file'` 作为查看器参数。这样做将导致此函数以只读模式返回一个文件对象，如果未设置 `filename`。但是，如果设置了，那么
+    ‘preview’ 将生成的文件写入此文件名。
 - en: There is also support for writing to a `io.BytesIO` like object, which needs
     to be passed to the `outputbuffer` argument.
+  id: totrans-788
   prefs: []
   type: TYPE_NORMAL
+  zh: 还支持写入类似 `io.BytesIO` 的对象，需要传递给 `outputbuffer` 参数。
 - en: '[PRE226]'
+  id: totrans-789
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE226]'
 - en: The LaTeX preamble can be customized by setting the ‘preamble’ keyword argument.
     This can be used, e.g., to set a different font size, use a custom documentclass
     or import certain set of LaTeX packages.
+  id: totrans-790
   prefs: []
   type: TYPE_NORMAL
+  zh: 可通过设置 ‘preamble’ 关键字参数来自定义 LaTeX 前导部分。例如，可以用于设置不同的字体大小、使用自定义文档类或导入某一组 LaTeX
+    包。
 - en: '[PRE227]'
+  id: totrans-791
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE227]'
 - en: It is also possible to use the standard preamble and provide additional information
     to the preamble using the `extra_preamble` keyword argument.
+  id: totrans-792
   prefs: []
   type: TYPE_NORMAL
+  zh: 还可以使用标准导言，并使用 `extra_preamble` 关键字参数提供额外的信息。
 - en: '[PRE228]'
+  id: totrans-793
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE228]'
 - en: If the value of ‘output’ is different from ‘dvi’ then command line options can
     be set (‘dvioptions’ argument) for the execution of the ‘dvi’+output conversion
     tool. These options have to be in the form of a list of strings (see `subprocess.Popen`).
+  id: totrans-794
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果‘output’的值与‘dvi’不同，则可以为‘dvi’+输出转换工具的执行设置命令行选项（‘dvioptions’参数）。这些选项必须以字符串列表的形式给出（参见
+    `subprocess.Popen`）。
 - en: Additional keyword args will be passed to the [`latex()`](#sympy.printing.latex.latex
     "sympy.printing.latex.latex") call, e.g., the `symbol_names` flag.
+  id: totrans-795
   prefs: []
   type: TYPE_NORMAL
+  zh: 附加关键字参数将传递给 [`latex()`](#sympy.printing.latex.latex "sympy.printing.latex.latex")
+    调用，例如 `symbol_names` 标志。
 - en: '[PRE229]'
+  id: totrans-796
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE229]'
 - en: For post-processing the generated TeX File can be written to a file by passing
     the desired filename to the ‘outputTexFile’ keyword argument. To write the TeX
     code to a file named `"sample.tex"` and run the default png viewer to display
     the resulting bitmap, do
+  id: totrans-797
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将所需的文件名传递给 ‘outputTexFile’ 关键字参数，可以将生成的 TeX 文件写入文件。要将 TeX 代码写入名为 `"sample.tex"`
+    的文件，并运行默认的 png 查看器以显示生成的位图，请执行以下操作
 - en: '[PRE230]'
+  id: totrans-798
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE230]'
 - en: '## Implementation - Helper Classes/Functions'
+  id: totrans-799
   prefs: []
   type: TYPE_NORMAL
+  zh: '## 实现 - 辅助类/函数'
 - en: '[PRE231]'
+  id: totrans-800
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE231]'
 - en: Split a symbol name into a name, superscripts and subscripts
+  id: totrans-801
   prefs: []
   type: TYPE_NORMAL
+  zh: 将符号名称拆分为名称、上标和下标。
 - en: The first part of the symbol name is considered to be its actual ‘name’, followed
     by super- and subscripts. Each superscript is preceded with a “^” character or
     by “__”. Each subscript is preceded by a “_” character. The three return values
     are the actual name, a list with superscripts and a list with subscripts.
+  id: totrans-802
   prefs: []
   type: TYPE_NORMAL
+  zh: 符号名称的第一部分被视为其实际“名称”，后跟上标和下标。每个上标前面带有“^”字符或“__”。每个下标前面带有“_”字符。三个返回值分别是实际名称、包含上标的列表和包含下标的列表。
 - en: Examples
+  id: totrans-803
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE232]'
+  id: totrans-804
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE232]'
 - en: '### CodePrinter'
+  id: totrans-805
   prefs: []
   type: TYPE_NORMAL
+  zh: '### CodePrinter'
 - en: This class is a base class for other classes that implement code-printing functionality,
     and additionally lists a number of functions that cannot be easily translated
     to C or Fortran.
+  id: totrans-806
   prefs: []
   type: TYPE_NORMAL
+  zh: 此类是其他实现代码打印功能的类的基类，另外列出了一些不能轻松转换为 C 或 Fortran 的函数。
 - en: '[PRE233]'
+  id: totrans-807
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE233]'
 - en: The base class for code-printing subclasses.
+  id: totrans-808
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码打印子类的基类。
 - en: '[PRE234]'
+  id: totrans-809
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE234]'
 - en: '[PRE235]'
+  id: totrans-810
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE235]'
 - en: Print the expression as code.
+  id: totrans-811
   prefs: []
   type: TYPE_NORMAL
+  zh: 将表达式打印为代码。
 - en: 'Parameters:'
+  id: totrans-812
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**expr** : Expression'
+  id: totrans-813
   prefs: []
   type: TYPE_NORMAL
+  zh: '**expr**：表达式'
 - en: The expression to be printed.
+  id: totrans-814
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要打印的表达式。
 - en: '**assign_to** : Symbol, string, MatrixSymbol, list of strings or Symbols (optional)'
+  id: totrans-815
   prefs: []
   type: TYPE_NORMAL
+  zh: '**assign_to**：符号、字符串、MatrixSymbol、字符串列表或符号（可选）'
 - en: If provided, the printed code will set the expression to a variable or multiple
     variables with the name or names given in `assign_to`.
+  id: totrans-816
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 如果提供了，打印的代码将把表达式设置为在 `assign_to` 中给定的变量或多个变量的名称。
 - en: '[PRE236]'
+  id: totrans-817
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE236]'
 - en: 'Raised if an assignment variable for a loop is missing.  ### Precedence'
+  id: totrans-818
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果缺少循环的分配变量，则引发异常。### 优先级
 - en: '[PRE237]'
+  id: totrans-819
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE237]'
 - en: Default precedence values for some basic types.
+  id: totrans-820
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些基本类型的默认优先级值。
 - en: '[PRE238]'
+  id: totrans-821
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE238]'
 - en: A dictionary assigning precedence values to certain classes. These values are
     treated like they were inherited, so not every single class has to be named here.
+  id: totrans-822
   prefs: []
   type: TYPE_NORMAL
+  zh: 将某些类别赋予优先级值的字典。这些值被视为继承的值，因此不必在此处命名每个单独的类。
 - en: '[PRE239]'
+  id: totrans-823
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE239]'
 - en: Sometimes it’s not enough to assign a fixed precedence value to a class. Then
     a function can be inserted in this dictionary that takes an instance of this class
     as argument and returns the appropriate precedence value.
+  id: totrans-824
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时仅为类别分配固定的优先级值是不够的。然后可以在此字典中插入一个函数，该函数以此类的实例作为参数，并返回适当的优先级值。
 - en: '[PRE240]'
+  id: totrans-825
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE240]'
 - en: Returns the precedence of a given object.
+  id: totrans-826
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回给定对象的优先级。
 - en: 'This is the precedence for StrPrinter.  ## Pretty-Printing Implementation Helpers'
+  id: totrans-827
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是 StrPrinter 的优先级。## 漂亮打印实现辅助函数
 - en: '[PRE241]'
+  id: totrans-828
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE241]'
 - en: Get a unicode character by name or, None if not found.
+  id: totrans-829
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过名称获取 Unicode 字符，如果找不到则返回 `None`。
 - en: This exists because older versions of Python use older unicode databases.
+  id: totrans-830
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是因为较旧版本的 Python 使用较旧的 Unicode 数据库。
 - en: '[PRE242]'
+  id: totrans-831
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE242]'
 - en: Set whether pretty-printer should use unicode by default
+  id: totrans-832
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置漂亮打印机默认是否使用 Unicode。
 - en: '[PRE243]'
+  id: totrans-833
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE243]'
 - en: See if unicode output is available and leverage it if possible
+  id: totrans-834
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看是否可以使用 Unicode 输出，并在可能时利用它。
 - en: '[PRE244]'
+  id: totrans-835
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE244]'
 - en: The following two functions return the Unicode version of the inputted Greek
     letter.
+  id: totrans-836
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下两个函数返回输入的希腊字母的 Unicode 版本。
 - en: '[PRE245]'
+  id: totrans-837
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE245]'
 - en: '[PRE246]'
+  id: totrans-838
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE246]'
 - en: '[PRE247]'
+  id: totrans-839
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE247]'
 - en: Built-in mutable sequence.
+  id: totrans-840
   prefs: []
   type: TYPE_NORMAL
+  zh: 内置可变序列。
 - en: If no argument is given, the constructor creates a new empty list. The argument
     must be an iterable if specified.
+  id: totrans-841
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果未给出参数，则构造函数创建一个新的空列表。如果指定了参数，必须是可迭代的。
 - en: '[PRE248]'
+  id: totrans-842
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE248]'
 - en: '[PRE249]'
+  id: totrans-843
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE249]'
 - en: The following functions return the Unicode subscript/superscript version of
     the character.
+  id: totrans-844
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下函数返回字符的Unicode下标/上标版本。
 - en: '[PRE250]'
+  id: totrans-845
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE250]'
 - en: '[PRE251]'
+  id: totrans-846
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE251]'
 - en: The following functions return Unicode vertical objects.
+  id: totrans-847
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下函数返回Unicode垂直对象。
 - en: '[PRE252]'
+  id: totrans-848
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE252]'
 - en: Construct spatial object of given length.
+  id: totrans-849
   prefs: []
   type: TYPE_NORMAL
+  zh: 构造给定长度的空间对象。
 - en: 'return: [] of equal-length strings'
+  id: totrans-850
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回：[]，长度相等的字符串。
 - en: '[PRE253]'
+  id: totrans-851
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE253]'
 - en: Construct vertical object of a given height
+  id: totrans-852
   prefs: []
   type: TYPE_NORMAL
+  zh: 构建给定高度的垂直对象。
 - en: 'see: xobj'
+  id: totrans-853
   prefs: []
   type: TYPE_NORMAL
+  zh: 见：xobj
 - en: '[PRE254]'
+  id: totrans-854
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE254]'
 - en: Construct horizontal object of a given width
+  id: totrans-855
   prefs: []
   type: TYPE_NORMAL
+  zh: 构建给定宽度的水平对象。
 - en: 'see: xobj'
+  id: totrans-856
   prefs: []
   type: TYPE_NORMAL
+  zh: 见：xobj
 - en: The following constants are for rendering roots and fractions.
+  id: totrans-857
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下常数用于呈现根和分数。
 - en: '[PRE255]'
+  id: totrans-858
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE255]'
 - en: '[PRE256]'
+  id: totrans-859
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE256]'
 - en: '[PRE257]'
+  id: totrans-860
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE257]'
 - en: The following constants/functions are for rendering atoms and symbols.
+  id: totrans-861
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下常量/函数用于呈现原子和符号。
 - en: '[PRE258]'
+  id: totrans-862
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE258]'
 - en: get symbology for a ‘character’
+  id: totrans-863
   prefs: []
   type: TYPE_NORMAL
+  zh: 获取‘character’的符号学。
 - en: '[PRE259]'
+  id: totrans-864
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE259]'
 - en: '[PRE260]'
+  id: totrans-865
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE260]'
 - en: return pretty representation of an atom
+  id: totrans-866
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回原子的漂亮表示。
 - en: '[PRE261]'
+  id: totrans-867
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE261]'
 - en: return pretty representation of a symbol
+  id: totrans-868
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回符号的漂亮表示。
 - en: '[PRE262]'
+  id: totrans-869
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE262]'
 - en: Return a stylised drawing of the letter `letter`, together with information
     on how to put annotations (super- and subscripts to the left and to the right)
     on it.
+  id: totrans-870
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回字母`letter`的风格化图，以及如何在其上方和下方放置标注（上标和下标）的信息。
 - en: See pretty.py functions _print_meijerg, _print_hyper on how to use this information.
+  id: totrans-871
   prefs: []
   type: TYPE_NORMAL
+  zh: 请查看pretty.py函数_print_meijerg，_print_hyper，了解如何使用此信息。
 - en: 'Prettyprinter by Jurjen Bos. (I hate spammers: mail me at pietjepuk314 at the
     reverse of ku.oc.oohay). All objects have a method that create a “stringPict”,
     that can be used in the str method for pretty printing.'
+  id: totrans-872
   prefs: []
   type: TYPE_NORMAL
+  zh: 由Jurjen Bos编写的Prettyprinter。（我讨厌垃圾邮件：请发邮件至ku.oc.oohay的反向地址）。所有对象都有一个创建“stringPict”的方法，可在用于漂亮打印的str方法中使用。
 - en: Updates by Jason Gedge (email <my last name> at cs mun ca)
+  id: totrans-873
   prefs: []
   type: TYPE_NORMAL
+  zh: 由Jason Gedge更新（电子邮件<我的姓氏> at cs mun ca）
 - en: terminal_string() method
+  id: totrans-874
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: terminal_string() 方法
 - en: minor fixes and changes (mostly to prettyForm)
+  id: totrans-875
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 小修复和更改（主要是对prettyForm的修复）
 - en: 'TODO:'
+  id: totrans-876
   prefs: []
   type: TYPE_NORMAL
+  zh: 待办事项：
 - en: Allow left/center/right alignment options for above/below and top/center/bottom
     alignment options for left/right
+  id: totrans-877
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 允许对上方/下方进行左/居中/右对齐选项，并对左侧/右侧进行上/居中/下对齐选项。
 - en: '[PRE263]'
+  id: totrans-878
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE263]'
 - en: An ASCII picture. The pictures are represented as a list of equal length strings.
+  id: totrans-879
   prefs: []
   type: TYPE_NORMAL
+  zh: ASCII图片。图片表示为等长字符串列表。
 - en: '[PRE264]'
+  id: totrans-880
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE264]'
 - en: Put pictures above this picture. Returns string, baseline arguments for stringPict.
     Baseline is baseline of bottom picture.
+  id: totrans-881
   prefs: []
   type: TYPE_NORMAL
+  zh: 将图片放在此图片上方。返回字符串，用于stringPict的基线参数。基线是底部图片的基线。
 - en: '[PRE265]'
+  id: totrans-882
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE265]'
 - en: Put pictures under this picture. Returns string, baseline arguments for stringPict.
     Baseline is baseline of top picture
+  id: totrans-883
   prefs: []
   type: TYPE_NORMAL
+  zh: 将图片放在此图片下方。返回字符串，用于stringPict的基线参数。基线是顶部图片的基线。
 - en: Examples
+  id: totrans-884
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE266]'
+  id: totrans-885
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE266]'
 - en: '[PRE267]'
+  id: totrans-886
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE267]'
 - en: The height of the picture in characters.
+  id: totrans-887
   prefs: []
   type: TYPE_NORMAL
+  zh: 图片在字符中的高度。
 - en: '[PRE268]'
+  id: totrans-888
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE268]'
 - en: Put pictures (left to right) at left. Returns string, baseline arguments for
     stringPict.
+  id: totrans-889
   prefs: []
   type: TYPE_NORMAL
+  zh: 将图片（从左到右）放在左边。返回字符串，用于stringPict的基线参数。
 - en: '[PRE269]'
+  id: totrans-890
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE269]'
 - en: Precede object by a slash of the proper size.
+  id: totrans-891
   prefs: []
   type: TYPE_NORMAL
+  zh: 在对象前加上适当大小的斜杠。
 - en: '[PRE270]'
+  id: totrans-892
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE270]'
 - en: Put a string of stringPicts next to each other. Returns string, baseline arguments
     for stringPict.
+  id: totrans-893
   prefs: []
   type: TYPE_NORMAL
+  zh: 将一串stringPicts放在一起。返回字符串，用于stringPict的基线参数。
 - en: '[PRE271]'
+  id: totrans-894
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE271]'
 - en: Put parentheses around self. Returns string, baseline arguments for stringPict.
+  id: totrans-895
   prefs: []
   type: TYPE_NORMAL
+  zh: 将自身放在括号中。返回字符串，用于stringPict的基线参数。
 - en: left or right can be None or empty string which means ‘no paren from that side’
+  id: totrans-896
   prefs: []
   type: TYPE_NORMAL
+  zh: 左侧或右侧可以是None或空字符串，表示“该侧没有括号”。
 - en: '[PRE272]'
+  id: totrans-897
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE272]'
 - en: Return the string form of self.
+  id: totrans-898
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回自身的字符串形式。
 - en: Unless the argument line_break is set to False, it will break the expression
     in a form that can be printed on the terminal without being broken up.
+  id: totrans-899
   prefs: []
   type: TYPE_NORMAL
+  zh: 除非设置参数`line_break`为False，否则将在可以在终端上打印的形式中断表达式，而不会中断它。
 - en: '[PRE273]'
+  id: totrans-900
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE273]'
 - en: Put pictures next to this one. Returns string, baseline arguments for stringPict.
     (Multiline) strings are allowed, and are given a baseline of 0.
+  id: totrans-901
   prefs: []
   type: TYPE_NORMAL
+  zh: 将图片放在这个旁边。返回字符串，用于stringPict的基线参数。（多行）字符串被允许，并且给出基线为0。
 - en: Examples
+  id: totrans-902
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE274]'
+  id: totrans-903
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE274]'
 - en: '[PRE275]'
+  id: totrans-904
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE275]'
 - en: Produce a nice root symbol. Produces ugly results for big n inserts.
+  id: totrans-905
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成一个漂亮的根符号。对大n插入产生丑陋的结果。
 - en: '[PRE276]'
+  id: totrans-906
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE276]'
 - en: Put pictures on top of each other, from top to bottom. Returns string, baseline
     arguments for stringPict. The baseline is the baseline of the second picture.
     Everything is centered. Baseline is the baseline of the second picture. Strings
     are allowed. The special value stringPict.LINE is a row of ‘-’ extended to the
     width.
+  id: totrans-907
   prefs: []
   type: TYPE_NORMAL
+  zh: 将图片从上到下放在一起。返回字符串，用于stringPict的基线参数。基线是第二张图片的基线。一切都居中。基线是第二张图片的基线。允许字符串。特殊值stringPict.LINE是一排‘-’扩展到宽度。
 - en: '[PRE277]'
+  id: totrans-908
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE277]'
 - en: Return the terminal width if possible, otherwise return 0.
+  id: totrans-909
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果可能，返回终端宽度，否则返回0。
 - en: '[PRE278]'
+  id: totrans-910
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE278]'
 - en: The width of the picture in characters.
+  id: totrans-911
   prefs: []
   type: TYPE_NORMAL
+  zh: 图片在字符中的宽度。
 - en: '[PRE279]'
+  id: totrans-912
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE279]'
 - en: Extension of the stringPict class that knows about basic math applications,
     optimizing double minus signs.
+  id: totrans-913
   prefs: []
   type: TYPE_NORMAL
+  zh: stringPict类的扩展，了解基本数学应用程序，优化双减号。
 - en: '“Binding” is interpreted as follows:'
+  id: totrans-914
   prefs: []
   type: TYPE_NORMAL
+  zh: “绑定”被解释如下：
 - en: '[PRE280]'
+  id: totrans-915
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE280]'
 - en: '[PRE281]'
+  id: totrans-916
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE281]'
 - en: Functions of one or more variables.
+  id: totrans-917
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个或多个变量的函数。
 - en: dotprint
+  id: totrans-918
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: dotprint
 - en: '[PRE282]'
+  id: totrans-919
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE282]'
 - en: DOT description of a SymPy expression tree
+  id: totrans-920
   prefs: []
   type: TYPE_NORMAL
+  zh: SymPy表达式树的DOT描述
 - en: 'Parameters:'
+  id: totrans-921
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**styles** : list of lists composed of (Class, mapping), optional'
+  id: totrans-922
   prefs: []
   type: TYPE_NORMAL
+  zh: '**styles**：由（类，映射）组成的列表的列表，可选'
 - en: Styles for different classes.
+  id: totrans-923
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 不同类别的样式。
 - en: ''
+  id: totrans-924
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: The default is
+  id: totrans-925
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 默认值是
 - en: ''
+  id: totrans-926
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: '[PRE283]'
+  id: totrans-927
   prefs:
   - PREF_BQ
   type: TYPE_PRE
+  zh: '[PRE283]'
 - en: '**atom** : function, optional'
+  id: totrans-928
   prefs: []
   type: TYPE_NORMAL
+  zh: '**atom**：函数，可选'
 - en: Function used to determine if an arg is an atom.
+  id: totrans-929
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 用于确定参数是否为原子的函数。
 - en: ''
+  id: totrans-930
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: 'A good choice is `lambda x: not x.args`.'
+  id: totrans-931
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '一个好的选择是`lambda x: not x.args`。'
 - en: ''
+  id: totrans-932
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: 'The default is `lambda x: not isinstance(x, Basic)`.'
+  id: totrans-933
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: '默认值是`lambda x: not isinstance(x, Basic)`。'
 - en: '**maxdepth** : integer, optional'
+  id: totrans-934
   prefs: []
   type: TYPE_NORMAL
+  zh: '**maxdepth**：整数，可选'
 - en: The maximum depth.
+  id: totrans-935
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 最大深度。
 - en: ''
+  id: totrans-936
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: The default is `None`, meaning no limit.
+  id: totrans-937
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 默认值为`None`，表示没有限制。
 - en: '**repeat** : boolean, optional'
+  id: totrans-938
   prefs: []
   type: TYPE_NORMAL
+  zh: '**repeat**：布尔值，可选'
 - en: Whether to use different nodes for common subexpressions.
+  id: totrans-939
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 是否对常见子表达式使用不同节点。
 - en: ''
+  id: totrans-940
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: The default is `True`.
+  id: totrans-941
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 默认值为`True`。
 - en: ''
+  id: totrans-942
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: For example, for `x + x*y` with `repeat=True`, it will have two nodes for `x`;
     with `repeat=False`, it will have one node.
+  id: totrans-943
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例如，对于带有`repeat=True`的`x + x*y`，将会有两个`x`的节点；而对于`repeat=False`，将只有一个节点。
 - en: ''
+  id: totrans-944
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: Warning
+  id: totrans-945
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 警告
 - en: ''
+  id: totrans-946
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: Even if a node appears twice in the same object like `x` in `Pow(x, x)`, it
     will still only appear once. Hence, with `repeat=False`, the number of arrows
     out of an object might not equal the number of args it has.
+  id: totrans-947
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 即使像`Pow(x, x)`中的`x`在同一对象中出现两次，它仍然只会出现一次。因此，对于`repeat=False`，对象的箭头数量可能不等于其参数数量。
 - en: '**labelfunc** : function, optional'
+  id: totrans-948
   prefs: []
   type: TYPE_NORMAL
+  zh: '**labelfunc**：函数，可选'
 - en: A function to create a label for a given leaf node.
+  id: totrans-949
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 为给定叶节点创建标签的函数。
 - en: ''
+  id: totrans-950
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: The default is `str`.
+  id: totrans-951
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 默认值为`str`。
 - en: ''
+  id: totrans-952
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: Another good option is `srepr`.
+  id: totrans-953
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 另一个好选择是`srepr`。
 - en: ''
+  id: totrans-954
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: For example with `str`, the leaf nodes of `x + 1` are labeled, `x` and `1`.
     With `srepr`, they are labeled `Symbol('x')` and `Integer(1)`.
+  id: totrans-955
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 例如，使用`str`时，`x + 1`的叶节点标记为`x`和`1`。使用`srepr`时，它们标记为`Symbol('x')`和`Integer(1)`。
 - en: '****kwargs** : optional'
+  id: totrans-956
   prefs: []
   type: TYPE_NORMAL
+  zh: '****kwargs**：可选'
 - en: Additional keyword arguments are included as styles for the graph.
+  id: totrans-957
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 额外的关键字参数包括图形的样式。
 - en: Examples
+  id: totrans-958
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE284]'
+  id: totrans-959
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE284]'

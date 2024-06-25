@@ -1,901 +1,1466 @@
 - en: Series Manipulation using Polynomials
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.sympy.org/latest/modules/polys/ringseries.html](https://docs.sympy.org/latest/modules/polys/ringseries.html)
+  zh: 多项式级数操作
+- en: Original text：[https://docs.sympy.org/latest/modules/polys/ringseries.html](https://docs.sympy.org/latest/modules/polys/ringseries.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://docs.sympy.org/latest/modules/polys/ringseries.html](https://docs.sympy.org/latest/modules/polys/ringseries.html)
 - en: Any finite Taylor series, for all practical purposes is, in fact a polynomial.
     This module makes use of the efficient representation and operations of sparse
     polynomials for very fast multivariate series manipulations. Typical speedups
     compared to SymPy’s `series` method are in the range 20-100, with the gap widening
     as the series being handled gets larger.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 任何有限的泰勒级数在实际应用中实际上都是多项式。本模块利用高效的稀疏多项式表示和操作，实现了非常快速的多变量级数操作。与 SymPy 的 `series`
+    方法相比，典型的加速比在 20-100 之间，随着处理的级数越来越大，这一差距会进一步扩大。
 - en: 'All the functions expand any given series on some ring specified by the user.
     Thus, the coefficients of the calculated series depend on the ring being used.
     For example:'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有函数都在用户指定的某个环上展开任何给定的级数。因此，计算出的级数的系数取决于使用的环。例如：
 - en: '[PRE0]'
+  id: totrans-4
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '`QQ` stands for the Rational domain. Here all coefficients are rationals. It
     is recommended to use `QQ` with ring series as it automatically chooses the fastest
     Rational type.'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: '`QQ` 代表有理数域。在这里，所有系数都是有理数。建议在使用 `ring series` 时使用 `QQ`，因为它会自动选择最快的有理数类型。'
 - en: 'Similarly, if a Real domain is used:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样地，如果使用实数域：
 - en: '[PRE1]'
+  id: totrans-7
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Though the definition of a polynomial limits the use of Polynomial module to
     Taylor series, we extend it to allow Laurent and even Puiseux series (with fractional
     exponents):'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管多项式的定义限制了多项式模块仅用于泰勒级数，但我们将其扩展到允许 Laurent 甚至 Puiseux 级数（带有分数指数）。
 - en: '[PRE2]'
+  id: totrans-9
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: By default, `PolyElement` did not allow non-natural numbers as exponents. It
     converted a fraction to an integer and raised an error on getting negative exponents.
     The goal of the `ring series` module is fast series expansion, and not to use
     the `polys` module. The reason we use it as our backend is simply because it implements
     a sparse representation and most of the basic functions that we need. However,
     this default behaviour of `polys` was limiting for `ring series`.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，`PolyElement` 不允许非自然数作为指数。它会将分数转换为整数，并在获取负指数时引发错误。`ring series` 模块的目标是快速级数展开，并不是使用
+    `polys` 模块。我们之所以选择它作为后端仅仅是因为它实现了稀疏表示和我们需要的大多数基本功能。然而，`polys` 的这种默认行为对于 `ring series`
+    是有限制的。
 - en: Note that there is no such constraint (in having rational exponents) in the
     data-structure used by `polys`- `dict`. Sparse polynomials (`PolyElement`) use
     the Python dict to store a polynomial term by term, where a tuple of exponents
     is the key and the coefficient of that term is the value. There is no reason why
     we can’t have rational values in the `dict` so as to support rational exponents.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，在由 `polys`- `dict` 使用的数据结构中，不存在对有理指数的约束。稀疏多项式 (`PolyElement`) 使用 Python 字典逐项存储多项式，其中元组是指数，而系数是值。我们完全可以在
+    `dict` 中使用有理数值以支持有理指数。
 - en: 'So the approach we took was to modify sparse `polys` to allow non-natural exponents.
     And it turned out to be quite simple. We only had to delete the conversion to
     `int` of exponents in the `__pow__` method of `PolyElement`. So:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们采取的方法是修改稀疏 `polys` 以允许非自然指数。而这个修改实际上非常简单。我们只需要在 `PolyElement` 的 `__pow__`
+    方法中删除指数转换为整数的部分。因此：
 - en: '[PRE3]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: and not `1` as was the case earlier.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 而不是之前的 `1`。
 - en: Though this change violates the definition of a polynomial, it doesn’t break
     anything yet. Ideally, we shouldn’t modify `polys` in any way. But to have all
     the `series` capabilities we want, no other simple way was found. If need be,
     we can separate the modified part of `polys` from core `polys`. It would be great
     if any other elegant solution is found.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管这种改变违反了多项式的定义，但目前尚未造成任何破坏。理想情况下，我们不应以任何方式修改 `polys`。但为了拥有我们想要的所有 `series`
+    功能，没有找到其他简单的解决方案。如果需要的话，我们可以将 `polys` 的修改部分与核心 `polys` 分开。如果能找到其他优雅的解决方案将是极好的。
 - en: 'All series returned by the functions of this module are instances of the `PolyElement`
     class. To use them with other SymPy types, convert them to `Expr`:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 本模块函数返回的所有级数都是 `PolyElement` 类的实例。要与其他 SymPy 类型一起使用它们，请将它们转换为 `Expr`：
 - en: '[PRE4]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: rs_series
+  id: totrans-18
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: rs_series
 - en: Direct use of elementary ring series functions does give more control, but is
     limiting at the same time. Creating an appropriate ring for the desired series
     expansion and knowing which ring series function to call, are things not everyone
     might be familiar with.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 直接使用基本环级数函数确实提供了更多控制，但同时也有限制。创建适当的环以进行所需的级数展开，并知道调用哪个环级数函数，这些可能不是每个人都熟悉的事情。
 - en: '\(rs\_series\) is a function that takes an arbitrary `Expr` and returns its
     expansion by calling the appropriate ring series functions. The returned series
     is a polynomial over the simplest (almost) possible ring that does the job. It
     recursively builds the ring as it parses the given expression, adding generators
     to the ring when it needs them. Some examples:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: \(rs\_series\) 是一个函数，它接受任意的 `Expr` 并通过调用适当的环级数函数返回其展开。返回的级数是在几乎可能的最简单环上的多项式。它在解析给定表达式时递归地构建环，并在需要时将生成器添加到环中。一些示例：
 - en: '[PRE5]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'It can expand complicated multivariate expressions involving multiple functions
     and most importantly, it does so blazingly fast:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 它可以快速展开涉及多个函数的复杂多变量表达式：
 - en: '[PRE6]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: '\(rs\_series\) is over 300 times faster. Given an expression to expand, there
     is some fixed overhead to parse it. Thus, for larger orders, the speed improvement
     becomes more prominent:'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: \(rs\_series\) 的速度快了300多倍。给定一个要展开的表达式，解析它需要一些固定的开销。因此，对于更大的阶数，速度改进更为显著：
 - en: '[PRE7]'
+  id: totrans-25
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'To figure out the right ring for a given expression, \(rs\_series\) uses the
     `sring` function, which in turn uses other functions of `polys`. As explained
     above, non-natural exponents are not allowed. But the restriction is on exponents
     and not generators. So, `polys` allows all sorts of symbolic terms as generators
     to make sure that the exponent is a natural number:'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 要找出给定表达式的正确环，\(rs\_series\) 使用 `sring` 函数，该函数又使用 `polys` 的其他函数。如上所述，不允许非自然指数。但限制在指数而不是生成器上。因此，`polys`
+    允许各种符号术语作为生成器，以确保指数是自然数：
 - en: '[PRE8]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'In the above example, \(1/a\) and \(a**(1/7)\) will be treated as completely
     different atoms. For all practical purposes, we could let \(b = 1/a\) and \(c
     = a**(1/7)\) and do the manipulations. Effectively, expressions involving \(1/a\)
     and \(a**(1/7)\) (and their powers) will never simplify:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上面的例子中，\(1/a\) 和 \(a**(1/7)\) 将被视为完全不同的原子。对于所有实际目的，我们可以让 \(b = 1/a\) 和 \(c
+    = a**(1/7)\)，然后进行操作。实际上，涉及 \(1/a\) 和 \(a**(1/7)\)（及其幂次）的表达式永远不会简化：
 - en: '[PRE9]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'This leads to similar issues with manipulating Laurent and Puiseux series as
     faced earlier. Fortunately, this time we have an elegant solution and are able
     to isolate the `series` and `polys` behaviour from one another. We introduce a
     boolean flag `series` in the list of allowed `Options` for polynomials (see [`sympy.polys.polyoptions.Options`](internals.html#sympy.polys.polyoptions.Options
     "sympy.polys.polyoptions.Options")). Thus, when we want `sring` to allow rational
     exponents we supply a `series=True` flag to `sring`:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 这导致与早期面对的操作 Laurent 和 Puiseux 级数类似的问题。幸运的是，这次我们有了一个优雅的解决方案，并能够将 `series` 和 `polys`
+    的行为彼此隔离。我们在多项式的允许选项列表中引入了一个布尔标志 `series`（请参阅 [`sympy.polys.polyoptions.Options`](internals.html#sympy.polys.polyoptions.Options
+    "sympy.polys.polyoptions.Options")），以便在需要 `sring` 允许有理指数时提供 `series=True` 标志：
 - en: '[PRE10]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Contribute
+  id: totrans-32
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 贡献
 - en: \(rs\_series\) is not fully implemented yet. As of now, it supports only multivariate
     Taylor expansions of expressions involving `sin`, `cos`, `exp` and `tan`. Adding
     the remaining functions is not at all difficult and they will be gradually added.
     If you are interested in helping, read the comments in `ring_series.py`. Currently,
     it does not support Puiseux series (though the elementary functions do). This
     is expected to be fixed soon.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 目前，\(rs\_series\) 尚未完全实现。目前，它仅支持涉及 `sin`、`cos`、`exp` 和 `tan` 的多变量泰勒展开。其余功能将逐步添加。如果您有兴趣帮助，请阅读
+    `ring_series.py` 中的注释。目前，它不支持普伊塞累级数（尽管基本函数支持）。预计很快将修复此问题。
 - en: You can also add more functions to `ring_series.py`. Only elementary functions
     are supported currently. The long term goal is to replace SymPy’s current `series`
     method with `rs_series`.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 您还可以将更多函数添加到 `ring_series.py` 中。目前仅支持基本函数。长远目标是用 `rs_series` 替换 SymPy 的当前 `series`
+    方法。
 - en: Reference
+  id: totrans-35
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 参考
 - en: Functions in this module carry the prefix `rs_`, standing for “ring series”.
     They manipulate finite power series in the sparse representation provided by `polys.ring.ring`.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 此模块中的函数带有前缀 `rs_`，代表“环级数”。它们操作由 `polys.ring.ring` 提供的稀疏表示中的有限幂级数。
 - en: '**Elementary functions**'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: '**基本函数**'
 - en: '[PRE11]'
+  id: totrans-38
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: The Logarithm of `p` modulo `O(x**prec)`.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: '`p`模`O(x**prec)`的对数。'
 - en: Notes
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: Truncation of `integral dx p**-1*d p/dx` is used.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`integral dx p**-1*d p/dx`的截断。
 - en: Examples
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE12]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '[PRE13]'
+  id: totrans-44
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Calculate the series expansion of the principal branch of the Lambert W function.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算Lambert W函数的主分支的级数展开。
 - en: Examples
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE14]'
+  id: totrans-47
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: See also
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`LambertW`](../functions/elementary.html#sympy.functions.elementary.exponential.LambertW
     "sympy.functions.elementary.exponential.LambertW")'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`LambertW`](../functions/elementary.html#sympy.functions.elementary.exponential.LambertW
+    "sympy.functions.elementary.exponential.LambertW")'
 - en: '[PRE15]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Exponentiation of a series modulo `O(x**prec)`
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的指数化模`O(x**prec)`的
 - en: Examples
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE16]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: '[PRE17]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: The arctangent of a series
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的反正切
 - en: Return the series expansion of the atan of `p`, about 0.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的反正切的级数展开，关于0。
 - en: Examples
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE18]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: See also
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`atan`](../functions/elementary.html#sympy.functions.elementary.trigonometric.atan
     "sympy.functions.elementary.trigonometric.atan")'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`atan`](../functions/elementary.html#sympy.functions.elementary.trigonometric.atan
+    "sympy.functions.elementary.trigonometric.atan")'
 - en: '[PRE19]'
+  id: totrans-61
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Arcsine of a series
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的反正弦
 - en: Return the series expansion of the asin of `p`, about 0.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的反正弦的级数展开，关于0。
 - en: Examples
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE20]'
+  id: totrans-65
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: See also
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`asin`](../functions/elementary.html#sympy.functions.elementary.trigonometric.asin
     "sympy.functions.elementary.trigonometric.asin")'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`asin`](../functions/elementary.html#sympy.functions.elementary.trigonometric.asin
+    "sympy.functions.elementary.trigonometric.asin")'
 - en: '[PRE21]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: Tangent of a series.
+  id: totrans-69
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 一系列的正切。
 - en: ''
+  id: totrans-70
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: Return the series expansion of the tan of `p`, about 0.
+  id: totrans-71
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 返回`p`的正切的级数展开，关于0。
 - en: Examples
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE22]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: See also
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`_tan1`](#sympy.polys.ring_series._tan1 "sympy.polys.ring_series._tan1"),
     [`tan`](../functions/elementary.html#sympy.functions.elementary.trigonometric.tan
     "sympy.functions.elementary.trigonometric.tan")'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`_tan1`](#sympy.polys.ring_series._tan1 "sympy.polys.ring_series._tan1"),
+    [`tan`](../functions/elementary.html#sympy.functions.elementary.trigonometric.tan
+    "sympy.functions.elementary.trigonometric.tan")'
 - en: '[PRE23]'
+  id: totrans-76
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Helper function of [`rs_tan()`](#sympy.polys.ring_series.rs_tan "sympy.polys.ring_series.rs_tan").
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`rs_tan()`](#sympy.polys.ring_series.rs_tan "sympy.polys.ring_series.rs_tan")的辅助函数。'
 - en: Return the series expansion of tan of a univariate series using Newton’s method.
     It takes advantage of the fact that series expansion of atan is easier than that
     of tan.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用牛顿法返回单变量级数的正切的级数展开。它利用了atan的级数展开比tan的级数展开更简单的事实。
 - en: Consider \(f(x) = y - \arctan(x)\) Let r be a root of f(x) found using Newton’s
     method. Then \(f(r) = 0\) Or \(y = \arctan(x)\) where \(x = \tan(y)\) as required.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑\(f(x) = y - \arctan(x)\)，让r是用牛顿法找到的f(x)的根。然后\(f(r) = 0\)或\(y = \arctan(x)\)其中\(x
+    = \tan(y)\)如所需。
 - en: '[PRE24]'
+  id: totrans-80
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Cotangent of a series
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的余切
 - en: Return the series expansion of the cot of `p`, about 0.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的余切的级数展开，关于0。
 - en: Examples
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE25]'
+  id: totrans-84
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: See also
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`cot`](../functions/elementary.html#sympy.functions.elementary.trigonometric.cot
     "sympy.functions.elementary.trigonometric.cot")'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`cot`](../functions/elementary.html#sympy.functions.elementary.trigonometric.cot
+    "sympy.functions.elementary.trigonometric.cot")'
 - en: '[PRE26]'
+  id: totrans-87
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Sine of a series
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的正弦
 - en: Return the series expansion of the sin of `p`, about 0.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的正弦的级数展开，关于0。
 - en: Examples
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE27]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: See also
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`sin`](../functions/elementary.html#sympy.functions.elementary.trigonometric.sin
     "sympy.functions.elementary.trigonometric.sin")'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`sin`](../functions/elementary.html#sympy.functions.elementary.trigonometric.sin
+    "sympy.functions.elementary.trigonometric.sin")'
 - en: '[PRE28]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: Cosine of a series
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的余弦
 - en: Return the series expansion of the cos of `p`, about 0.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的余弦的级数展开，关于0。
 - en: Examples
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE29]'
+  id: totrans-98
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: See also
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`cos`](../functions/elementary.html#sympy.functions.elementary.trigonometric.cos
     "sympy.functions.elementary.trigonometric.cos")'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`cos`](../functions/elementary.html#sympy.functions.elementary.trigonometric.cos
+    "sympy.functions.elementary.trigonometric.cos")'
 - en: '[PRE30]'
+  id: totrans-101
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: Return the tuple ``(rs_cos(p, x, prec)`, `rs_sin(p, x, prec))``.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回元组`(`rs_cos(p, x, prec)`, `rs_sin(p, x, prec))`。
 - en: Is faster than calling rs_cos and rs_sin separately
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 比分别调用rs_cos和rs_sin更快
 - en: '[PRE31]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Hyperbolic arctangent of a series
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的双曲反正切
 - en: Return the series expansion of the atanh of `p`, about 0.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的双曲反正切的级数展开，关于0。
 - en: Examples
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE32]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: See also
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`atanh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.atanh
     "sympy.functions.elementary.hyperbolic.atanh")'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`atanh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.atanh
+    "sympy.functions.elementary.hyperbolic.atanh")'
 - en: '[PRE33]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: Hyperbolic sine of a series
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的双曲正弦
 - en: Return the series expansion of the sinh of `p`, about 0.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的双曲正弦的级数展开，关于0。
 - en: Examples
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE34]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: See also
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`sinh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.sinh
     "sympy.functions.elementary.hyperbolic.sinh")'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`sinh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.sinh
+    "sympy.functions.elementary.hyperbolic.sinh")'
 - en: '[PRE35]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: Hyperbolic cosine of a series
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的双曲余弦
 - en: Return the series expansion of the cosh of `p`, about 0.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的双曲余弦的级数展开，关于0。
 - en: Examples
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 例子
 - en: '[PRE36]'
+  id: totrans-122
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: See also
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参阅
 - en: '[`cosh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.cosh
     "sympy.functions.elementary.hyperbolic.cosh")'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`双曲余弦`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.cosh
+    "sympy.functions.elementary.hyperbolic.cosh")'
 - en: '[PRE37]'
+  id: totrans-125
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: Hyperbolic tangent of a series
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的双曲正切
 - en: Return the series expansion of the tanh of `p`, about 0.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p`的tanh的系列展开，关于0。
 - en: Examples
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE38]'
+  id: totrans-129
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: See also
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 另请参见
 - en: '[`tanh`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.tanh
     "sympy.functions.elementary.hyperbolic.tanh")'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`双曲正切`](../functions/elementary.html#sympy.functions.elementary.hyperbolic.tanh
+    "sympy.functions.elementary.hyperbolic.tanh")'
 - en: '[PRE39]'
+  id: totrans-132
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: Return `sum f_i/i!*x**i` from `sum f_i*x**i`, where `x` is the first variable.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 从`sum f_i*x**i`返回`sum f_i/i!*x**i`，其中`x`是第一个变量。
 - en: If `invers=True` return `sum f_i*i!*x**i`
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`invers=True`，返回`sum f_i*i!*x**i`
 - en: Examples
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE40]'
+  id: totrans-136
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: '**Operations**'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: '**操作**'
 - en: '[PRE41]'
+  id: totrans-138
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: Return the product of the given two series, modulo `O(x**prec)`.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回给定两个系列的乘积，模`O(x**prec)`。
 - en: '`x` is the series variable or its position in the generators.'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: '`x`是系列变量或其在生成器中的位置。'
 - en: Examples
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE42]'
+  id: totrans-142
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: '[PRE43]'
+  id: totrans-143
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: Square the series modulo `O(x**prec)`
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 平方系列模`O(x**prec)`
 - en: Examples
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE44]'
+  id: totrans-146
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: '[PRE45]'
+  id: totrans-147
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: Return `p1**n` modulo `O(x**prec)`
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回`p1**n`模`O(x**prec)`
 - en: Examples
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE46]'
+  id: totrans-150
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: '[PRE47]'
+  id: totrans-151
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: Multivariate series inversion `1/p` modulo `O(x**prec)`.
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 多元级数反转`1/p`模`O(x**prec)`。
 - en: Examples
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE48]'
+  id: totrans-154
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: '[PRE49]'
+  id: totrans-155
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: Reversion of a series.
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 一系列的反转。
 - en: '`p` is a series with `O(x**n)` of the form \(p = ax + f(x)\) where \(a\) is
     a number different from 0.'
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: '`p`是形式为\(p = ax + f(x)\)的系列，其中\(a\)是不为零的数。'
 - en: \(f(x) = \sum_{k=2}^{n-1} a_kx_k\)
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: \(f(x) = \sum_{k=2}^{n-1} a_kx_k\)
 - en: 'Parameters:'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**a_k** : Can depend polynomially on other variables, not indicated.'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: '**a_k**：可以多项式地依赖其他变量，未指示。'
 - en: 'x : Variable with name x. y : Variable with name y.'
+  id: totrans-161
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: x：名称为x的变量。y：名称为y的变量。
 - en: 'Returns:'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回：
 - en: Solve \(p = y\), that is, given \(ax + f(x) - y = 0\),
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 解决\(p = y\)，即给定\(ax + f(x) - y = 0\)
 - en: find the solution \(x = r(y)\) up to \(O(y^n)\).
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 找到解\(x = r(y)\)，直到\(O(y^n)\)。
 - en: Algorithm
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 算法
 - en: 'If \(r_i\) is the solution at order \(i\), then: \(ar_i + f(r_i) - y = O\left(y^{i
     + 1}\right)\)'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果\(r_i\)是顺序\(i\)的解，则：\(ar_i + f(r_i) - y = O\left(y^{i + 1}\right)\)
 - en: 'and if \(r_{i + 1}\) is the solution at order \(i + 1\), then: \(ar_{i + 1}
     + f(r_{i + 1}) - y = O\left(y^{i + 2}\right)\)'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果\(r_{i + 1}\)是顺序\(i + 1\)的解，则：\(ar_{i + 1} + f(r_{i + 1}) - y = O\left(y^{i
+    + 2}\right)\)
 - en: We have, \(r_{i + 1} = r_i + e\), such that, \(ae + f(r_i) = O\left(y^{i + 2}\right)\)
     or \(e = -f(r_i)/a\)
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们有，\(r_{i + 1} = r_i + e\)，使得，\(ae + f(r_i) = O\left(y^{i + 2}\right)\)或\(e
+    = -f(r_i)/a\)
 - en: 'So we use the recursion relation: \(r_{i + 1} = r_i - f(r_i)/a\) with the boundary
     condition: \(r_1 = y\)'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们使用递归关系：\(r_{i + 1} = r_i - f(r_i)/a\)与边界条件：\(r_1 = y\)
 - en: Examples
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE50]'
+  id: totrans-171
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: '[PRE51]'
+  id: totrans-172
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: Multivariate series expansion of the nth root of `p`.
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: '`p`的n次根的多元级数展开。'
 - en: 'Parameters:'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**p** : Expr'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: '**p**：表达式'
 - en: The polynomial to computer the root of.
+  id: totrans-176
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 计算根的多项式。
 - en: '**n** : integer'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: '**n**：整数'
 - en: The order of the root to be computed.
+  id: totrans-178
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 要计算的根的顺序。
 - en: '**x** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: '**x**：[`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")'
 - en: '**prec** : integer'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prec**：整数'
 - en: Order of the expanded series.
+  id: totrans-181
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 展开系列的顺序。
 - en: Notes
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 注释
 - en: The result of this function is dependent on the ring over which the polynomial
     has been defined. If the answer involves a root of a constant, make sure that
     the polynomial is over a real field. It cannot yet handle roots of symbols.
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 此函数的结果取决于多项式定义的环。如果答案涉及常数的根，请确保多项式在实数域上。它目前无法处理符号的根。
 - en: Examples
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE52]'
+  id: totrans-185
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: '[PRE53]'
+  id: totrans-186
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: Truncate the series in the `x` variable with precision `prec`, that is, modulo
     `O(x**prec)`
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 截断`x`变量的系列，精度为`prec`，即模`O(x**prec)`
 - en: Examples
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE54]'
+  id: totrans-189
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: '[PRE55]'
+  id: totrans-190
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: Substitution with truncation according to the mapping in `rules`.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据`rules`中的映射进行截断替换。
 - en: Return a series with precision `prec` in the generator `x`
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回具有生成器`x`中精度`prec`的系列展开
 - en: Note that substitutions are not done one after the other
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，不是依次进行替换
 - en: '[PRE56]'
+  id: totrans-194
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: which differs from
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 不同于
 - en: '[PRE57]'
+  id: totrans-196
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: 'Parameters:'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**p** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
     Input series.'
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: '**p**：[`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    输入系列。'
 - en: '**rules** : `dict` with substitution mappings.'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: '**rules**：具有替换映射的`dict`。'
 - en: '**x** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
     in which the series truncation is to be done.'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: '**x**：[`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    进行系列截断的变量。'
 - en: '**prec** : [`Integer`](../core.html#sympy.core.numbers.Integer "sympy.core.numbers.Integer")
     order of the series after truncation.'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: '**prec**：[`整数`](../core.html#sympy.core.numbers.Integer "sympy.core.numbers.Integer")
+    截断后系列的顺序。'
 - en: Examples
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE58]'
+  id: totrans-203
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: '[PRE59]'
+  id: totrans-204
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: Return partial derivative of `p` with respect to `x`.
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回关于`x`对`p`的偏导数。
 - en: 'Parameters:'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**x** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
     with respect to which `p` is differentiated.'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: '**x**：[`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    对其进行`p`的微分。'
 - en: Examples
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE60]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: '[PRE61]'
+  id: totrans-210
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: Integrate `p` with respect to `x`.
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 对`p`关于`x`积分。
 - en: 'Parameters:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**x** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
     with respect to which `p` is integrated.'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: '**x**：[`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    对其进行`p`的积分。'
 - en: Examples
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE62]'
+  id: totrans-215
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: '[PRE63]'
+  id: totrans-216
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: Compute the truncated Newton sum of the polynomial `p`
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算多项式`p`的截断牛顿和。
 - en: Examples
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE64]'
+  id: totrans-219
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: '[PRE65]'
+  id: totrans-220
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: compute the composed sum `prod(p2(x - beta) for beta root of p1)`
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算由`p1`的根`beta`组成的复合和`prod(p2(x - beta) for beta root of p1)`
 - en: Examples
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE66]'
+  id: totrans-223
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: References
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: '[[R823](#id1)]'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[R823](#id1)]'
 - en: A. Bostan, P. Flajolet, B. Salvy and E. Schost “Fast Computation with Two Algebraic
     Numbers”, (2002) Research Report 4579, Institut National de Recherche en Informatique
     et en Automatique
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: A. Bostan, P. Flajolet, B. Salvy and E. Schost “Fast Computation with Two Algebraic
+    Numbers”, (2002) 研究报告 4579, Institut National de Recherche en Informatique et
+    en Automatique
 - en: '**Utility functions**'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: '**实用函数**'
 - en: '[PRE67]'
+  id: totrans-228
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: Test if `p` is Puiseux series in `x`.
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 测试`p`是否为关于`x`的普维苏级数。
 - en: Raise an exception if it has a negative power in `x`.
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果在`x`中有负幂，则引发异常。
 - en: Examples
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE68]'
+  id: totrans-232
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: '[PRE69]'
+  id: totrans-233
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: Return the puiseux series for \(f(p, x, prec)\).
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回\(f(p, x, prec)\)的普维苏级数。
 - en: To be used when function `f` is implemented only for regular series.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 仅当函数`f`用于常规级数时使用。
 - en: Examples
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE70]'
+  id: totrans-237
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: '[PRE71]'
+  id: totrans-238
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: Return the puiseux series for \(f(p, q, x, prec)\).
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回\(f(p, q, x, prec)\)的普维苏级数。
 - en: To be used when function `f` is implemented only for regular series.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 仅当函数`f`用于常规级数时使用。
 - en: '[PRE72]'
+  id: totrans-241
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: Return a series \(sum c[n]*p**n\) modulo \(O(x**prec)\).
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回级数\(sum c[n]*p**n\)模\(O(x**prec)\)。
 - en: It reduces the number of multiplications by summing concurrently.
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过同时求和减少乘法次数。
 - en: \(ax = [1, p, p**2, .., p**(J - 1)]\) \(s = sum(c[i]*ax[i]\) for i in \(range(r,
     (r + 1)*J))*p**((K - 1)*J)\) with \(K >= (n + 1)/J\)
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: \(ax = [1, p, p**2, .., p**(J - 1)]\) \(s = sum(c[i]*ax[i]\) for i in \(range(r,
+    (r + 1)*J))*p**((K - 1)*J)\) with \(K >= (n + 1)/J\)
 - en: Examples
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE73]'
+  id: totrans-246
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: '[PRE74]'
+  id: totrans-247
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: Function of a multivariate series computed by substitution.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过替换计算多变量级数的函数。
 - en: 'The case with f method name is used to compute \(rs\_tan\) and \(rs\_nth\_root\)
     of a multivariate series:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 当函数名为f时，用于计算多变量级数\(rs\_tan\)和\(rs\_nth\_root\)的情况：
 - en: \(rs\_fun(p, tan, iv, prec)\)
+  id: totrans-250
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: \(rs\_fun(p, tan, iv, prec)\)
 - en: ''
+  id: totrans-251
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: tan series is first computed for a dummy variable _x, i.e, \(rs\_tan(\_x, iv,
     prec)\). Then we substitute _x with p to get the desired series
+  id: totrans-252
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 首先对虚拟变量_x计算正切级数，即\(rs\_tan(\_x, iv, prec)\)。然后我们用`p`替换_x以获得所需的级数。
 - en: 'Parameters:'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数：
 - en: '**p** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
     The multivariate series to be expanded.'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: '**p**：[`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement "sympy.polys.rings.PolyElement")
+    要展开的多变量级数。'
 - en: '**f** : \(ring\_series\) function to be applied on \(p\).'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: '**f**：\(ring\_series\)应用于`p`的函数。'
 - en: '**args[-2]** : [`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement
     "sympy.polys.rings.PolyElement") with respect to which, the series is to be expanded.'
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: '**args[-2]**：[`PolyElement`](domainsref.html#sympy.polys.rings.PolyElement
+    "sympy.polys.rings.PolyElement") 对其进行级数展开。'
 - en: '**args[-1]** : Required order of the expanded series.'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: '**args[-1]**：展开级数所需的阶数。'
 - en: Examples
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE75]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: '[PRE76]'
+  id: totrans-260
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: Return \(p*x_i**n\).
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回\(p*x_i**n\)。
 - en: \(x\_i\) is the ith variable in `p`.
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: \(x\_i\)是`p`中的第i个变量。
 - en: '[PRE77]'
+  id: totrans-263
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: '[PRE78]'
+  id: totrans-264
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE78]'

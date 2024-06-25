@@ -1,182 +1,272 @@
 - en: Numeric Computation
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
-- en: 原文：[https://docs.sympy.org/latest/modules/numeric-computation.html](https://docs.sympy.org/latest/modules/numeric-computation.html)
+  zh: 数值计算
+- en: Original text：[https://docs.sympy.org/latest/modules/numeric-computation.html](https://docs.sympy.org/latest/modules/numeric-computation.html)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文链接：[https://docs.sympy.org/latest/modules/numeric-computation.html](https://docs.sympy.org/latest/modules/numeric-computation.html)
 - en: Symbolic computer algebra systems like SymPy facilitate the construction and
     manipulation of mathematical expressions. Unfortunately when it comes time to
     evaluate these expressions on numerical data, symbolic systems often have poor
     performance.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 像SymPy这样的符号计算代数系统有助于构建和操作数学表达式。但是，当需要对数值数据进行评估时，符号系统的性能通常较差。
 - en: Fortunately SymPy offers a number of easy-to-use hooks into other numeric systems,
     allowing you to create mathematical expressions in SymPy and then ship them off
     to the numeric system of your choice. This page documents many of the options
     available including the `math` library, the popular array computing package `numpy`,
     code generation in `Fortran` or `C`, and the use of the array compiler `Aesara`.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 幸运的是，SymPy提供了许多易于使用的钩子，可以连接到其他数值系统，允许您在SymPy中创建数学表达式，然后将其传送到您选择的数值系统。本页记录了许多可用选项，包括`math`库、流行的数组计算包`numpy`、在Fortran或C中生成代码以及使用数组编译器`Aesara`。
 - en: Subs/evalf
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Subs/evalf
 - en: Subs is the slowest but simplest option. It runs at SymPy speeds. The `.subs(...).evalf()`
     method can substitute a numeric value for a symbolic one and then evaluate the
     result within SymPy.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: Subs是最慢但最简单的选项。它以SymPy的速度运行。`.subs(...).evalf()`方法可以用数值值替换符号值，然后在SymPy中评估结果。
 - en: '[PRE0]'
+  id: totrans-6
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: This method is slow. You should use this method production only if performance
     is not an issue. You can expect `.subs` to take tens of microseconds. It can be
     useful while prototyping or if you just want to see a value once.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种方法速度较慢。仅在性能不是问题时，才应在生产中使用此方法。你可以预期`.subs`耗时数十微秒。在原型设计阶段或者只需查看值时，这可能很有用。
 - en: Lambdify
+  id: totrans-8
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Lambdify
 - en: 'The `lambdify` function translates SymPy expressions into Python functions,
     leveraging a variety of numerical libraries. It is used as follows:'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: '`lambdify`函数将SymPy表达式转换为Python函数，利用各种数值库。其用法如下：'
 - en: '[PRE1]'
+  id: totrans-10
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Here lambdify makes a function that computes `f(x) = sin(x)/x`. By default lambdify
     relies on implementations in the `math` standard library. This numerical evaluation
     takes on the order of hundreds of nanoseconds, roughly two orders of magnitude
     faster than the `.subs` method. This is the speed difference between SymPy and
     raw Python.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，lambdify创建一个计算`f(x) = sin(x)/x`的函数。默认情况下，lambdify依赖于`math`标准库中的实现。这种数值评估大约需要数百纳秒，比`.subs`方法快大约两个数量级。这是SymPy和原始Python之间的速度差异。
 - en: Lambdify can leverage a variety of numerical backends. By default it uses the
     `math` library. However it also supports `mpmath` and most notably, `numpy`. Using
     the `numpy` library gives the generated function access to powerful vectorized
     ufuncs that are backed by compiled C code.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: Lambdify可以利用多种数值后端。默认情况下使用`math`库。但它也支持`mpmath`和最显著的是`numpy`。使用`numpy`库可以让生成的函数访问由编译的C代码支持的强大的矢量化ufuncs。
 - en: '[PRE2]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: '[PRE3]'
+  id: totrans-14
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: If you have array-based data this can confer a considerable speedup, on the
     order of 10 nano-seconds per element. Unfortunately numpy incurs some start-up
     time and introduces an overhead of a few microseconds.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你有基于数组的数据，这可能会显著加快速度，每个元素大约在10纳秒左右。不幸的是，NumPy会产生一些启动时间，并引入几微秒的额外开销。
 - en: CuPy is a NumPy-compatible array library that mainly runs on CUDA, but has increasing
     support for other GPU manufacturers. It can in many cases be used as a drop-in
     replacement for numpy.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: CuPy是一个与NumPy兼容的数组库，主要运行在CUDA上，但也越来越多地支持其他GPU制造商。在许多情况下，它可以作为numpy的即插即用替代品。
 - en: '[PRE4]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: JAX is a similar alternative to CuPy that provides GPU and TPU acceleration
     via just-in-time compilation to XLA. It too, can in some cases, be used as a drop-in
     replacement for numpy.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: JAX是CuPy的类似替代方案，通过即时编译到XLA提供GPU和TPU加速。在某些情况下，它也可以作为numpy的即插即用替代品。
 - en: '[PRE5]'
+  id: totrans-19
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: uFuncify
+  id: totrans-20
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: uFuncify
 - en: The `autowrap` module contains methods that help in efficient computation.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 内联代码（`autowrap`）模块包含一些能够帮助进行高效计算的方法。
 - en: '[autowrap](codegen.html#id1) method for compiling code generated by the [codegen](codegen.html#codegen-prose)
     module, and wrap the binary for use in python.'
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[autowrap](codegen.html#id1)方法用于编译由[codegen](codegen.html#codegen-prose)模块生成的代码，并将二进制包装供Python使用。'
 - en: '[binary_function](codegen.html#binary-function) method automates the steps
     needed to autowrap the SymPy expression and attaching it to a `Function` object
     with `implemented_function()`.'
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[binary_function](codegen.html#binary-function)方法自动化了将SymPy表达式自动包装并附加到`Function`对象的步骤。'
 - en: '[ufuncify](codegen.html#ufuncify-method) generates a binary function that supports
     broadcasting on numpy arrays using different backends that are faster as compared
     to `subs/evalf` and `lambdify`.'
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[ufuncify](codegen.html#ufuncify-method)生成一个二元函数，支持在numpy数组上进行广播，使用不同的后端比`subs/evalf`和`lambdify`更快。'
 - en: 'The API reference of all the above is listed here: [`sympy.utilities.autowrap()`](utilities/autowrap.html#module-sympy.utilities.autowrap
     "sympy.utilities.autowrap").'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有上述内容的API参考在这里列出：[`sympy.utilities.autowrap()`](utilities/autowrap.html#module-sympy.utilities.autowrap
+    "sympy.utilities.autowrap")。
 - en: Aesara
+  id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Aesara
 - en: SymPy has a strong connection with [Aesara](https://aesara.readthedocs.io/en/latest/),
     a mathematical array compiler. SymPy expressions can be easily translated to Aesara
     graphs and then compiled using the Aesara compiler chain.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: SymPy与[Aesara](https://aesara.readthedocs.io/en/latest/)有着紧密的连接，是一个数学数组编译器。SymPy表达式可以轻松转换为Aesara图，然后使用Aesara编译器链进行编译。
 - en: '[PRE6]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: '[PRE7]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: If array broadcasting or types are desired then Aesara requires this extra information
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果希望进行数组广播或者类型处理，Aesara需要额外的信息。
 - en: '[PRE8]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Aesara has a more sophisticated code generation system than SymPy’s C/Fortran
     code printers. Among other things it handles common sub-expressions and compilation
     onto the GPU. Aesara also supports SymPy Matrix and Matrix Expression objects.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: Aesara比SymPy的C/Fortran代码打印机有一个更复杂的代码生成系统。除其他外，它处理常见的子表达式，并编译到GPU上。Aesara还支持SymPy的Matrix和Matrix
+    Expression对象。
 - en: So Which Should I Use?
+  id: totrans-33
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 所以我应该使用哪一个？
 - en: The options here were listed in order from slowest and least dependencies to
     fastest and most dependencies. For example, if you have Aesara installed then
     that will often be the best choice. If you don’t have Aesara but do have `f2py`
     then you should use `ufuncify`. If you have been comfortable using lambdify with
     the numpy module, but have a GPU, CuPy and JAX can provide substantial speedups
     with little effort.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的选项按从最慢和最少依赖到最快和最多依赖的顺序列出。例如，如果安装了Aesara，则通常是最佳选择。如果没有安装Aesara但安装了`f2py`，则应使用`ufuncify`。如果您一直使用numpy模块使用lambdify，并且有GPU，那么CuPy和JAX可以提供显著的加速效果而几乎没有额外工作。
 - en: '| Tool | Speed | Qualities | Dependencies |'
+  id: totrans-35
   prefs: []
   type: TYPE_TB
+  zh: '| 工具 | 速度 | 特性 | 依赖项 |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-36
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| subs/evalf | 50us | Simple | None |'
+  id: totrans-37
   prefs: []
   type: TYPE_TB
+  zh: '| subs/evalf | 50us | 简单 | None |'
 - en: '| lambdify | 1us | Scalar functions | math |'
+  id: totrans-38
   prefs: []
   type: TYPE_TB
+  zh: '| lambdify | 1us | 标量函数 | math |'
 - en: '| lambdify-numpy | 10ns | Vector functions | numpy |'
+  id: totrans-39
   prefs: []
   type: TYPE_TB
+  zh: '| lambdify-numpy | 10ns | 向量函数 | numpy |'
 - en: '| ufuncify | 10ns | Complex vector expressions | f2py, Cython |'
+  id: totrans-40
   prefs: []
   type: TYPE_TB
+  zh: '| ufuncify | 10ns | 复杂向量表达式 | f2py, Cython |'
 - en: '| lambdify-cupy | 10ns | Vector functions on GPUs | cupy |'
+  id: totrans-41
   prefs: []
   type: TYPE_TB
+  zh: '| lambdify-cupy | 10ns | GPU上的向量函数 | cupy |'
 - en: '| lambdify-jax | 10ns | Vector functions on CPUs, GPUs and TPUs | jax |'
+  id: totrans-42
   prefs: []
   type: TYPE_TB
+  zh: '| lambdify-jax | 10ns | CPU、GPU和TPU上的向量函数 | jax |'
 - en: '| Aesara | 10ns | Many outputs, CSE, GPUs | Aesara |'
+  id: totrans-43
   prefs: []
   type: TYPE_TB
+  zh: '| Aesara | 10ns | 多输出，CSE，GPU | Aesara |'
