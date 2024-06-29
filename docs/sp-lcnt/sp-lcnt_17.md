@@ -1,7 +1,5 @@
 # 3.3 Scikit-image：图像处理
 
-# 3.3 Scikit-image：图像处理
-
 > **作者**: Emmanuelle Gouillart
 
 [scikit-image](http://scikit-image.org/)是专注于图像处理的 Python 包，并且使用原生的 Numpy 数组作为图像对象。本章描述如何在不同图像处理任务上使用`scikit-image`，并且保留了其他科学 Python 模块比如 Numpy 和 Scipy 的链接。

@@ -1,6 +1,4 @@
-# 介绍
-
-# SciPy Lecture Notes 中文版
+# SciPy 中文官方讲义
 
 > 原文：[SciPy Lecture Notes](http://www.scipy-lectures.org/)
 > 

@@ -1,7 +1,5 @@
 # 1.1 科学计算工具及流程
 
-# 1.1 科学计算工具及流程
-
 > 作者 : Fernando Perez, Emmanuelle Gouillart, Gaël Varoquaux, Valentin Haenel
 
 ## 1.1.1 为什么是 Python？

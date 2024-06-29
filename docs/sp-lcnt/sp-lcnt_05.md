@@ -1,7 +1,5 @@
 # 1.5 Scipy：高级科学计算
 
-# 1.5 Scipy：高级科学计算
-
 作者：Adrien Chauve, Andre Espaze, Emmanuelle Gouillart, Gaël Varoquaux, Ralf Gommers
 
 **Scipy**

@@ -1,4 +1,3 @@
-# 3.2 Sympy：Python 中的符号数学
 
 # 3.2 Sympy：Python 中的符号数学
 

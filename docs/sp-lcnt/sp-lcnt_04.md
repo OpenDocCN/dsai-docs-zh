@@ -1,7 +1,5 @@
 # 1.4 Matplotlib：绘图
 
-# 1.4 Matplotlib：绘图
-
 ## 1.4.1 简介
 
 [Matplotlib](http://matplotlib.org/) 可能是 Python 惟一一个最广泛使用的二维图包。它同时提供了从 Python 中可视化数据非常的快速方式以及多种格式的出版质量图片。我们将在交互模式下研究 Matplotlib，包含大多数的常用案例。

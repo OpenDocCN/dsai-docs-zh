@@ -1,7 +1,5 @@
 # 2.1 Python 高级功能（Constructs）
 
-# 2.1 Python 高级功能（Constructs）
-
 **作者**: Zbigniew Jędrzejewski-Szmek
 
 这一章是关于 Python 语言的高级特性-从不是每种语言都有这些特性的角度来说，也可以从他们在更复杂的程序和库中更有用这个角度来说，但是，并不是说特别专业或特别复杂。

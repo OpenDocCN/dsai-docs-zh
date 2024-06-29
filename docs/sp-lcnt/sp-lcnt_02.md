@@ -1,7 +1,5 @@
 # 1.2 Python 语言
 
-# 1.2 Python 语言
-
 > 作者 Chris Burns, Christophe Combelles, Emmanuelle Gouillart, Gaël Varoquaux
 > 
 > **Python 中的科学计算** 这里我们介绍 Python 语言。这里只会仅仅解决可以用于 Numpy 和 Scipy 的最低要求。想要更多的了解这门语言，请参考[`docs.python.org/tutorial`](http://docs.python.org/tutorial) 这个非常好的教程。也可以借助专门的图书，比如：[`diveintopython.org/`](http://diveintopython.org/).

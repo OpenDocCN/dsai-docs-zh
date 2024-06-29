@@ -8,6 +8,7 @@
 +   [Pandas 2.2 中文文档](docs/pd22/README.md)
 +   [scikit-learn 0.21 中文文档](docs/skl021/README.md)
 +   [seaborn 0.9 中文文档](docs/sns09/README.md)
++   [SciPy 中文官方讲义](docs/sp-lcnt/README.md)
 +   [SciPy 1.12 中文文档](docs/sp112/README.md)
 +   [SymPy 1.13 中文文档](docs/sympy113/README.md)
 +   [Xgboost 0.7.2 中文文档](docs/xgb072/README.md)

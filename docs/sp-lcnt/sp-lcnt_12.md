@@ -1,7 +1,5 @@
 # 2.6 使用 Numpy 和 Scipy 进行图像操作及处理
 
-# 2.6 使用 Numpy 和 Scipy 进行图像操作及处理
-
 In [3]:
 
 ```py

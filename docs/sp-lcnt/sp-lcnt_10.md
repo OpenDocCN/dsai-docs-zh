@@ -1,7 +1,5 @@
 # 2.4 代码优化
 
-# 2.4 代码优化
-
 **作者**：Gaël Varoquaux
 
 **Donald Knuth**

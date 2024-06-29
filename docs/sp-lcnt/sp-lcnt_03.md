@@ -1,7 +1,5 @@
 # 1.3 NumPy：创建和操作数值数据
 
-# 1.3 NumPy：创建和操作数值数据
-
 > 作者：Emmanuelle Gouillart、Didrik Pinte、Gaël Varoquaux 和 Pauli Virtanen
 
 本章给出关于 Numpy 概述，Numpy 是 Python 中高效数值计算的核心工具。

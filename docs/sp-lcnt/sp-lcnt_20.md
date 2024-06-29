@@ -1,7 +1,5 @@
 # 3.6 scikit-learn：Python 中的机器学习
 
-# 3.6 scikit-learn：Python 中的机器学习
-
 In [5]:
 
 ```py
