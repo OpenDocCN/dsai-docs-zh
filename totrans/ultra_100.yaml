@@ -1,337 +1,506 @@
 - en: 'Ultralytics Docs: Using YOLOv8 with SAHI for Sliced Inference'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Ultralytics 文档：如何在 SAHI 中使用 YOLOv8 进行切片推理
 - en: 原文：[`docs.ultralytics.com/guides/sahi-tiled-inference/`](https://docs.ultralytics.com/guides/sahi-tiled-inference/)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[`docs.ultralytics.com/guides/sahi-tiled-inference/`](https://docs.ultralytics.com/guides/sahi-tiled-inference/)
 - en: Welcome to the Ultralytics documentation on how to use YOLOv8 with [SAHI](https://github.com/obss/sahi)
     (Slicing Aided Hyper Inference). This comprehensive guide aims to furnish you
     with all the essential knowledge you'll need to implement SAHI alongside YOLOv8\.
     We'll deep-dive into what SAHI is, why sliced inference is critical for large-scale
     applications, and how to integrate these functionalities with YOLOv8 for enhanced
     object detection performance.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 欢迎来到 Ultralytics 文档，学习如何与 [SAHI](https://github.com/obss/sahi)（切片辅助超推理）一起使用
+    YOLOv8。本详尽指南旨在为您提供所有必要的知识，以便您将 SAHI 与 YOLOv8 结合使用。我们将深入探讨 SAHI 的定义、切片推理在大规模应用中的重要性，以及如何将这些功能与
+    YOLOv8 整合，从而提升目标检测性能。
 - en: '![SAHI Sliced Inference Overview](img/65c11a31ad118924bd1e837ef4e51bc3.png)'
+  id: totrans-3
   prefs: []
   type: TYPE_IMG
+  zh: '![SAHI 切片推理概述](img/65c11a31ad118924bd1e837ef4e51bc3.png)'
 - en: Introduction to SAHI
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: SAHI 简介
 - en: SAHI (Slicing Aided Hyper Inference) is an innovative library designed to optimize
     object detection algorithms for large-scale and high-resolution imagery. Its core
     functionality lies in partitioning images into manageable slices, running object
     detection on each slice, and then stitching the results back together. SAHI is
     compatible with a range of object detection models, including the YOLO series,
     thereby offering flexibility while ensuring optimized use of computational resources.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: SAHI（切片辅助超推理）是一个创新的库，旨在优化大规模和高分辨率图像的目标检测算法。其核心功能在于将图像分割成可管理的切片，对每个切片进行目标检测，然后将结果拼合在一起。SAHI
+    兼容一系列目标检测模型，包括 YOLO 系列，从而在保证计算资源优化的同时提供灵活性。
 - en: '[`www.youtube.com/embed/tq3FU_QczxE`](https://www.youtube.com/embed/tq3FU_QczxE)'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: '[`www.youtube.com/embed/tq3FU_QczxE`](https://www.youtube.com/embed/tq3FU_QczxE)'
 - en: '**Watch:** Inference with SAHI (Slicing Aided Hyper Inference) using Ultralytics
     YOLOv8'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: '**观看：** 使用 Ultralytics YOLOv8 进行 SAHI 推理（切片辅助超推理）'
 - en: Key Features of SAHI
+  id: totrans-8
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: SAHI 的关键特性
 - en: '**Seamless Integration**: SAHI integrates effortlessly with YOLO models, meaning
     you can start slicing and detecting without a lot of code modification.'
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**无缝集成**：SAHI 与 YOLO 模型无缝集成，意味着您可以在不需要大量代码修改的情况下开始切片和检测。'
 - en: '**Resource Efficiency**: By breaking down large images into smaller parts,
     SAHI optimizes the memory usage, allowing you to run high-quality detection on
     hardware with limited resources.'
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**资源效率**：通过将大图像分解成较小的部分，SAHI 优化了内存使用，使您可以在资源有限的硬件上运行高质量的检测。'
 - en: '**High Accuracy**: SAHI maintains the detection accuracy by employing smart
     algorithms to merge overlapping detection boxes during the stitching process.'
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**高准确性**：SAHI 在拼合过程中采用智能算法合并重叠的检测框，从而保持检测的准确性。'
 - en: What is Sliced Inference?
+  id: totrans-12
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 什么是切片推理？
 - en: Sliced Inference refers to the practice of subdividing a large or high-resolution
     image into smaller segments (slices), conducting object detection on these slices,
     and then recompiling the slices to reconstruct the object locations on the original
     image. This technique is invaluable in scenarios where computational resources
     are limited or when working with extremely high-resolution images that could otherwise
     lead to memory issues.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 切片推理指的是将大尺寸或高分辨率图像细分为较小的段（切片），在这些切片上进行目标检测，然后重新组合这些切片，以重建原始图像上的对象位置。在计算资源有限或者处理极高分辨率图像可能导致内存问题的情况下，这种技术非常宝贵。
 - en: Benefits of Sliced Inference
+  id: totrans-14
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 切片推理的优势
 - en: '**Reduced Computational Burden**: Smaller image slices are faster to process,
     and they consume less memory, enabling smoother operation on lower-end hardware.'
+  id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**减少计算负担**：较小的图像切片处理速度更快，内存消耗更少，使其能够在低端硬件上更加流畅运行。'
 - en: '**Preserved Detection Quality**: Since each slice is treated independently,
     there is no reduction in the quality of object detection, provided the slices
     are large enough to capture the objects of interest.'
+  id: totrans-16
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**保持检测质量**：由于每个切片都是独立处理的，只要切片足够大以捕捉感兴趣的对象，就不会降低目标检测的质量。'
 - en: '**Enhanced Scalability**: The technique allows for object detection to be more
     easily scaled across different sizes and resolutions of images, making it ideal
     for a wide range of applications from satellite imagery to medical diagnostics.'
+  id: totrans-17
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**增强可扩展性**：该技术允许更轻松地在不同尺寸和分辨率的图像上进行目标检测，适用于从卫星图像到医学诊断等各种应用。'
 - en: '| YOLOv8 without SAHI | YOLOv8 with SAHI |'
+  id: totrans-18
   prefs: []
   type: TYPE_TB
+  zh: '| YOLOv8 无 SAHI | YOLOv8 有 SAHI |'
 - en: '| ![YOLOv8 without SAHI](img/2182fc3f50cbcdd723070a8763b9a04c.png) | ![YOLOv8
     with SAHI](img/327e16cf9414789c9fe1bda2515fd2c9.png) |'
+  id: totrans-19
   prefs: []
   type: TYPE_TB
+  zh: '| ![YOLOv8 无 SAHI](img/2182fc3f50cbcdd723070a8763b9a04c.png) | ![YOLOv8 有 SAHI](img/327e16cf9414789c9fe1bda2515fd2c9.png)
+    |'
 - en: Installation and Preparation
+  id: totrans-20
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 安装与准备
 - en: Installation
+  id: totrans-21
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 安装
 - en: 'To get started, install the latest versions of SAHI and Ultralytics:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 要开始，请安装 SAHI 和 Ultralytics 的最新版本：
 - en: '[PRE0]'
+  id: totrans-23
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Import Modules and Download Resources
+  id: totrans-24
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 导入模块并下载资源
 - en: 'Here''s how to import the necessary modules and download a YOLOv8 model and
     some test images:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是如何导入必要模块、下载 YOLOv8 模型和一些测试图像的方法：
 - en: '[PRE1]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Standard Inference with YOLOv8
+  id: totrans-27
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用 YOLOv8 进行标准推断
 - en: Instantiate the Model
+  id: totrans-28
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 实例化模型
 - en: 'You can instantiate a YOLOv8 model for object detection like this:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以像这样实例化 YOLOv8 模型进行目标检测：
 - en: '[PRE2]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Perform Standard Prediction
+  id: totrans-31
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 执行标准预测
 - en: Perform standard inference using an image path or a numpy image.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用图像路径或 numpy 图像执行标准推断。
 - en: '[PRE3]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Visualize Results
+  id: totrans-34
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 可视化结果
 - en: 'Export and visualize the predicted bounding boxes and masks:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 导出并可视化预测的边界框和掩模：
 - en: '[PRE4]'
+  id: totrans-36
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Sliced Inference with YOLOv8
+  id: totrans-37
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用 YOLOv8 进行切片推断
 - en: 'Perform sliced inference by specifying the slice dimensions and overlap ratios:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 指定切片尺寸和重叠比率执行切片推断：
 - en: '[PRE5]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Handling Prediction Results
+  id: totrans-40
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 处理预测结果
 - en: 'SAHI provides a `PredictionResult` object, which can be converted into various
     annotation formats:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: SAHI 提供 `PredictionResult` 对象，可转换为各种注释格式：
 - en: '[PRE6]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Batch Prediction
+  id: totrans-43
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 批量预测
 - en: 'For batch prediction on a directory of images:'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 对目录中的图像进行批量预测：
 - en: '[PRE7]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: That's it! Now you're equipped to use YOLOv8 with SAHI for both standard and
     sliced inference.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 就这样！现在您已准备好使用 YOLOv8 和 SAHI 进行标准和切片推断了。
 - en: Citations and Acknowledgments
+  id: totrans-47
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 引用与致谢
 - en: 'If you use SAHI in your research or development work, please cite the original
     SAHI paper and acknowledge the authors:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您在研究或开发工作中使用 SAHI，请引用原始的 SAHI 论文并致谢作者：
 - en: '[PRE8]'
+  id: totrans-49
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: We extend our thanks to the SAHI research group for creating and maintaining
     this invaluable resource for the computer vision community. For more information
     about SAHI and its creators, visit the [SAHI GitHub repository](https://github.com/obss/sahi).
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们衷心感谢 SAHI 研究组为计算机视觉社区创建和维护这一宝贵资源。有关 SAHI 及其作者的更多信息，请访问 [SAHI GitHub 仓库](https://github.com/obss/sahi)。
 - en: FAQ
+  id: totrans-51
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 常见问题解答
 - en: How can I integrate YOLOv8 with SAHI for sliced inference in object detection?
+  id: totrans-52
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何集成 YOLOv8 和 SAHI 以在目标检测中进行切片推断？
 - en: 'Integrating Ultralytics YOLOv8 with SAHI (Slicing Aided Hyper Inference) for
     sliced inference optimizes your object detection tasks on high-resolution images
     by partitioning them into manageable slices. This approach improves memory usage
     and ensures high detection accuracy. To get started, you need to install the ultralytics
     and sahi libraries:'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 Ultralytics YOLOv8 与 SAHI 集成（切片辅助超推断）用于在高分辨率图像上优化切片推断，通过将图像分割成可管理的切片来改善内存使用和确保高检测精度。要开始使用，您需要安装
+    ultralytics 和 sahi 库：
 - en: '[PRE9]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'Then, download a YOLOv8 model and test images:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，下载 YOLOv8 模型和测试图像：
 - en: '[PRE10]'
+  id: totrans-56
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: For more detailed instructions, refer to our Sliced Inference guide.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 欲了解更详细的说明，请参阅我们的切片推断指南。
 - en: Why should I use SAHI with YOLOv8 for object detection on large images?
+  id: totrans-58
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 我为什么要在大图像上使用 YOLOv8 和 SAHI 进行目标检测？
 - en: 'Using SAHI with Ultralytics YOLOv8 for object detection on large images offers
     several benefits:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 SAHI 和 Ultralytics YOLOv8 在大图像上进行目标检测提供了几个好处：
 - en: '**Reduced Computational Burden**: Smaller slices are faster to process and
     consume less memory, making it feasible to run high-quality detections on hardware
     with limited resources.'
+  id: totrans-60
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**减少计算负担**：更小的切片处理速度更快，消耗更少内存，使得在资源有限的硬件上运行高质量检测成为可能。'
 - en: '**Maintained Detection Accuracy**: SAHI uses intelligent algorithms to merge
     overlapping boxes, preserving the detection quality.'
+  id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**保持检测精度**：SAHI 使用智能算法合并重叠框，保持检测质量。'
 - en: '**Enhanced Scalability**: By scaling object detection tasks across different
     image sizes and resolutions, SAHI becomes ideal for various applications, such
     as satellite imagery analysis and medical diagnostics.'
+  id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**增强可扩展性**：通过在不同图像尺寸和分辨率上扩展目标检测任务，SAHI 成为各种应用的理想选择，如卫星图像分析和医学诊断。'
 - en: Learn more about the benefits of sliced inference in our documentation.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们的文档中了解更多关于切片推理的好处。
 - en: Can I visualize prediction results when using YOLOv8 with SAHI?
+  id: totrans-64
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 当使用 YOLOv8 和 SAHI 时，我可以可视化预测结果吗？
 - en: 'Yes, you can visualize prediction results when using YOLOv8 with SAHI. Here''s
     how you can export and visualize the results:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 是的，当使用 YOLOv8 和 SAHI 时，您可以可视化预测结果。以下是导出和可视化结果的方法：
 - en: '[PRE11]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: This command will save the visualized predictions to the specified directory
     and you can then load the image to view it in your notebook or application. For
     a detailed guide, check out the Standard Inference section.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 此命令将预测结果保存到指定目录，并且您可以加载图像在您的笔记本或应用程序中查看它。查看标准推理部分以获取详细指南。
 - en: What features does SAHI offer for improving YOLOv8 object detection?
+  id: totrans-68
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: SAHI 提供了哪些功能来改进 YOLOv8 的目标检测？
 - en: 'SAHI (Slicing Aided Hyper Inference) offers several features that complement
     Ultralytics YOLOv8 for object detection:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: SAHI（切片辅助超推理）提供了几个功能，可以补充 Ultralytics YOLOv8 进行目标检测：
 - en: '**Seamless Integration**: SAHI easily integrates with YOLO models, requiring
     minimal code adjustments.'
+  id: totrans-70
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**无缝集成**：SAHI 轻松集成到 YOLO 模型中，只需进行最少的代码调整。'
 - en: '**Resource Efficiency**: It partitions large images into smaller slices, which
     optimizes memory usage and speed.'
+  id: totrans-71
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**资源效率**：它将大图像分割成较小的切片，优化内存使用和速度。'
 - en: '**High Accuracy**: By effectively merging overlapping detection boxes during
     the stitching process, SAHI maintains high detection accuracy.'
+  id: totrans-72
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**高准确性**：通过在拼接过程中有效合并重叠的检测框，SAHI 保持高检测准确性。'
 - en: For a deeper understanding, read about SAHI's key features.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 深入了解，请阅读关于 SAHI 的关键特性。
 - en: How do I handle large-scale inference projects using YOLOv8 and SAHI?
+  id: totrans-74
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何处理使用 YOLOv8 和 SAHI 的大规模推理项目？
 - en: 'To handle large-scale inference projects using YOLOv8 and SAHI, follow these
     best practices:'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 要处理使用 YOLOv8 和 SAHI 的大规模推理项目，请遵循以下最佳实践：
 - en: '**Install Required Libraries**: Ensure that you have the latest versions of
     ultralytics and sahi.'
+  id: totrans-76
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**安装所需的库**：确保您拥有最新版本的 ultralytics 和 sahi。'
 - en: '**Configure Sliced Inference**: Determine the optimal slice dimensions and
     overlap ratios for your specific project.'
+  id: totrans-77
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**配置切片推理**：确定适合您特定项目的最佳切片尺寸和重叠比率。'
 - en: '**Run Batch Predictions**: Use SAHI''s capabilities to perform batch predictions
     on a directory of images, which improves efficiency.'
+  id: totrans-78
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**运行批量预测**：利用 SAHI 的能力对图像目录进行批量预测，从而提高效率。'
 - en: 'Example for batch prediction:'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 批量预测示例：
 - en: '[PRE12]'
+  id: totrans-80
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: For more detailed steps, visit our section on Batch Prediction.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 要获取更详细的步骤，请访问我们的批量预测部分。
