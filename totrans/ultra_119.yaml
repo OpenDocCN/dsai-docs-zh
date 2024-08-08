@@ -1,324 +1,455 @@
 - en: A Guide on Model Testing
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 模型测试指南
 - en: 原文：[`docs.ultralytics.com/guides/model-testing/`](https://docs.ultralytics.com/guides/model-testing/)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[`docs.ultralytics.com/guides/model-testing/`](https://docs.ultralytics.com/guides/model-testing/)
 - en: Introduction
+  id: totrans-2
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 引言
 - en: After training and evaluating your model, it's time to test it. Model testing
     involves assessing how well it performs in real-world scenarios. Testing considers
     factors like accuracy, reliability, fairness, and how easy it is to understand
     the model's decisions. The goal is to make sure the model performs as intended,
     delivers the expected results, and fits into the overall objective of your application
     or project.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在训练和评估您的模型之后，现在是时候进行测试了。模型测试涉及评估它在真实场景中的表现如何。测试考虑因素包括准确性、可靠性、公正性以及理解模型决策的难易程度。目标是确保模型按预期运行，提供期望的结果，并符合应用程序或项目的整体目标。
 - en: Model testing is quite similar to model evaluation, but they are two distinct
     steps in a computer vision project. Model evaluation involves metrics and plots
     to assess the model's accuracy. On the other hand, model testing checks if the
     model's learned behavior is the same as expectations. In this guide, we'll explore
     strategies for testing your computer vision models.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 模型测试与模型评估非常相似，但它们是计算机视觉项目中的两个独立步骤。模型评估涉及指标和图表以评估模型的准确性。另一方面，模型测试检查模型的学习行为是否与预期一致。在本指南中，我们将探讨测试计算机视觉模型的策略。
 - en: Model Testing Vs. Model Evaluation
+  id: totrans-5
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 模型测试与模型评估的比较
 - en: First, let's understand the difference between model evaluation and testing
     with an example.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，让我们通过一个例子了解模型评估和测试之间的区别。
 - en: Suppose you have trained a computer vision model to recognize cats and dogs,
     and you want to deploy this model at a pet store to monitor the animals. During
     the model evaluation phase, you use a labeled dataset to calculate metrics like
     accuracy, precision, recall, and F1 score. For instance, the model might have
     an accuracy of 98% in distinguishing between cats and dogs in a given dataset.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设您已经训练了一个计算机视觉模型来识别猫和狗，并且您希望将这个模型部署在宠物店以监控动物。在模型评估阶段，您使用带标签的数据集来计算诸如准确度、精确率、召回率和
+    F1 分数等指标。例如，该模型在一个特定数据集中在区分猫和狗方面可能达到了 98% 的准确度。
 - en: After evaluation, you test the model using images from a pet store to see how
     well it identifies cats and dogs in more varied and realistic conditions. You
     check if it can correctly label cats and dogs when they are moving, in different
     lighting conditions, or partially obscured by objects like toys or furniture.
     Model testing checks that the model behaves as expected outside the controlled
     evaluation environment.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 在评估之后，您使用来自宠物店的图像来测试模型，以查看它在更加多样化和现实条件下如何识别猫和狗。您检查它在动态、不同光照条件或部分被玩具或家具遮挡的情况下是否能够正确标记猫和狗。模型测试确保模型在受控评估环境之外的情况下表现符合预期。
 - en: Preparing for Model Testing
+  id: totrans-9
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备模型测试
 - en: Computer vision models learn from datasets by detecting patterns, making predictions,
     and evaluating their performance. These datasets are usually divided into training
     and testing sets to simulate real-world conditions. Training data teaches the
     model while testing data verifies its accuracy.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算机视觉模型通过检测模式、进行预测和评估其性能来学习数据集。这些数据集通常分为训练集和测试集，以模拟真实世界的条件。训练数据教导模型，而测试数据验证其准确性。
 - en: 'Here are two points to keep in mind before testing your model:'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 在测试模型之前，请记住以下两点：
 - en: '**Realistic Representation:** The previously unseen testing data should be
     similar to the data that the model will have to handle when deployed. This helps
     get a realistic understanding of the model''s capabilities.'
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**真实的代表性：** 先前未见的测试数据应该与模型在部署时需要处理的数据类似。这有助于真实地理解模型的能力。'
 - en: '**Sufficient Size:** The size of the testing dataset needs to be large enough
     to provide reliable insights into how well the model performs.'
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**足够的数据集大小：** 测试数据集的大小需要足够大，以便可靠地了解模型的表现如何。'
 - en: Testing Your Computer Vision Model
+  id: totrans-14
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试您的计算机视觉模型
 - en: Here are the key steps to take to test your computer vision model and understand
     its performance.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下是测试计算机视觉模型并了解其性能的关键步骤。
 - en: '**Run Predictions:** Use the model to make predictions on the test dataset.'
+  id: totrans-16
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**运行预测：** 使用模型对测试数据集进行预测。'
 - en: '**Compare Predictions:** Check how well the model''s predictions match the
     actual labels (ground truth).'
+  id: totrans-17
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**比较预测结果：** 检查模型的预测结果与实际标签（地面真相）的匹配程度。'
 - en: '**Calculate Performance Metrics:** Compute metrics like accuracy, precision,
     recall, and F1 score to understand the model''s strengths and weaknesses. Testing
     focuses on how these metrics reflect real-world performance.'
+  id: totrans-18
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**计算性能指标：** 计算准确率、精确率、召回率和F1分数等指标，以了解模型的优势和劣势。测试侧重于这些指标如何反映实际应用的性能。'
 - en: '**Visualize Results:** Create visual aids like confusion matrices and ROC curves.
     These help you spot specific areas where the model might not be performing well
     in practical applications.'
+  id: totrans-19
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**可视化结果：** 创建诸如混淆矩阵和ROC曲线之类的视觉辅助工具。这些工具帮助您发现模型在实际应用中可能表现不佳的具体领域。'
 - en: 'Next, the testing results can be analyzed:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，可以分析测试结果：
 - en: '**Misclassified Images:** Identify and review images that the model misclassified
     to understand where it is going wrong.'
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**错误分类的图像：** 识别和审查模型误分类的图像，以了解其错误出现的位置。'
 - en: '**Error Analysis:** Perform a thorough error analysis to understand the types
     of errors (e.g., false positives vs. false negatives) and their potential causes.'
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**错误分析：** 进行彻底的错误分析，以了解错误类型（例如假阳性与假阴性）及其潜在原因。'
 - en: '**Bias and Fairness:** Check for any biases in the model''s predictions. Ensure
     that the model performs equally well across different subsets of the data, especially
     if it includes sensitive attributes like race, gender, or age.'
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**偏见和公平性：** 检查模型预测中是否存在任何偏见。确保模型在数据的不同子集上表现一致，特别是涉及种族、性别或年龄等敏感属性的情况。'
 - en: Testing Your YOLOv8 Model
+  id: totrans-24
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 测试您的YOLOv8模型
 - en: To test your YOLOv8 model, you can use the validation mode. It's a straightforward
     way to understand the model's strengths and areas that need improvement. Also,
     you'll need to format your test dataset correctly for YOLOv8\. For more details
     on how to use the validation mode, check out the Model Validation docs page.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 要测试您的YOLOv8模型，可以使用验证模式。这是了解模型优势和需要改进的领域的直接方式。此外，您需要正确格式化您的测试数据集以供YOLOv8使用。有关如何使用验证模式的详细信息，请查看模型验证文档页面。
 - en: Using YOLOv8 to Predict on Multiple Test Images
+  id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用YOLOv8对多个测试图像进行预测
 - en: If you want to test your trained YOLOv8 model on multiple images stored in a
     folder, you can easily do so in one go. Instead of using the validation mode,
     which is typically used to evaluate model performance on a validation set and
     provide detailed metrics, you might just want to see predictions on all images
     in your test set. For this, you can use the prediction mode.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您想要在存储在文件夹中的多个图像上测试已训练的YOLOv8模型，您可以轻松地一次性完成。与通常用于在验证集上评估模型性能并提供详细指标的验证模式不同，您可能只想看到在测试集中所有图像上的预测结果。为此，您可以使用预测模式。
 - en: Difference Between Validation and Prediction Modes
+  id: totrans-28
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 验证模式与预测模式的区别
 - en: '**Validation Mode:** Used to evaluate the model''s performance by comparing
     predictions against known labels (ground truth). It provides detailed metrics
     such as accuracy, precision, recall, and F1 score.'
+  id: totrans-29
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**验证模式：** 用于通过将预测与已知标签（地面真相）进行比较来评估模型的性能。它提供详细的指标，如准确率、精确率、召回率和F1分数。'
 - en: '**Prediction Mode:** Used to run the model on new, unseen data to generate
     predictions. It does not provide detailed performance metrics but allows you to
     see how the model performs on real-world images.'
+  id: totrans-30
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**预测模式：** 用于在新的未见数据上运行模型以生成预测。它不提供详细的性能指标，但允许您查看模型在实际图像上的表现。'
 - en: Running YOLOv8 Predictions Without Custom Training
+  id: totrans-31
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 在没有自定义训练的情况下运行YOLOv8预测
 - en: If you are interested in testing the basic YOLOv8 model to understand whether
     it can be used for your application without custom training, you can use the prediction
     mode. While the model is pre-trained on datasets like COCO, running predictions
     on your own dataset can give you a quick sense of how well it might perform in
     your specific context.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您有兴趣测试基本的YOLOv8模型，以了解它是否可以在没有自定义训练的情况下用于您的应用程序，您可以使用预测模式。虽然模型在像COCO这样的数据集上进行了预训练，但在您自己的数据集上运行预测可以让您快速了解它在特定环境中的性能。
 - en: Overfitting and Underfitting in Machine Learning
+  id: totrans-33
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 机器学习中的过拟合和欠拟合
 - en: When testing a machine learning model, especially in computer vision, it's important
     to watch out for overfitting and underfitting. These issues can significantly
     affect how well your model works with new data.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 在测试机器学习模型时，特别是在计算机视觉中，需要注意过拟合和欠拟合。这些问题可能会显著影响模型在新数据上的表现。
 - en: Overfitting
+  id: totrans-35
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 过拟合
 - en: Overfitting happens when your model learns the training data too well, including
     the noise and details that don't generalize to new data. In computer vision, this
     means your model might do great with training images but struggle with new ones.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 当您的模型过于精确地学习了训练数据，包括噪声和不一般化的细节时，就会发生过拟合。在计算机视觉中，这意味着您的模型可能在训练图像上表现出色，但在新图像上可能会遇到困难。
 - en: Signs of Overfitting
+  id: totrans-37
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 过拟合的迹象
 - en: '**High Training Accuracy, Low Validation Accuracy:** If your model performs
     very well on training data but poorly on validation or test data, it''s likely
     overfitting.'
+  id: totrans-38
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**高训练准确率，低验证准确率：** 如果模型在训练数据上表现非常好，但在验证或测试数据上表现不佳，可能是过拟合的迹象。'
 - en: '**Visual Inspection:** Sometimes, you can see overfitting if your model is
     too sensitive to minor changes or irrelevant details in images.'
+  id: totrans-39
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**视觉检查：** 有时，如果您的模型对图像中的微小变化或不相关细节过于敏感，您可能会看到过拟合。'
 - en: Underfitting
+  id: totrans-40
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 欠拟合
 - en: Underfitting occurs when your model can't capture the underlying patterns in
     the data. In computer vision, an underfitted model might not even recognize objects
     correctly in the training images.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你的模型无法捕捉数据中的潜在模式时，就会发生欠拟合。在计算机视觉中，一个欠拟合的模型可能甚至无法正确识别训练图像中的物体。
 - en: Signs of Underfitting
+  id: totrans-42
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 欠拟合的迹象
 - en: '**Low Training Accuracy:** If your model can''t achieve high accuracy on the
     training set, it might be underfitting.'
+  id: totrans-43
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**低训练准确率：** 如果模型在训练集上无法达到高准确率，可能是欠拟合的表现。'
 - en: '**Visual Misclassification:** Consistent failure to recognize obvious features
     or objects suggests underfitting.'
+  id: totrans-44
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**视觉误分类：** 持续未能识别明显特征或物体表明欠拟合。'
 - en: Balancing Overfitting and Underfitting
+  id: totrans-45
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 平衡过拟合和欠拟合
 - en: The key is to find a balance between overfitting and underfitting. Ideally,
     a model should perform well on both training and validation datasets. Regularly
     monitoring your model's performance through metrics and visual inspections, along
     with applying the right strategies, can help you achieve the best results.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 关键是在过拟合和欠拟合之间找到平衡。理想情况下，模型应在训练和验证数据集上都表现良好。通过指标和视觉检查定期监控模型的性能，以及应用正确的策略，可以帮助您获得最佳结果。
 - en: '![Overfitting and Underfitting Overview](img/262d58651fa4d6104d298c47446dc558.png)'
+  id: totrans-47
   prefs: []
   type: TYPE_IMG
+  zh: '![过拟合和欠拟合概述](img/262d58651fa4d6104d298c47446dc558.png)'
 - en: Data Leakage in Computer Vision and How to Avoid It
+  id: totrans-48
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 计算机视觉中的数据泄漏及其避免方法
 - en: While testing your model, something important to keep in mind is data leakage.
     Data leakage happens when information from outside the training dataset accidentally
     gets used to train the model. The model may seem very accurate during training,
     but it won't perform well on new, unseen data when data leakage occurs.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 在测试模型时，需要牢记的重要事项是数据泄漏。数据泄漏发生在意外使用训练集外部信息来训练模型时。当数据泄漏发生时，模型在训练过程中可能看起来非常准确，但在新的、未见过的数据上表现不佳。
 - en: Why Data Leakage Happens
+  id: totrans-50
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 数据泄漏的原因
 - en: 'Data leakage can be tricky to spot and often comes from hidden biases in the
     training data. Here are some common ways it can happen in computer vision:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据泄漏可能很难发现，并且常常来自训练数据中的隐藏偏差。以下是计算机视觉中可能发生数据泄漏的一些常见方式：
 - en: '**Camera Bias:** Different angles, lighting, shadows, and camera movements
     can introduce unwanted patterns.'
+  id: totrans-52
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**相机偏差：** 不同角度、光照、阴影和相机运动可能引入不必要的模式。'
 - en: '**Overlay Bias:** Logos, timestamps, or other overlays in images can mislead
     the model.'
+  id: totrans-53
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**覆盖偏差：** 图像中的标志、时间戳或其他覆盖物可能会误导模型。'
 - en: '**Font and Object Bias:** Specific fonts or objects that frequently appear
     in certain classes can skew the model''s learning.'
+  id: totrans-54
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**字体和物体偏差：** 特定字体或频繁出现在某些类别中的物体可能会扭曲模型的学习。'
 - en: '**Spatial Bias:** Imbalances in foreground-background, bounding box distributions,
     and object locations can affect training.'
+  id: totrans-55
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**空间偏差：** 前景-背景、边界框分布以及物体位置的不平衡可能影响训练。'
 - en: '**Label and Domain Bias:** Incorrect labels or shifts in data types can lead
     to leakage.'
+  id: totrans-56
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**标签和域偏差：** 错误的标签或数据类型的转移可能导致信息泄漏。'
 - en: Detecting Data Leakage
+  id: totrans-57
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 检测数据泄漏
 - en: 'To find data leakage, you can:'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 要找出数据泄漏，您可以：
 - en: '**Check Performance:** If the model''s results are surprisingly good, it might
     be leaking.'
+  id: totrans-59
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**检查性能：** 如果模型的结果出奇的好，可能存在信息泄漏。'
 - en: '**Look at Feature Importance:** If one feature is much more important than
     others, it could indicate leakage.'
+  id: totrans-60
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**查看特征重要性：** 如果某个特征比其他特征重要得多，可能会提示信息泄露。'
 - en: '**Visual Inspection:** Double-check that the model''s decisions make sense
     intuitively.'
+  id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**视觉检查：** 双重检查模型的决策是否在直觉上合理。'
 - en: '**Verify Data Separation:** Make sure data was divided correctly before any
     processing.'
+  id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**验证数据分离：** 在任何处理之前确保数据被正确分割。'
 - en: Avoiding Data Leakage
+  id: totrans-63
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 避免数据泄漏
 - en: To prevent data leakage, use a diverse dataset with images or videos from different
     cameras and environments. Carefully review your data and check that there are
     no hidden biases, such as all positive samples being taken at a specific time
     of day. Avoiding data leakage will help make your computer vision models more
     reliable and effective in real-world situations.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
 - en: What Comes After Model Testing
+  id: totrans-65
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -327,46 +458,56 @@
     aren't satisfactory, you'll need to make improvements. This might involve analyzing
     errors, gathering more data, improving data quality, adjusting hyperparameters,
     and retraining the model.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
 - en: Join the AI Conversation
+  id: totrans-67
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: Becoming part of a community of computer vision enthusiasts can aid in solving
     problems and learning more efficiently. Here are some ways to connect, seek help,
     and share your thoughts.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
 - en: Community Resources
+  id: totrans-69
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: '**GitHub Issues:** Explore the [YOLOv8 GitHub repository](https://github.com/ultralytics/ultralytics/issues)
     and use the Issues tab to ask questions, report bugs, and suggest new features.
     The community and maintainers are very active and ready to help.'
+  id: totrans-70
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Ultralytics Discord Server:** Join the [Ultralytics Discord server](https://ultralytics.com/discord/)
     to chat with other users and developers, get support, and share your experiences.'
+  id: totrans-71
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Official Documentation
+  id: totrans-72
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: '**Ultralytics YOLOv8 Documentation:** Check out the official YOLOv8 documentation
     for detailed guides and helpful tips on various computer vision projects.'
+  id: totrans-73
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: These resources will help you navigate challenges and remain updated on the
     latest trends and practices within the computer vision community.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
 - en: In Summary
+  id: totrans-75
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -376,14 +517,17 @@
     the model perform well in real-world applications. It's important to remember
     that model testing is just as crucial as model evaluation in guaranteeing the
     model's long-term success and effectiveness.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
 - en: FAQ
+  id: totrans-77
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: What are the key differences between model evaluation and model testing in computer
     vision?
+  id: totrans-78
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -394,9 +538,11 @@
     performance in real-world scenarios by applying it to new, unseen data, ensuring
     the model's learned behavior aligns with expectations outside the evaluation environment.
     For a detailed guide, refer to the steps in a computer vision project.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
 - en: How can I test my Ultralytics YOLOv8 model on multiple images?
+  id: totrans-80
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -405,123 +551,185 @@
     without providing detailed metrics. This is ideal for real-world performance testing
     on larger image sets stored in a folder. For evaluating performance metrics, use
     the validation mode instead.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 若要在多个图像上测试您的Ultralytics YOLOv8模型，可以使用预测模式。此模式允许您在新的、未见过的数据上运行模型，生成预测，而无需提供详细的度量标准。这对于在文件夹中存储的大型图像集上进行实际性能测试非常理想。如需评估性能指标，请改用验证模式。
 - en: What should I do if my computer vision model shows signs of overfitting or underfitting?
+  id: totrans-82
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如果我的计算机视觉模型出现过拟合或欠拟合迹象，应该怎么办？
 - en: 'To address **overfitting**:'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 解决**过拟合**问题：
 - en: Regularization techniques like dropout.
+  id: totrans-84
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 正则化技术如dropout。
 - en: Increase the size of the training dataset.
+  id: totrans-85
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 增加训练数据集的大小。
 - en: Simplify the model architecture.
+  id: totrans-86
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 简化模型架构。
 - en: 'To address **underfitting**:'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 解决**欠拟合**问题：
 - en: Use a more complex model.
+  id: totrans-88
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用更复杂的模型。
 - en: Provide more relevant features.
+  id: totrans-89
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 提供更相关的特征。
 - en: Increase training iterations or epochs.
+  id: totrans-90
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 增加训练迭代次数或轮数。
 - en: Review misclassified images, perform thorough error analysis, and regularly
     track performance metrics to maintain a balance. For more information on these
     concepts, explore our section on Overfitting and Underfitting.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 审查误分类的图像，进行彻底的错误分析，并定期跟踪性能指标以维持平衡。有关这些概念的更多信息，请查看我们关于过拟合和欠拟合的部分。
 - en: How can I detect and avoid data leakage in computer vision?
+  id: totrans-92
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何检测并避免计算机视觉中的数据泄露？
 - en: 'To detect data leakage:'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 检测数据泄露：
 - en: Verify that the testing performance is not unusually high.
+  id: totrans-94
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 确保测试性能不异常高。
 - en: Check feature importance for unexpected insights.
+  id: totrans-95
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 检查特征重要性以获取意外的见解。
 - en: Intuitively review model decisions.
+  id: totrans-96
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 直观地审查模型决策。
 - en: Ensure correct data division before processing.
+  id: totrans-97
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在处理之前确保正确的数据划分。
 - en: 'To avoid data leakage:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 避免数据泄露：
 - en: Use diverse datasets with various environments.
+  id: totrans-99
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用不同环境的多样化数据集。
 - en: Carefully review data for hidden biases.
+  id: totrans-100
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 仔细审查数据中的潜在偏见。
 - en: Ensure no overlapping information between training and testing sets.
+  id: totrans-101
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 确保训练集和测试集之间没有重叠信息。
 - en: For detailed strategies on preventing data leakage, refer to our section on
     Data Leakage in Computer Vision.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关如何防止数据泄露的详细策略，请参阅我们关于计算机视觉中数据泄露的部分。
 - en: What steps should I take after testing my computer vision model?
+  id: totrans-103
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在测试完计算机视觉模型后应采取哪些步骤？
 - en: 'Post-testing, if the model performance meets the project goals, proceed with
     deployment. If the results are unsatisfactory, consider:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 测试后，如果模型表现符合项目目标，可以继续部署。如果结果不理想，考虑：
 - en: Error analysis.
+  id: totrans-105
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 错误分析。
 - en: Gathering more diverse and high-quality data.
+  id: totrans-106
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 收集更多多样化和高质量的数据。
 - en: Hyperparameter tuning.
+  id: totrans-107
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 超参数调优。
 - en: Retraining the model.
+  id: totrans-108
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 重新训练模型。
 - en: Gain insights from the Model Testing Vs. Model Evaluation section to refine
     and enhance model effectiveness in real-world applications.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 从模型测试与模型评估部分获取见解，以优化和增强模型在实际应用中的有效性。
 - en: How do I run YOLOv8 predictions without custom training?
+  id: totrans-110
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何在没有定制训练的情况下运行YOLOv8预测？
 - en: You can run predictions using the pre-trained YOLOv8 model on your dataset to
     see if it suits your application needs. Utilize the prediction mode to get a quick
     sense of performance results without diving into custom training.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以在您的数据集上使用预训练的YOLOv8模型进行预测，以查看它是否适合您的应用需求。利用预测模式快速了解性能结果，无需进行定制训练。
