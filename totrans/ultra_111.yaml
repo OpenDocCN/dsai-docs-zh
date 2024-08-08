@@ -1,299 +1,434 @@
 - en: 'Optimizing OpenVINO Inference for Ultralytics YOLO Models: A Comprehensive
     Guide'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 优化 Ultralytics YOLO 模型的 OpenVINO 推理：全面指南
 - en: 原文：[`docs.ultralytics.com/guides/optimizing-openvino-latency-vs-throughput-modes/`](https://docs.ultralytics.com/guides/optimizing-openvino-latency-vs-throughput-modes/)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[`docs.ultralytics.com/guides/optimizing-openvino-latency-vs-throughput-modes/`](https://docs.ultralytics.com/guides/optimizing-openvino-latency-vs-throughput-modes/)
 - en: '![OpenVINO Ecosystem](img/055ab2bfede0cf7c3fa779f33d3a6ea3.png)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![OpenVINO 生态系统](img/055ab2bfede0cf7c3fa779f33d3a6ea3.png)'
 - en: Introduction
+  id: totrans-3
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 介绍
 - en: When deploying deep learning models, particularly those for object detection
     such as Ultralytics YOLO models, achieving optimal performance is crucial. This
     guide delves into leveraging Intel's OpenVINO toolkit to optimize inference, focusing
     on latency and throughput. Whether you're working on consumer-grade applications
     or large-scale deployments, understanding and applying these optimization strategies
     will ensure your models run efficiently on various devices.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在部署深度学习模型时，特别是那些用于目标检测的模型（例如 Ultralytics YOLO 模型），实现最佳性能至关重要。本指南深入探讨了如何利用英特尔的
+    OpenVINO 工具包优化推理过程，专注于延迟和吞吐量。无论您是在消费级应用还是大规模部署中工作，了解并应用这些优化策略将确保您的模型在各种设备上高效运行。
 - en: Optimizing for Latency
+  id: totrans-5
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 优化延迟
 - en: Latency optimization is vital for applications requiring immediate response
     from a single model given a single input, typical in consumer scenarios. The goal
     is to minimize the delay between input and inference result. However, achieving
     low latency involves careful consideration, especially when running concurrent
     inferences or managing multiple models.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于需要从单个输入获得单个模型立即响应的应用程序，如消费者场景中典型的情况，延迟优化至关重要。目标是尽量减少输入和推理结果之间的延迟。然而，要实现低延迟需要仔细考虑，特别是在同时运行推理或管理多个模型时。
 - en: 'Key Strategies for Latency Optimization:'
+  id: totrans-7
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 降低延迟优化关键策略：
 - en: '**Single Inference per Device:** The simplest way to achieve low latency is
     by limiting to one inference at a time per device. Additional concurrency often
     leads to increased latency.'
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**单设备单推理：** 实现低延迟的最简单方法是限制每次设备仅进行一个推理。增加并发通常会导致延迟增加。'
 - en: '**Leveraging Sub-Devices:** Devices like multi-socket CPUs or multi-tile GPUs
     can execute multiple requests with minimal latency increase by utilizing their
     internal sub-devices.'
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**利用子设备：** 类似多套接 CPU 或多片 GPU 的设备可以利用其内部子设备，在增加最小延迟的情况下执行多个请求。'
 - en: '**OpenVINO Performance Hints:** Utilizing OpenVINO''s `ov::hint::PerformanceMode::LATENCY`
     for the `ov::hint::performance_mode` property during model compilation simplifies
     performance tuning, offering a device-agnostic and future-proof approach.'
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**OpenVINO 性能提示：** 在模型编译过程中，使用 OpenVINO 的 `ov::hint::PerformanceMode::LATENCY`
+    设置 `ov::hint::performance_mode` 属性可以简化性能调优，提供一种设备无关且未来可靠的方法。'
 - en: 'Managing First-Inference Latency:'
+  id: totrans-11
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 管理首次推理延迟：
 - en: '**Model Caching:** To mitigate model load and compile times impacting latency,
     use model caching where possible. For scenarios where caching isn''t viable, CPUs
     generally offer the fastest model load times.'
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**模型缓存：** 为了减少影响延迟的模型加载和编译时间，尽可能使用模型缓存。对于无法使用缓存的情况，CPU通常提供最快的模型加载时间。'
 - en: '**Model Mapping vs. Reading:** To reduce load times, OpenVINO replaced model
     reading with mapping. However, if the model is on a removable or network drive,
     consider using `ov::enable_mmap(false)` to switch back to reading.'
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**模型映射 vs. 读取：** 为了减少加载时间，OpenVINO 使用模型映射替换了模型读取。然而，如果模型位于可移动或网络驱动器上，考虑使用 `ov::enable_mmap(false)`
+    切换回读取模式。'
 - en: '**AUTO Device Selection:** This mode begins inference on the CPU, shifting
     to an accelerator once ready, seamlessly reducing first-inference latency.'
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**AUTO 设备选择：** 此模式在 CPU 上开始推理，在加速器准备就绪后自动切换，无缝地降低首次推理延迟。'
 - en: Optimizing for Throughput
+  id: totrans-15
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 优化吞吐量
 - en: Throughput optimization is crucial for scenarios serving numerous inference
     requests simultaneously, maximizing resource utilization without significantly
     sacrificing individual request performance.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 在同时处理大量推理请求的场景中，优化吞吐量至关重要，旨在最大化资源利用率，同时不显著牺牲单个请求的性能。
 - en: 'Approaches to Throughput Optimization:'
+  id: totrans-17
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 吞吐量优化方法：
 - en: '**OpenVINO Performance Hints:** A high-level, future-proof method to enhance
     throughput across devices using performance hints.'
+  id: totrans-18
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**OpenVINO 性能提示：** 使用性能提示可以跨设备高效提升吞吐量的高级、未来可靠的方法。'
 - en: '[PRE0]'
+  id: totrans-19
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '**Explicit Batching and Streams:** A more granular approach involving explicit
     batching and the use of streams for advanced performance tuning.'
+  id: totrans-20
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**显式批处理和流：** 更精细的方法包括显式批处理和使用流进行高级性能调优。'
 - en: 'Designing Throughput-Oriented Applications:'
+  id: totrans-21
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 设计面向吞吐量的应用程序：
 - en: 'To maximize throughput, applications should:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了最大化吞吐量，应用程序应该：
 - en: Process inputs in parallel, making full use of the device's capabilities.
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 并行处理输入，充分利用设备的能力。
 - en: Decompose data flow into concurrent inference requests, scheduled for parallel
     execution.
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将数据流分解为并发推理请求，安排并行执行。
 - en: Utilize the Async API with callbacks to maintain efficiency and avoid device
     starvation.
+  id: totrans-25
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 利用异步API和回调来保持效率并避免设备饥饿。
 - en: 'Multi-Device Execution:'
+  id: totrans-26
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多设备执行：
 - en: OpenVINO's multi-device mode simplifies scaling throughput by automatically
     balancing inference requests across devices without requiring application-level
     device management.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: OpenVINO的多设备模式通过自动平衡设备之间的推理请求而无需应用程序级别的设备管理，从而简化了吞吐量的扩展。
 - en: Conclusion
+  id: totrans-28
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 结论
 - en: Optimizing Ultralytics YOLO models for latency and throughput with OpenVINO
     can significantly enhance your application's performance. By carefully applying
     the strategies outlined in this guide, developers can ensure their models run
     efficiently, meeting the demands of various deployment scenarios. Remember, the
     choice between optimizing for latency or throughput depends on your specific application
     needs and the characteristics of the deployment environment.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用OpenVINO优化Ultralytics YOLO模型以提高延迟和吞吐量可以显著增强应用程序的性能。通过仔细应用本指南中提出的策略，开发人员可以确保其模型高效运行，满足各种部署场景的需求。请记住，优化延迟或吞吐量的选择取决于您的具体应用需求和部署环境的特性。
 - en: For more detailed technical information and the latest updates, refer to the
     [OpenVINO documentation](https://docs.openvino.ai/latest/index.html) and [Ultralytics
     YOLO repository](https://github.com/ultralytics/ultralytics). These resources
     provide in-depth guides, tutorials, and community support to help you get the
     most out of your deep learning models.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 欲获取更详细的技术信息和最新更新，请参阅[OpenVINO文档](https://docs.openvino.ai/latest/index.html)和[Ultralytics
+    YOLO存储库](https://github.com/ultralytics/ultralytics)。这些资源提供深入的指南、教程和社区支持，帮助您充分利用您的深度学习模型。
 - en: '* * *'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: '* * *'
 - en: Ensuring your models achieve optimal performance is not just about tweaking
     configurations; it's about understanding your application's needs and making informed
     decisions. Whether you're optimizing for real-time responses or maximizing throughput
     for large-scale processing, the combination of Ultralytics YOLO models and OpenVINO
     offers a powerful toolkit for developers to deploy high-performance AI solutions.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 确保您的模型实现最佳性能不仅仅是调整配置，还需要理解应用程序的需求并做出明智的决策。无论您是为实时响应进行优化还是为大规模处理最大化吞吐量，Ultralytics
+    YOLO模型与OpenVINO的结合为开发人员提供了强大的工具包，用于部署高性能人工智能解决方案。
 - en: FAQ
+  id: totrans-33
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 常见问题
 - en: How do I optimize Ultralytics YOLO models for low latency using OpenVINO?
+  id: totrans-34
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何使用OpenVINO优化Ultralytics YOLO模型以实现低延迟？
 - en: 'Optimizing Ultralytics YOLO models for low latency involves several key strategies:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用OpenVINO优化Ultralytics YOLO模型以实现低延迟涉及几个关键策略：
 - en: '**Single Inference per Device:** Limit inferences to one at a time per device
     to minimize delays.'
+  id: totrans-36
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**单设备单推理：** 限制每次设备推理一个以减少延迟。'
 - en: '**Leveraging Sub-Devices:** Utilize devices like multi-socket CPUs or multi-tile
     GPUs which can handle multiple requests with minimal latency increase.'
+  id: totrans-37
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**利用子设备：** 利用像多插槽CPU或多片GPU这样的设备，可以处理多个请求而增加的延迟最小。'
 - en: '**OpenVINO Performance Hints:** Use OpenVINO''s `ov::hint::PerformanceMode::LATENCY`
     during model compilation for simplified, device-agnostic tuning.'
+  id: totrans-38
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**OpenVINO性能提示：** 在模型编译期间使用OpenVINO的`ov::hint::PerformanceMode::LATENCY`来简化设备无关的调优。'
 - en: For more practical tips on optimizing latency, check out the Latency Optimization
     section of our guide.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 欲了解更多有关优化延迟的实用技巧，请查看我们指南中的延迟优化部分。
 - en: Why should I use OpenVINO for optimizing Ultralytics YOLO throughput?
+  id: totrans-40
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为何应使用OpenVINO优化Ultralytics YOLO吞吐量？
 - en: 'OpenVINO enhances Ultralytics YOLO model throughput by maximizing device resource
     utilization without sacrificing performance. Key benefits include:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: OpenVINO通过最大化设备资源利用而不损失性能来增强Ultralytics YOLO模型的吞吐量。其主要优势包括：
 - en: '**Performance Hints:** Simple, high-level performance tuning across devices.'
+  id: totrans-42
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**性能提示：** 简单高效的跨设备性能调优。'
 - en: '**Explicit Batching and Streams:** Fine-tuning for advanced performance.'
+  id: totrans-43
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**显式批处理和流处理：** 为高级性能进行微调。'
 - en: '**Multi-Device Execution:** Automated inference load balancing, easing application-level
     management.'
+  id: totrans-44
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**多设备执行：** 自动推理负载平衡，简化应用级管理。'
 - en: 'Example configuration:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例配置：
 - en: '[PRE1]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Learn more about throughput optimization in the Throughput Optimization section
     of our detailed guide.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们详细指南的吞吐量优化部分了解更多。
 - en: What is the best practice for reducing first-inference latency in OpenVINO?
+  id: totrans-48
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在OpenVINO中减少首次推断延迟的最佳实践是什么？
 - en: 'To reduce first-inference latency, consider these practices:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 要减少首次推断延迟，考虑以下实践：
 - en: '**Model Caching:** Use model caching to decrease load and compile times.'
+  id: totrans-50
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**模型缓存:** 使用模型缓存来减少加载和编译时间。'
 - en: '**Model Mapping vs. Reading:** Use mapping (`ov::enable_mmap(true)`) by default
     but switch to reading (`ov::enable_mmap(false)`) if the model is on a removable
     or network drive.'
+  id: totrans-51
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**模型映射 vs. 读取:** 默认使用映射（`ov::enable_mmap(true)`），但如果模型位于可移动或网络驱动器上，则切换到读取（`ov::enable_mmap(false)`）。'
 - en: '**AUTO Device Selection:** Utilize AUTO mode to start with CPU inference and
     transition to an accelerator seamlessly.'
+  id: totrans-52
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**AUTO设备选择:** 使用AUTO模式从CPU推断开始，并无缝转换到加速器。'
 - en: For detailed strategies on managing first-inference latency, refer to the Managing
     First-Inference Latency section.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于管理首次推断延迟的详细策略，请参考管理首次推断延迟部分。
 - en: How do I balance optimizing for latency and throughput with Ultralytics YOLO
     and OpenVINO?
+  id: totrans-54
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何在Ultralytics YOLO和OpenVINO之间平衡优化延迟和吞吐量？
 - en: 'Balancing latency and throughput optimization requires understanding your application
     needs:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 平衡延迟和吞吐量优化需要理解您的应用程序需求：
 - en: '**Latency Optimization:** Ideal for real-time applications requiring immediate
     responses (e.g., consumer-grade apps).'
+  id: totrans-56
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**延迟优化:** 适用于需要即时响应的实时应用程序（例如消费级应用程序）。'
 - en: '**Throughput Optimization:** Best for scenarios with many concurrent inferences,
     maximizing resource use (e.g., large-scale deployments).'
+  id: totrans-57
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**吞吐量优化:** 适用于有许多并发推断的场景，最大化资源使用（例如大规模部署）。'
 - en: Using OpenVINO's high-level performance hints and multi-device modes can help
     strike the right balance. Choose the appropriate [OpenVINO Performance hints](https://docs.ultralytics.com/integrations/openvino#openvino-performance-hints)
     based on your specific requirements.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用OpenVINO的高级性能提示和多设备模式可以帮助找到适当的平衡。根据您的具体需求选择适当的[OpenVINO性能提示](https://docs.ultralytics.com/integrations/openvino#openvino-performance-hints)。
 - en: Can I use Ultralytics YOLO models with other AI frameworks besides OpenVINO?
+  id: totrans-59
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 我可以将Ultralytics YOLO模型与除OpenVINO外的其他AI框架一起使用吗？
 - en: 'Yes, Ultralytics YOLO models are highly versatile and can be integrated with
     various AI frameworks. Options include:'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 是的，Ultralytics YOLO模型非常灵活，可以与多种AI框架集成。选项包括：
 - en: '**TensorRT:** For NVIDIA GPU optimization, follow the [TensorRT integration
     guide](https://docs.ultralytics.com/integrations/tensorrt).'
+  id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**TensorRT:** 用于NVIDIA GPU优化，请参考[TensorRT集成指南](https://docs.ultralytics.com/integrations/tensorrt)。'
 - en: '**CoreML:** For Apple devices, refer to our [CoreML export instructions](https://docs.ultralytics.com/integrations/coreml).'
+  id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**CoreML:** 对于苹果设备，请参考我们的[CoreML导出说明](https://docs.ultralytics.com/integrations/coreml)。'
 - en: '**TensorFlow.js:** For web and Node.js apps, see the [TF.js conversion guide](https://docs.ultralytics.com/integrations/tfjs).'
+  id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**TensorFlow.js:** 用于Web和Node.js应用程序，请查看[TF.js转换指南](https://docs.ultralytics.com/integrations/tfjs)。'
 - en: Explore more integrations on the [Ultralytics Integrations page](https://docs.ultralytics.com/integrations).
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[Ultralytics集成页面](https://docs.ultralytics.com/integrations)上探索更多集成。
