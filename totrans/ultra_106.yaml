@@ -1,35 +1,54 @@
 - en: Ultralytics YOLOv8 on NVIDIA Jetson using DeepStream SDK and TensorRT
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用DeepStream SDK和TensorRT在NVIDIA Jetson上的Ultralytics YOLOv8
 - en: 原文：[`docs.ultralytics.com/guides/deepstream-nvidia-jetson/`](https://docs.ultralytics.com/guides/deepstream-nvidia-jetson/)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[`docs.ultralytics.com/guides/deepstream-nvidia-jetson/`](https://docs.ultralytics.com/guides/deepstream-nvidia-jetson/)
 - en: This comprehensive guide provides a detailed walkthrough for deploying Ultralytics
     YOLOv8 on [NVIDIA Jetson](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/)
     devices using DeepStream SDK and TensorRT. Here we use TensorRT to maximize the
     inference performance on the Jetson platform.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 这份详尽的指南提供了在[NVIDIA Jetson](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/)设备上使用DeepStream
+    SDK和TensorRT部署Ultralytics YOLOv8的详细步骤。在这里，我们使用TensorRT来最大化Jetson平台上的推理性能。
 - en: '![DeepStream on NVIDIA Jetson](img/f66f632ba33d1fe10163a54c15db50ce.png)'
+  id: totrans-3
   prefs: []
   type: TYPE_IMG
+  zh: '![NVIDIA Jetson 上的 DeepStream](img/f66f632ba33d1fe10163a54c15db50ce.png)'
 - en: Note
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: This guide has been tested with both [Seeed Studio reComputer J4012](https://www.seeedstudio.com/reComputer-J4012-p-5586.html)
     which is based on NVIDIA Jetson Orin NX 16GB running JetPack release of [JP5.1.3](https://developer.nvidia.com/embedded/jetpack-sdk-513)
     and [Seeed Studio reComputer J1020 v2](https://www.seeedstudio.com/reComputer-J1020-v2-p-5498.html)
     which is based on NVIDIA Jetson Nano 4GB running JetPack release of [JP4.6.4](https://developer.nvidia.com/jetpack-sdk-464).
     It is expected to work across all the NVIDIA Jetson hardware lineup including
     latest and legacy.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 本指南已在基于NVIDIA Jetson Orin NX 16GB运行JetPack版本[JP5.1.3](https://developer.nvidia.com/embedded/jetpack-sdk-513)的[Seeed
+    Studio reComputer J4012](https://www.seeedstudio.com/reComputer-J4012-p-5586.html)和基于NVIDIA
+    Jetson Nano 4GB运行JetPack版本[JP4.6.4](https://developer.nvidia.com/jetpack-sdk-464)的[Seeed
+    Studio reComputer J1020 v2](https://www.seeedstudio.com/reComputer-J1020-v2-p-5498.html)上进行了测试。它预计可以在包括最新和传统的所有NVIDIA
+    Jetson硬件中使用。
 - en: What is NVIDIA DeepStream?
+  id: totrans-6
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 什么是NVIDIA DeepStream？
 - en: '[NVIDIA''s DeepStream SDK](https://developer.nvidia.com/deepstream-sdk) is
     a complete streaming analytics toolkit based on GStreamer for AI-based multi-sensor
     processing, video, audio, and image understanding. It''s ideal for vision AI developers,
@@ -40,476 +59,719 @@
     and sensor data. DeepStream''s multi-platform support gives you a faster, easier
     way to develop vision AI applications and services on-premise, at the edge, and
     in the cloud.'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: '[NVIDIA的DeepStream SDK](https://developer.nvidia.com/deepstream-sdk)是基于GStreamer的完整流分析工具包，用于基于AI的多传感器处理、视频、音频和图像理解。它非常适合视觉AI开发人员、软件合作伙伴、初创公司和OEM构建IVA（智能视频分析）应用和服务。您现在可以创建包含神经网络和其他复杂处理任务（如跟踪、视频编码/解码和视频渲染）的流处理管道。这些管道实现了对视频、图像和传感器数据的实时分析。DeepStream的多平台支持为您在本地、边缘和云端开发视觉AI应用和服务提供了更快、更简单的方法。'
 - en: Prerequisites
+  id: totrans-8
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 先决条件
 - en: 'Before you start to follow this guide:'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 在开始遵循本指南之前：
 - en: 'Visit our documentation, Quick Start Guide: NVIDIA Jetson with Ultralytics
     YOLOv8 to set up your NVIDIA Jetson device with Ultralytics YOLOv8'
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 访问我们的文档，快速入门指南：NVIDIA Jetson与Ultralytics YOLOv8，为您的NVIDIA Jetson设备设置Ultralytics
+    YOLOv8
 - en: Install [DeepStream SDK](https://developer.nvidia.com/deepstream-getting-started)
     according to the JetPack version
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 根据JetPack版本安装[DeepStream SDK](https://developer.nvidia.com/deepstream-getting-started)
 - en: For JetPack 4.6.4, install [DeepStream 6.0.1](https://docs.nvidia.com/metropolis/deepstream/6.0.1/dev-guide/text/DS_Quickstart.html)
+  id: totrans-12
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对于 JetPack 4.6.4，请安装[DeepStream 6.0.1](https://docs.nvidia.com/metropolis/deepstream/6.0.1/dev-guide/text/DS_Quickstart.html)
 - en: For JetPack 5.1.3, install [DeepStream 6.3](https://docs.nvidia.com/metropolis/deepstream/6.3/dev-guide/text/DS_Quickstart.html)
+  id: totrans-13
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对于 JetPack 5.1.3，请安装[DeepStream 6.3](https://docs.nvidia.com/metropolis/deepstream/6.3/dev-guide/text/DS_Quickstart.html)
 - en: Tip
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 提示
 - en: In this guide we have used the Debian package method of installing DeepStream
     SDK to the Jetson device. You can also visit the [DeepStream SDK on Jetson (Archived)](https://developer.nvidia.com/embedded/deepstream-on-jetson-downloads-archived)
     to access legacy versions of DeepStream.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本指南中，我们使用了将DeepStream SDK安装到Jetson设备的Debian软件包方法。您也可以访问[Jetson上的DeepStream
+    SDK（存档）](https://developer.nvidia.com/embedded/deepstream-on-jetson-downloads-archived)来获取DeepStream的旧版本。
 - en: DeepStream Configuration for YOLOv8
+  id: totrans-16
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: YOLOv8在DeepStream上的配置
 - en: Here we are using [marcoslucianops/DeepStream-Yolo](https://github.com/marcoslucianops/DeepStream-Yolo)
     GitHub repository which includes NVIDIA DeepStream SDK support for YOLO models.
     We appreciate the efforts of marcoslucianops for his contributions!
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用的是[marcoslucianops/DeepStream-Yolo](https://github.com/marcoslucianops/DeepStream-Yolo)
+    GitHub存储库，该存储库包含NVIDIA DeepStream SDK对YOLO模型的支持。我们感谢marcoslucianops为其贡献所做的努力！
 - en: Install dependencies
+  id: totrans-18
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 安装依赖项
 - en: '[PRE0]'
+  id: totrans-19
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Clone the following repository
+  id: totrans-20
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 克隆以下存储库
 - en: '[PRE1]'
+  id: totrans-21
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Download Ultralytics YOLOv8 detection model (.pt) of your choice from [YOLOv8
     releases](https://github.com/ultralytics/assets/releases). Here we use [yolov8s.pt](https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8s.pt).
+  id: totrans-22
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从[YOLOv8 releases](https://github.com/ultralytics/assets/releases)下载您选择的Ultralytics
+    YOLOv8检测模型（.pt）。这里我们使用[yolov8s.pt](https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8s.pt)。
 - en: '[PRE2]'
+  id: totrans-23
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Note
+  id: totrans-24
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 注意
 - en: You can also use a [custom trained YOLOv8 model](https://docs.ultralytics.com/modes/train/).
+  id: totrans-25
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 您还可以使用[自定义训练的YOLOv8模型](https://docs.ultralytics.com/modes/train/)。
 - en: Convert model to ONNX
+  id: totrans-26
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将模型转换为ONNX
 - en: '[PRE3]'
+  id: totrans-27
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Pass the below arguments to the above command
+  id: totrans-28
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 将以下参数传递给上述命令
 - en: For DeepStream 6.0.1, use opset 12 or lower. The default opset is 16.
+  id: totrans-29
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 对于DeepStream 6.0.1，请使用opset 12或更低版本。默认opset为16。
 - en: '[PRE4]'
+  id: totrans-30
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'To change the inference size (default: 640)'
+  id: totrans-31
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 更改推理尺寸（默认值：640）
 - en: '[PRE5]'
+  id: totrans-32
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Example for 1280:'
+  id: totrans-33
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 例如1280的示例：
 - en: '[PRE6]'
+  id: totrans-34
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: To simplify the ONNX model (DeepStream >= 6.0)
+  id: totrans-35
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 要简化ONNX模型（DeepStream >= 6.0）
 - en: '[PRE7]'
+  id: totrans-36
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: To use dynamic batch-size (DeepStream >= 6.1)
+  id: totrans-37
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 要使用动态批量大小（DeepStream >= 6.1）
 - en: '[PRE8]'
+  id: totrans-38
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: To use static batch-size (example for batch-size = 4)
+  id: totrans-39
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 若要使用静态批量大小（例如批量大小为4）
 - en: '[PRE9]'
+  id: totrans-40
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Set the CUDA version according to the JetPack version installed
+  id: totrans-41
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 根据安装的JetPack版本设置CUDA版本
 - en: 'For JetPack 4.6.4:'
+  id: totrans-42
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 对于JetPack 4.6.4：
 - en: '[PRE10]'
+  id: totrans-43
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'For JetPack 5.1.3:'
+  id: totrans-44
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 对于JetPack 5.1.3：
 - en: '[PRE11]'
+  id: totrans-45
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Compile the library
+  id: totrans-46
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 编译库
 - en: '[PRE12]'
+  id: totrans-47
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Edit the `config_infer_primary_yoloV8.txt` file according to your model (for
     YOLOv8s with 80 classes)
+  id: totrans-48
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 根据您的模型编辑`config_infer_primary_yoloV8.txt`文件（适用于具有80个类别的YOLOv8s）
 - en: '[PRE13]'
+  id: totrans-49
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: Edit the `deepstream_app_config` file
+  id: totrans-50
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 编辑`deepstream_app_config`文件
 - en: '[PRE14]'
+  id: totrans-51
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: You can also change the video source in `deepstream_app_config` file. Here a
     default video file is loaded
+  id: totrans-52
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 您还可以在`deepstream_app_config`文件中更改视频源。这里加载了一个默认视频文件
 - en: '[PRE15]'
+  id: totrans-53
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Run Inference
+  id: totrans-54
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 运行推理
 - en: '[PRE16]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Note
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: It will take a long time to generate the TensorRT engine file before starting
     the inference. So please be patient.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 在开始推理之前生成TensorRT引擎文件可能需要很长时间，请耐心等待。
 - en: '![YOLOv8 with deepstream](img/9f70e5b78ecc1d90ec84e7ede95712e3.png)'
+  id: totrans-58
   prefs: []
   type: TYPE_IMG
+  zh: '![YOLOv8 with deepstream](img/9f70e5b78ecc1d90ec84e7ede95712e3.png)'
 - en: Tip
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 提示
 - en: If you want to convert the model to FP16 precision, simply set `model-engine-file=model_b1_gpu0_fp16.engine`
     and `network-mode=2` inside `config_infer_primary_yoloV8.txt`
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果要将模型转换为FP16精度，只需在`config_infer_primary_yoloV8.txt`内设置`model-engine-file=model_b1_gpu0_fp16.engine`和`network-mode=2`。
 - en: INT8 Calibration
+  id: totrans-61
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: INT8校准
 - en: If you want to use INT8 precision for inference, you need to follow the steps
     below
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果要进行推理的INT8精度，您需要按照以下步骤操作
 - en: Set `OPENCV` environment variable
+  id: totrans-63
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 设置`OPENCV`环境变量
 - en: '[PRE17]'
+  id: totrans-64
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Compile the library
+  id: totrans-65
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 编译库
 - en: '[PRE18]'
+  id: totrans-66
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: For COCO dataset, download the [val2017](http://images.cocodataset.org/zips/val2017.zip),
     extract, and move to `DeepStream-Yolo` folder
+  id: totrans-67
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对于COCO数据集，请下载[val2017](http://images.cocodataset.org/zips/val2017.zip)，解压并移动到`DeepStream-Yolo`文件夹
 - en: Make a new directory for calibration images
+  id: totrans-68
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建一个用于校准图像的新目录
 - en: '[PRE19]'
+  id: totrans-69
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Run the following to select 1000 random images from COCO dataset to run calibration
+  id: totrans-70
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 运行以下命令从COCO数据集中选择1000张随机图像以进行校准
 - en: '[PRE20]'
+  id: totrans-71
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: Note
+  id: totrans-72
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 注意
 - en: NVIDIA recommends at least 500 images to get a good accuracy. On this example,
     1000 images are chosen to get better accuracy (more images = more accuracy). You
     can set it from **head -1000**. For example, for 2000 images, **head -2000**.
     This process can take a long time.
+  id: totrans-73
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: NVIDIA建议至少使用500张图像以获得良好的准确性。在此示例中，选择1000张图像以获得更高的准确性（更多图像=更高的准确性）。您可以设置为**head
+    -1000**。例如，对于2000张图像，设置为**head -2000**。此过程可能需要很长时间。
 - en: Create the `calibration.txt` file with all selected images
+  id: totrans-74
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建包含所有选定图像的`calibration.txt`文件
 - en: '[PRE21]'
+  id: totrans-75
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: Set environment variables
+  id: totrans-76
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 设置环境变量
 - en: '[PRE22]'
+  id: totrans-77
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Note
+  id: totrans-78
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 注意
 - en: Higher INT8_CALIB_BATCH_SIZE values will result in more accuracy and faster
     calibration speed. Set it according to you GPU memory.
+  id: totrans-79
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 较高的INT8_CALIB_BATCH_SIZE值将导致更高的准确性和更快的校准速度。根据您的GPU内存设置它。
 - en: Update the `config_infer_primary_yoloV8.txt` file
+  id: totrans-80
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 更新`config_infer_primary_yoloV8.txt`文件
 - en: From
+  id: totrans-81
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 来自
 - en: '[PRE23]'
+  id: totrans-82
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: To
+  id: totrans-83
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为了
 - en: '[PRE24]'
+  id: totrans-84
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Run Inference
+  id: totrans-85
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 运行推理
 - en: '[PRE25]'
+  id: totrans-86
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: MultiStream Setup
+  id: totrans-87
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 多流设置
 - en: To set up multiple streams under a single deepstream application, you can do
     the following changes to the `deepstream_app_config.txt` file
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 要在单个DeepStream应用程序下设置多个流，您可以对`deepstream_app_config.txt`文件进行以下更改
 - en: Change the rows and columns to build a grid display according to the number
     of streams you want to have. For example, for 4 streams, we can add 2 rows and
     2 columns.
+  id: totrans-89
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 根据所需的流数量更改行和列以构建网格显示。例如，对于 4 个流，我们可以添加 2 行和 2 列。
 - en: '[PRE26]'
+  id: totrans-90
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Set `num-sources=4` and add `uri` of all the 4 streams
+  id: totrans-91
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 设置 `num-sources=4` 并添加所有 4 个流的 `uri`
 - en: '[PRE27]'
+  id: totrans-92
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: Run Inference
+  id: totrans-93
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 运行推理
 - en: '[PRE28]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: '![Multistream setup](img/0392649c7f1d05b4d620d143951d4cf1.png)'
+  id: totrans-95
   prefs: []
   type: TYPE_IMG
+  zh: '![多流设置](img/0392649c7f1d05b4d620d143951d4cf1.png)'
 - en: Benchmark Results
+  id: totrans-96
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 基准结果
 - en: The following table summarizes how YOLOv8s models perform at different TensorRT
     precision levels with an input size of 640x640 on NVIDIA Jetson Orin NX 16GB.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下表格总结了在 NVIDIA Jetson Orin NX 16GB 上，YOLOv8s 模型在不同 TensorRT 精度级别（输入尺寸为 640x640）下的性能表现。
 - en: '| Model Name | Precision | Inference Time (ms/im) | FPS |'
+  id: totrans-98
   prefs: []
   type: TYPE_TB
+  zh: '| 模型名称 | 精度 | 推理时间 (ms/im) | FPS |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-99
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| YOLOv8s | FP32 | 15.63 | 64 |'
+  id: totrans-100
   prefs: []
   type: TYPE_TB
+  zh: '| YOLOv8s | FP32 | 15.63 | 64 |'
 - en: '|  | FP16 | 7.94 | 126 |'
+  id: totrans-101
   prefs: []
   type: TYPE_TB
+  zh: '|  | FP16 | 7.94 | 126 |'
 - en: '|  | INT8 | 5.53 | 181 |'
+  id: totrans-102
   prefs: []
   type: TYPE_TB
+  zh: '|  | INT8 | 5.53 | 181 |'
 - en: Acknowledgements
+  id: totrans-103
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 致谢
 - en: This guide was initially created by our friends at Seeed Studio, Lakshantha
     and Elaine.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 此指南最初由我们的朋友 Seeed Studio 的 Lakshantha 和 Elaine 创建。
 - en: FAQ
+  id: totrans-105
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 常见问题解答
 - en: How do I set up Ultralytics YOLOv8 on an NVIDIA Jetson device?
+  id: totrans-106
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何在 NVIDIA Jetson 设备上设置 Ultralytics YOLOv8？
 - en: To set up Ultralytics YOLOv8 on an [NVIDIA Jetson](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/)
     device, you first need to install the [DeepStream SDK](https://developer.nvidia.com/deepstream-getting-started)
     compatible with your JetPack version. Follow the step-by-step guide in our Quick
     Start Guide to configure your NVIDIA Jetson for YOLOv8 deployment.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 要在 [NVIDIA Jetson](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/)
+    设备上设置 Ultralytics YOLOv8，首先需要安装与你的 JetPack 版本兼容的 [DeepStream SDK](https://developer.nvidia.com/deepstream-getting-started)。按照我们的快速入门指南逐步配置你的
+    NVIDIA Jetson，以便部署 YOLOv8。
 - en: What is the benefit of using TensorRT with YOLOv8 on NVIDIA Jetson?
+  id: totrans-108
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在 NVIDIA Jetson 上使用 TensorRT 与 YOLOv8 的好处是什么？
 - en: Using TensorRT with YOLOv8 optimizes the model for inference, significantly
     reducing latency and improving throughput on NVIDIA Jetson devices. TensorRT provides
     high-performance, low-latency deep learning inference through layer fusion, precision
     calibration, and kernel auto-tuning. This leads to faster and more efficient execution,
     particularly useful for real-time applications like video analytics and autonomous
     machines.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 TensorRT 优化 YOLOv8 模型，显著降低 NVIDIA Jetson 设备上的延迟，并提高吞吐量。TensorRT 通过层融合、精度校准和内核自动调整提供高性能、低延迟的深度学习推理。这导致更快更高效的执行，特别适用于视频分析和自动化机器等实时应用。
 - en: Can I run Ultralytics YOLOv8 with DeepStream SDK across different NVIDIA Jetson
     hardware?
+  id: totrans-110
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 能否在不同的 NVIDIA Jetson 硬件上运行 Ultralytics YOLOv8 与 DeepStream SDK？
 - en: Yes, the guide for deploying Ultralytics YOLOv8 with the DeepStream SDK and
     TensorRT is compatible across the entire NVIDIA Jetson lineup. This includes devices
     like the Jetson Orin NX 16GB with [JetPack 5.1.3](https://developer.nvidia.com/embedded/jetpack-sdk-513)
     and the Jetson Nano 4GB with [JetPack 4.6.4](https://developer.nvidia.com/jetpack-sdk-464).
     Refer to the section DeepStream Configuration for YOLOv8 for detailed steps.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 是的，部署 Ultralytics YOLOv8 与 DeepStream SDK 和 TensorRT 的指南适用于整个 NVIDIA Jetson
+    系列。这包括 Jetson Orin NX 16GB（使用 [JetPack 5.1.3](https://developer.nvidia.com/embedded/jetpack-sdk-513)）和
+    Jetson Nano 4GB（使用 [JetPack 4.6.4](https://developer.nvidia.com/jetpack-sdk-464)）。详细步骤请参阅
+    YOLOv8 的 DeepStream 配置部分。
 - en: How can I convert a YOLOv8 model to ONNX for DeepStream?
+  id: totrans-112
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何将 YOLOv8 模型转换为 DeepStream 的 ONNX 格式？
 - en: To convert a YOLOv8 model to ONNX format for deployment with DeepStream, use
     the `utils/export_yoloV8.py` script from the [DeepStream-Yolo](https://github.com/marcoslucianops/DeepStream-Yolo)
     repository.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 要将 YOLOv8 模型转换为 ONNX 格式以在 DeepStream 中部署，请使用来自 [DeepStream-Yolo](https://github.com/marcoslucianops/DeepStream-Yolo)
+    仓库的 `utils/export_yoloV8.py` 脚本。
 - en: 'Here''s an example command:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是一个示例命令：
 - en: '[PRE29]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: For more details on model conversion, check out our model export section.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 要了解更多有关模型转换的详细信息，请查看我们的模型导出部分。
 - en: What are the performance benchmarks for YOLOv8 on NVIDIA Jetson Orin NX?
+  id: totrans-117
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: NVIDIA Jetson Orin NX 上 YOLOv8 的性能基准是多少？
 - en: 'The performance of YOLOv8 models on NVIDIA Jetson Orin NX 16GB varies based
     on TensorRT precision levels. For example, YOLOv8s models achieve:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: NVIDIA Jetson Orin NX 16GB 上 YOLOv8 模型的性能因 TensorRT 精度级别而异。例如，YOLOv8s 模型达到：
 - en: '**FP32 Precision**: 15.63 ms/im, 64 FPS'
+  id: totrans-119
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**FP32 精度**: 15.63 ms/im, 64 FPS'
 - en: '**FP16 Precision**: 7.94 ms/im, 126 FPS'
+  id: totrans-120
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**FP16 精度**: 7.94 ms/im, 126 FPS'
 - en: '**INT8 Precision**: 5.53 ms/im, 181 FPS'
+  id: totrans-121
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**INT8 精度**: 5.53 ms/im, 181 FPS'
 - en: These benchmarks underscore the efficiency and capability of using TensorRT-optimized
     YOLOv8 models on NVIDIA Jetson hardware. For further details, see our Benchmark
     Results section.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些基准测试突显了在 NVIDIA Jetson 硬件上使用 TensorRT 优化的 YOLOv8 模型的效率和能力。详细信息请参见我们的基准测试结果部分。
