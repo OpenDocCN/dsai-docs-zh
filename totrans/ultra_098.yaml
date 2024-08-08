@@ -1,353 +1,509 @@
 - en: K-Fold Cross Validation with Ultralytics
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用Ultralytics进行K折交叉验证
 - en: 原文：[`docs.ultralytics.com/guides/kfold-cross-validation/`](https://docs.ultralytics.com/guides/kfold-cross-validation/)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[`docs.ultralytics.com/guides/kfold-cross-validation/`](https://docs.ultralytics.com/guides/kfold-cross-validation/)
 - en: Introduction
+  id: totrans-2
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 介绍
 - en: This comprehensive guide illustrates the implementation of K-Fold Cross Validation
     for object detection datasets within the Ultralytics ecosystem. We'll leverage
     the YOLO detection format and key Python libraries such as sklearn, pandas, and
     PyYaml to guide you through the necessary setup, the process of generating feature
     vectors, and the execution of a K-Fold dataset split.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 这份全面的指南演示了在Ultralytics生态系统内实施物体检测数据集的K折交叉验证的过程。我们将利用YOLO检测格式和关键的Python库（如sklearn、pandas和PyYaml）来指导您完成必要的设置，生成特征向量以及执行K折数据集拆分的过程。
 - en: '![K-Fold Cross Validation Overview](img/9cd934ad6a5b729638c7783535ae81e1.png)'
+  id: totrans-4
   prefs: []
   type: TYPE_IMG
+  zh: '![K折交叉验证概述](img/9cd934ad6a5b729638c7783535ae81e1.png)'
 - en: Whether your project involves the Fruit Detection dataset or a custom data source,
     this tutorial aims to help you comprehend and apply K-Fold Cross Validation to
     bolster the reliability and robustness of your machine learning models. While
     we're applying `k=5` folds for this tutorial, keep in mind that the optimal number
     of folds can vary depending on your dataset and the specifics of your project.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 无论您的项目涉及Fruit Detection数据集还是自定义数据源，本教程旨在帮助您理解并应用K折交叉验证来增强机器学习模型的可靠性和健壮性。虽然本教程中应用了`k=5`折，但请注意，最优折数可能因您的数据集和项目的特定情况而异。
 - en: Without further ado, let's dive in!
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 言归正传，让我们开始吧！
 - en: Setup
+  id: totrans-7
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 设置
 - en: Your annotations should be in the YOLO detection format.
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 您的标注应采用YOLO检测格式。
 - en: This guide assumes that annotation files are locally available.
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 本指南假定注释文件已在本地可用。
 - en: For our demonstration, we use the [Fruit Detection](https://www.kaggle.com/datasets/lakshaytyagi01/fruit-detection/code)
     dataset.
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们使用的是[Fruit Detection](https://www.kaggle.com/datasets/lakshaytyagi01/fruit-detection/code)数据集进行演示。
 - en: This dataset contains a total of 8479 images.
+  id: totrans-11
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该数据集共包含8479张图像。
 - en: It includes 6 class labels, each with its total instance counts listed below.
+  id: totrans-12
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它包含6个类别标签，每个标签的总实例数如下所示。
 - en: '| Class Label | Instance Count |'
+  id: totrans-13
   prefs: []
   type: TYPE_TB
+  zh: '| 类别标签 | 实例计数 |'
 - en: '| --- | --- |'
+  id: totrans-14
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- |'
 - en: '| Apple | 7049 |'
+  id: totrans-15
   prefs: []
   type: TYPE_TB
+  zh: '| 苹果 | 7049 |'
 - en: '| Grapes | 7202 |'
+  id: totrans-16
   prefs: []
   type: TYPE_TB
+  zh: '| 葡萄 | 7202 |'
 - en: '| Pineapple | 1613 |'
+  id: totrans-17
   prefs: []
   type: TYPE_TB
+  zh: '| 菠萝 | 1613 |'
 - en: '| Orange | 15549 |'
+  id: totrans-18
   prefs: []
   type: TYPE_TB
+  zh: '| 橙子 | 15549 |'
 - en: '| Banana | 3536 |'
+  id: totrans-19
   prefs: []
   type: TYPE_TB
+  zh: '| 香蕉 | 3536 |'
 - en: '| Watermelon | 1976 |'
+  id: totrans-20
   prefs: []
   type: TYPE_TB
+  zh: '| 西瓜 | 1976 |'
 - en: 'Necessary Python packages include:'
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 必要的Python包括：
 - en: '`ultralytics`'
+  id: totrans-22
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`ultralytics`'
 - en: '`sklearn`'
+  id: totrans-23
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`sklearn`'
 - en: '`pandas`'
+  id: totrans-24
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`pandas`'
 - en: '`pyyaml`'
+  id: totrans-25
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`pyyaml`'
 - en: This tutorial operates with `k=5` folds. However, you should determine the best
     number of folds for your specific dataset.
+  id: totrans-26
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 本教程使用`k=5`折。但是，您应确定适合您特定数据集的最佳折数。
 - en: 'Initiate a new Python virtual environment (`venv`) for your project and activate
     it. Use `pip` (or your preferred package manager) to install:'
+  id: totrans-27
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 为项目初始化一个新的Python虚拟环境（`venv`）并激活它。使用`pip`（或您偏好的包管理器）安装：
 - en: 'The Ultralytics library: `pip install -U ultralytics`. Alternatively, you can
     clone the official [repo](https://github.com/ultralytics/ultralytics).'
+  id: totrans-28
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Ultralytics库：`pip install -U ultralytics`。或者，您可以克隆官方[repo](https://github.com/ultralytics/ultralytics)。
 - en: 'Scikit-learn, pandas, and PyYAML: `pip install -U scikit-learn pandas pyyaml`.'
+  id: totrans-29
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Scikit-learn、pandas和PyYAML：`pip install -U scikit-learn pandas pyyaml`。
 - en: Verify that your annotations are in the YOLO detection format.
+  id: totrans-30
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 确保您的标注采用YOLO检测格式。
 - en: For this tutorial, all annotation files are found in the `Fruit-Detection/labels`
     directory.
+  id: totrans-31
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对于本教程，所有的标注文件都位于`Fruit-Detection/labels`目录中。
 - en: Generating Feature Vectors for Object Detection Dataset
+  id: totrans-32
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 生成物体检测数据集的特征向量
 - en: Start by creating a new `example.py` Python file for the steps below.
+  id: totrans-33
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 首先，创建一个名为`example.py`的新Python文件，进行以下步骤。
 - en: Proceed to retrieve all label files for your dataset.
+  id: totrans-34
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 继续检索数据集的所有标签文件。
 - en: '[PRE0]'
+  id: totrans-35
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Now, read the contents of the dataset YAML file and extract the indices of the
     class labels.
+  id: totrans-36
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在，读取数据集的YAML文件内容，并提取类别标签的索引。
 - en: '[PRE1]'
+  id: totrans-37
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Initialize an empty `pandas` DataFrame.
+  id: totrans-38
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 初始化一个空的`pandas` DataFrame。
 - en: '[PRE2]'
+  id: totrans-39
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Count the instances of each class-label present in the annotation files.
+  id: totrans-40
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 统计每个类别标签在标注文件中的实例数。
 - en: '[PRE3]'
+  id: totrans-41
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'The following is a sample view of the populated DataFrame:'
+  id: totrans-42
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下面是填充的DataFrame的示例视图：
 - en: '[PRE4]'
+  id: totrans-43
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: The rows index the label files, each corresponding to an image in your dataset,
     and the columns correspond to your class-label indices. Each row represents a
     pseudo feature-vector, with the count of each class-label present in your dataset.
     This data structure enables the application of K-Fold Cross Validation to an object
     detection dataset.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 行索引标签文件，每个文件对应数据集中的一个图像，列对应类别标签索引。每行代表一个伪特征向量，其中包含数据集中每个类别标签的计数。这种数据结构使得可以将K折交叉验证应用于目标检测数据集。
 - en: K-Fold Dataset Split
+  id: totrans-45
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: K折数据集分割
 - en: Now we will use the `KFold` class from `sklearn.model_selection` to generate
     `k` splits of the dataset.
+  id: totrans-46
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在，我们将使用`sklearn.model_selection`中的`KFold`类来生成数据集的`k`个分割。
 - en: 'Important:'
+  id: totrans-47
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 重要：
 - en: Setting `shuffle=True` ensures a randomized distribution of classes in your
     splits.
+  id: totrans-48
   prefs:
   - PREF_IND
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 设置`shuffle=True`可确保在分割中类别的随机分布。
 - en: By setting `random_state=M` where `M` is a chosen integer, you can obtain repeatable
     results.
+  id: totrans-49
   prefs:
   - PREF_IND
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通过设置`random_state=M`，其中`M`是选择的整数，可以获得可重复的结果。
 - en: '[PRE5]'
+  id: totrans-50
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: The dataset has now been split into `k` folds, each having a list of `train`
     and `val` indices. We will construct a DataFrame to display these results more
     clearly.
+  id: totrans-51
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 数据集现已分为`k`折，每折都有一个`train`和`val`索引列表。我们将构建一个数据框架来更清楚地显示这些结果。
 - en: '[PRE6]'
+  id: totrans-52
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Now we will calculate the distribution of class labels for each fold as a ratio
     of the classes present in `val` to those present in `train`.
+  id: totrans-53
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在，我们将计算每个折中`val`中类别标签与`train`中类别标签的分布比率。
 - en: '[PRE7]'
+  id: totrans-54
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: The ideal scenario is for all class ratios to be reasonably similar for each
     split and across classes. This, however, will be subject to the specifics of your
     dataset.
+  id: totrans-55
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 理想情况是每个分割中所有类别的比例都相对均衡，并且跨类别也相似。然而，这将取决于您数据集的具体情况。
 - en: Next, we create the directories and dataset YAML files for each split.
+  id: totrans-56
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 接下来，我们为每个分割创建目录和数据集YAML文件。
 - en: '[PRE8]'
+  id: totrans-57
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Lastly, copy images and labels into the respective directory ('train' or 'val')
     for each split.
+  id: totrans-58
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 最后，将图像和标签复制到相应的目录（'train'或'val'）中的每个分割。
 - en: '**NOTE:** The time required for this portion of the code will vary based on
     the size of your dataset and your system hardware.'
+  id: totrans-59
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**注意：** 此部分代码所需的时间取决于数据集的大小和系统硬件。'
 - en: '[PRE9]'
+  id: totrans-60
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Save Records (Optional)
+  id: totrans-61
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 保存记录（可选）
 - en: Optionally, you can save the records of the K-Fold split and label distribution
     DataFrames as CSV files for future reference.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 可选地，您可以将K折分割和标签分布数据框架的记录保存为CSV文件以供将来参考。
 - en: '[PRE10]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Train YOLO using K-Fold Data Splits
+  id: totrans-64
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用K折数据分割训练YOLO
 - en: First, load the YOLO model.
+  id: totrans-65
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 首先，加载YOLO模型。
 - en: '[PRE11]'
+  id: totrans-66
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'Next, iterate over the dataset YAML files to run training. The results will
     be saved to a directory specified by the `project` and `name` arguments. By default,
     this directory is ''exp/runs#'' where # is an integer index.'
+  id: totrans-67
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 接下来，迭代数据集YAML文件以运行训练。结果将保存到由`project`和`name`参数指定的目录中。默认情况下，该目录为 'exp/runs#'，其中#是整数索引。
 - en: '[PRE12]'
+  id: totrans-68
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Conclusion
+  id: totrans-69
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 结论
 - en: In this guide, we have explored the process of using K-Fold cross-validation
     for training the YOLO object detection model. We learned how to split our dataset
     into K partitions, ensuring a balanced class distribution across the different
     folds.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本指南中，我们探讨了如何使用K折交叉验证来训练YOLO目标检测模型的过程。我们学习了如何将数据集分割成K个分区，确保在不同分区之间有平衡的类分布。
 - en: We also explored the procedure for creating report DataFrames to visualize the
     data splits and label distributions across these splits, providing us a clear
     insight into the structure of our training and validation sets.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还探讨了创建报告数据框架的过程，以可视化数据分割和标签分布，为我们提供了对训练和验证集结构的清晰洞察。
 - en: Optionally, we saved our records for future reference, which could be particularly
     useful in large-scale projects or when troubleshooting model performance.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 可选地，我们保存了我们的记录以供将来参考，在大型项目或解决模型性能问题时尤其有用。
 - en: Finally, we implemented the actual model training using each split in a loop,
     saving our training results for further analysis and comparison.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们使用循环在每个分割中实现了实际的模型训练，保存了我们的训练结果以供进一步分析和比较。
 - en: This technique of K-Fold cross-validation is a robust way of making the most
     out of your available data, and it helps to ensure that your model performance
     is reliable and consistent across different data subsets. This results in a more
     generalizable and reliable model that is less likely to overfit to specific data
     patterns.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: K折交叉验证技术是利用可用数据的一种强大方法，有助于确保模型在不同数据子集上的性能可靠和一致。这将导致更具泛化性和可靠性的模型，不太可能过度拟合特定数据模式。
 - en: Remember that although we used YOLO in this guide, these steps are mostly transferable
     to other machine learning models. Understanding these steps allows you to apply
     cross-validation effectively in your own machine learning projects. Happy coding!
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 请记住，虽然我们在本指南中使用了YOLO，但这些步骤大部分是可以迁移到其他机器学习模型的。了解这些步骤可以帮助您有效地在自己的机器学习项目中应用交叉验证。祝编程愉快！
 - en: FAQ
+  id: totrans-76
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 常见问题
 - en: What is K-Fold Cross Validation and why is it useful in object detection?
+  id: totrans-77
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 什么是K折交叉验证，以及在目标检测中它为什么有用？
 - en: K-Fold Cross Validation is a technique where the dataset is divided into 'k'
     subsets (folds) to evaluate model performance more reliably. Each fold serves
     as both training and validation data. In the context of object detection, using
@@ -355,70 +511,102 @@
     is robust and generalizable across different data splits, enhancing its reliability.
     For detailed instructions on setting up K-Fold Cross Validation with Ultralytics
     YOLO, refer to K-Fold Cross Validation with Ultralytics.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: K折交叉验证是一种技术，将数据集分为'k'个子集（折叠），以更可靠地评估模型性能。每个折叠都用作训练和验证数据。在目标检测的背景下，使用K折交叉验证有助于确保您的Ultralytics
+    YOLO模型在不同数据拆分下的性能稳健且具有泛化能力，从而增强其可靠性。有关设置Ultralytics YOLO的K折交叉验证的详细说明，请参阅K折交叉验证与Ultralytics。
 - en: How do I implement K-Fold Cross Validation using Ultralytics YOLO?
+  id: totrans-79
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何使用Ultralytics YOLO实现K折交叉验证？
 - en: 'To implement K-Fold Cross Validation with Ultralytics YOLO, you need to follow
     these steps:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 要使用Ultralytics YOLO实现K折交叉验证，需要按照以下步骤操作：
 - en: Verify annotations are in the YOLO detection format.
+  id: totrans-81
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 验证注释是否符合YOLO检测格式。
 - en: Use Python libraries like `sklearn`, `pandas`, and `pyyaml`.
+  id: totrans-82
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用Python库，如`sklearn`、`pandas`和`pyyaml`。
 - en: Create feature vectors from your dataset.
+  id: totrans-83
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从你的数据集中创建特征向量。
 - en: Split your dataset using `KFold` from `sklearn.model_selection`.
+  id: totrans-84
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用`sklearn.model_selection`中的`KFold`来分割你的数据集。
 - en: Train the YOLO model on each split.
+  id: totrans-85
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在每个拆分上训练YOLO模型。
 - en: For a comprehensive guide, see the K-Fold Dataset Split section in our documentation.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 欲了解详细指南，请查看我们文档中的K-Fold数据集分割部分。
 - en: Why should I use Ultralytics YOLO for object detection?
+  id: totrans-87
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为什么应该使用Ultralytics YOLO进行目标检测？
 - en: Ultralytics YOLO offers state-of-the-art, real-time object detection with high
     accuracy and efficiency. It's versatile, supporting multiple computer vision tasks
     such as detection, segmentation, and classification. Additionally, it integrates
     seamlessly with tools like Ultralytics HUB for no-code model training and deployment.
     For more details, explore the benefits and features on our [Ultralytics YOLO page](https://www.ultralytics.com/yolo).
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: Ultralytics YOLO提供了高精度高效率的实时目标检测，支持多种计算机视觉任务，如检测、分割和分类。此外，它与Ultralytics HUB等工具无缝集成，用于无代码模型训练和部署。有关更多详细信息，请探索我们的[Ultralytics
+    YOLO页面](https://www.ultralytics.com/yolo)上的优点和功能。
 - en: How can I ensure my annotations are in the correct format for Ultralytics YOLO?
+  id: totrans-89
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何确保我的注释符合Ultralytics YOLO的正确格式？
 - en: Your annotations should follow the YOLO detection format. Each annotation file
     must list the object class, alongside its bounding box coordinates in the image.
     The YOLO format ensures streamlined and standardized data processing for training
     object detection models. For more information on proper annotation formatting,
     visit the YOLO detection format guide.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 你的注释应该遵循YOLO检测格式。每个注释文件必须列出对象类别及其在图像中的边界框坐标。YOLO格式确保了训练目标检测模型时数据处理的流畅性和标准化。有关正确注释格式的更多信息，请访问YOLO检测格式指南。
 - en: Can I use K-Fold Cross Validation with custom datasets other than Fruit Detection?
+  id: totrans-91
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 我可以在除了Fruit Detection以外的自定义数据集上使用K折交叉验证吗？
 - en: Yes, you can use K-Fold Cross Validation with any custom dataset as long as
     the annotations are in the YOLO detection format. Replace the dataset paths and
     class labels with those specific to your custom dataset. This flexibility ensures
     that any object detection project can benefit from robust model evaluation using
     K-Fold Cross Validation. For a practical example, review our Generating Feature
     Vectors section.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 是的，只要注释符合YOLO检测格式，你可以在任何自定义数据集上使用K折交叉验证。用你自定义数据集的路径和类标签替换数据集路径和类标签。这种灵活性确保了任何目标检测项目都能通过K折交叉验证进行强大的模型评估。有关实际示例，请查看我们的生成特征向量部分。

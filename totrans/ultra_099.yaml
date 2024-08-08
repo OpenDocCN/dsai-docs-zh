@@ -1,440 +1,642 @@
 - en: Ultralytics YOLO Hyperparameter Tuning Guide
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Ultralytics YOLO超参数调整指南
 - en: 原文：[`docs.ultralytics.com/guides/hyperparameter-tuning/`](https://docs.ultralytics.com/guides/hyperparameter-tuning/)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[`docs.ultralytics.com/guides/hyperparameter-tuning/`](https://docs.ultralytics.com/guides/hyperparameter-tuning/)
 - en: Introduction
+  id: totrans-2
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 介绍
 - en: Hyperparameter tuning is not just a one-time set-up but an iterative process
     aimed at optimizing the machine learning model's performance metrics, such as
     accuracy, precision, and recall. In the context of Ultralytics YOLO, these hyperparameters
     could range from learning rate to architectural details, such as the number of
     layers or types of activation functions used.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 超参数调整不仅仅是一次性设置，而是一个迭代过程，旨在优化机器学习模型的性能指标，如准确率、精确率和召回率。在Ultralytics YOLO的背景下，这些超参数可以从学习率到架构细节，如层数或激活函数类型。
 - en: What are Hyperparameters?
+  id: totrans-4
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 什么是超参数？
 - en: 'Hyperparameters are high-level, structural settings for the algorithm. They
     are set prior to the training phase and remain constant during it. Here are some
     commonly tuned hyperparameters in Ultralytics YOLO:'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 超参数是算法的高级结构设置。它们在训练阶段之前设置，并在其间保持不变。以下是Ultralytics YOLO中一些常调整的超参数：
 - en: '**Learning Rate** `lr0`: Determines the step size at each iteration while moving
     towards a minimum in the loss function.'
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**学习率** `lr0`: 确定每次迭代中在损失函数中向最小值移动的步长大小。'
 - en: '**Batch Size** `batch`: Number of images processed simultaneously in a forward
     pass.'
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**批处理大小** `batch`: 在前向传递中同时处理的图像数量。'
 - en: '**Number of Epochs** `epochs`: An epoch is one complete forward and backward
     pass of all the training examples.'
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**训练周期数** `epochs`: 一个周期是所有训练样本的完整前向和后向传递。'
 - en: '**Architecture Specifics**: Such as channel counts, number of layers, types
     of activation functions, etc.'
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**架构细节**: 如通道数、层数、激活函数类型等。'
 - en: '![Hyperparameter Tuning Visual](img/bfd62960bd9f74faa1c910ed78fdde4a.png)'
+  id: totrans-10
   prefs: []
   type: TYPE_IMG
+  zh: '![超参数调整可视化](img/bfd62960bd9f74faa1c910ed78fdde4a.png)'
 - en: For a full list of augmentation hyperparameters used in YOLOv8 please refer
     to the configurations page.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于YOLOv8中使用的所有增强超参数的完整列表，请参阅配置页面。
 - en: Genetic Evolution and Mutation
+  id: totrans-12
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 遗传进化和突变
 - en: Ultralytics YOLO uses genetic algorithms to optimize hyperparameters. Genetic
     algorithms are inspired by the mechanism of natural selection and genetics.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: Ultralytics YOLO使用遗传算法来优化超参数。遗传算法受自然选择和遗传机制的启发。
 - en: '**Mutation**: In the context of Ultralytics YOLO, mutation helps in locally
     searching the hyperparameter space by applying small, random changes to existing
     hyperparameters, producing new candidates for evaluation.'
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**突变**: 在Ultralytics YOLO的背景下，突变通过对现有超参数应用小的随机更改，在超参数空间中进行局部搜索，生成新的评估候选者。'
 - en: '**Crossover**: Although crossover is a popular genetic algorithm technique,
     it is not currently used in Ultralytics YOLO for hyperparameter tuning. The focus
     is mainly on mutation for generating new hyperparameter sets.'
+  id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**交叉**: 虽然交叉是一种流行的遗传算法技术，但它目前在Ultralytics YOLO中不用于超参数调整。主要关注通过变异生成新的超参数集。'
 - en: Preparing for Hyperparameter Tuning
+  id: totrans-16
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备超参数调整
 - en: 'Before you begin the tuning process, it''s important to:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 在开始调整过程之前，重要的是：
 - en: '**Identify the Metrics**: Determine the metrics you will use to evaluate the
     model''s performance. This could be AP50, F1-score, or others.'
+  id: totrans-18
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**确定评估模型性能的指标**：这可能是AP50、F1分数或其他指标。'
 - en: '**Set the Tuning Budget**: Define how much computational resources you''re
     willing to allocate. Hyperparameter tuning can be computationally intensive.'
+  id: totrans-19
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**设定调整预算**：定义你愿意分配的计算资源量。超参数调整可能需要大量计算资源。'
 - en: Steps Involved
+  id: totrans-20
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 涉及步骤
 - en: Initialize Hyperparameters
+  id: totrans-21
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 初始化超参数
 - en: Start with a reasonable set of initial hyperparameters. This could either be
     the default hyperparameters set by Ultralytics YOLO or something based on your
     domain knowledge or previous experiments.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 从一组合理的初始超参数开始。这可以是由Ultralytics YOLO默认设置的超参数，也可以是基于您的领域知识或先前实验的某些内容。
 - en: Mutate Hyperparameters
+  id: totrans-23
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 变异超参数
 - en: Use the `_mutate` method to produce a new set of hyperparameters based on the
     existing set.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`_mutate`方法基于现有集合生成新的超参数集。
 - en: Train Model
+  id: totrans-25
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 训练模型
 - en: Training is performed using the mutated set of hyperparameters. The training
     performance is then assessed.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用变异后的超参数集进行训练。然后评估训练性能。
 - en: Evaluate Model
+  id: totrans-27
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 评估模型
 - en: Use metrics like AP50, F1-score, or custom metrics to evaluate the model's performance.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用AP50、F1分数或自定义指标等指标评估模型性能。
 - en: Log Results
+  id: totrans-29
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 记录结果
 - en: It's crucial to log both the performance metrics and the corresponding hyperparameters
     for future reference.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 记录性能指标及相应超参数对于将来参考非常重要。
 - en: Repeat
+  id: totrans-31
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 重复
 - en: The process is repeated until either the set number of iterations is reached
     or the performance metric is satisfactory.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个过程重复进行，直到达到设定的迭代次数或性能指标令人满意为止。
 - en: Usage Example
+  id: totrans-33
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 用法示例
 - en: Here's how to use the `model.tune()` method to utilize the `Tuner` class for
     hyperparameter tuning of YOLOv8n on COCO8 for 30 epochs with an AdamW optimizer
     and skipping plotting, checkpointing and validation other than on final epoch
     for faster Tuning.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是如何使用`model.tune()`方法利用`Tuner`类对YOLOv8n在COCO8上进行30个epoch的超参数调整，使用AdamW优化器，并跳过绘图、检查点和仅在最后一个epoch上进行验证以加快调整速度。
 - en: Example
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE0]'
+  id: totrans-36
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Results
+  id: totrans-37
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 结果
 - en: 'After you''ve successfully completed the hyperparameter tuning process, you
     will obtain several files and directories that encapsulate the results of the
     tuning. The following describes each:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 在成功完成超参数调整过程之后，您将获得几个文件和目录，这些文件和目录概括了调整结果。以下是每个的描述：
 - en: File Structure
+  id: totrans-39
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 文件结构
 - en: 'Here''s what the directory structure of the results will look like. Training
     directories like `train1/` contain individual tuning iterations, i.e. one model
     trained with one set of hyperparameters. The `tune/` directory contains tuning
     results from all the individual model trainings:'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面是结果目录结构的示例。像`train1/`这样的训练目录包含单独的调整迭代，即使用一组超参数训练的一个模型。`tune/`目录包含所有单独模型训练的调整结果：
 - en: '[PRE1]'
+  id: totrans-41
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: File Descriptions
+  id: totrans-42
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 文件描述
 - en: best_hyperparameters.yaml
+  id: totrans-43
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: best_hyperparameters.yaml
 - en: This YAML file contains the best-performing hyperparameters found during the
     tuning process. You can use this file to initialize future trainings with these
     optimized settings.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 此 YAML 文件包含调整过程中找到的表现最佳的超参数。您可以使用此文件使用这些优化设置初始化未来的训练。
 - en: '**Format**: YAML'
+  id: totrans-45
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**格式**: YAML'
 - en: '**Usage**: Hyperparameter results'
+  id: totrans-46
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**用法**: 超参数结果'
 - en: '**Example**:'
+  id: totrans-47
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**示例**:'
 - en: '[PRE2]'
+  id: totrans-48
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: best_fitness.png
+  id: totrans-49
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: best_fitness.png
 - en: This is a plot displaying fitness (typically a performance metric like AP50)
     against the number of iterations. It helps you visualize how well the genetic
     algorithm performed over time.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是一个显示适应度（通常是像AP50这样的性能指标）随迭代次数变化的图表。它帮助您可视化遗传算法随时间的表现情况。
 - en: '**Format**: PNG'
+  id: totrans-51
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**格式**: PNG'
 - en: '**Usage**: Performance visualization'
+  id: totrans-52
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**用法**: 性能可视化'
 - en: '![Hyperparameter Tuning Fitness vs Iteration](img/a5d9bd0a7515da79d1c8e48ee4c0399f.png)'
+  id: totrans-53
   prefs: []
   type: TYPE_IMG
+  zh: '![超参数调整适应度 vs 迭代](img/a5d9bd0a7515da79d1c8e48ee4c0399f.png)'
 - en: tune_results.csv
+  id: totrans-54
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: tune_results.csv
 - en: A CSV file containing detailed results of each iteration during the tuning.
     Each row in the file represents one iteration, and it includes metrics like fitness
     score, precision, recall, as well as the hyperparameters used.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: CSV 文件包含调整过程中每次迭代的详细结果。文件中的每一行代表一次迭代，包括适应度分数、精确度、召回率以及所使用的超参数。
 - en: '**Format**: CSV'
+  id: totrans-56
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**格式**: CSV'
 - en: '**Usage**: Per-iteration results tracking.'
+  id: totrans-57
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**用法**: 追踪每次迭代的结果。'
 - en: '**Example**:'
+  id: totrans-58
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**示例**:'
 - en: '[PRE3]'
+  id: totrans-59
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: tune_scatter_plots.png
+  id: totrans-60
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: tune_scatter_plots.png
 - en: This file contains scatter plots generated from `tune_results.csv`, helping
     you visualize relationships between different hyperparameters and performance
     metrics. Note that hyperparameters initialized to 0 will not be tuned, such as
     `degrees` and `shear` below.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 此文件包含从`tune_results.csv`生成的散点图，帮助您可视化不同超参数与性能指标之间的关系。请注意，初始化为0的超参数将不会被调整，例如下面的`degrees`和`shear`。
 - en: '**Format**: PNG'
+  id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**格式**: PNG'
 - en: '**Usage**: Exploratory data analysis'
+  id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**用法**: 探索性数据分析'
 - en: '![Hyperparameter Tuning Scatter Plots](img/6d8ca000b8ab3a7f94038f024ef3a9a4.png)'
+  id: totrans-64
   prefs: []
   type: TYPE_IMG
+  zh: '![超参数调整散点图](img/6d8ca000b8ab3a7f94038f024ef3a9a4.png)'
 - en: weights/
+  id: totrans-65
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: weights/
 - en: This directory contains the saved PyTorch models for the last and the best iterations
     during the hyperparameter tuning process.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 此目录包含在超参数调整过程中最后和最佳迭代期间保存的 PyTorch 模型。
 - en: '**`last.pt`**: The last.pt are the weights from the last epoch of training.'
+  id: totrans-67
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**`last.pt`**: `last.pt`是训练的最后一个epoch的权重。'
 - en: '**`best.pt`**: The best.pt weights for the iteration that achieved the best
     fitness score.'
+  id: totrans-68
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**`best.pt`**: 达到最佳适应度分数的迭代的`best.pt`权重。'
 - en: Using these results, you can make more informed decisions for your future model
     trainings and analyses. Feel free to consult these artifacts to understand how
     well your model performed and how you might improve it further.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 利用这些结果，您可以为未来的模型训练和分析做出更加明智的决策。随时参考这些工件，了解您的模型表现如何以及如何进一步改进它。
 - en: Conclusion
+  id: totrans-70
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 结论
 - en: The hyperparameter tuning process in Ultralytics YOLO is simplified yet powerful,
     thanks to its genetic algorithm-based approach focused on mutation. Following
     the steps outlined in this guide will assist you in systematically tuning your
     model to achieve better performance.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: Ultralytics YOLO的超参数调优过程通过基于变异的遗传算法方法简化但功能强大。按照本指南中概述的步骤进行操作将帮助您系统地调整模型以实现更好的性能。
 - en: Further Reading
+  id: totrans-72
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 进一步阅读
 - en: '[Hyperparameter Optimization in Wikipedia](https://en.wikipedia.org/wiki/Hyperparameter_optimization)'
+  id: totrans-73
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '[维基百科中的超参数优化](https://en.wikipedia.org/wiki/Hyperparameter_optimization)'
 - en: YOLOv5 Hyperparameter Evolution Guide
+  id: totrans-74
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: YOLOv5超参数演化指南
 - en: Efficient Hyperparameter Tuning with Ray Tune and YOLOv8
+  id: totrans-75
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用Ray Tune和YOLOv8进行高效的超参数调优
 - en: For deeper insights, you can explore the `Tuner` class source code and accompanying
     documentation. Should you have any questions, feature requests, or need further
     assistance, feel free to reach out to us on [GitHub](https://github.com/ultralytics/ultralytics/issues/new/choose)
     or [Discord](https://ultralytics.com/discord).
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 想要深入了解的话，你可以查看`Tuner`类的源代码和相关文档。如果你有任何问题、功能请求或需要进一步帮助，请随时通过[GitHub](https://github.com/ultralytics/ultralytics/issues/new/choose)或[Discord](https://ultralytics.com/discord)联系我们。
 - en: FAQ
+  id: totrans-77
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 常见问题
 - en: How do I optimize the learning rate for Ultralytics YOLO during hyperparameter
     tuning?
+  id: totrans-78
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何在Ultralytics YOLO的超参数调优过程中优化学习率？
 - en: 'To optimize the learning rate for Ultralytics YOLO, start by setting an initial
     learning rate using the `lr0` parameter. Common values range from `0.001` to `0.01`.
     During the hyperparameter tuning process, this value will be mutated to find the
     optimal setting. You can utilize the `model.tune()` method to automate this process.
     For example:'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 要优化Ultralytics YOLO的学习率，请从设置初始学习率`lr0`参数开始。常见的初始值范围为`0.001`到`0.01`。在超参数调优过程中，此值将进行变异以找到最佳设置。您可以利用`model.tune()`方法来自动化此过程。例如：
 - en: Example
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例
 - en: '[PRE4]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: For more details, check the Ultralytics YOLO configuration page.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 欲了解更多详情，请查看Ultralytics YOLO配置页面。
 - en: What are the benefits of using genetic algorithms for hyperparameter tuning
     in YOLOv8?
+  id: totrans-83
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在YOLOv8中使用遗传算法进行超参数调优的好处是什么？
 - en: 'Genetic algorithms in Ultralytics YOLOv8 provide a robust method for exploring
     the hyperparameter space, leading to highly optimized model performance. Key benefits
     include:'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: Ultralytics YOLOv8中的遗传算法提供了一种探索超参数空间的强大方法，从而实现高度优化的模型性能。其主要优势包括：
 - en: '**Efficient Search**: Genetic algorithms like mutation can quickly explore
     a large set of hyperparameters.'
+  id: totrans-85
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**高效搜索**：像变异这样的遗传算法可以快速探索大量的超参数。'
 - en: '**Avoiding Local Minima**: By introducing randomness, they help in avoiding
     local minima, ensuring better global optimization.'
+  id: totrans-86
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**避免局部最小值**：通过引入随机性，有助于避免局部最小值，确保更好的全局优化。'
 - en: '**Performance Metrics**: They adapt based on performance metrics such as AP50
     and F1-score.'
+  id: totrans-87
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**性能指标**：它们根据AP50和F1分数等性能指标进行调整。'
 - en: To see how genetic algorithms can optimize hyperparameters, check out the hyperparameter
     evolution guide.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 要了解遗传算法如何优化超参数，请查看超参数演化指南。
 - en: How long does the hyperparameter tuning process take for Ultralytics YOLO?
+  id: totrans-89
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Ultralytics YOLO的超参数调优过程需要多长时间？
 - en: The time required for hyperparameter tuning with Ultralytics YOLO largely depends
     on several factors such as the size of the dataset, the complexity of the model
     architecture, the number of iterations, and the computational resources available.
     For instance, tuning YOLOv8n on a dataset like COCO8 for 30 epochs might take
     several hours to days, depending on the hardware.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用Ultralytics YOLO进行超参数调优所需的时间在很大程度上取决于多个因素，如数据集大小、模型架构复杂性、迭代次数以及可用的计算资源。例如，对像COCO8这样的数据集进行30个epochs的YOLOv8n调优可能需要几小时到几天不等，具体取决于硬件配置。
 - en: To effectively manage tuning time, define a clear tuning budget beforehand (internal
     section link). This helps in balancing resource allocation and optimization goals.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了有效管理调整时间，事先定义一个明确的调整预算（内部部分链接）。这有助于平衡资源分配和优化目标。
 - en: What metrics should I use to evaluate model performance during hyperparameter
     tuning in YOLO?
+  id: totrans-92
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在YOLO超参数调优过程中应该使用哪些指标来评估模型性能？
 - en: 'When evaluating model performance during hyperparameter tuning in YOLO, you
     can use several key metrics:'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 在进行YOLO超参数调优时评估模型性能时，可以使用几个关键指标：
 - en: '**AP50**: The average precision at IoU threshold of 0.50.'
+  id: totrans-94
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**AP50**：在IoU阈值为0.50时的平均精度。'
 - en: '**F1-Score**: The harmonic mean of precision and recall.'
+  id: totrans-95
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**F1分数**：精确率和召回率的调和平均数。'
 - en: '**Precision and Recall**: Individual metrics indicating the model''s accuracy
     in identifying true positives versus false positives and false negatives.'
+  id: totrans-96
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**精确率和召回率**：这些指标表明模型在识别真正例与假正例以及假负例方面的准确性。'
 - en: These metrics help you understand different aspects of your model's performance.
     Refer to the Ultralytics YOLO performance metrics guide for a comprehensive overview.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些指标帮助您理解模型性能的不同方面。请参考Ultralytics YOLO性能指标指南，获取全面的概述。
 - en: Can I use Ultralytics HUB for hyperparameter tuning of YOLO models?
+  id: totrans-98
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 我可以使用Ultralytics HUB来调整YOLO模型的超参数吗？
 - en: Yes, you can use Ultralytics HUB for hyperparameter tuning of YOLO models. The
     HUB offers a no-code platform to easily upload datasets, train models, and perform
     hyperparameter tuning efficiently. It provides real-time tracking and visualization
     of tuning progress and results.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 是的，您可以使用Ultralytics HUB来调整YOLO模型的超参数。该HUB提供了一个无代码平台，可以轻松上传数据集、训练模型并高效进行超参数调整。它实时跟踪和可视化调整进展和结果。
 - en: Explore more about using Ultralytics HUB for hyperparameter tuning in the Ultralytics
     HUB Cloud Training documentation.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 在Ultralytics HUB云训练文档中深入了解如何使用Ultralytics HUB进行超参数调整。
