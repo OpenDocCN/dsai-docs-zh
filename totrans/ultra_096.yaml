@@ -1,219 +1,318 @@
 - en: Thread-Safe Inference with YOLO Models
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用YOLO模型进行线程安全推理
 - en: 原文：[`docs.ultralytics.com/guides/yolo-thread-safe-inference/`](https://docs.ultralytics.com/guides/yolo-thread-safe-inference/)
+  id: totrans-1
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
+  zh: 原文：[`docs.ultralytics.com/guides/yolo-thread-safe-inference/`](https://docs.ultralytics.com/guides/yolo-thread-safe-inference/)
 - en: Running YOLO models in a multi-threaded environment requires careful consideration
     to ensure thread safety. Python's `threading` module allows you to run several
     threads concurrently, but when it comes to using YOLO models across these threads,
     there are important safety issues to be aware of. This page will guide you through
     creating thread-safe YOLO model inference.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在多线程环境中运行YOLO模型需要仔细考虑以确保线程安全。Python的`threading`模块允许您同时运行多个线程，但在使用这些线程跨越YOLO模型时，有重要的安全问题需要注意。本页将指导您创建线程安全的YOLO模型推理。
 - en: Understanding Python Threading
+  id: totrans-3
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 理解Python线程
 - en: Python threads are a form of parallelism that allow your program to run multiple
     operations at once. However, Python's Global Interpreter Lock (GIL) means that
     only one thread can execute Python bytecode at a time.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: Python线程是一种并行形式，允许程序同时运行多个操作。然而，Python的全局解释器锁（GIL）意味着只有一个线程可以同时执行Python字节码。
 - en: '![Single vs Multi-Thread Examples](img/1730a9e4d170bede53d0612310fc0941.png)'
+  id: totrans-5
   prefs: []
   type: TYPE_IMG
+  zh: '![单线程与多线程示例](img/1730a9e4d170bede53d0612310fc0941.png)'
 - en: While this sounds like a limitation, threads can still provide concurrency,
     especially for I/O-bound operations or when using operations that release the
     GIL, like those performed by YOLO's underlying C libraries.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管听起来像是一个限制，线程仍然可以提供并发性，特别是对于I/O绑定操作或使用释放GIL的操作，例如YOLO底层的C库操作。
 - en: The Danger of Shared Model Instances
+  id: totrans-7
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 共享模型实例的危险
 - en: Instantiating a YOLO model outside your threads and sharing this instance across
     multiple threads can lead to race conditions, where the internal state of the
     model is inconsistently modified due to concurrent accesses. This is particularly
     problematic when the model or its components hold state that is not designed to
     be thread-safe.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 在您的线程外部实例化YOLO模型并在多个线程之间共享此实例可能会导致竞争条件，其中模型的内部状态由于并发访问而不一致地修改。当模型或其组件持有不设计为线程安全的状态时，这尤为严重。
 - en: 'Non-Thread-Safe Example: Single Model Instance'
+  id: totrans-9
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 非线程安全示例：单个模型实例
 - en: 'When using threads in Python, it''s important to recognize patterns that can
     lead to concurrency issues. Here is what you should avoid: sharing a single YOLO
     model instance across multiple threads.'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 当在Python中使用线程时，重要的是要识别可能导致并发问题的模式。以下是应该避免的情况：在多个线程之间共享单个YOLO模型实例。
 - en: '[PRE0]'
+  id: totrans-11
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: In the example above, the `shared_model` is used by multiple threads, which
     can lead to unpredictable results because `predict` could be executed simultaneously
     by multiple threads.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上面的例子中，`shared_model`被多个线程使用，这可能导致不可预测的结果，因为`predict`可能会被多个线程同时执行。
 - en: 'Non-Thread-Safe Example: Multiple Model Instances'
+  id: totrans-13
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 非线程安全示例：多个模型实例
 - en: 'Similarly, here is an unsafe pattern with multiple YOLO model instances:'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样，这里是一个不安全的模式，涉及多个YOLO模型实例：
 - en: '[PRE1]'
+  id: totrans-15
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Even though there are two separate model instances, the risk of concurrency
     issues still exists. If the internal implementation of `YOLO` is not thread-safe,
     using separate instances might not prevent race conditions, especially if these
     instances share any underlying resources or states that are not thread-local.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 即使有两个单独的模型实例，仍然存在并发问题的风险。如果`YOLO`的内部实现不是线程安全的，使用单独的实例可能无法防止竞争条件，特别是如果这些实例共享任何非线程本地的底层资源或状态。
 - en: Thread-Safe Inference
+  id: totrans-17
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 线程安全推理
 - en: To perform thread-safe inference, you should instantiate a separate YOLO model
     within each thread. This ensures that each thread has its own isolated model instance,
     eliminating the risk of race conditions.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 要执行线程安全推理，您应该在每个线程内部实例化一个单独的YOLO模型。这确保每个线程都有自己的隔离模型实例，消除竞争条件的风险。
 - en: Thread-Safe Example
+  id: totrans-19
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 线程安全示例
 - en: 'Here''s how to instantiate a YOLO model inside each thread for safe parallel
     inference:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是如何在每个线程内部实例化YOLO模型以进行安全并行推理的方法：
 - en: '[PRE2]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: In this example, each thread creates its own `YOLO` instance. This prevents
     any thread from interfering with the model state of another, thus ensuring that
     each thread performs inference safely and without unexpected interactions with
     the other threads.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，每个线程创建自己的`YOLO`实例。这可以防止任何线程干扰另一个模型状态，从而确保每个线程安全地执行推理，而不会与其他线程发生意外交互。
 - en: Conclusion
+  id: totrans-23
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 结论
 - en: When using YOLO models with Python's `threading`, always instantiate your models
     within the thread that will use them to ensure thread safety. This practice avoids
     race conditions and makes sure that your inference tasks run reliably.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 在使用Python的`threading`时，始终在将使用模型的线程内实例化模型，以确保线程安全。这种做法可以避免竞态条件，并确保推理任务可靠运行。
 - en: For more advanced scenarios and to further optimize your multi-threaded inference
     performance, consider using process-based parallelism with `multiprocessing` or
     leveraging a task queue with dedicated worker processes.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于更高级的场景和进一步优化多线程推理性能，考虑使用基于进程的并行化`multiprocessing`或者利用任务队列和专用工作进程。
 - en: FAQ
+  id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 常见问题解答
 - en: How can I avoid race conditions when using YOLO models in a multi-threaded Python
     environment?
+  id: totrans-27
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何在多线程Python环境中使用YOLO模型避免竞态条件？
 - en: To prevent race conditions when using Ultralytics YOLO models in a multi-threaded
     Python environment, instantiate a separate YOLO model within each thread. This
     ensures that each thread has its own isolated model instance, avoiding concurrent
     modification of the model state.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了在多线程Python环境中使用Ultralytics YOLO模型时避免竞态条件，应在每个线程内实例化一个独立的YOLO模型。这确保每个线程有其自己的隔离模型实例，避免对模型状态的并发修改。
 - en: 'Example:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例：
 - en: '[PRE3]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: For more information on ensuring thread safety, visit the Thread-Safe Inference
     with YOLO Models.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 欲了解更多关于确保线程安全的信息，请访问“使用YOLO模型进行线程安全推理”的章节。
 - en: What are the best practices for running multi-threaded YOLO model inference
     in Python?
+  id: totrans-32
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在Python中运行多线程YOLO模型推理的最佳实践是什么？
 - en: 'To run multi-threaded YOLO model inference safely in Python, follow these best
     practices:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 要安全地在Python中运行多线程YOLO模型推理，请遵循以下最佳实践：
 - en: Instantiate YOLO models within each thread rather than sharing a single model
     instance across threads.
+  id: totrans-34
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在每个线程内实例化YOLO模型，而不是在多个线程之间共享单个模型实例。
 - en: Use Python's `multiprocessing` module for parallel processing to avoid issues
     related to Global Interpreter Lock (GIL).
+  id: totrans-35
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用Python的`multiprocessing`模块进行并行处理以避免与全局解释器锁（GIL）相关的问题。
 - en: Release the GIL by using operations performed by YOLO's underlying C libraries.
+  id: totrans-36
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 通过使用YOLO底层C库执行的操作释放GIL。
 - en: 'Example for thread-safe model instantiation:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 线程安全模型实例化示例：
 - en: '[PRE4]'
+  id: totrans-38
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: For additional context, refer to the section on Thread-Safe Inference.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 欲了解更多背景，请参阅“线程安全推理”部分。
 - en: Why should each thread have its own YOLO model instance?
+  id: totrans-40
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为什么每个线程应该有自己的YOLO模型实例？
 - en: Each thread should have its own YOLO model instance to prevent race conditions.
     When a single model instance is shared among multiple threads, concurrent accesses
     can lead to unpredictable behavior and modifications of the model's internal state.
     By using separate instances, you ensure thread isolation, making your multi-threaded
     tasks reliable and safe.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个线程应该有自己的YOLO模型实例以避免竞态条件。当多个线程共享单个模型实例时，同时访问可能导致不可预测的行为和对模型内部状态的修改。通过使用独立实例，确保线程隔离，使得多线程任务可靠和安全。
 - en: 'For detailed guidance, check the Non-Thread-Safe Example: Single Model Instance
     and Thread-Safe Example sections.'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 欲了解详细指南，请查看“非线程安全示例：单一模型实例和线程安全示例”部分。
 - en: How does Python's Global Interpreter Lock (GIL) affect YOLO model inference?
+  id: totrans-43
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Python的全局解释器锁（GIL）如何影响YOLO模型推理？
 - en: Python's Global Interpreter Lock (GIL) allows only one thread to execute Python
     bytecode at a time, which can limit the performance of CPU-bound multi-threading
     tasks. However, for I/O-bound operations or processes that use libraries releasing
     the GIL, like YOLO's C libraries, you can still achieve concurrency. For enhanced
     performance, consider using process-based parallelism with Python's `multiprocessing`
     module.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: Python的全局解释器锁（GIL）每次只允许一个线程执行Python字节码，这可能限制CPU绑定的多线程任务的性能。然而，对于I/O绑定的操作或使用释放GIL的库（如YOLO的C库）的进程，仍然可以实现并发性。为了提高性能，考虑使用Python的`multiprocessing`模块进行基于进程的并行化。
 - en: For more about threading in Python, see the Understanding Python Threading section.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 想了解Python中线程的更多信息，请参阅“理解Python线程”部分。
 - en: Is it safer to use process-based parallelism instead of threading for YOLO model
     inference?
+  id: totrans-46
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在YOLO模型推理中，使用基于进程的并行化是否比使用线程更安全？
 - en: Yes, using Python's `multiprocessing` module is safer and often more efficient
     for running YOLO model inference in parallel. Process-based parallelism creates
     separate memory spaces, avoiding the Global Interpreter Lock (GIL) and reducing
     the risk of concurrency issues. Each process will operate independently with its
     own YOLO model instance.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 是的，使用 Python 的 `multiprocessing` 模块在并行运行 YOLO 模型推理时更安全且通常更高效。基于进程的并行处理创建了独立的内存空间，避免了全局解释器锁（GIL）并减少并发问题的风险。每个进程将独立运行其自己的
+    YOLO 模型实例。
 - en: For further details on process-based parallelism with YOLO models, refer to
     the page on Thread-Safe Inference.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于使用 YOLO 模型的基于进程的并行处理的详细信息，请参阅线程安全推理页面。
