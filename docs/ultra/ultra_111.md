@@ -37,7 +37,10 @@
 1.  **OpenVINO 性能提示：** 使用性能提示可以跨设备高效提升吞吐量的高级、未来可靠的方法。
 
     ```py
-    `import openvino.properties.hint as hints  config = {hints.performance_mode: hints.PerformanceMode.THROUGHPUT} compiled_model = core.compile_model(model, "GPU", config)` 
+    import openvino.properties.hint as hints
+
+    config = {hints.performance_mode: hints.PerformanceMode.THROUGHPUT}
+    compiled_model = core.compile_model(model, "GPU", config) 
     ```
 
 1.  **显式批处理和流：** 更精细的方法包括显式批处理和使用流进行高级性能调优。
@@ -93,7 +96,10 @@ OpenVINO 通过最大化设备资源利用而不损失性能来增强 Ultralytic
 示例配置：
 
 ```py
-`import openvino.properties.hint as hints  config = {hints.performance_mode: hints.PerformanceMode.THROUGHPUT} compiled_model = core.compile_model(model, "GPU", config)` 
+import openvino.properties.hint as hints
+
+config = {hints.performance_mode: hints.PerformanceMode.THROUGHPUT}
+compiled_model = core.compile_model(model, "GPU", config) 
 ```
 
 在我们详细指南的吞吐量优化部分了解更多。

@@ -15,7 +15,7 @@
 Explorer 依赖于某些功能的外部库。这些库在使用时会自动安装。要手动安装这些依赖项，请使用以下命令：
 
 ```py
-`pip  install  ultralytics[explorer]` 
+pip  install  ultralytics[explorer] 
 ```
 
 提示
@@ -33,7 +33,7 @@ Explorer 在嵌入/语义搜索和 SQL 查询方面运作，并由[LanceDB](http
 GUI 演示在您的浏览器中运行，允许您为数据集创建嵌入并搜索相似图像，运行 SQL 查询和执行语义搜索。可以使用以下命令运行：
 
 ```py
-`yolo  explorer` 
+yolo  explorer 
 ```
 
 注意
@@ -55,7 +55,7 @@ Ultralytics Explorer 是一个强大的工具，专为通过语义搜索、SQL �
 要手动安装 Ultralytics Explorer 所需的可选依赖项，您可以使用以下`pip`命令：
 
 ```py
-`pip  install  ultralytics[explorer]` 
+pip  install  ultralytics[explorer] 
 ```
 
 这些依赖项对语义搜索和 SQL 查询的完整功能至关重要。通过包含由[LanceDB](https://lancedb.com/)支持的库，安装确保数据库操作保持高效和可扩展性，即使处理像 COCO 这样的大型数据集。
@@ -65,7 +65,7 @@ Ultralytics Explorer 是一个强大的工具，专为通过语义搜索、SQL �
 使用 Ultralytics Explorer 的 GUI 版本非常简单。安装必要的依赖项后，您可以使用以下命令启动 GUI：
 
 ```py
-`yolo  explorer` 
+yolo  explorer 
 ```
 
 GUI 提供了一个用户友好的界面，用于创建数据集嵌入、搜索相似图像、运行 SQL 查询和进行语义搜索。此外，与 OpenAI 的 Ask AI 功能集成使您能够使用自然语言查询数据集，增强了灵活性和易用性。
@@ -77,7 +77,7 @@ GUI 提供了一个用户友好的界面，用于创建数据集嵌入、搜索�
 Ultralytics Explorer 中的 Ask AI 功能允许用户使用自然语言查询与其数据集进行交互。通过 OpenAI 提供支持，此功能使您能够提出复杂问题并获得深刻见解，而无需编写 SQL 查询或类似命令。要使用此功能，您需要在第一次运行 GUI 时设置您的 OpenAI API 密钥：
 
 ```py
-`yolo  settings  openai_api_key="YOUR_API_KEY"` 
+yolo  settings  openai_api_key="YOUR_API_KEY" 
 ```
 
 欲了解更多此功能及其集成方法，请参阅我们的 GUI Explorer 使用部分。

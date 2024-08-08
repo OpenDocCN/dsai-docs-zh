@@ -129,7 +129,13 @@ Oriented Bounding Boxes (OBB)：计算机视觉中用于检测图像中角度对
 1.  **整理数据集**：将数据集整理成正确的文件夹结构。你应该有`train/`和`val/`两个顶级目录，在每个目录中，还应有`images/`和`labels/`子目录。
 
     ```py
-    `dataset/ ├── train/ │   ├── images/ │   └── labels/ └── val/     ├── images/     └── labels/` 
+    dataset/
+    ├── train/
+    │   ├── images/
+    │   └── labels/
+    └── val/
+        ├── images/
+        └── labels/ 
     ```
 
 1.  **创建`data.yaml`文件**：在数据集的根目录下，创建一个`data.yaml`文件，描述数据集、类别和其他必要信息。
@@ -145,7 +151,20 @@ Oriented Bounding Boxes (OBB)：计算机视觉中用于检测图像中角度对
 优化和压缩数据集
 
 ```py
-`from pathlib import Path  from ultralytics.data.utils import compress_one_image from ultralytics.utils.downloads import zip_directory  # Define dataset directory path = Path("path/to/dataset")  # Optimize images in dataset (optional) for f in path.rglob("*.jpg"):     compress_one_image(f)  # Zip dataset into 'path/to/dataset.zip' zip_directory(path)` 
+from pathlib import Path
+
+from ultralytics.data.utils import compress_one_image
+from ultralytics.utils.downloads import zip_directory
+
+# Define dataset directory
+path = Path("path/to/dataset")
+
+# Optimize images in dataset (optional)
+for f in path.rglob("*.jpg"):
+    compress_one_image(f)
+
+# Zip dataset into 'path/to/dataset.zip'
+zip_directory(path) 
 ```
 
 遵循这些步骤，您可以贡献一个新的数据集，使其与 Ultralytics 的现有结构很好地整合。
@@ -183,7 +202,20 @@ Ultralytics YOLO 模型提供几个独特特性： - **实时性能**：高速�
 优化和压缩数据集
 
 ```py
-`from pathlib import Path  from ultralytics.data.utils import compress_one_image from ultralytics.utils.downloads import zip_directory  # Define dataset directory path = Path("path/to/dataset")  # Optimize images in dataset (optional) for f in path.rglob("*.jpg"):     compress_one_image(f)  # Zip dataset into 'path/to/dataset.zip' zip_directory(path)` 
+from pathlib import Path
+
+from ultralytics.data.utils import compress_one_image
+from ultralytics.utils.downloads import zip_directory
+
+# Define dataset directory
+path = Path("path/to/dataset")
+
+# Optimize images in dataset (optional)
+for f in path.rglob("*.jpg"):
+    compress_one_image(f)
+
+# Zip dataset into 'path/to/dataset.zip'
+zip_directory(path) 
 ```
 
 了解如何优化和压缩数据集。

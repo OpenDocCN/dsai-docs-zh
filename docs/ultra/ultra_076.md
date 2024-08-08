@@ -11,11 +11,14 @@
 示例
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n.pt") results = model.track(source="https://youtu.be/LNwODJXcvt4", conf=0.3, iou=0.5, show=True)` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")
+results = model.track(source="https://youtu.be/LNwODJXcvt4", conf=0.3, iou=0.5, show=True) 
 ```
 
 ```py
-`yolo  track  model=yolov8n.pt  source="https://youtu.be/LNwODJXcvt4"  conf=0.3,  iou=0.5  show` 
+yolo  track  model=yolov8n.pt  source="https://youtu.be/LNwODJXcvt4"  conf=0.3,  iou=0.5  show 
 ```
 
 ## FAQ
@@ -27,11 +30,14 @@
 示例
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n.pt")  # Load the YOLOv8 model results = model.track(source="https://youtu.be/LNwODJXcvt4", conf=0.3, iou=0.5, show=True)` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")  # Load the YOLOv8 model
+results = model.track(source="https://youtu.be/LNwODJXcvt4", conf=0.3, iou=0.5, show=True) 
 ```
 
 ```py
-`yolo  track  model=yolov8n.pt  source="https://youtu.be/LNwODJXcvt4"  conf=0.3  iou=0.5  show` 
+yolo  track  model=yolov8n.pt  source="https://youtu.be/LNwODJXcvt4"  conf=0.3  iou=0.5  show 
 ```
 
 这些命令加载了 YOLOv8 模型，并使用特定置信度（`conf`）和 IoU（Intersection over Union，`iou`）阈值跟踪给定视频源中的物体。有关更多详细信息，请参阅跟踪模式文档。

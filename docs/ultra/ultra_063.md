@@ -31,11 +31,18 @@ Caltech-101 数据集广泛用于训练和评估深度学习模型在对象识�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="caltech101", epochs=100, imgsz=416)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="caltech101", epochs=100, imgsz=416) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=caltech101  model=yolov8n-cls.pt  epochs=100  imgsz=416` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=caltech101  model=yolov8n-cls.pt  epochs=100  imgsz=416 
 ```
 
 ## 样本图像和注释
@@ -51,7 +58,16 @@ Caltech-101 数据集包含各种对象的高质量彩色图像，为对象识�
 如果您在研究或开发工作中使用 Caltech-101 数据集，请引用以下论文：
 
 ```py
-`@article{fei2007learning,   title={Learning generative visual models from few training examples: An incremental Bayesian approach tested on 101 object categories},   author={Fei-Fei, Li and Fergus, Rob and Perona, Pietro},   journal={Computer vision and Image understanding},   volume={106},   number={1},   pages={59--70},   year={2007},   publisher={Elsevier} }` 
+@article{fei2007learning,
+  title={Learning generative visual models from few training examples: An incremental Bayesian approach tested on 101 object categories},
+  author={Fei-Fei, Li and Fergus, Rob and Perona, Pietro},
+  journal={Computer vision and Image understanding},
+  volume={106},
+  number={1},
+  pages={59--70},
+  year={2007},
+  publisher={Elsevier}
+} 
 ```
 
 我们要感谢李飞飞、Rob Fergus 和 Pietro Perona 创建并维护 Caltech-101 数据集，作为机器学习和计算机视觉研究社区的宝贵资源。有关 Caltech-101 数据集及其创建者的更多信息，请访问[Caltech-101 数据集网站](https://data.caltech.edu/records/mzrjq-6wc02)。
@@ -69,11 +85,18 @@ Caltech-101 数据集包含各种对象的高质量彩色图像，为对象识�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="caltech101", epochs=100, imgsz=416)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="caltech101", epochs=100, imgsz=416) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=caltech101  model=yolov8n-cls.pt  epochs=100  imgsz=416` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=caltech101  model=yolov8n-cls.pt  epochs=100  imgsz=416 
 ```
 
 获取更详细的论证和选项，请参考模型训练页面。
@@ -89,7 +112,16 @@ Caltech-101 数据集包括： - 约 9,000 张跨越 101 个类别的彩色图�
 引用 Caltech-101 数据集在您的研究中承认了创作者的贡献，并为可能使用该数据集的其他人提供了参考文献。推荐的引用格式如下：
 
 ```py
-`@article{fei2007learning,   title={Learning generative visual models from few training examples: An incremental Bayesian approach tested on 101 object categories},   author={Fei-Fei, Li and Fergus, Rob and Perona, Pietro},   journal={Computer vision and Image understanding},   volume={106},   number={1},   pages={59--70},   year={2007},   publisher={Elsevier} }` 
+@article{fei2007learning,
+  title={Learning generative visual models from few training examples: An incremental Bayesian approach tested on 101 object categories},
+  author={Fei-Fei, Li and Fergus, Rob and Perona, Pietro},
+  journal={Computer vision and Image understanding},
+  volume={106},
+  number={1},
+  pages={59--70},
+  year={2007},
+  publisher={Elsevier}
+} 
 ```
 
 引用有助于维护学术作品的完整性，并帮助同行找到原始资源。

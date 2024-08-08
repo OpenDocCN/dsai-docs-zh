@@ -49,11 +49,26 @@
 设备会自动确定。如果 GPU 可用，则会使用 GPU，否则将在 CPU 上开始训练。
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.yaml")  # build a new model from YAML model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training) model = YOLO("yolov8n.yaml").load("yolov8n.pt")  # build from YAML and transfer weights  # Train the model results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.yaml")  # build a new model from YAML
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+model = YOLO("yolov8n.yaml").load("yolov8n.pt")  # build from YAML and transfer weights
+
+# Train the model
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Build a new model from YAML and start training from scratch yolo  detect  train  data=coco8.yaml  model=yolov8n.yaml  epochs=100  imgsz=640  # Start training from a pretrained *.pt model yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640  # Build a new model from YAML, transfer pretrained weights to it and start training yolo  detect  train  data=coco8.yaml  model=yolov8n.yaml  pretrained=yolov8n.pt  epochs=100  imgsz=640` 
+# Build a new model from YAML and start training from scratch
+yolo  detect  train  data=coco8.yaml  model=yolov8n.yaml  epochs=100  imgsz=640
+
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640
+
+# Build a new model from YAML, transfer pretrained weights to it and start training
+yolo  detect  train  data=coco8.yaml  model=yolov8n.yaml  pretrained=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 ### 多 GPU 训练
@@ -65,11 +80,18 @@
 要使用 2 个 GPU 进行训练，CUDA 设备 0 和 1，请使用以下命令。根据需要扩展到更多 GPU。
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model with 2 GPUs results = model.train(data="coco8.yaml", epochs=100, imgsz=640, device=[0, 1])` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model with 2 GPUs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640, device=[0, 1]) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model using GPUs 0 and 1 yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640  device=0,1` 
+# Start training from a pretrained *.pt model using GPUs 0 and 1
+yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640  device=0,1 
 ```
 
 ### Apple M1 和 M2 MPS 训练
@@ -81,11 +103,18 @@
 MPS 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model with 2 GPUs results = model.train(data="coco8.yaml", epochs=100, imgsz=640, device="mps")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model with 2 GPUs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640, device="mps") 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model using GPUs 0 and 1 yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640  device=mps` 
+# Start training from a pretrained *.pt model using GPUs 0 and 1
+yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640  device=mps 
 ```
 
 在利用 M1/M2 芯片的计算能力的同时，这使得训练任务的处理更加高效。有关更详细的指导和高级配置选项，请参阅[PyTorch MPS 文档](https://pytorch.org/docs/stable/notes/mps.html)。
@@ -103,11 +132,18 @@ MPS 训练示例
 恢复训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/last.pt")  # load a partially trained model  # Resume training results = model.train(resume=True)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/last.pt")  # load a partially trained model
+
+# Resume training
+results = model.train(resume=True) 
 ```
 
 ```py
-`# Resume an interrupted training yolo  train  resume  model=path/to/last.pt` 
+# Resume an interrupted training
+yolo  train  resume  model=path/to/last.pt 
 ```
 
 通过设置`resume=True`，`train`函数将从存储在'path/to/last.pt'文件中的状态继续训练。如果省略`resume`参数或将其设置为`False`，`train`函数将启动新的训练会话。
@@ -224,7 +260,10 @@ Comet 是一个平台，允许数据科学家和开发人员跟踪、比较、�
 示例
 
 ```py
-`# pip install comet_ml import comet_ml  comet_ml.init()` 
+# pip install comet_ml
+import comet_ml
+
+comet_ml.init() 
 ```
 
 记得在 Comet 的网站上登录您的账户并获取您的 API 密钥。您需要将其添加到环境变量或脚本中以记录您的实验。
@@ -238,7 +277,10 @@ Comet 是一个平台，允许数据科学家和开发人员跟踪、比较、�
 示例
 
 ```py
-`# pip install clearml import clearml  clearml.browser_login()` 
+# pip install clearml
+import clearml
+
+clearml.browser_login() 
 ```
 
 运行此脚本后，您需要在浏览器上登录您的[CearML](https://www.clear.ml/)账户并验证您的会话。
@@ -252,7 +294,8 @@ Comet 是一个平台，允许数据科学家和开发人员跟踪、比较、�
 示例
 
 ```py
-`load_ext  tensorboard tensorboard  --logdir  ultralytics/runs  # replace with 'runs' directory` 
+load_ext  tensorboard
+tensorboard  --logdir  ultralytics/runs  # replace with 'runs' directory 
 ```
 
 要在本地使用 TensorBoard，请运行下面的命令，并在 http://localhost:6006/ 查看结果。
@@ -260,7 +303,7 @@ Comet 是一个平台，允许数据科学家和开发人员跟踪、比较、�
 示例
 
 ```py
-`tensorboard  --logdir  ultralytics/runs  # replace with 'runs' directory` 
+tensorboard  --logdir  ultralytics/runs  # replace with 'runs' directory 
 ```
 
 这将加载 TensorBoard 并将其定向到保存训练日志的目录。
@@ -276,11 +319,17 @@ Comet 是一个平台，允许数据科学家和开发人员跟踪、比较、�
 单 GPU 和 CPU 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 欲了解更多详情，请参阅训练设置部分。
@@ -306,11 +355,17 @@ Ultralytics YOLOv8 的训练模式的关键特性包括：
 恢复训练示例
 
 ```py
-`from ultralytics import YOLO  # Load the partially trained model model = YOLO("path/to/last.pt")  # Resume training results = model.train(resume=True)` 
+from ultralytics import YOLO
+
+# Load the partially trained model
+model = YOLO("path/to/last.pt")
+
+# Resume training
+results = model.train(resume=True) 
 ```
 
 ```py
-`yolo  train  resume  model=path/to/last.pt` 
+yolo  train  resume  model=path/to/last.pt 
 ```
 
 查看中断训练部分以获取更多信息。
@@ -322,11 +377,17 @@ Ultralytics YOLOv8 的训练模式的关键特性包括：
 MPS 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained model model = YOLO("yolov8n.pt")  # Train the model on M1/M2 chip results = model.train(data="coco8.yaml", epochs=100, imgsz=640, device="mps")` 
+from ultralytics import YOLO
+
+# Load a pretrained model
+model = YOLO("yolov8n.pt")
+
+# Train the model on M1/M2 chip
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640, device="mps") 
 ```
 
 ```py
-`yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640  device=mps` 
+yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640  device=mps 
 ```
 
 欲了解更多详情，请参阅 Apple M1 和 M2 MPS 训练部分。

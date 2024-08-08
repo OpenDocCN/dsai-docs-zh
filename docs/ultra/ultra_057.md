@@ -27,7 +27,27 @@ Package Segmentation Dataset 提供了包分割，对于优化物流、增强末
 ultralytics/cfg/datasets/package-seg.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # Package-seg dataset by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/segment/package-seg/ # Example usage: yolo train data=package-seg.yaml # parent # ├── ultralytics # └── datasets #     └── package-seg  ← downloads here (102 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/package-seg  # dataset root dir train:  images/train  # train images (relative to 'path') 1920 images val:  images/val  # val images (relative to 'path') 89 images test:  test/images  # test images (relative to 'path') 188 images  # Classes names:   0:  package  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/package-seg.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Package-seg dataset by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/segment/package-seg/
+# Example usage: yolo train data=package-seg.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── package-seg  ← downloads here (102 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/package-seg  # dataset root dir
+train:  images/train  # train images (relative to 'path') 1920 images
+val:  images/val  # val images (relative to 'path') 89 images
+test:  test/images  # test images (relative to 'path') 188 images
+
+# Classes
+names:
+  0:  package
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/package-seg.zip 
 ```
 
 ## 用途
@@ -37,11 +57,18 @@ ultralytics/cfg/datasets/package-seg.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="package-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="package-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=package-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=package-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 ## 样本数据和注释
@@ -59,7 +86,18 @@ Package Segmentation 数据集包含从多个视角捕获的各种图像和视�
 如果您将裂缝分割数据集整合到您的研究或开发项目中，请引用以下论文：
 
 ```py
-`@misc{  factory_package_dataset,   title  =  { factory_package Dataset },   type  =  { Open Source Dataset },   author  =  { factorypackage },   howpublished  =  { \url{ https://universe.roboflow.com/factorypackage/factory_package } },   url  =  { https://universe.roboflow.com/factorypackage/factory_package },   journal  =  { Roboflow Universe },   publisher  =  { Roboflow },   year  =  { 2024 },   month  =  { jan },   note  =  { visited on 2024-01-24 }, }` 
+@misc{  factory_package_dataset,
+  title  =  { factory_package Dataset },
+  type  =  { Open Source Dataset },
+  author  =  { factorypackage },
+  howpublished  =  { \url{ https://universe.roboflow.com/factorypackage/factory_package } },
+  url  =  { https://universe.roboflow.com/factorypackage/factory_package },
+  journal  =  { Roboflow Universe },
+  publisher  =  { Roboflow },
+  year  =  { 2024 },
+  month  =  { jan },
+  note  =  { visited on 2024-01-24 },
+} 
 ```
 
 我们要感谢 Roboflow 团队为创建和维护包分割数据集所做的努力。对于有关包分割数据集及其创建者的更多详细信息，请访问[包分割数据集页面](https://universe.roboflow.com/factorypackage/factory_package)。
@@ -75,13 +113,20 @@ Package Segmentation 数据集包含从多个视角捕获的各种图像和视�
 您可以使用 Python 和 CLI 方法训练 Ultralytics YOLOv8n 模型。对于 Python，使用下面的代码片段：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load a pretrained model  # Train the model results = model.train(data="package-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model
+
+# Train the model
+results = model.train(data="package-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 对于 CLI：
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=package-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=package-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 有关更多详情，请参阅模型训练页面。

@@ -67,7 +67,7 @@
 +   当调用 `model.train()` 时，请确保将 `.yaml` 文件的路径作为 `data` 参数传递，如下所示：
 
 ```py
-`model.train(data="/path/to/your/data.yaml", batch=4)` 
+model.train(data="/path/to/your/data.yaml", batch=4) 
 ```
 
 #### 使用多个 GPU 加速训练
@@ -85,7 +85,8 @@
 +   修改您的训练命令以利用多个 GPU：
 
 ```py
-`# Adjust the batch size and other settings as needed to optimize training speed model.train(data="/path/to/your/data.yaml", batch=32, multi_scale=True)` 
+# Adjust the batch size and other settings as needed to optimize training speed
+model.train(data="/path/to/your/data.yaml", batch=32, multi_scale=True) 
 ```
 
 #### 连续监控参数
@@ -123,7 +124,7 @@
 **解决方案**：在训练日志中，'device' 的值为 'null' 通常意味着训练过程设置为自动使用可用的 GPU，这是默认行为。要确保在特定 GPU 上进行训练，可以在您的 .yaml 配置文件中手动设置 'device' 值为 GPU 索引（例如，第一个 GPU 的 '0'）：
 
 ```py
-`device:  0` 
+device:  0 
 ```
 
 这将显式地将训练过程分配到指定的 GPU。如果希望在 CPU 上训练，请将 'device' 设置为 'cpu'。
@@ -177,7 +178,11 @@
 +   坐标格式：YOLOv8 提供绝对像素值的边界框坐标。要将其转换为相对坐标（范围从 0 到 1），需要通过图像尺寸进行除法。例如，假设您的图像尺寸为 640x640。然后您需要执行以下操作：
 
 ```py
-`# Convert absolute coordinates to relative coordinates x1 = x1 / 640  # Divide x-coordinates by image width x2 = x2 / 640 y1 = y1 / 640  # Divide y-coordinates by image height y2 = y2 / 640` 
+# Convert absolute coordinates to relative coordinates
+x1 = x1 / 640  # Divide x-coordinates by image width
+x2 = x2 / 640
+y1 = y1 / 640  # Divide y-coordinates by image height
+y2 = y2 / 640 
 ```
 
 +   文件名：要获取正在进行预测的图像的文件名，请直接从结果对象中访问图像文件路径。
@@ -189,7 +194,7 @@
 **解决方案**：要检测特定类别，请使用 classes 参数指定要包含在输出中的类别。例如，要仅检测汽车（假设 'cars' 的类别索引为 2）：
 
 ```py
-`yolo  task=detect  mode=segment  model=yolov8n-seg.pt  source='path/to/car.mp4'  show=True  classes=2` 
+yolo  task=detect  mode=segment  model=yolov8n-seg.pt  source='path/to/car.mp4'  show=True  classes=2 
 ```
 
 #### 理解 YOLOv8 中的精度指标
@@ -205,7 +210,22 @@
 **解决方案**：要获取边界框尺寸，请首先使用 Ultralytics 的 YOLOv8 模型在图像中预测对象。然后，从预测结果中提取边界框的宽度和高度信息。
 
 ```py
-`from ultralytics import YOLO  # Load a pre-trained YOLOv8 model model = YOLO("yolov8n.pt")  # Specify the source image source = "https://ultralytics.com/images/bus.jpg"  # Make predictions results = model.predict(source, save=True, imgsz=320, conf=0.5)  # Extract bounding box dimensions boxes = results[0].boxes.xywh.cpu() for box in boxes:     x, y, w, h = box     print(f"Width of Box: {w}, Height of Box: {h}")` 
+from ultralytics import YOLO
+
+# Load a pre-trained YOLOv8 model
+model = YOLO("yolov8n.pt")
+
+# Specify the source image
+source = "https://ultralytics.com/images/bus.jpg"
+
+# Make predictions
+results = model.predict(source, save=True, imgsz=320, conf=0.5)
+
+# Extract bounding box dimensions
+boxes = results[0].boxes.xywh.cpu()
+for box in boxes:
+    x, y, w, h = box
+    print(f"Width of Box: {w}, Height of Box: {h}") 
 ```
 
 ### 部署挑战
@@ -269,7 +289,7 @@
 使用单个 GPU 进行训练可能由于批量大小过大或内存不足而导致速度较慢。为加快训练速度，请使用多个 GPU。确保系统有多个可用的 GPU，并调整您的 `.yaml` 配置文件以指定 GPU 数量，例如 `gpus: 4`。相应增加批量大小，以充分利用 GPU 而不超过内存限制。示例命令：
 
 ```py
-`model.train(data="/path/to/your/data.yaml", batch=32, multi_scale=True)` 
+model.train(data="/path/to/your/data.yaml", batch=32, multi_scale=True) 
 ```
 
 ### 如何确保我的 YOLOv8 模型在 GPU 上训练？
@@ -277,7 +297,7 @@
 如果在训练日志中 'device' 值显示为 'null'，通常意味着训练进程设置为自动使用可用的 GPU。若需显式分配特定的 GPU，请在您的 `.yaml` 配置文件中设置 'device' 值。例如：
 
 ```py
-`device:  0` 
+device:  0 
 ```
 
 将训练过程设置为第一个 GPU。请使用 `nvidia-smi` 命令确认您的 CUDA 设置。

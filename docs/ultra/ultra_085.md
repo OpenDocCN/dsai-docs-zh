@@ -34,27 +34,219 @@
 使用 Ultralytics YOLOv8 的热力图示例
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  # Video writer video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  # Init heatmap heatmap_obj = solutions.Heatmap(     colormap=cv2.COLORMAP_PARULA,     view_img=True,     shape="circle",     names=model.names, )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break     tracks = model.track(im0, persist=True, show=False)      im0 = heatmap_obj.generate_heatmap(im0, tracks)     video_writer.write(im0)  cap.release() video_writer.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+# Video writer
+video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+# Init heatmap
+heatmap_obj = solutions.Heatmap(
+    colormap=cv2.COLORMAP_PARULA,
+    view_img=True,
+    shape="circle",
+    names=model.names,
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+    tracks = model.track(im0, persist=True, show=False)
+
+    im0 = heatmap_obj.generate_heatmap(im0, tracks)
+    video_writer.write(im0)
+
+cap.release()
+video_writer.release()
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  # Video writer video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  line_points = [(20, 400), (1080, 404)]  # line for object counting  # Init heatmap heatmap_obj = solutions.Heatmap(     colormap=cv2.COLORMAP_PARULA,     view_img=True,     shape="circle",     count_reg_pts=line_points,     names=model.names, )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break      tracks = model.track(im0, persist=True, show=False)     im0 = heatmap_obj.generate_heatmap(im0, tracks)     video_writer.write(im0)  cap.release() video_writer.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+# Video writer
+video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+line_points = [(20, 400), (1080, 404)]  # line for object counting
+
+# Init heatmap
+heatmap_obj = solutions.Heatmap(
+    colormap=cv2.COLORMAP_PARULA,
+    view_img=True,
+    shape="circle",
+    count_reg_pts=line_points,
+    names=model.names,
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+
+    tracks = model.track(im0, persist=True, show=False)
+    im0 = heatmap_obj.generate_heatmap(im0, tracks)
+    video_writer.write(im0)
+
+cap.release()
+video_writer.release()
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  # Video writer video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  # Define polygon points region_points = [(20, 400), (1080, 404), (1080, 360), (20, 360), (20, 400)]  # Init heatmap heatmap_obj = solutions.Heatmap(     colormap=cv2.COLORMAP_PARULA,     view_img=True,     shape="circle",     count_reg_pts=region_points,     names=model.names, )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break      tracks = model.track(im0, persist=True, show=False)     im0 = heatmap_obj.generate_heatmap(im0, tracks)     video_writer.write(im0)  cap.release() video_writer.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+# Video writer
+video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+# Define polygon points
+region_points = [(20, 400), (1080, 404), (1080, 360), (20, 360), (20, 400)]
+
+# Init heatmap
+heatmap_obj = solutions.Heatmap(
+    colormap=cv2.COLORMAP_PARULA,
+    view_img=True,
+    shape="circle",
+    count_reg_pts=region_points,
+    names=model.names,
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+
+    tracks = model.track(im0, persist=True, show=False)
+    im0 = heatmap_obj.generate_heatmap(im0, tracks)
+    video_writer.write(im0)
+
+cap.release()
+video_writer.release()
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  # Video writer video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  # Define region points region_points = [(20, 400), (1080, 404), (1080, 360), (20, 360)]  # Init heatmap heatmap_obj = solutions.Heatmap(     colormap=cv2.COLORMAP_PARULA,     view_img=True,     shape="circle",     count_reg_pts=region_points,     names=model.names, )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break      tracks = model.track(im0, persist=True, show=False)     im0 = heatmap_obj.generate_heatmap(im0, tracks)     video_writer.write(im0)  cap.release() video_writer.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+# Video writer
+video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+# Define region points
+region_points = [(20, 400), (1080, 404), (1080, 360), (20, 360)]
+
+# Init heatmap
+heatmap_obj = solutions.Heatmap(
+    colormap=cv2.COLORMAP_PARULA,
+    view_img=True,
+    shape="circle",
+    count_reg_pts=region_points,
+    names=model.names,
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+
+    tracks = model.track(im0, persist=True, show=False)
+    im0 = heatmap_obj.generate_heatmap(im0, tracks)
+    video_writer.write(im0)
+
+cap.release()
+video_writer.release()
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt")  # YOLOv8 custom/pretrained model  im0 = cv2.imread("path/to/image.png")  # path to image file h, w = im0.shape[:2]  # image height and width  # Heatmap Init heatmap_obj = solutions.Heatmap(     colormap=cv2.COLORMAP_PARULA,     view_img=True,     shape="circle",     names=model.names, )  results = model.track(im0, persist=True) im0 = heatmap_obj.generate_heatmap(im0, tracks=results) cv2.imwrite("ultralytics_output.png", im0)` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")  # YOLOv8 custom/pretrained model
+
+im0 = cv2.imread("path/to/image.png")  # path to image file
+h, w = im0.shape[:2]  # image height and width
+
+# Heatmap Init
+heatmap_obj = solutions.Heatmap(
+    colormap=cv2.COLORMAP_PARULA,
+    view_img=True,
+    shape="circle",
+    names=model.names,
+)
+
+results = model.track(im0, persist=True)
+im0 = heatmap_obj.generate_heatmap(im0, tracks=results)
+cv2.imwrite("ultralytics_output.png", im0) 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  # Video writer video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  classes_for_heatmap = [0, 2]  # classes for heatmap  # Init heatmap heatmap_obj = solutions.Heatmap(     colormap=cv2.COLORMAP_PARULA,     view_img=True,     shape="circle",     names=model.names, )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break     tracks = model.track(im0, persist=True, show=False, classes=classes_for_heatmap)      im0 = heatmap_obj.generate_heatmap(im0, tracks)     video_writer.write(im0)  cap.release() video_writer.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+# Video writer
+video_writer = cv2.VideoWriter("heatmap_output.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+classes_for_heatmap = [0, 2]  # classes for heatmap
+
+# Init heatmap
+heatmap_obj = solutions.Heatmap(
+    colormap=cv2.COLORMAP_PARULA,
+    view_img=True,
+    shape="circle",
+    names=model.names,
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+    tracks = model.track(im0, persist=True, show=False, classes=classes_for_heatmap)
+
+    im0 = heatmap_obj.generate_heatmap(im0, tracks)
+    video_writer.write(im0)
+
+cap.release()
+video_writer.release()
+cv2.destroyAllWindows() 
 ```
 
 ### 参数 `Heatmap()`
@@ -130,7 +322,26 @@ Ultralytics YOLOv8 通过将复杂数据转换为彩色矩阵生成热图，不�
 是的，Ultralytics YOLOv8 支持对象跟踪和热图生成同时进行。这可以通过其与对象跟踪模型集成的`Heatmap`解决方案来实现。为此，你需要初始化热图对象并使用 YOLOv8 的跟踪功能。以下是一个简单的示例：
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") heatmap_obj = solutions.Heatmap(colormap=cv2.COLORMAP_PARULA, view_img=True, shape="circle", names=model.names)  while cap.isOpened():     success, im0 = cap.read()     if not success:         break     tracks = model.track(im0, persist=True, show=False)     im0 = heatmap_obj.generate_heatmap(im0, tracks)     cv2.imshow("Heatmap", im0)     if cv2.waitKey(1) & 0xFF == ord("q"):         break  cap.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+heatmap_obj = solutions.Heatmap(colormap=cv2.COLORMAP_PARULA, view_img=True, shape="circle", names=model.names)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        break
+    tracks = model.track(im0, persist=True, show=False)
+    im0 = heatmap_obj.generate_heatmap(im0, tracks)
+    cv2.imshow("Heatmap", im0)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
+cv2.destroyAllWindows() 
 ```
 
 有关进一步的指导，请查看跟踪模式页面。
@@ -144,7 +355,27 @@ Ultralytics YOLOv8 热图专为与其对象检测和跟踪模型集成而设计�
 你可以通过在 YOLO 模型的`track()`方法中指定所需的类别来可视化特定的对象类别。例如，如果你只想可视化汽车和人（假设它们的类别索引为 0 和 2），你可以相应地设置`classes`参数。
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") heatmap_obj = solutions.Heatmap(colormap=cv2.COLORMAP_PARULA, view_img=True, shape="circle", names=model.names)  classes_for_heatmap = [0, 2]  # Classes to visualize while cap.isOpened():     success, im0 = cap.read()     if not success:         break     tracks = model.track(im0, persist=True, show=False, classes=classes_for_heatmap)     im0 = heatmap_obj.generate_heatmap(im0, tracks)     cv2.imshow("Heatmap", im0)     if cv2.waitKey(1) & 0xFF == ord("q"):         break  cap.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+heatmap_obj = solutions.Heatmap(colormap=cv2.COLORMAP_PARULA, view_img=True, shape="circle", names=model.names)
+
+classes_for_heatmap = [0, 2]  # Classes to visualize
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        break
+    tracks = model.track(im0, persist=True, show=False, classes=classes_for_heatmap)
+    im0 = heatmap_obj.generate_heatmap(im0, tracks)
+    cv2.imshow("Heatmap", im0)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
+cv2.destroyAllWindows() 
 ```
 
 ### 为什么企业应该选择 Ultralytics YOLOv8 进行数据分析中的热图生成？

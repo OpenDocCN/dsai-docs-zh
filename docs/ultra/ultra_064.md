@@ -35,11 +35,18 @@ Caltech-256 数据集被广泛用于训练和评估深度学习模型，例如�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="caltech256", epochs=100, imgsz=416)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="caltech256", epochs=100, imgsz=416) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=caltech256  model=yolov8n-cls.pt  epochs=100  imgsz=416` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=caltech256  model=yolov8n-cls.pt  epochs=100  imgsz=416 
 ```
 
 ## 样本图像和注释
@@ -55,7 +62,11 @@ Caltech-256 数据集包含各种对象的高质量彩色图像，为目标识�
 如果您在研究或开发工作中使用 Caltech-256 数据集，请引用以下论文：
 
 ```py
-`@article{griffin2007caltech,   title={Caltech-256 object category dataset},   author={Griffin, Gregory and Holub, Alex and Perona, Pietro},   year={2007} }` 
+@article{griffin2007caltech,
+  title={Caltech-256 object category dataset},
+  author={Griffin, Gregory and Holub, Alex and Perona, Pietro},
+  year={2007}
+} 
 ```
 
 我们要感谢 Gregory Griffin、Alex Holub 和 Pietro Perona 创建和维护 Caltech-256 数据集，作为机器学习和计算机视觉研究社区的宝贵资源。有关更多信息，请访问
@@ -75,11 +86,18 @@ Caltech-256 数据集包含各种对象的高质量彩色图像，为目标识�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model  # Train the model results = model.train(data="caltech256", epochs=100, imgsz=416)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model
+
+# Train the model
+results = model.train(data="caltech256", epochs=100, imgsz=416) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=caltech256  model=yolov8n-cls.pt  epochs=100  imgsz=416` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=caltech256  model=yolov8n-cls.pt  epochs=100  imgsz=416 
 ```
 
 ### Caltech-256 数据集最常见的用例是什么？

@@ -61,13 +61,29 @@ Example
 PyTorch 预训练的`*.pt`模型以及配置`*.yaml`文件可以传递给`YOLO()`类，以在 Python 中创建模型实例：
 
 ```py
-`from ultralytics import YOLO  # Load a COCO-pretrained YOLOv5n model model = YOLO("yolov5n.pt")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the YOLOv5n model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import YOLO
+
+# Load a COCO-pretrained YOLOv5n model
+model = YOLO("yolov5n.pt")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the YOLOv5n model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 CLI 命令可直接运行模型：
 
 ```py
-`# Load a COCO-pretrained YOLOv5n model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov5n.pt  data=coco8.yaml  epochs=100  imgsz=640  # Load a COCO-pretrained YOLOv5n model and run inference on the 'bus.jpg' image yolo  predict  model=yolov5n.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained YOLOv5n model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov5n.pt  data=coco8.yaml  epochs=100  imgsz=640
+
+# Load a COCO-pretrained YOLOv5n model and run inference on the 'bus.jpg' image
+yolo  predict  model=yolov5n.pt  source=path/to/bus.jpg 
 ```
 
 ## 引文和致谢
@@ -75,7 +91,16 @@ CLI 命令可直接运行模型：
 如果您在研究中使用 YOLOv5 或 YOLOv5u，请引用 Ultralytics YOLOv5 库的存储库如下：
 
 ```py
-`@software{yolov5,   title  =  {Ultralytics YOLOv5},   author  =  {Glenn Jocher},   year  =  {2020},   version  =  {7.0},   license  =  {AGPL-3.0},   url  =  {https://github.com/ultralytics/yolov5},   doi  =  {10.5281/zenodo.3908559},   orcid  =  {0000-0001-5950-6979} }` 
+@software{yolov5,
+  title  =  {Ultralytics YOLOv5},
+  author  =  {Glenn Jocher},
+  year  =  {2020},
+  version  =  {7.0},
+  license  =  {AGPL-3.0},
+  url  =  {https://github.com/ultralytics/yolov5},
+  doi  =  {10.5281/zenodo.3908559},
+  orcid  =  {0000-0001-5950-6979}
+} 
 ```
 
 请注意，YOLOv5 模型根据[AGPL-3.0](https://github.com/ultralytics/ultralytics/blob/main/LICENSE)和[企业](https://ultralytics.com/license)许可提供。
@@ -105,11 +130,21 @@ YOLOv5u 模型的性能指标因平台和硬件的不同而有所不同。例如
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a COCO-pretrained YOLOv5n model model = YOLO("yolov5n.pt")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a COCO-pretrained YOLOv5n model
+model = YOLO("yolov5n.pt")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Load a COCO-pretrained YOLOv5n model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov5n.pt  data=coco8.yaml  epochs=100  imgsz=640` 
+# Load a COCO-pretrained YOLOv5n model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov5n.pt  data=coco8.yaml  epochs=100  imgsz=640 
 ```
 
 欲了解更详细的说明，请访问使用示例部分。

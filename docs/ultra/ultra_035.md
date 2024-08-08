@@ -13,7 +13,7 @@ Explorer GUI 就像一个使用 Ultralytics Explorer API 构建的游乐场。�
 ### 安装
 
 ```py
-`pip  install  ultralytics[explorer]` 
+pip  install  ultralytics[explorer] 
 ```
 
 注意
@@ -45,7 +45,7 @@ Explorer GUI 就像一个使用 Ultralytics Explorer API 构建的游乐场。�
 你可以在数据集上运行 SQL 查询以进行过滤。如果只提供 WHERE 子句，它也能正常工作。示例 SQL 查询将仅显示至少包含 1 个人和 1 只狗的图像：
 
 ```py
-`WHERE  labels  LIKE  '%person%'  AND  labels  LIKE  '%dog%'` 
+WHERE  labels  LIKE  '%person%'  AND  labels  LIKE  '%dog%' 
 ```
 
 ![Explorer 仪表板截图 5](img/203e2306bb188030e12b48114825c814.png)
@@ -61,7 +61,7 @@ Ultralytics Explorer GUI 是一个强大的界面，通过 Ultralytics Explorer 
 要安装 Explorer GUI，您可以使用 pip：
 
 ```py
-`pip  install  ultralytics[explorer]` 
+pip  install  ultralytics[explorer] 
 ```
 
 注意：要使用由大型语言模型（LLMs）提供支持的 Ask AI 功能，您需要设置 OpenAI API 密钥：`yolo settings openai_api_key="..."`。
@@ -83,7 +83,7 @@ Ultralytics Explorer GUI 中的语义搜索功能允许你根据它们的嵌入�
 Ultralytics Explorer GUI 允许你直接在数据集上运行 SQL 查询，以便高效地过滤和管理数据。要运行查询，导航到 GUI 中的 SQL 查询部分，并编写你的查询。例如，要显示至少有一个人和一只狗的图像，你可以使用：
 
 ```py
-`WHERE  labels  LIKE  '%person%'  AND  labels  LIKE  '%dog%'` 
+WHERE  labels  LIKE  '%person%'  AND  labels  LIKE  '%dog%' 
 ```
 
 你也可以仅提供 WHERE 子句，使查询过程更加灵活。

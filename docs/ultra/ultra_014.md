@@ -62,11 +62,26 @@ YOLOv8 预训练的姿势模型显示在这里。检测、分割和姿势模型�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.yaml")  # build a new model from YAML model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training) model = YOLO("yolov8n-pose.yaml").load("yolov8n-pose.pt")  # build from YAML and transfer weights  # Train the model results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.yaml")  # build a new model from YAML
+model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)
+model = YOLO("yolov8n-pose.yaml").load("yolov8n-pose.pt")  # build from YAML and transfer weights
+
+# Train the model
+results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Build a new model from YAML and start training from scratch yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.yaml  epochs=100  imgsz=640  # Start training from a pretrained *.pt model yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640  # Build a new model from YAML, transfer pretrained weights to it and start training yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.yaml  pretrained=yolov8n-pose.pt  epochs=100  imgsz=640` 
+# Build a new model from YAML and start training from scratch
+yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.yaml  epochs=100  imgsz=640
+
+# Start training from a pretrained *.pt model
+yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640
+
+# Build a new model from YAML, transfer pretrained weights to it and start training
+yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.yaml  pretrained=yolov8n-pose.pt  epochs=100  imgsz=640 
 ```
 
 ### 数据集格式
@@ -80,11 +95,23 @@ YOLO 姿势数据集格式详见数据集指南。要将现有数据集（如 CO
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Validate the model metrics = model.val()  # no arguments needed, dataset and settings remembered metrics.box.map  # map50-95 metrics.box.map50  # map50 metrics.box.map75  # map75 metrics.box.maps  # a list contains map50-95 of each category` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Validate the model
+metrics = model.val()  # no arguments needed, dataset and settings remembered
+metrics.box.map  # map50-95
+metrics.box.map50  # map50
+metrics.box.map75  # map75
+metrics.box.maps  # a list contains map50-95 of each category 
 ```
 
 ```py
-`yolo  pose  val  model=yolov8n-pose.pt  # val official model yolo  pose  val  model=path/to/best.pt  # val custom model` 
+yolo  pose  val  model=yolov8n-pose.pt  # val official model
+yolo  pose  val  model=path/to/best.pt  # val custom model 
 ```
 
 ## 预测
@@ -94,11 +121,19 @@ YOLO 姿势数据集格式详见数据集指南。要将现有数据集（如 CO
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Predict with the model results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Predict with the model
+results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image 
 ```
 
 ```py
-`yolo  pose  predict  model=yolov8n-pose.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with official model yolo  pose  predict  model=path/to/best.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with custom model` 
+yolo  pose  predict  model=yolov8n-pose.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with official model
+yolo  pose  predict  model=path/to/best.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with custom model 
 ```
 
 在预测页面查看完整的`predict`模式详细信息。
@@ -110,11 +145,19 @@ YOLO 姿势数据集格式详见数据集指南。要将现有数据集（如 CO
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom trained model  # Export the model model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom trained model
+
+# Export the model
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n-pose.pt  format=onnx  # export official model yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model` 
+yolo  export  model=yolov8n-pose.pt  format=onnx  # export official model
+yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model 
 ```
 
 可用的 YOLOv8-pose 导出格式如下表所示。您可以使用`format`参数导出到任何格式，例如`format='onnx'`或`format='engine'`。导出完成后，您可以直接在导出的模型上进行预测或验证，例如`yolo predict model=yolov8n-pose.onnx`。使用示例在导出模型后显示您的模型。
@@ -148,7 +191,14 @@ YOLO 姿势数据集格式详见数据集指南。要将现有数据集（如 CO
 在自定义数据集上训练 YOLOv8-pose 模型涉及加载模型，可以是由 YAML 文件定义的新模型或预训练模型。然后，您可以使用指定的数据集和参数开始训练过程。
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.yaml")  # build a new model from YAML model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="your-dataset.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.yaml")  # build a new model from YAML
+model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="your-dataset.yaml", epochs=100, imgsz=640) 
 ```
 
 欲了解有关训练的详细信息，请参阅训练部分。
@@ -158,7 +208,14 @@ YOLO 姿势数据集格式详见数据集指南。要将现有数据集（如 CO
 验证 YOLOv8-pose 模型涉及使用在训练期间保留的相同数据集参数来评估其准确性。以下是一个示例：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Validate the model metrics = model.val()  # no arguments needed, dataset and settings remembered` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Validate the model
+metrics = model.val()  # no arguments needed, dataset and settings remembered 
 ```
 
 欲了解更多信息，请访问验证部分。
@@ -168,7 +225,14 @@ YOLO 姿势数据集格式详见数据集指南。要将现有数据集（如 CO
 是的，您可以将 YOLOv8-pose 模型导出为 ONNX、CoreML、TensorRT 等各种格式。可以使用 Python 或命令行界面（CLI）来完成此操作。
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom trained model  # Export the model model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom trained model
+
+# Export the model
+model.export(format="onnx") 
 ```
 
 欲了解更多详细信息，请参阅导出部分。

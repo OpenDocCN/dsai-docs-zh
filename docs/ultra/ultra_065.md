@@ -39,11 +39,18 @@ CIFAR-10 数据集广泛用于训练和评估深度学习模型在图像分类�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="cifar10", epochs=100, imgsz=32)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="cifar10", epochs=100, imgsz=32) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=cifar10  model=yolov8n-cls.pt  epochs=100  imgsz=32` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=cifar10  model=yolov8n-cls.pt  epochs=100  imgsz=32 
 ```
 
 ## 样本图像和注释
@@ -59,7 +66,12 @@ CIFAR-10 数据集包含各种对象的彩色图像，为图像分类任务提�
 如果你在研究或开发工作中使用 CIFAR-10 数据集，请引用以下论文：
 
 ```py
-`@TECHREPORT{Krizhevsky09learningmultiple,   author={Alex Krizhevsky},   title={Learning multiple layers of features from tiny images},   institution={},   year={2009} }` 
+@TECHREPORT{Krizhevsky09learningmultiple,
+  author={Alex Krizhevsky},
+  title={Learning multiple layers of features from tiny images},
+  institution={},
+  year={2009}
+} 
 ```
 
 我们要感谢 Alex Krizhevsky 创建并维护 CIFAR-10 数据集，作为机器学习和计算机视觉研究社区的宝贵资源。有关 CIFAR-10 数据集及其创建者的更多信息，请访问[CIFAR-10 数据集网站](https://www.cs.toronto.edu/~kriz/cifar.html)。
@@ -73,11 +85,18 @@ CIFAR-10 数据集包含各种对象的彩色图像，为图像分类任务提�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="cifar10", epochs=100, imgsz=32)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="cifar10", epochs=100, imgsz=32) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=cifar10  model=yolov8n-cls.pt  epochs=100  imgsz=32` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=cifar10  model=yolov8n-cls.pt  epochs=100  imgsz=32 
 ```
 
 如需更多详细信息，请参阅模型训练页面。
@@ -127,7 +146,12 @@ CIFAR-10 数据集分为两个主要子集：
 如果您在研究或开发项目中使用 CIFAR-10 数据集，请确保引用以下论文：
 
 ```py
-`@TECHREPORT{Krizhevsky09learningmultiple,   author={Alex Krizhevsky},   title={Learning multiple layers of features from tiny images},   institution={},   year={2009} }` 
+@TECHREPORT{Krizhevsky09learningmultiple,
+  author={Alex Krizhevsky},
+  title={Learning multiple layers of features from tiny images},
+  institution={},
+  year={2009}
+} 
 ```
 
 表彰数据集的创作者有助于支持该领域的持续研究和发展。有关更多详细信息，请参阅引用和致谢部分。

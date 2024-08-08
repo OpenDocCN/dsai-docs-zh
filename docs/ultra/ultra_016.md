@@ -53,13 +53,29 @@
 可以将预训练的 PyTorch `*.pt`模型以及配置`*.yaml`文件传递给`YOLO()`、`SAM()`、`NAS()`和`RTDETR()`类，在 Python 中创建一个模型实例：
 
 ```py
-`from ultralytics import YOLO  # Load a COCO-pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the YOLOv8n model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import YOLO
+
+# Load a COCO-pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the YOLOv8n model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 可以使用 CLI 命令直接运行模型：
 
 ```py
-`# Load a COCO-pretrained YOLOv8n model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov8n.pt  data=coco8.yaml  epochs=100  imgsz=640  # Load a COCO-pretrained YOLOv8n model and run inference on the 'bus.jpg' image yolo  predict  model=yolov8n.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained YOLOv8n model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov8n.pt  data=coco8.yaml  epochs=100  imgsz=640
+
+# Load a COCO-pretrained YOLOv8n model and run inference on the 'bus.jpg' image
+yolo  predict  model=yolov8n.pt  source=path/to/bus.jpg 
 ```
 
 ## 贡献新模型
@@ -93,11 +109,17 @@ Ultralytics YOLOv8 提供了增强功能，如实时目标检测、实例分割�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a YOLOv8n model model = YOLO("yolov8n.pt")  # Train the model on custom dataset results = model.train(data="custom_data.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Train the model on custom dataset
+results = model.train(data="custom_data.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  train  model=yolov8n.pt  data='custom_data.yaml'  epochs=100  imgsz=640` 
+yolo  train  model=yolov8n.pt  data='custom_data.yaml'  epochs=100  imgsz=640 
 ```
 
 获取更详细的指导，请访问 Train 文档页面。

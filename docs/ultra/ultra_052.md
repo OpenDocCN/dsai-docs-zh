@@ -21,7 +21,7 @@
 分割数据集文件中单行的格式如下：
 
 ```py
-`<class-index> <x1> <y1> <x2> <y2> ... <xn> <yn>` 
+<class-index> <x1> <y1> <x2> <y2> ... <xn> <yn> 
 ```
 
 在此格式中，`<类索引>` 是对象的类索引，`<x1> <y1> <x2> <y2> ... <xn> <yn>` 是对象分割掩模的边界坐标。坐标之间用空格分隔。
@@ -29,7 +29,8 @@
 这是 YOLO 数据集格式的单个图像示例，包含由 3 点段和 5 点段组成的两个对象。
 
 ```py
-`0 0.681 0.485 0.670 0.487 0.676 0.487 1 0.504 0.000 0.501 0.004 0.498 0.004 0.493 0.010 0.492 0.0104` 
+0 0.681 0.485 0.670 0.487 0.676 0.487
+1 0.504 0.000 0.501 0.004 0.498 0.004 0.493 0.010 0.492 0.0104 
 ```
 
 提示
@@ -43,7 +44,21 @@
 Ultralytics 框架使用 YAML 文件格式定义用于训练检测模型的数据集和模型配置。以下是用于定义检测数据集的 YAML 格式示例：
 
 ```py
-`# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/coco8-seg  # dataset root dir train:  images/train  # train images (relative to 'path') 4 images val:  images/val  # val images (relative to 'path') 4 images test:  # test images (optional)  # Classes (80 COCO classes) names:   0:  person   1:  bicycle   2:  car   # ...   77:  teddy bear   78:  hair drier   79:  toothbrush` 
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/coco8-seg  # dataset root dir
+train:  images/train  # train images (relative to 'path') 4 images
+val:  images/val  # val images (relative to 'path') 4 images
+test:  # test images (optional)
+
+# Classes (80 COCO classes)
+names:
+  0:  person
+  1:  bicycle
+  2:  car
+  # ...
+  77:  teddy bear
+  78:  hair drier
+  79:  toothbrush 
 ```
 
 `train` 和 `val` 字段指定分别包含训练和验证图像的目录路径。
@@ -55,11 +70,18 @@ Ultralytics 框架使用 YAML 文件格式定义用于训练检测模型的数�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="coco8-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="coco8-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 ## 支持的数据集
@@ -89,7 +111,9 @@ Ultralytics 框架使用 YAML 文件格式定义用于训练检测模型的数�
 示例
 
 ```py
-`from ultralytics.data.converter import convert_coco  convert_coco(labels_dir="path/to/coco/annotations/", use_segments=True)` 
+from ultralytics.data.converter import convert_coco
+
+convert_coco(labels_dir="path/to/coco/annotations/", use_segments=True) 
 ```
 
 此转换工具可用于将 COCO 数据集或任何 COCO 格式的数据集转换为 Ultralytics YOLO 格式。
@@ -107,7 +131,9 @@ Ultralytics 框架使用 YAML 文件格式定义用于训练检测模型的数�
 示例
 
 ```py
-`from ultralytics.data.annotator import auto_annotate  auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam_b.pt")` 
+from ultralytics.data.annotator import auto_annotate
+
+auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam_b.pt") 
 ```
 
 | 参数 | 类型 | 描述 | 默认值 |
@@ -133,7 +159,9 @@ Ultralytics YOLO 支持多种数据集格式，例如实例分割，其中主要
 使用 Ultralytics 工具将 COCO 格式的注释转换为 YOLO 格式非常简单。您可以使用`ultralytics.data.converter`模块中的`convert_coco`函数：
 
 ```py
-`from ultralytics.data.converter import convert_coco  convert_coco(labels_dir="path/to/coco/annotations/", use_segments=True)` 
+from ultralytics.data.converter import convert_coco
+
+convert_coco(labels_dir="path/to/coco/annotations/", use_segments=True) 
 ```
 
 这个脚本将您的 COCO 数据集注释转换为所需的 YOLO 格式，适用于训练您的 YOLO 模型。有关详细信息，请参阅 Port or Convert Label Formats。
@@ -143,7 +171,15 @@ Ultralytics YOLO 支持多种数据集格式，例如实例分割，其中主要
 要为使用 Ultralytics 训练 YOLO 模型做准备，您需要定义数据集路径和类名。以下是一个 YAML 配置的示例：
 
 ```py
-`path:  ../datasets/coco8-seg  # dataset root dir train:  images/train  # train images (relative to 'path')  val:  images/val  # val images (relative to 'path')   names:   0:  person   1:  bicycle   2:  car   # ...` 
+path:  ../datasets/coco8-seg  # dataset root dir
+train:  images/train  # train images (relative to 'path') 
+val:  images/val  # val images (relative to 'path') 
+
+names:
+  0:  person
+  1:  bicycle
+  2:  car
+  # ... 
 ```
 
 确保根据您的数据集更新路径和类名。有关更多信息，请查看 Dataset YAML Format 部分。
@@ -153,7 +189,9 @@ Ultralytics YOLO 支持多种数据集格式，例如实例分割，其中主要
 Ultralytics YOLO 中的自动注释允许您使用预训练的检测模型为您的数据集生成分割注释。这显著减少了手动标注的需求。您可以如下使用`auto_annotate`函数：
 
 ```py
-`from ultralytics.data.annotator import auto_annotate  auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam_b.pt")` 
+from ultralytics.data.annotator import auto_annotate
+
+auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam_b.pt") 
 ```
 
 这个函数自动化了注释过程，使其更快速、高效。有关详细信息，请探索自动注释部分。

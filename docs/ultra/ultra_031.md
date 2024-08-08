@@ -77,11 +77,21 @@ Tip
 可以将预训练的 PyTorch `*.pt`模型以及配置`*.yaml`文件传递给`YOLOWorld()`类，在 Python 中创建模型实例：
 
 ```py
-`from ultralytics import YOLOWorld  # Load a pretrained YOLOv8s-worldv2 model model = YOLOWorld("yolov8s-worldv2.pt")  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the YOLOv8n model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import YOLOWorld
+
+# Load a pretrained YOLOv8s-worldv2 model
+model = YOLOWorld("yolov8s-worldv2.pt")
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the YOLOv8n model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 ```py
-`# Load a pretrained YOLOv8s-worldv2 model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov8s-worldv2.yaml  data=coco8.yaml  epochs=100  imgsz=640` 
+# Load a pretrained YOLOv8s-worldv2 model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov8s-worldv2.yaml  data=coco8.yaml  epochs=100  imgsz=640 
 ```
 
 ### 预测用法
@@ -91,11 +101,21 @@ Tip
 示例
 
 ```py
-`from ultralytics import YOLOWorld  # Initialize a YOLO-World model model = YOLOWorld("yolov8s-world.pt")  # or select yolov8m/l-world.pt for different sizes  # Execute inference with the YOLOv8s-world model on the specified image results = model.predict("path/to/image.jpg")  # Show results results[0].show()` 
+from ultralytics import YOLOWorld
+
+# Initialize a YOLO-World model
+model = YOLOWorld("yolov8s-world.pt")  # or select yolov8m/l-world.pt for different sizes
+
+# Execute inference with the YOLOv8s-world model on the specified image
+results = model.predict("path/to/image.jpg")
+
+# Show results
+results[0].show() 
 ```
 
 ```py
-`# Perform object detection using a YOLO-World model yolo  predict  model=yolov8s-world.pt  source=path/to/image.jpg  imgsz=640` 
+# Perform object detection using a YOLO-World model
+yolo  predict  model=yolov8s-world.pt  source=path/to/image.jpg  imgsz=640 
 ```
 
 此代码片段展示了加载预训练模型并在图像上进行预测的简易性。
@@ -107,11 +127,18 @@ Tip
 示例
 
 ```py
-`from ultralytics import YOLO  # Create a YOLO-World model model = YOLO("yolov8s-world.pt")  # or select yolov8m/l-world.pt for different sizes  # Conduct model validation on the COCO8 example dataset metrics = model.val(data="coco8.yaml")` 
+from ultralytics import YOLO
+
+# Create a YOLO-World model
+model = YOLO("yolov8s-world.pt")  # or select yolov8m/l-world.pt for different sizes
+
+# Conduct model validation on the COCO8 example dataset
+metrics = model.val(data="coco8.yaml") 
 ```
 
 ```py
-`# Validate a YOLO-World model on the COCO8 dataset with a specified image size yolo  val  model=yolov8s-world.pt  data=coco8.yaml  imgsz=640` 
+# Validate a YOLO-World model on the COCO8 dataset with a specified image size
+yolo  val  model=yolov8s-world.pt  data=coco8.yaml  imgsz=640 
 ```
 
 ### 跟踪使用情况
@@ -121,11 +148,18 @@ Tip
 示例
 
 ```py
-`from ultralytics import YOLO  # Create a YOLO-World model model = YOLO("yolov8s-world.pt")  # or select yolov8m/l-world.pt for different sizes  # Track with a YOLO-World model on a video results = model.track(source="path/to/video.mp4")` 
+from ultralytics import YOLO
+
+# Create a YOLO-World model
+model = YOLO("yolov8s-world.pt")  # or select yolov8m/l-world.pt for different sizes
+
+# Track with a YOLO-World model on a video
+results = model.track(source="path/to/video.mp4") 
 ```
 
 ```py
-`# Track with a YOLO-World model on the video with a specified image size yolo  track  model=yolov8s-world.pt  imgsz=640  source="path/to/video/file.mp4"` 
+# Track with a YOLO-World model on the video with a specified image size
+yolo  track  model=yolov8s-world.pt  imgsz=640  source="path/to/video/file.mp4" 
 ```
 
 注意
@@ -143,7 +177,19 @@ YOLO-World 框架允许通过自定义提示动态指定类别，让用户根据
 示例
 
 ```py
-`from ultralytics import YOLO  # Initialize a YOLO-World model model = YOLO("yolov8s-world.pt")  # or choose yolov8m/l-world.pt  # Define custom classes model.set_classes(["person", "bus"])  # Execute prediction for specified categories on an image results = model.predict("path/to/image.jpg")  # Show results results[0].show()` 
+from ultralytics import YOLO
+
+# Initialize a YOLO-World model
+model = YOLO("yolov8s-world.pt")  # or choose yolov8m/l-world.pt
+
+# Define custom classes
+model.set_classes(["person", "bus"])
+
+# Execute prediction for specified categories on an image
+results = model.predict("path/to/image.jpg")
+
+# Show results
+results[0].show() 
 ```
 
 在设置自定义类后，您还可以保存模型。通过这样做，您可以创建一个专门针对特定用例的 YOLO-World 模型版本。此过程将您的自定义类定义直接嵌入到模型文件中，使得模型准备好使用您指定的类别，无需进一步调整。按照以下步骤保存和加载您的自定义 YOLOv8 模型：
@@ -153,13 +199,31 @@ YOLO-World 框架允许通过自定义提示动态指定类别，让用户根据
 首先加载一个 YOLO-World 模型，为其设置自定义类别并保存：
 
 ```py
-`from ultralytics import YOLO  # Initialize a YOLO-World model model = YOLO("yolov8s-world.pt")  # or select yolov8m/l-world.pt  # Define custom classes model.set_classes(["person", "bus"])  # Save the model with the defined offline vocabulary model.save("custom_yolov8s.pt")` 
+from ultralytics import YOLO
+
+# Initialize a YOLO-World model
+model = YOLO("yolov8s-world.pt")  # or select yolov8m/l-world.pt
+
+# Define custom classes
+model.set_classes(["person", "bus"])
+
+# Save the model with the defined offline vocabulary
+model.save("custom_yolov8s.pt") 
 ```
 
 保存后，custom_yolov8s.pt 模型与任何其他预训练的 YOLOv8 模型一样工作，但有一个关键区别：它现在优化为仅检测您定义的类别。这种定制可以显著提高特定应用场景中的检测性能和效率。
 
 ```py
-`from ultralytics import YOLO  # Load your custom model model = YOLO("custom_yolov8s.pt")  # Run inference to detect your custom classes results = model.predict("path/to/image.jpg")  # Show results results[0].show()` 
+from ultralytics import YOLO
+
+# Load your custom model
+model = YOLO("custom_yolov8s.pt")
+
+# Run inference to detect your custom classes
+results = model.predict("path/to/image.jpg")
+
+# Show results
+results[0].show() 
 ```
 
 ### 保存具有自定义词汇的好处
@@ -201,7 +265,27 @@ YOLO-World 框架允许通过自定义提示动态指定类别，让用户根据
 示例
 
 ```py
-`from ultralytics import YOLOWorld from ultralytics.models.yolo.world.train_world import WorldTrainerFromScratch  data = dict(     train=dict(         yolo_data=["Objects365.yaml"],         grounding_data=[             dict(                 img_path="../datasets/flickr30k/images",                 json_file="../datasets/flickr30k/final_flickr_separateGT_train.json",             ),             dict(                 img_path="../datasets/GQA/images",                 json_file="../datasets/GQA/final_mixed_train_no_coco.json",             ),         ],     ),     val=dict(yolo_data=["lvis.yaml"]), ) model = YOLOWorld("yolov8s-worldv2.yaml") model.train(data=data, batch=128, epochs=100, trainer=WorldTrainerFromScratch)` 
+from ultralytics import YOLOWorld
+from ultralytics.models.yolo.world.train_world import WorldTrainerFromScratch
+
+data = dict(
+    train=dict(
+        yolo_data=["Objects365.yaml"],
+        grounding_data=[
+            dict(
+                img_path="../datasets/flickr30k/images",
+                json_file="../datasets/flickr30k/final_flickr_separateGT_train.json",
+            ),
+            dict(
+                img_path="../datasets/GQA/images",
+                json_file="../datasets/GQA/final_mixed_train_no_coco.json",
+            ),
+        ],
+    ),
+    val=dict(yolo_data=["lvis.yaml"]),
+)
+model = YOLOWorld("yolov8s-worldv2.yaml")
+model.train(data=data, batch=128, epochs=100, trainer=WorldTrainerFromScratch) 
 ```
 
 ## 引用和致谢
@@ -209,7 +293,12 @@ YOLO-World 框架允许通过自定义提示动态指定类别，让用户根据
 我们对 [腾讯 AI 实验室计算机视觉中心](https://ai.tencent.com/) 在实时开放词汇目标检测领域与 YOLO-World 的开创性工作表示感谢：
 
 ```py
-`@article{cheng2024yolow, title={YOLO-World: Real-Time Open-Vocabulary Object Detection}, author={Cheng, Tianheng and Song, Lin and Ge, Yixiao and Liu, Wenyu and Wang, Xinggang and Shan, Ying}, journal={arXiv preprint arXiv:2401.17270}, year={2024} }` 
+@article{cheng2024yolow,
+title={YOLO-World: Real-Time Open-Vocabulary Object Detection},
+author={Cheng, Tianheng and Song, Lin and Ge, Yixiao and Liu, Wenyu and Wang, Xinggang and Shan, Ying},
+journal={arXiv preprint arXiv:2401.17270},
+year={2024}
+} 
 ```
 
 想进一步阅读，YOLO-World 的原始论文可在 [arXiv](https://arxiv.org/pdf/2401.17270v2.pdf) 获得。项目的源代码和其他资源可以通过他们的 [GitHub 仓库](https://github.com/AILab-CVC/YOLO-World) 获取。我们感谢他们在推动领域进步和与社区分享宝贵见解的努力。
@@ -225,7 +314,19 @@ YOLO-World 模型是基于 Ultralytics YOLOv8 框架的先进实时目标检测�
 YOLO-World 支持“提示-检测”策略，利用离线词汇表增强效率。像标题或特定对象类别这样的自定义提示会被预先编码并存储为离线词汇表嵌入。这种方法简化了检测过程，无需重新训练即可动态设置这些提示以适应特定的检测任务，如下所示：
 
 ```py
-`from ultralytics import YOLOWorld  # Initialize a YOLO-World model model = YOLOWorld("yolov8s-world.pt")  # Define custom classes model.set_classes(["person", "bus"])  # Execute prediction on an image results = model.predict("path/to/image.jpg")  # Show results results[0].show()` 
+from ultralytics import YOLOWorld
+
+# Initialize a YOLO-World model
+model = YOLOWorld("yolov8s-world.pt")
+
+# Define custom classes
+model.set_classes(["person", "bus"])
+
+# Execute prediction on an image
+results = model.predict("path/to/image.jpg")
+
+# Show results
+results[0].show() 
 ```
 
 ### 为什么应该选择 YOLO-World 而不是传统的开放词汇检测模型？
@@ -245,13 +346,19 @@ YOLO-World 相比传统的开放词汇检测模型提供了多个优势：
 使用提供的 Python API 或 CLI 命令，训练 YOLO-World 模型的数据集非常简单。以下是如何开始使用 Python 进行训练的示例：
 
 ```py
-`from ultralytics import YOLOWorld  # Load a pretrained YOLOv8s-worldv2 model model = YOLOWorld("yolov8s-worldv2.pt")  # Train the model on the COCO8 dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLOWorld
+
+# Load a pretrained YOLOv8s-worldv2 model
+model = YOLOWorld("yolov8s-worldv2.pt")
+
+# Train the model on the COCO8 dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 或者使用 CLI：
 
 ```py
-`yolo  train  model=yolov8s-worldv2.yaml  data=coco8.yaml  epochs=100  imgsz=640` 
+yolo  train  model=yolov8s-worldv2.yaml  data=coco8.yaml  epochs=100  imgsz=640 
 ```
 
 ### 可用的预训练 YOLO-World 模型及其支持的任务是什么？
@@ -274,5 +381,26 @@ Ultralytics 提供多个预训练的 YOLO-World 模型，支持各种任务和�
 要从头开始复现官方结果，您需要准备数据集并使用提供的代码启动训练。训练过程涉及创建数据字典，并使用自定义训练器运行`train`方法：
 
 ```py
-`from ultralytics import YOLOWorld from ultralytics.models.yolo.world.train_world import WorldTrainerFromScratch  data = {     "train": {         "yolo_data": ["Objects365.yaml"],         "grounding_data": [             {                 "img_path": "../datasets/flickr30k/images",                 "json_file": "../datasets/flickr30k/final_flickr_separateGT_train.json",             },             {                 "img_path": "../datasets/GQA/images",                 "json_file": "../datasets/GQA/final_mixed_train_no_coco.json",             },         ],     },     "val": {"yolo_data": ["lvis.yaml"]}, }  model = YOLOWorld("yolov8s-worldv2.yaml") model.train(data=data, batch=128, epochs=100, trainer=WorldTrainerFromScratch)` 
+from ultralytics import YOLOWorld
+from ultralytics.models.yolo.world.train_world import WorldTrainerFromScratch
+
+data = {
+    "train": {
+        "yolo_data": ["Objects365.yaml"],
+        "grounding_data": [
+            {
+                "img_path": "../datasets/flickr30k/images",
+                "json_file": "../datasets/flickr30k/final_flickr_separateGT_train.json",
+            },
+            {
+                "img_path": "../datasets/GQA/images",
+                "json_file": "../datasets/GQA/final_mixed_train_no_coco.json",
+            },
+        ],
+    },
+    "val": {"yolo_data": ["lvis.yaml"]},
+}
+
+model = YOLOWorld("yolov8s-worldv2.yaml")
+model.train(data=data, batch=128, epochs=100, trainer=WorldTrainerFromScratch) 
 ```

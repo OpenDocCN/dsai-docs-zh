@@ -87,11 +87,14 @@
 示例
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8s.pt")  # Load a pre-trained YOLO model model.train(data="path/to/dataset.yaml", epochs=50)  # Train on custom dataset` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8s.pt")  # Load a pre-trained YOLO model
+model.train(data="path/to/dataset.yaml", epochs=50)  # Train on custom dataset 
 ```
 
 ```py
-`yolo  task=detect  mode=train  model=yolov8s.pt  data=path/to/dataset.yaml  epochs=50` 
+yolo  task=detect  mode=train  model=yolov8s.pt  data=path/to/dataset.yaml  epochs=50 
 ```
 
 关于详细的数据集格式化和其他选项，请参考我们的模型训练提示指南。

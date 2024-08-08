@@ -75,11 +75,15 @@ Benchmark Examples
 Example
 
 ```py
-`from ultralytics import YOLO  # Train a custom model model = YOLO("yolov8n.pt") model.train(data="path/to/dataset.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Train a custom model
+model = YOLO("yolov8n.pt")
+model.train(data="path/to/dataset.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  train  data=path/to/dataset.yaml  epochs=100  imgsz=640` 
+yolo  train  data=path/to/dataset.yaml  epochs=100  imgsz=640 
 ```
 
 欲获取更详细的说明，请参阅 Ultralytics Train Guide。
@@ -99,11 +103,15 @@ Ultralytics YOLOv8 在验证过程中使用多种指标评估模型性能。这�
 Example
 
 ```py
-`from ultralytics import YOLO  # Validate the model model = YOLO("yolov8n.pt") model.val(data="path/to/validation.yaml")` 
+from ultralytics import YOLO
+
+# Validate the model
+model = YOLO("yolov8n.pt")
+model.val(data="path/to/validation.yaml") 
 ```
 
 ```py
-`yolo  val  data=path/to/validation.yaml` 
+yolo  val  data=path/to/validation.yaml 
 ```
 
 欲了解更多详细信息，请参阅 Validation Guide。
@@ -115,11 +123,15 @@ Ultralytics YOLOv8 提供导出功能，将您训练好的模型转换为各种�
 Example
 
 ```py
-`from ultralytics import YOLO  # Export the model model = YOLO("yolov8n.pt") model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Export the model
+model = YOLO("yolov8n.pt")
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n.pt  format=onnx` 
+yolo  export  model=yolov8n.pt  format=onnx 
 ```
 
 每种导出格式的详细步骤可在 Export Guide 中找到。
@@ -131,11 +143,14 @@ Ultralytics YOLOv8 中的 Benchmark 模式用于分析各种导出格式（如 O
 Example
 
 ```py
-`from ultralytics.utils.benchmarks import benchmark  # Benchmark on GPU benchmark(model="yolov8n.pt", data="coco8.yaml", imgsz=640, half=False, device=0)` 
+from ultralytics.utils.benchmarks import benchmark
+
+# Benchmark on GPU
+benchmark(model="yolov8n.pt", data="coco8.yaml", imgsz=640, half=False, device=0) 
 ```
 
 ```py
-`yolo  benchmark  model=yolov8n.pt  data='coco8.yaml'  imgsz=640  half=False  device=0` 
+yolo  benchmark  model=yolov8n.pt  data='coco8.yaml'  imgsz=640  half=False  device=0 
 ```
 
 欲获取更多细节，请参阅 Benchmark Guide。
@@ -147,11 +162,15 @@ Example
 示例
 
 ```py
-`from ultralytics import YOLO  # Track objects in a video model = YOLO("yolov8n.pt") model.track(source="path/to/video.mp4")` 
+from ultralytics import YOLO
+
+# Track objects in a video
+model = YOLO("yolov8n.pt")
+model.track(source="path/to/video.mp4") 
 ```
 
 ```py
-`yolo  track  source=path/to/video.mp4` 
+yolo  track  source=path/to/video.mp4 
 ```
 
 欲了解详细说明，请访问跟踪指南。

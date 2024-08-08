@@ -21,7 +21,8 @@
 1.  首先，您必须在 VSCode 中启用设置`terminal.integrated.enableImages`和`terminal.integrated.gpuAcceleration`。
 
     ```py
-    `"terminal.integrated.gpuAcceleration":  "auto"  # "auto" is default, can also use "on" "terminal.integrated.enableImages":  false` 
+    "terminal.integrated.gpuAcceleration":  "auto"  # "auto" is default, can also use "on"
+    "terminal.integrated.enableImages":  false 
     ```
 
     ![VSCode 启用终端图像设置](img/7d96462727cf15ec4f9b59ce5f034c10.png)
@@ -29,13 +30,22 @@
 1.  在您的虚拟环境中安装`python-sixel`库。这是已不再维护的`PySixel`库的[分支](https://github.com/lubosz/python-sixel?tab=readme-ov-file)。
 
     ```py
-    `pip  install  sixel` 
+    pip  install  sixel 
     ```
 
 1.  加载模型并执行推断，然后绘制结果并存储在变量中。有关推断参数和处理结果的更多信息，请参阅预测模式页面。
 
     ```py
-    `from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # Run inference on an image results = model.predict(source="ultralytics/assets/bus.jpg")  # Plot inference results plot = results[0].plot()  # (1)!` 
+    from ultralytics import YOLO
+
+    # Load a model
+    model = YOLO("yolov8n.pt")
+
+    # Run inference on an image
+    results = model.predict(source="ultralytics/assets/bus.jpg")
+
+    # Plot inference results
+    plot = results[0].plot()  # (1)! 
     ```
 
     1.  查看绘图方法参数以了解可能的参数用法。
@@ -43,7 +53,18 @@
 1.  现在，使用 OpenCV 将`numpy.ndarray`转换为`bytes`数据。然后使用`io.BytesIO`创建“类文件”对象。
 
     ```py
-    `import io  import cv2  # Results image as bytes im_bytes = cv2.imencode(     ".png",  # (1)!     plot, )[1].tobytes()  # (2)!  # Image bytes as a file-like object mem_file = io.BytesIO(im_bytes)` 
+    import io
+
+    import cv2
+
+    # Results image as bytes
+    im_bytes = cv2.imencode(
+        ".png",  # (1)!
+        plot,
+    )[1].tobytes()  # (2)!
+
+    # Image bytes as a file-like object
+    mem_file = io.BytesIO(im_bytes) 
     ```
 
     1.  也可以使用其他图像扩展名。
@@ -53,7 +74,13 @@
 1.  创建一个`SixelWriter`实例，然后使用`.draw()`方法在终端中绘制图像。
 
     ```py
-    `from sixel import SixelWriter  # Create sixel writer object w = SixelWriter()  # Draw the sixel image in the terminal w.draw(mem_file)` 
+    from sixel import SixelWriter
+
+    # Create sixel writer object
+    w = SixelWriter()
+
+    # Draw the sixel image in the terminal
+    w.draw(mem_file) 
     ```
 
 ## 示例推断结果
@@ -67,7 +94,31 @@
 ## 完整代码示例
 
 ```py
-`import io  import cv2 from sixel import SixelWriter  from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # Run inference on an image results = model.predict(source="ultralytics/assets/bus.jpg")  # Plot inference results plot = results[0].plot()  # (3)!  # Results image as bytes im_bytes = cv2.imencode(     ".png",  # (1)!     plot, )[1].tobytes()  # (2)!  mem_file = io.BytesIO(im_bytes) w = SixelWriter() w.draw(mem_file)` 
+import io
+
+import cv2
+from sixel import SixelWriter
+
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")
+
+# Run inference on an image
+results = model.predict(source="ultralytics/assets/bus.jpg")
+
+# Plot inference results
+plot = results[0].plot()  # (3)!
+
+# Results image as bytes
+im_bytes = cv2.imencode(
+    ".png",  # (1)!
+    plot,
+)[1].tobytes()  # (2)!
+
+mem_file = io.BytesIO(im_bytes)
+w = SixelWriter()
+w.draw(mem_file) 
 ```
 
 1.  也可以使用其他图像扩展名。
@@ -91,25 +142,37 @@
 1.  启用必要的 VSCode 设置：
 
     ```py
-    `"terminal.integrated.enableImages":  true "terminal.integrated.gpuAcceleration":  "auto"` 
+    "terminal.integrated.enableImages":  true
+    "terminal.integrated.gpuAcceleration":  "auto" 
     ```
 
 1.  安装 sixel 库：
 
     ```py
-    `pip  install  sixel` 
+    pip  install  sixel 
     ```
 
 1.  加载您的 YOLO 模型并运行推断：
 
     ```py
-    `from ultralytics import YOLO  model = YOLO("yolov8n.pt") results = model.predict(source="path_to_image") plot = results[0].plot()` 
+    from ultralytics import YOLO
+
+    model = YOLO("yolov8n.pt")
+    results = model.predict(source="path_to_image")
+    plot = results[0].plot() 
     ```
 
 1.  将推理结果图像转换为字节并在终端中显示：
 
     ```py
-    `import io  import cv2 from sixel import SixelWriter  im_bytes = cv2.imencode(".png", plot)[1].tobytes() mem_file = io.BytesIO(im_bytes) SixelWriter().draw(mem_file)` 
+    import io
+
+    import cv2
+    from sixel import SixelWriter
+
+    im_bytes = cv2.imencode(".png", plot)[1].tobytes()
+    mem_file = io.BytesIO(im_bytes)
+    SixelWriter().draw(mem_file) 
     ```
 
 获取更多细节，请访问预测模式页面。
@@ -125,19 +188,27 @@
 1.  确保在 VSCode 中启用必要的设置：
 
     ```py
-    `"terminal.integrated.enableImages":  true "terminal.integrated.gpuAcceleration":  "auto"` 
+    "terminal.integrated.enableImages":  true
+    "terminal.integrated.gpuAcceleration":  "auto" 
     ```
 
 1.  验证 sixel 库的安装：
 
     ```py
-    `pip  install  sixel` 
+    pip  install  sixel 
     ```
 
 1.  检查你的图像数据转换和绘图代码是否存在错误。例如：
 
     ```py
-    `import io  import cv2 from sixel import SixelWriter  im_bytes = cv2.imencode(".png", plot)[1].tobytes() mem_file = io.BytesIO(im_bytes) SixelWriter().draw(mem_file)` 
+    import io
+
+    import cv2
+    from sixel import SixelWriter
+
+    im_bytes = cv2.imencode(".png", plot)[1].tobytes()
+    mem_file = io.BytesIO(im_bytes)
+    SixelWriter().draw(mem_file) 
     ```
 
 如果问题持续存在，请参考 [VSCode 仓库](https://github.com/microsoft/vscode)，并访问绘图方法参数部分以获取额外的指导。
@@ -153,7 +224,7 @@
 1.  确保库在你的虚拟环境中正确安装：
 
     ```py
-    `pip  install  sixel` 
+    pip  install  sixel 
     ```
 
 1.  验证你是否拥有必要的 Python 和系统依赖项。

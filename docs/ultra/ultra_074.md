@@ -77,7 +77,41 @@ DOTA 作为专门针对空中图像分析的模型训练和评估的基准。通
 DOTAv1.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # DOTA 1.0 dataset https://captain-whu.github.io/DOTA/index.html for object detection in aerial images by Wuhan University # Documentation: https://docs.ultralytics.com/datasets/obb/dota-v2/ # Example usage: yolo train model=yolov8n-obb.pt data=DOTAv1.yaml # parent # ├── ultralytics # └── datasets #     └── dota1  ← downloads here (2GB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/DOTAv1  # dataset root dir train:  images/train  # train images (relative to 'path') 1411 images val:  images/val  # val images (relative to 'path') 458 images test:  images/test  # test images (optional) 937 images  # Classes for DOTA 1.0 names:   0:  plane   1:  ship   2:  storage tank   3:  baseball diamond   4:  tennis court   5:  basketball court   6:  ground track field   7:  harbor   8:  bridge   9:  large vehicle   10:  small vehicle   11:  helicopter   12:  roundabout   13:  soccer ball field   14:  swimming pool  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/DOTAv1.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# DOTA 1.0 dataset https://captain-whu.github.io/DOTA/index.html for object detection in aerial images by Wuhan University
+# Documentation: https://docs.ultralytics.com/datasets/obb/dota-v2/
+# Example usage: yolo train model=yolov8n-obb.pt data=DOTAv1.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── dota1  ← downloads here (2GB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/DOTAv1  # dataset root dir
+train:  images/train  # train images (relative to 'path') 1411 images
+val:  images/val  # val images (relative to 'path') 458 images
+test:  images/test  # test images (optional) 937 images
+
+# Classes for DOTA 1.0
+names:
+  0:  plane
+  1:  ship
+  2:  storage tank
+  3:  baseball diamond
+  4:  tennis court
+  5:  basketball court
+  6:  ground track field
+  7:  harbor
+  8:  bridge
+  9:  large vehicle
+  10:  small vehicle
+  11:  helicopter
+  12:  roundabout
+  13:  soccer ball field
+  14:  swimming pool
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/DOTAv1.zip 
 ```
 
 ## 拆分 DOTA 图像
@@ -87,7 +121,22 @@ DOTAv1.yaml
 图像分割
 
 ```py
-`from ultralytics.data.split_dota import split_test, split_trainval  # split train and val set, with labels. split_trainval(     data_root="path/to/DOTAv1.0/",     save_dir="path/to/DOTAv1.0-split/",     rates=[0.5, 1.0, 1.5],  # multiscale     gap=500, ) # split test set, without labels. split_test(     data_root="path/to/DOTAv1.0/",     save_dir="path/to/DOTAv1.0-split/",     rates=[0.5, 1.0, 1.5],  # multiscale     gap=500, )` 
+from ultralytics.data.split_dota import split_test, split_trainval
+
+# split train and val set, with labels.
+split_trainval(
+    data_root="path/to/DOTAv1.0/",
+    save_dir="path/to/DOTAv1.0-split/",
+    rates=[0.5, 1.0, 1.5],  # multiscale
+    gap=500,
+)
+# split test set, without labels.
+split_test(
+    data_root="path/to/DOTAv1.0/",
+    save_dir="path/to/DOTAv1.0-split/",
+    rates=[0.5, 1.0, 1.5],  # multiscale
+    gap=500,
+) 
 ```
 
 ## 使用方法
@@ -101,11 +150,18 @@ DOTAv1.yaml
 Train 示例
 
 ```py
-`from ultralytics import YOLO  # Create a new YOLOv8n-OBB model from scratch model = YOLO("yolov8n-obb.yaml")  # Train the model on the DOTAv2 dataset results = model.train(data="DOTAv1.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Create a new YOLOv8n-OBB model from scratch
+model = YOLO("yolov8n-obb.yaml")
+
+# Train the model on the DOTAv2 dataset
+results = model.train(data="DOTAv1.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Train a new YOLOv8n-OBB model on the DOTAv2 dataset yolo  obb  train  data=DOTAv1.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640` 
+# Train a new YOLOv8n-OBB model on the DOTAv2 dataset
+yolo  obb  train  data=DOTAv1.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640 
 ```
 
 ## 样本数据和注释
@@ -123,7 +179,16 @@ Train 示例
 对于那些在努力中利用 DOTA 的人，引用相关研究论文是非常重要的。
 
 ```py
-`@article{9560031,   author={Ding, Jian and Xue, Nan and Xia, Gui-Song and Bai, Xiang and Yang, Wen and Yang, Michael and Belongie, Serge and Luo, Jiebo and Datcu, Mihai and Pelillo, Marcello and Zhang, Liangpei},   journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},   title={Object Detection in Aerial Images: A Large-Scale Benchmark and Challenges},   year={2021},   volume={},   number={},   pages={1-1},   doi={10.1109/TPAMI.2021.3117983} }` 
+@article{9560031,
+  author={Ding, Jian and Xue, Nan and Xia, Gui-Song and Bai, Xiang and Yang, Wen and Yang, Michael and Belongie, Serge and Luo, Jiebo and Datcu, Mihai and Pelillo, Marcello and Zhang, Liangpei},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  title={Object Detection in Aerial Images: A Large-Scale Benchmark and Challenges},
+  year={2021},
+  volume={},
+  number={},
+  pages={1-1},
+  doi={10.1109/TPAMI.2021.3117983}
+} 
 ```
 
 特别感谢 DOTA 数据集背后的团队，他们在策划这个数据集方面做出了值得称赞的努力。要全面了解数据集及其细微差别，请访问[官方 DOTA 网站](https://captain-whu.github.io/DOTA/index.html)。
@@ -145,11 +210,18 @@ DOTA 使用面向对象的边界框（OBB）进行注释，这些由旋转矩形
 Train 示例
 
 ```py
-`from ultralytics import YOLO  # Create a new YOLOv8n-OBB model from scratch model = YOLO("yolov8n-obb.yaml")  # Train the model on the DOTAv1 dataset results = model.train(data="DOTAv1.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Create a new YOLOv8n-OBB model from scratch
+model = YOLO("yolov8n-obb.yaml")
+
+# Train the model on the DOTAv1 dataset
+results = model.train(data="DOTAv1.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Train a new YOLOv8n-OBB model on the DOTAv1 dataset yolo  obb  train  data=DOTAv1.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640` 
+# Train a new YOLOv8n-OBB model on the DOTAv1 dataset
+yolo  obb  train  data=DOTAv1.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640 
 ```
 
 关于如何拆分和预处理 DOTA 图像的详细信息，请参考拆分 DOTA 图像部分。
@@ -171,7 +243,22 @@ DOTA 图像可能非常大，因此会将其分割为更小的分辨率以便于
 示例
 
 ```py
-`from ultralytics.data.split_dota import split_test, split_trainval  # split train and val set, with labels. split_trainval(     data_root="path/to/DOTAv1.0/",     save_dir="path/to/DOTAv1.0-split/",     rates=[0.5, 1.0, 1.5],  # multiscale     gap=500, ) # split test set, without labels. split_test(     data_root="path/to/DOTAv1.0/",     save_dir="path/to/DOTAv1.0-split/",     rates=[0.5, 1.0, 1.5],  # multiscale     gap=500, )` 
+from ultralytics.data.split_dota import split_test, split_trainval
+
+# split train and val set, with labels.
+split_trainval(
+    data_root="path/to/DOTAv1.0/",
+    save_dir="path/to/DOTAv1.0-split/",
+    rates=[0.5, 1.0, 1.5],  # multiscale
+    gap=500,
+)
+# split test set, without labels.
+split_test(
+    data_root="path/to/DOTAv1.0/",
+    save_dir="path/to/DOTAv1.0-split/",
+    rates=[0.5, 1.0, 1.5],  # multiscale
+    gap=500,
+) 
 ```
 
 这一过程有助于提高训练效率和模型性能。欲获取详细说明，请访问分割 DOTA 图像部分。

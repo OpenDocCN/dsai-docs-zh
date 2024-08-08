@@ -27,7 +27,28 @@ YAML（Yet Another Markup Language）文件用于定义数据集配置。它包�
 ultralytics/cfg/datasets/brain-tumor.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # Brain-tumor dataset by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/detect/brain-tumor/ # Example usage: yolo train data=brain-tumor.yaml # parent # ├── ultralytics # └── datasets #     └── brain-tumor  ← downloads here (4.05 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/brain-tumor  # dataset root dir train:  train/images  # train images (relative to 'path') 893 images val:  valid/images  # val images (relative to 'path') 223 images test:  # test images (relative to 'path')  # Classes names:   0:  negative   1:  positive  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/brain-tumor.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Brain-tumor dataset by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/detect/brain-tumor/
+# Example usage: yolo train data=brain-tumor.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── brain-tumor  ← downloads here (4.05 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/brain-tumor  # dataset root dir
+train:  train/images  # train images (relative to 'path') 893 images
+val:  valid/images  # val images (relative to 'path') 223 images
+test:  # test images (relative to 'path')
+
+# Classes
+names:
+  0:  negative
+  1:  positive
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/brain-tumor.zip 
 ```
 
 ## 用法
@@ -37,21 +58,35 @@ ultralytics/cfg/datasets/brain-tumor.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="brain-tumor.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="brain-tumor.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=brain-tumor.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=brain-tumor.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 推理示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/best.pt")  # load a brain-tumor fine-tuned model  # Inference using the model results = model.predict("https://ultralytics.com/assets/brain-tumor-sample.jpg")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/best.pt")  # load a brain-tumor fine-tuned model
+
+# Inference using the model
+results = model.predict("https://ultralytics.com/assets/brain-tumor-sample.jpg") 
 ```
 
 ```py
-`# Start prediction with a finetuned *.pt model yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/brain-tumor-sample.jpg"` 
+# Start prediction with a finetuned *.pt model
+yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/brain-tumor-sample.jpg" 
 ```
 
 ## 样本图像和标注
@@ -81,11 +116,18 @@ ultralytics/cfg/datasets/brain-tumor.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="brain-tumor.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="brain-tumor.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=brain-tumor.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=brain-tumor.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 若要查看可用参数的详细列表，请参阅训练页面。
@@ -101,11 +143,18 @@ ultralytics/cfg/datasets/brain-tumor.yaml
 推理示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/best.pt")  # load a brain-tumor fine-tuned model  # Inference using the model results = model.predict("https://ultralytics.com/assets/brain-tumor-sample.jpg")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/best.pt")  # load a brain-tumor fine-tuned model
+
+# Inference using the model
+results = model.predict("https://ultralytics.com/assets/brain-tumor-sample.jpg") 
 ```
 
 ```py
-`# Start prediction with a finetuned *.pt model yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/brain-tumor-sample.jpg"` 
+# Start prediction with a finetuned *.pt model
+yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/brain-tumor-sample.jpg" 
 ```
 
 ### 我在哪里可以找到大脑肿瘤数据集的 YAML 配置？

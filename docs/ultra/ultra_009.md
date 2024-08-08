@@ -53,11 +53,14 @@
 示例
 
 ```py
-`from ultralytics.utils.benchmarks import benchmark  # Benchmark on GPU benchmark(model="yolov8n.pt", data="coco8.yaml", imgsz=640, half=False, device=0)` 
+from ultralytics.utils.benchmarks import benchmark
+
+# Benchmark on GPU
+benchmark(model="yolov8n.pt", data="coco8.yaml", imgsz=640, half=False, device=0) 
 ```
 
 ```py
-`yolo  benchmark  model=yolov8n.pt  data='coco8.yaml'  imgsz=640  half=False  device=0` 
+yolo  benchmark  model=yolov8n.pt  data='coco8.yaml'  imgsz=640  half=False  device=0 
 ```
 
 ## 参数
@@ -105,11 +108,14 @@ Ultralytics YOLOv8 提供了一个基准模式，可以评估模型在不同导�
 示例
 
 ```py
-`from ultralytics.utils.benchmarks import benchmark  # Benchmark on GPU benchmark(model="yolov8n.pt", data="coco8.yaml", imgsz=640, half=False, device=0)` 
+from ultralytics.utils.benchmarks import benchmark
+
+# Benchmark on GPU
+benchmark(model="yolov8n.pt", data="coco8.yaml", imgsz=640, half=False, device=0) 
 ```
 
 ```py
-`yolo  benchmark  model=yolov8n.pt  data='coco8.yaml'  imgsz=640  half=False  device=0` 
+yolo  benchmark  model=yolov8n.pt  data='coco8.yaml'  imgsz=640  half=False  device=0 
 ```
 
 有关基准参数的更多详情，请访问参数部分。

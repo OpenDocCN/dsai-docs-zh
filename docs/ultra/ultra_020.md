@@ -43,13 +43,29 @@ YOLOv6 还提供了针对不同精度和移动平台优化的量化模型。
 可以将 PyTorch 预训练的`*.pt`模型和配置文件`*.yaml`传递给`YOLO()`类，在 Python 中创建模型实例：
 
 ```py
-`from ultralytics import YOLO  # Build a YOLOv6n model from scratch model = YOLO("yolov6n.yaml")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the YOLOv6n model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import YOLO
+
+# Build a YOLOv6n model from scratch
+model = YOLO("yolov6n.yaml")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the YOLOv6n model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 可以直接运行模型的 CLI 命令：
 
 ```py
-`# Build a YOLOv6n model from scratch and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov6n.yaml  data=coco8.yaml  epochs=100  imgsz=640  # Build a YOLOv6n model from scratch and run inference on the 'bus.jpg' image yolo  predict  model=yolov6n.yaml  source=path/to/bus.jpg` 
+# Build a YOLOv6n model from scratch and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov6n.yaml  data=coco8.yaml  epochs=100  imgsz=640
+
+# Build a YOLOv6n model from scratch and run inference on the 'bus.jpg' image
+yolo  predict  model=yolov6n.yaml  source=path/to/bus.jpg 
 ```
 
 ## 支持的任务和模式
@@ -71,7 +87,14 @@ YOLOv6 系列提供了一系列针对高性能目标检测优化的模型。这�
 我们要感谢在实时目标检测领域作出重要贡献的作者：
 
 ```py
-`@misc{li2023yolov6,   title={YOLOv6 v3.0: A Full-Scale Reloading},   author={Chuyi Li and Lulu Li and Yifei Geng and Hongliang Jiang and Meng Cheng and Bo Zhang and Zaidan Ke and Xiaoming Xu and Xiangxiang Chu},   year={2023},   eprint={2301.05586},   archivePrefix={arXiv},   primaryClass={cs.CV} }` 
+@misc{li2023yolov6,
+  title={YOLOv6 v3.0: A Full-Scale Reloading},
+  author={Chuyi Li and Lulu Li and Yifei Geng and Hongliang Jiang and Meng Cheng and Bo Zhang and Zaidan Ke and Xiaoming Xu and Xiangxiang Chu},
+  year={2023},
+  eprint={2301.05586},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+} 
 ```
 
 原始的 YOLOv6 论文可以在 [arXiv](https://arxiv.org/abs/2301.05586) 找到。作者已经公开了他们的工作，并且代码库可以在 [GitHub](https://github.com/meituan/YOLOv6) 上访问。我们感谢他们在推动领域发展和使他们的工作对更广泛的社区可用方面的努力。
@@ -93,11 +116,17 @@ YOLOv6 中的双向串联（BiC）模块增强了探测器颈部的定位信号�
 示例
 
 ```py
-`from ultralytics import YOLO  # Build a YOLOv6n model from scratch model = YOLO("yolov6n.yaml")  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Build a YOLOv6n model from scratch
+model = YOLO("yolov6n.yaml")
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  train  model=yolov6n.yaml  data=coco8.yaml  epochs=100  imgsz=640` 
+yolo  train  model=yolov6n.yaml  data=coco8.yaml  epochs=100  imgsz=640 
 ```
 
 欲了解更多信息，请访问训练页面。

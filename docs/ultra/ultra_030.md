@@ -35,11 +35,27 @@ Ultralytics Python API 提供了预训练的 PaddlePaddle RT-DETR 模型，具�
 示例
 
 ```py
-`from ultralytics import RTDETR  # Load a COCO-pretrained RT-DETR-l model model = RTDETR("rtdetr-l.pt")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the RT-DETR-l model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import RTDETR
+
+# Load a COCO-pretrained RT-DETR-l model
+model = RTDETR("rtdetr-l.pt")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the RT-DETR-l model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 ```py
-`# Load a COCO-pretrained RT-DETR-l model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=rtdetr-l.pt  data=coco8.yaml  epochs=100  imgsz=640  # Load a COCO-pretrained RT-DETR-l model and run inference on the 'bus.jpg' image yolo  predict  model=rtdetr-l.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained RT-DETR-l model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=rtdetr-l.pt  data=coco8.yaml  epochs=100  imgsz=640
+
+# Load a COCO-pretrained RT-DETR-l model and run inference on the 'bus.jpg' image
+yolo  predict  model=rtdetr-l.pt  source=path/to/bus.jpg 
 ```
 
 ## 支持的任务和模式
@@ -56,7 +72,14 @@ Ultralytics Python API 提供了预训练的 PaddlePaddle RT-DETR 模型，具�
 如果您在研究或开发工作中使用百度的 RT-DETR，请引用[原始论文](https://arxiv.org/abs/2304.08069)：
 
 ```py
-`@misc{lv2023detrs,   title={DETRs Beat YOLOs on Real-time Object Detection},   author={Wenyu Lv and Shangliang Xu and Yian Zhao and Guanzhong Wang and Jinman Wei and Cheng Cui and Yuning Du and Qingqing Dang and Yi Liu},   year={2023},   eprint={2304.08069},   archivePrefix={arXiv},   primaryClass={cs.CV} }` 
+@misc{lv2023detrs,
+  title={DETRs Beat YOLOs on Real-time Object Detection},
+  author={Wenyu Lv and Shangliang Xu and Yian Zhao and Guanzhong Wang and Jinman Wei and Cheng Cui and Yuning Du and Qingqing Dang and Yi Liu},
+  year={2023},
+  eprint={2304.08069},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+} 
 ```
 
 我们要感谢百度和[PaddlePaddle](https://github.com/PaddlePaddle/PaddleDetection)团队为计算机视觉社区创建和维护这一宝贵资源。他们通过开发基于 Vision Transformers 的实时目标检测器 RT-DETR，为该领域做出了重要贡献，深受赞赏。
@@ -74,11 +97,27 @@ Ultralytics Python API 提供了预训练的 PaddlePaddle RT-DETR 模型，具�
 示例
 
 ```py
-`from ultralytics import RTDETR  # Load a COCO-pretrained RT-DETR-l model model = RTDETR("rtdetr-l.pt")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the RT-DETR-l model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import RTDETR
+
+# Load a COCO-pretrained RT-DETR-l model
+model = RTDETR("rtdetr-l.pt")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the RT-DETR-l model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 ```py
-`# Load a COCO-pretrained RT-DETR-l model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=rtdetr-l.pt  data=coco8.yaml  epochs=100  imgsz=640  # Load a COCO-pretrained RT-DETR-l model and run inference on the 'bus.jpg' image yolo  predict  model=rtdetr-l.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained RT-DETR-l model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=rtdetr-l.pt  data=coco8.yaml  epochs=100  imgsz=640
+
+# Load a COCO-pretrained RT-DETR-l model and run inference on the 'bus.jpg' image
+yolo  predict  model=rtdetr-l.pt  source=path/to/bus.jpg 
 ```
 
 ### 为什么应该选择百度的 RT-DETR 而不是其他实时目标检测器？

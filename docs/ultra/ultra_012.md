@@ -51,11 +51,26 @@ YOLOv8 分割模型使用 `-seg` 后缀，例如 `yolov8n-seg.pt`，并在 [COCO
 例子
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.yaml")  # build a new model from YAML model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training) model = YOLO("yolov8n-seg.yaml").load("yolov8n.pt")  # build from YAML and transfer weights  # Train the model results = model.train(data="coco8-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.yaml")  # build a new model from YAML
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)
+model = YOLO("yolov8n-seg.yaml").load("yolov8n.pt")  # build from YAML and transfer weights
+
+# Train the model
+results = model.train(data="coco8-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Build a new model from YAML and start training from scratch yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.yaml  epochs=100  imgsz=640  # Start training from a pretrained *.pt model yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640  # Build a new model from YAML, transfer pretrained weights to it and start training yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.yaml  pretrained=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Build a new model from YAML and start training from scratch
+yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.yaml  epochs=100  imgsz=640
+
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640
+
+# Build a new model from YAML, transfer pretrained weights to it and start training
+yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.yaml  pretrained=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 ### 数据集格式
@@ -69,11 +84,27 @@ YOLO 分割数据集格式的详细信息可以在数据集指南中找到。要
 例子
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Validate the model metrics = model.val()  # no arguments needed, dataset and settings remembered metrics.box.map  # map50-95(B) metrics.box.map50  # map50(B) metrics.box.map75  # map75(B) metrics.box.maps  # a list contains map50-95(B) of each category metrics.seg.map  # map50-95(M) metrics.seg.map50  # map50(M) metrics.seg.map75  # map75(M) metrics.seg.maps  # a list contains map50-95(M) of each category` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Validate the model
+metrics = model.val()  # no arguments needed, dataset and settings remembered
+metrics.box.map  # map50-95(B)
+metrics.box.map50  # map50(B)
+metrics.box.map75  # map75(B)
+metrics.box.maps  # a list contains map50-95(B) of each category
+metrics.seg.map  # map50-95(M)
+metrics.seg.map50  # map50(M)
+metrics.seg.map75  # map75(M)
+metrics.seg.maps  # a list contains map50-95(M) of each category 
 ```
 
 ```py
-`yolo  segment  val  model=yolov8n-seg.pt  # val official model yolo  segment  val  model=path/to/best.pt  # val custom model` 
+yolo  segment  val  model=yolov8n-seg.pt  # val official model
+yolo  segment  val  model=path/to/best.pt  # val custom model 
 ```
 
 ## 预测
@@ -83,11 +114,19 @@ YOLO 分割数据集格式的详细信息可以在数据集指南中找到。要
 例子
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Predict with the model results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Predict with the model
+results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image 
 ```
 
 ```py
-`yolo  segment  predict  model=yolov8n-seg.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with official model yolo  segment  predict  model=path/to/best.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with custom model` 
+yolo  segment  predict  model=yolov8n-seg.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with official model
+yolo  segment  predict  model=path/to/best.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with custom model 
 ```
 
 查看预测页面中的全部`predict`模式细节。
@@ -99,11 +138,19 @@ YOLO 分割数据集格式的详细信息可以在数据集指南中找到。要
 例子
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom trained model  # Export the model model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom trained model
+
+# Export the model
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n-seg.pt  format=onnx  # export official model yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model` 
+yolo  export  model=yolov8n-seg.pt  format=onnx  # export official model
+yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model 
 ```
 
 可用的 YOLOv8-seg 导出格式列在下表中。您可以使用`format`参数导出到任何格式，例如`format='onnx'`或`format='engine'`。您可以直接在导出模型上预测或验证，例如`yolo predict model=yolov8n-seg.onnx`。导出完成后，您的模型示例将显示使用示例。
@@ -135,11 +182,17 @@ YOLO 分割数据集格式的详细信息可以在数据集指南中找到。要
 例子
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8 segment model model = YOLO("yolov8n-seg.pt")  # Train the model results = model.train(data="path/to/your_dataset.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8 segment model
+model = YOLO("yolov8n-seg.pt")
+
+# Train the model
+results = model.train(data="path/to/your_dataset.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  segment  train  data=path/to/your_dataset.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+yolo  segment  train  data=path/to/your_dataset.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 检查配置页面以获取更多可用参数信息。
@@ -159,11 +212,19 @@ Ultralytics YOLOv8 是一种现代化的模型，以其高精度和实时性能�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained model model = YOLO("yolov8n-seg.pt")  # Validate the model metrics = model.val() print("Mean Average Precision for boxes:", metrics.box.map) print("Mean Average Precision for masks:", metrics.seg.map)` 
+from ultralytics import YOLO
+
+# Load a pretrained model
+model = YOLO("yolov8n-seg.pt")
+
+# Validate the model
+metrics = model.val()
+print("Mean Average Precision for boxes:", metrics.box.map)
+print("Mean Average Precision for masks:", metrics.seg.map) 
 ```
 
 ```py
-`yolo  segment  val  model=yolov8n-seg.pt` 
+yolo  segment  val  model=yolov8n-seg.pt 
 ```
 
 这些步骤将为您提供像平均精度（mAP）这样的验证指标，对评估模型性能至关重要。
@@ -175,11 +236,17 @@ Ultralytics YOLOv8 是一种现代化的模型，以其高精度和实时性能�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained model model = YOLO("yolov8n-seg.pt")  # Export the model to ONNX format model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a pretrained model
+model = YOLO("yolov8n-seg.pt")
+
+# Export the model to ONNX format
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n-seg.pt  format=onnx` 
+yolo  export  model=yolov8n-seg.pt  format=onnx 
 ```
 
 有关导出到各种格式的更多详细信息，请参阅导出页面。

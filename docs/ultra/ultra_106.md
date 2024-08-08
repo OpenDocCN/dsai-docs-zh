@@ -37,19 +37,21 @@
 1.  安装依赖项
 
     ```py
-    `pip  install  cmake pip  install  onnxsim` 
+    pip  install  cmake
+    pip  install  onnxsim 
     ```
 
 1.  克隆以下存储库
 
     ```py
-    `git  clone  https://github.com/marcoslucianops/DeepStream-Yolo cd  DeepStream-Yolo` 
+    git  clone  https://github.com/marcoslucianops/DeepStream-Yolo
+    cd  DeepStream-Yolo 
     ```
 
 1.  从[YOLOv8 releases](https://github.com/ultralytics/assets/releases)下载您选择的 Ultralytics YOLOv8 检测模型（.pt）。这里我们使用[yolov8s.pt](https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8s.pt)。
 
     ```py
-    `wget  https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8s.pt` 
+    wget  https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8s.pt 
     ```
 
     注意
@@ -59,7 +61,7 @@
 1.  将模型转换为 ONNX
 
     ```py
-    `python3  utils/export_yoloV8.py  -w  yolov8s.pt` 
+    python3  utils/export_yoloV8.py  -w  yolov8s.pt 
     ```
 
     将以下参数传递给上述命令
@@ -67,37 +69,42 @@
     对于 DeepStream 6.0.1，请使用 opset 12 或更低版本。默认 opset 为 16。
 
     ```py
-    `--opset  12` 
+    --opset  12 
     ```
 
     更改推理尺寸（默认值：640）
 
     ```py
-    `-s  SIZE --size  SIZE -s  HEIGHT  WIDTH --size  HEIGHT  WIDTH` 
+    -s  SIZE
+    --size  SIZE
+    -s  HEIGHT  WIDTH
+    --size  HEIGHT  WIDTH 
     ```
 
     例如 1280 的示例：
 
     ```py
-    `-s  1280 or -s  1280  1280` 
+    -s  1280
+    or
+    -s  1280  1280 
     ```
 
     要简化 ONNX 模型（DeepStream >= 6.0）
 
     ```py
-    `--simplify` 
+    --simplify 
     ```
 
     要使用动态批量大小（DeepStream >= 6.1）
 
     ```py
-    `--dynamic` 
+    --dynamic 
     ```
 
     若要使用静态批量大小（例如批量大小为 4）
 
     ```py
-    `--batch  4` 
+    --batch  4 
     ```
 
 1.  根据安装的 JetPack 版本设置 CUDA 版本
@@ -105,43 +112,54 @@
     对于 JetPack 4.6.4：
 
     ```py
-    `export  CUDA_VER=10.2` 
+    export  CUDA_VER=10.2 
     ```
 
     对于 JetPack 5.1.3：
 
     ```py
-    `export  CUDA_VER=11.4` 
+    export  CUDA_VER=11.4 
     ```
 
 1.  编译库
 
     ```py
-    `make  -C  nvdsinfer_custom_impl_Yolo  clean  &&  make  -C  nvdsinfer_custom_impl_Yolo` 
+    make  -C  nvdsinfer_custom_impl_Yolo  clean  &&  make  -C  nvdsinfer_custom_impl_Yolo 
     ```
 
 1.  根据您的模型编辑`config_infer_primary_yoloV8.txt`文件（适用于具有 80 个类别的 YOLOv8s）
 
     ```py
-    `[property] ... onnx-file=yolov8s.onnx ... num-detected-classes=80 ...` 
+    [property]
+    ...
+    onnx-file=yolov8s.onnx
+    ...
+    num-detected-classes=80
+    ... 
     ```
 
 1.  编辑`deepstream_app_config`文件
 
     ```py
-    `... [primary-gie] ... config-file=config_infer_primary_yoloV8.txt` 
+    ...
+    [primary-gie]
+    ...
+    config-file=config_infer_primary_yoloV8.txt 
     ```
 
 1.  您还可以在`deepstream_app_config`文件中更改视频源。这里加载了一个默认视频文件
 
     ```py
-    `... [source0] ... uri=file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4` 
+    ...
+    [source0]
+    ...
+    uri=file:///opt/nvidia/deepstream/deepstream/samples/streams/sample_1080p_h264.mp4 
     ```
 
 ### 运行推理
 
 ```py
-`deepstream-app  -c  deepstream_app_config.txt` 
+deepstream-app  -c  deepstream_app_config.txt 
 ```
 
 注意
@@ -161,13 +179,13 @@
 1.  设置`OPENCV`环境变量
 
     ```py
-    `export  OPENCV=1` 
+    export  OPENCV=1 
     ```
 
 1.  编译库
 
     ```py
-    `make  -C  nvdsinfer_custom_impl_Yolo  clean  &&  make  -C  nvdsinfer_custom_impl_Yolo` 
+    make  -C  nvdsinfer_custom_impl_Yolo  clean  &&  make  -C  nvdsinfer_custom_impl_Yolo 
     ```
 
 1.  对于 COCO 数据集，请下载[val2017](http://images.cocodataset.org/zips/val2017.zip)，解压并移动到`DeepStream-Yolo`文件夹
@@ -175,13 +193,15 @@
 1.  创建一个用于校准图像的新目录
 
     ```py
-    `mkdir  calibration` 
+    mkdir  calibration 
     ```
 
 1.  运行以下命令从 COCO 数据集中选择 1000 张随机图像以进行校准
 
     ```py
-    `for  jpg  in  $(ls  -1  val2017/*.jpg  |  sort  -R  |  head  -1000);  do  \   cp  ${jpg}  calibration/;  \ done` 
+    for  jpg  in  $(ls  -1  val2017/*.jpg  |  sort  -R  |  head  -1000);  do  \
+      cp  ${jpg}  calibration/;  \
+    done 
     ```
 
     注意
@@ -191,13 +211,14 @@
 1.  创建包含所有选定图像的`calibration.txt`文件
 
     ```py
-    `realpath  calibration/*jpg  >  calibration.txt` 
+    realpath  calibration/*jpg  >  calibration.txt 
     ```
 
 1.  设置环境变量
 
     ```py
-    `export  INT8_CALIB_IMG_PATH=calibration.txt export  INT8_CALIB_BATCH_SIZE=1` 
+    export  INT8_CALIB_IMG_PATH=calibration.txt
+    export  INT8_CALIB_BATCH_SIZE=1 
     ```
 
     注意
@@ -209,19 +230,29 @@
     来自
 
     ```py
-    `... model-engine-file=model_b1_gpu0_fp32.engine #int8-calib-file=calib.table ... network-mode=0 ...` 
+    ...
+    model-engine-file=model_b1_gpu0_fp32.engine
+    #int8-calib-file=calib.table
+    ...
+    network-mode=0
+    ... 
     ```
 
     为了
 
     ```py
-    `... model-engine-file=model_b1_gpu0_int8.engine int8-calib-file=calib.table ... network-mode=1 ...` 
+    ...
+    model-engine-file=model_b1_gpu0_int8.engine
+    int8-calib-file=calib.table
+    ...
+    network-mode=1
+    ... 
     ```
 
 ### 运行推理
 
 ```py
-`deepstream-app  -c  deepstream_app_config.txt` 
+deepstream-app  -c  deepstream_app_config.txt 
 ```
 
 ## 多流设置
@@ -231,19 +262,28 @@
 1.  根据所需的流数量更改行和列以构建网格显示。例如，对于 4 个流，我们可以添加 2 行和 2 列。
 
     ```py
-    `[tiled-display] rows=2 columns=2` 
+    [tiled-display]
+    rows=2
+    columns=2 
     ```
 
 1.  设置 `num-sources=4` 并添加所有 4 个流的 `uri`
 
     ```py
-    `[source0] enable=1 type=3 uri=<path_to_video> uri=<path_to_video> uri=<path_to_video> uri=<path_to_video> num-sources=4` 
+    [source0]
+    enable=1
+    type=3
+    uri=<path_to_video>
+    uri=<path_to_video>
+    uri=<path_to_video>
+    uri=<path_to_video>
+    num-sources=4 
     ```
 
 ### 运行推理
 
 ```py
-`deepstream-app  -c  deepstream_app_config.txt` 
+deepstream-app  -c  deepstream_app_config.txt 
 ```
 
 ![多流设置](img/0392649c7f1d05b4d620d143951d4cf1.png)
@@ -283,7 +323,7 @@
 这是一个示例命令：
 
 ```py
-`python3  utils/export_yoloV8.py  -w  yolov8s.pt  --opset  12  --simplify` 
+python3  utils/export_yoloV8.py  -w  yolov8s.pt  --opset  12  --simplify 
 ```
 
 要了解更多有关模型转换的详细信息，请查看我们的模型导出部分。

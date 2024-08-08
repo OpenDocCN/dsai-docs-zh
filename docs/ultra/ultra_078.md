@@ -23,23 +23,256 @@
 Analytics Examples
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt")  cap = cv2.VideoCapture("Path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  out = cv2.VideoWriter("line_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(     type="line",     writer=out,     im0_shape=(w, h),     view_img=True, ) total_counts = 0 frame_count = 0  while cap.isOpened():     success, frame = cap.read()      if success:         frame_count += 1         results = model.track(frame, persist=True, verbose=True)          if results[0].boxes.id is not None:             boxes = results[0].boxes.xyxy.cpu()             for box in boxes:                 total_counts += 1          analytics.update_line(frame_count, total_counts)          total_counts = 0         if cv2.waitKey(1) & 0xFF == ord("q"):             break     else:         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+
+cap = cv2.VideoCapture("Path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+out = cv2.VideoWriter("line_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(
+    type="line",
+    writer=out,
+    im0_shape=(w, h),
+    view_img=True,
+)
+total_counts = 0
+frame_count = 0
+
+while cap.isOpened():
+    success, frame = cap.read()
+
+    if success:
+        frame_count += 1
+        results = model.track(frame, persist=True, verbose=True)
+
+        if results[0].boxes.id is not None:
+            boxes = results[0].boxes.xyxy.cpu()
+            for box in boxes:
+                total_counts += 1
+
+        analytics.update_line(frame_count, total_counts)
+
+        total_counts = 0
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    else:
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt")  cap = cv2.VideoCapture("Path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS)) out = cv2.VideoWriter("multiple_line_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(     type="line",     writer=out,     im0_shape=(w, h),     view_img=True,     max_points=200, )  frame_count = 0 data = {} labels = []  while cap.isOpened():     success, frame = cap.read()      if success:         frame_count += 1          results = model.track(frame, persist=True)          if results[0].boxes.id is not None:             boxes = results[0].boxes.xyxy.cpu()             track_ids = results[0].boxes.id.int().cpu().tolist()             clss = results[0].boxes.cls.cpu().tolist()              for box, track_id, cls in zip(boxes, track_ids, clss):                 # Store each class label                 if model.names[int(cls)] not in labels:                     labels.append(model.names[int(cls)])                  # Store each class count                 if model.names[int(cls)] in data:                     data[model.names[int(cls)]] += 1                 else:                     data[model.names[int(cls)]] = 0          # update lines every frame         analytics.update_multiple_lines(data, labels, frame_count)         data = {}  # clear the data list for next frame     else:         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+
+cap = cv2.VideoCapture("Path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+out = cv2.VideoWriter("multiple_line_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(
+    type="line",
+    writer=out,
+    im0_shape=(w, h),
+    view_img=True,
+    max_points=200,
+)
+
+frame_count = 0
+data = {}
+labels = []
+
+while cap.isOpened():
+    success, frame = cap.read()
+
+    if success:
+        frame_count += 1
+
+        results = model.track(frame, persist=True)
+
+        if results[0].boxes.id is not None:
+            boxes = results[0].boxes.xyxy.cpu()
+            track_ids = results[0].boxes.id.int().cpu().tolist()
+            clss = results[0].boxes.cls.cpu().tolist()
+
+            for box, track_id, cls in zip(boxes, track_ids, clss):
+                # Store each class label
+                if model.names[int(cls)] not in labels:
+                    labels.append(model.names[int(cls)])
+
+                # Store each class count
+                if model.names[int(cls)] in data:
+                    data[model.names[int(cls)]] += 1
+                else:
+                    data[model.names[int(cls)]] = 0
+
+        # update lines every frame
+        analytics.update_multiple_lines(data, labels, frame_count)
+        data = {}  # clear the data list for next frame
+    else:
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt")  cap = cv2.VideoCapture("Path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  out = cv2.VideoWriter("pie_chart.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(     type="pie",     writer=out,     im0_shape=(w, h),     view_img=True, )  clswise_count = {}  while cap.isOpened():     success, frame = cap.read()     if success:         results = model.track(frame, persist=True, verbose=True)         if results[0].boxes.id is not None:             boxes = results[0].boxes.xyxy.cpu()             clss = results[0].boxes.cls.cpu().tolist()             for box, cls in zip(boxes, clss):                 if model.names[int(cls)] in clswise_count:                     clswise_count[model.names[int(cls)]] += 1                 else:                     clswise_count[model.names[int(cls)]] = 1              analytics.update_pie(clswise_count)             clswise_count = {}          if cv2.waitKey(1) & 0xFF == ord("q"):             break     else:         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+
+cap = cv2.VideoCapture("Path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+out = cv2.VideoWriter("pie_chart.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(
+    type="pie",
+    writer=out,
+    im0_shape=(w, h),
+    view_img=True,
+)
+
+clswise_count = {}
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if success:
+        results = model.track(frame, persist=True, verbose=True)
+        if results[0].boxes.id is not None:
+            boxes = results[0].boxes.xyxy.cpu()
+            clss = results[0].boxes.cls.cpu().tolist()
+            for box, cls in zip(boxes, clss):
+                if model.names[int(cls)] in clswise_count:
+                    clswise_count[model.names[int(cls)]] += 1
+                else:
+                    clswise_count[model.names[int(cls)]] = 1
+
+            analytics.update_pie(clswise_count)
+            clswise_count = {}
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    else:
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt")  cap = cv2.VideoCapture("Path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  out = cv2.VideoWriter("bar_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(     type="bar",     writer=out,     im0_shape=(w, h),     view_img=True, )  clswise_count = {}  while cap.isOpened():     success, frame = cap.read()     if success:         results = model.track(frame, persist=True, verbose=True)         if results[0].boxes.id is not None:             boxes = results[0].boxes.xyxy.cpu()             clss = results[0].boxes.cls.cpu().tolist()             for box, cls in zip(boxes, clss):                 if model.names[int(cls)] in clswise_count:                     clswise_count[model.names[int(cls)]] += 1                 else:                     clswise_count[model.names[int(cls)]] = 1              analytics.update_bar(clswise_count)             clswise_count = {}          if cv2.waitKey(1) & 0xFF == ord("q"):             break     else:         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+
+cap = cv2.VideoCapture("Path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+out = cv2.VideoWriter("bar_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(
+    type="bar",
+    writer=out,
+    im0_shape=(w, h),
+    view_img=True,
+)
+
+clswise_count = {}
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if success:
+        results = model.track(frame, persist=True, verbose=True)
+        if results[0].boxes.id is not None:
+            boxes = results[0].boxes.xyxy.cpu()
+            clss = results[0].boxes.cls.cpu().tolist()
+            for box, cls in zip(boxes, clss):
+                if model.names[int(cls)] in clswise_count:
+                    clswise_count[model.names[int(cls)]] += 1
+                else:
+                    clswise_count[model.names[int(cls)]] = 1
+
+            analytics.update_bar(clswise_count)
+            clswise_count = {}
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    else:
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt")  cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  out = cv2.VideoWriter("area_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(     type="area",     writer=out,     im0_shape=(w, h),     view_img=True, )  clswise_count = {} frame_count = 0  while cap.isOpened():     success, frame = cap.read()     if success:         frame_count += 1         results = model.track(frame, persist=True, verbose=True)          if results[0].boxes.id is not None:             boxes = results[0].boxes.xyxy.cpu()             clss = results[0].boxes.cls.cpu().tolist()              for box, cls in zip(boxes, clss):                 if model.names[int(cls)] in clswise_count:                     clswise_count[model.names[int(cls)]] += 1                 else:                     clswise_count[model.names[int(cls)]] = 1          analytics.update_area(frame_count, clswise_count)         clswise_count = {}         if cv2.waitKey(1) & 0xFF == ord("q"):             break     else:         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+out = cv2.VideoWriter("area_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(
+    type="area",
+    writer=out,
+    im0_shape=(w, h),
+    view_img=True,
+)
+
+clswise_count = {}
+frame_count = 0
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if success:
+        frame_count += 1
+        results = model.track(frame, persist=True, verbose=True)
+
+        if results[0].boxes.id is not None:
+            boxes = results[0].boxes.xyxy.cpu()
+            clss = results[0].boxes.cls.cpu().tolist()
+
+            for box, cls in zip(boxes, clss):
+                if model.names[int(cls)] in clswise_count:
+                    clswise_count[model.names[int(cls)]] += 1
+                else:
+                    clswise_count[model.names[int(cls)]] = 1
+
+        analytics.update_area(frame_count, clswise_count)
+        clswise_count = {}
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    else:
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 ### Argument `Analytics`
@@ -97,7 +330,28 @@ Analytics Examples
 示例：
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt") cap = cv2.VideoCapture("Path/to/video/file.mp4") out = cv2.VideoWriter("line_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(type="line", writer=out, im0_shape=(w, h), view_img=True)  while cap.isOpened():     success, frame = cap.read()     if success:         results = model.track(frame, persist=True)         total_counts = sum([1 for box in results[0].boxes.xyxy])         analytics.update_line(frame_count, total_counts)     if cv2.waitKey(1) & 0xFF == ord("q"):         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+cap = cv2.VideoCapture("Path/to/video/file.mp4")
+out = cv2.VideoWriter("line_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(type="line", writer=out, im0_shape=(w, h), view_img=True)
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if success:
+        results = model.track(frame, persist=True)
+        total_counts = sum([1 for box in results[0].boxes.xyxy])
+        analytics.update_line(frame_count, total_counts)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 要进一步了解如何配置`Analytics`类，请访问使用 Ultralytics YOLOv8 📊部分。
@@ -117,7 +371,31 @@ Analytics Examples
 使用以下示例生成条形图：
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt") cap = cv2.VideoCapture("Path/to/video/file.mp4") out = cv2.VideoWriter("bar_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(type="bar", writer=out, im0_shape=(w, h), view_img=True)  while cap.isOpened():     success, frame = cap.read()     if success:         results = model.track(frame, persist=True)         clswise_count = {             model.names[int(cls)]: boxes.size(0)             for cls, boxes in zip(results[0].boxes.cls.tolist(), results[0].boxes.xyxy)         }         analytics.update_bar(clswise_count)     if cv2.waitKey(1) & 0xFF == ord("q"):         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+cap = cv2.VideoCapture("Path/to/video/file.mp4")
+out = cv2.VideoWriter("bar_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(type="bar", writer=out, im0_shape=(w, h), view_img=True)
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if success:
+        results = model.track(frame, persist=True)
+        clswise_count = {
+            model.names[int(cls)]: boxes.size(0)
+            for cls, boxes in zip(results[0].boxes.cls.tolist(), results[0].boxes.xyxy)
+        }
+        analytics.update_bar(clswise_count)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 要了解更多，请访问指南中的条形图部分。
@@ -137,7 +415,31 @@ Ultralytics YOLOv8 是创建饼图的优秀选择，因为：
 这是一个快速示例：
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt") cap = cv2.VideoCapture("Path/to/video/file.mp4") out = cv2.VideoWriter("pie_chart.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(type="pie", writer=out, im0_shape=(w, h), view_img=True)  while cap.isOpened():     success, frame = cap.read()     if success:         results = model.track(frame, persist=True)         clswise_count = {             model.names[int(cls)]: boxes.size(0)             for cls, boxes in zip(results[0].boxes.cls.tolist(), results[0].boxes.xyxy)         }         analytics.update_pie(clswise_count)     if cv2.waitKey(1) & 0xFF == ord("q"):         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+cap = cv2.VideoCapture("Path/to/video/file.mp4")
+out = cv2.VideoWriter("pie_chart.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(type="pie", writer=out, im0_shape=(w, h), view_img=True)
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if success:
+        results = model.track(frame, persist=True)
+        clswise_count = {
+            model.names[int(cls)]: boxes.size(0)
+            for cls, boxes in zip(results[0].boxes.cls.tolist(), results[0].boxes.xyxy)
+        }
+        analytics.update_pie(clswise_count)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 要获取更多信息，请参考指南中的饼图部分。
@@ -149,7 +451,28 @@ Ultralytics YOLOv8 是创建饼图的优秀选择，因为：
 用于跟踪和更新折线图的示例：
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8s.pt") cap = cv2.VideoCapture("Path/to/video/file.mp4") out = cv2.VideoWriter("line_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))  analytics = solutions.Analytics(type="line", writer=out, im0_shape=(w, h), view_img=True)  while cap.isOpened():     success, frame = cap.read()     if success:         results = model.track(frame, persist=True)         total_counts = sum([1 for box in results[0].boxes.xyxy])         analytics.update_line(frame_count, total_counts)     if cv2.waitKey(1) & 0xFF == ord("q"):         break  cap.release() out.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8s.pt")
+cap = cv2.VideoCapture("Path/to/video/file.mp4")
+out = cv2.VideoWriter("line_plot.avi", cv2.VideoWriter_fourcc(*"MJPG"), fps, (w, h))
+
+analytics = solutions.Analytics(type="line", writer=out, im0_shape=(w, h), view_img=True)
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if success:
+        results = model.track(frame, persist=True)
+        total_counts = sum([1 for box in results[0].boxes.xyxy])
+        analytics.update_line(frame_count, total_counts)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows() 
 ```
 
 要了解完整功能，请参阅跟踪部分。

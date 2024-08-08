@@ -35,11 +35,18 @@ CIFAR-100 数据集广泛应用于深度学习模型的训练和评估，用于�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="cifar100", epochs=100, imgsz=32)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="cifar100", epochs=100, imgsz=32) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=cifar100  model=yolov8n-cls.pt  epochs=100  imgsz=32` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=cifar100  model=yolov8n-cls.pt  epochs=100  imgsz=32 
 ```
 
 ## 样本图像与标注
@@ -55,7 +62,12 @@ CIFAR-100 数据集包含各种对象的彩色图像，为图像分类任务提�
 如果您在研究或开发工作中使用 CIFAR-100 数据集，请引用以下论文：
 
 ```py
-`@TECHREPORT{Krizhevsky09learningmultiple,   author={Alex Krizhevsky},   title={Learning multiple layers of features from tiny images},   institution={},   year={2009} }` 
+@TECHREPORT{Krizhevsky09learningmultiple,
+  author={Alex Krizhevsky},
+  title={Learning multiple layers of features from tiny images},
+  institution={},
+  year={2009}
+} 
 ```
 
 我们要感谢 Alex Krizhevsky 创建和维护 CIFAR-100 数据集，作为机器学习和计算机视觉研究社区的宝贵资源。更多关于 CIFAR-100 数据集及其创建者的信息，请访问 [CIFAR-100 数据集网站](https://www.cs.toronto.edu/~kriz/cifar.html)。
@@ -73,11 +85,18 @@ CIFAR-100 数据集包含各种对象的彩色图像，为图像分类任务提�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="cifar100", epochs=100, imgsz=32)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="cifar100", epochs=100, imgsz=32) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=cifar100  model=yolov8n-cls.pt  epochs=100  imgsz=32` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=cifar100  model=yolov8n-cls.pt  epochs=100  imgsz=32 
 ```
 
 欲了解所有可用参数的全面列表，请参阅模型训练页面。

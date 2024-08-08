@@ -51,7 +51,7 @@ Note
 执行以下命令以拉取 Docker 容器并在树莓派上运行。这基于包含 Debian 12（Bookworm）的[arm64v8/debian](https://hub.docker.com/r/arm64v8/debian) docker 镜像，处于 Python3 环境中。
 
 ```py
-`t=ultralytics/ultralytics:latest-arm64  &&  sudo  docker  pull  $t  &&  sudo  docker  run  -it  --ipc=host  $t` 
+t=ultralytics/ultralytics:latest-arm64  &&  sudo  docker  pull  $t  &&  sudo  docker  run  -it  --ipc=host  $t 
 ```
 
 在完成此操作后，请跳至使用树莓派上的 NCNN 部分。
@@ -65,19 +65,21 @@ Note
 1.  更新包列表，安装 pip 并升级到最新版本
 
     ```py
-    `sudo  apt  update sudo  apt  install  python3-pip  -y pip  install  -U  pip` 
+    sudo  apt  update
+    sudo  apt  install  python3-pip  -y
+    pip  install  -U  pip 
     ```
 
 1.  使用可选依赖项安装`ultralytics` pip 包
 
     ```py
-    `pip  install  ultralytics[export]` 
+    pip  install  ultralytics[export] 
     ```
 
 1.  重新启动设备
 
     ```py
-    `sudo  reboot` 
+    sudo  reboot 
     ```
 
 ## 在树莓派上使用 NCNN
@@ -91,11 +93,27 @@ Note
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a YOLOv8n PyTorch model model = YOLO("yolov8n.pt")  # Export the model to NCNN format model.export(format="ncnn")  # creates 'yolov8n_ncnn_model'  # Load the exported NCNN model ncnn_model = YOLO("yolov8n_ncnn_model")  # Run inference results = ncnn_model("https://ultralytics.com/images/bus.jpg")` 
+from ultralytics import YOLO
+
+# Load a YOLOv8n PyTorch model
+model = YOLO("yolov8n.pt")
+
+# Export the model to NCNN format
+model.export(format="ncnn")  # creates 'yolov8n_ncnn_model'
+
+# Load the exported NCNN model
+ncnn_model = YOLO("yolov8n_ncnn_model")
+
+# Run inference
+results = ncnn_model("https://ultralytics.com/images/bus.jpg") 
 ```
 
 ```py
-`# Export a YOLOv8n PyTorch model to NCNN format yolo  export  model=yolov8n.pt  format=ncnn  # creates 'yolov8n_ncnn_model'  # Run inference with the exported model yolo  predict  model='yolov8n_ncnn_model'  source='https://ultralytics.com/images/bus.jpg'` 
+# Export a YOLOv8n PyTorch model to NCNN format
+yolo  export  model=yolov8n.pt  format=ncnn  # creates 'yolov8n_ncnn_model'
+
+# Run inference with the exported model
+yolo  predict  model='yolov8n_ncnn_model'  source='https://ultralytics.com/images/bus.jpg' 
 ```
 
 提示
@@ -174,11 +192,18 @@ Ultralytics 团队在九种不同的模型格式上运行了 YOLOv8 基准测试
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a YOLOv8n PyTorch model model = YOLO("yolov8n.pt")  # Benchmark YOLOv8n speed and accuracy on the COCO8 dataset for all all export formats results = model.benchmarks(data="coco8.yaml", imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a YOLOv8n PyTorch model
+model = YOLO("yolov8n.pt")
+
+# Benchmark YOLOv8n speed and accuracy on the COCO8 dataset for all all export formats
+results = model.benchmarks(data="coco8.yaml", imgsz=640) 
 ```
 
 ```py
-`# Benchmark YOLOv8n speed and accuracy on the COCO8 dataset for all all export formats yolo  benchmark  model=yolov8n.pt  data=coco8.yaml  imgsz=640` 
+# Benchmark YOLOv8n speed and accuracy on the COCO8 dataset for all all export formats
+yolo  benchmark  model=yolov8n.pt  data=coco8.yaml  imgsz=640 
 ```
 
 请注意，基准测试结果可能会根据系统的确切硬件和软件配置以及系统在进行基准测试时的当前工作负载而有所不同。要获得最可靠的结果，请使用一个包含大量图像的数据集，即`data='coco8.yaml' (4 val images)`，或者`data='coco.yaml'`（5000 val images）。
@@ -200,7 +225,7 @@ Ultralytics 团队在九种不同的模型格式上运行了 YOLOv8 基准测试
 在连接摄像头到树莓派后执行以下命令。您应该能看到来自摄像头的实时视频流，持续约 5 秒钟。
 
 ```py
-`rpicam-hello` 
+rpicam-hello 
 ```
 
 提示
@@ -218,13 +243,47 @@ Ultralytics 团队在九种不同的模型格式上运行了 YOLOv8 基准测试
 示例
 
 ```py
-`import cv2 from picamera2 import Picamera2  from ultralytics import YOLO  # Initialize the Picamera2 picam2 = Picamera2() picam2.preview_configuration.main.size = (1280, 720) picam2.preview_configuration.main.format = "RGB888" picam2.preview_configuration.align() picam2.configure("preview") picam2.start()  # Load the YOLOv8 model model = YOLO("yolov8n.pt")  while True:     # Capture frame-by-frame     frame = picam2.capture_array()      # Run YOLOv8 inference on the frame     results = model(frame)      # Visualize the results on the frame     annotated_frame = results[0].plot()      # Display the resulting frame     cv2.imshow("Camera", annotated_frame)      # Break the loop if 'q' is pressed     if cv2.waitKey(1) == ord("q"):         break  # Release resources and close windows cv2.destroyAllWindows()` 
+import cv2
+from picamera2 import Picamera2
+
+from ultralytics import YOLO
+
+# Initialize the Picamera2
+picam2 = Picamera2()
+picam2.preview_configuration.main.size = (1280, 720)
+picam2.preview_configuration.main.format = "RGB888"
+picam2.preview_configuration.align()
+picam2.configure("preview")
+picam2.start()
+
+# Load the YOLOv8 model
+model = YOLO("yolov8n.pt")
+
+while True:
+    # Capture frame-by-frame
+    frame = picam2.capture_array()
+
+    # Run YOLOv8 inference on the frame
+    results = model(frame)
+
+    # Visualize the results on the frame
+    annotated_frame = results[0].plot()
+
+    # Display the resulting frame
+    cv2.imshow("Camera", annotated_frame)
+
+    # Break the loop if 'q' is pressed
+    if cv2.waitKey(1) == ord("q"):
+        break
+
+# Release resources and close windows
+cv2.destroyAllWindows() 
 ```
 
 我们需要通过连接的摄像头与 `rpicam-vid` 建立一个 TCP 流，以便在后续推理时将此流 URL 作为输入。执行以下命令来启动 TCP 流。
 
 ```py
-`rpicam-vid  -n  -t  0  --inline  --listen  -o  tcp://127.0.0.1:8888` 
+rpicam-vid  -n  -t  0  --inline  --listen  -o  tcp://127.0.0.1:8888 
 ```
 
 查看官方树莓派文档中关于 [`rpicam-vid` 的使用说明](https://www.raspberrypi.com/documentation/computers/camera_software.html#rpicam-vid)。
@@ -232,11 +291,17 @@ Ultralytics 团队在九种不同的模型格式上运行了 YOLOv8 基准测试
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a YOLOv8n PyTorch model model = YOLO("yolov8n.pt")  # Run inference results = model("tcp://127.0.0.1:8888")` 
+from ultralytics import YOLO
+
+# Load a YOLOv8n PyTorch model
+model = YOLO("yolov8n.pt")
+
+# Run inference
+results = model("tcp://127.0.0.1:8888") 
 ```
 
 ```py
-`yolo  predict  model=yolov8n.pt  source="tcp://127.0.0.1:8888"` 
+yolo  predict  model=yolov8n.pt  source="tcp://127.0.0.1:8888" 
 ```
 
 提示
@@ -274,19 +339,21 @@ Ultralytics 团队在九种不同的模型格式上运行了 YOLOv8 基准测试
 1.  更新软件包列表并安装`pip`：
 
     ```py
-    `sudo  apt  update sudo  apt  install  python3-pip  -y pip  install  -U  pip` 
+    sudo  apt  update
+    sudo  apt  install  python3-pip  -y
+    pip  install  -U  pip 
     ```
 
 1.  使用可选依赖项安装 Ultralytics 包：
 
     ```py
-    `pip  install  ultralytics[export]` 
+    pip  install  ultralytics[export] 
     ```
 
 1.  重新启动设备以应用更改：
 
     ```py
-    `sudo  reboot` 
+    sudo  reboot 
     ```
 
 有关详细说明，请参阅无 Docker 启动部分。
@@ -302,11 +369,27 @@ Ultralytics YOLOv8 的 NCNN 格式经过高度优化，非常适合移动和嵌�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a YOLOv8n PyTorch model model = YOLO("yolov8n.pt")  # Export the model to NCNN format model.export(format="ncnn")  # creates 'yolov8n_ncnn_model'  # Load the exported NCNN model ncnn_model = YOLO("yolov8n_ncnn_model")  # Run inference results = ncnn_model("https://ultralytics.com/images/bus.jpg")` 
+from ultralytics import YOLO
+
+# Load a YOLOv8n PyTorch model
+model = YOLO("yolov8n.pt")
+
+# Export the model to NCNN format
+model.export(format="ncnn")  # creates 'yolov8n_ncnn_model'
+
+# Load the exported NCNN model
+ncnn_model = YOLO("yolov8n_ncnn_model")
+
+# Run inference
+results = ncnn_model("https://ultralytics.com/images/bus.jpg") 
 ```
 
 ```py
-`# Export a YOLOv8n PyTorch model to NCNN format yolo  export  model=yolov8n.pt  format=ncnn  # creates 'yolov8n_ncnn_model'  # Run inference with the exported model yolo  predict  model='yolov8n_ncnn_model'  source='https://ultralytics.com/images/bus.jpg'` 
+# Export a YOLOv8n PyTorch model to NCNN format
+yolo  export  model=yolov8n.pt  format=ncnn  # creates 'yolov8n_ncnn_model'
+
+# Run inference with the exported model
+yolo  predict  model='yolov8n_ncnn_model'  source='https://ultralytics.com/images/bus.jpg' 
 ```
 
 更多详情，请参阅在树莓派上使用 NCNN 部分。
@@ -330,17 +413,43 @@ Ultralytics YOLOv8 的 NCNN 格式经过高度优化，非常适合移动和嵌�
 1.  **使用`picamera2`**：
 
     ```py
-    `import cv2 from picamera2 import Picamera2  from ultralytics import YOLO  picam2 = Picamera2() picam2.preview_configuration.main.size = (1280, 720) picam2.preview_configuration.main.format = "RGB888" picam2.preview_configuration.align() picam2.configure("preview") picam2.start()  model = YOLO("yolov8n.pt")  while True:     frame = picam2.capture_array()     results = model(frame)     annotated_frame = results[0].plot()     cv2.imshow("Camera", annotated_frame)      if cv2.waitKey(1) == ord("q"):         break  cv2.destroyAllWindows()` 
+    import cv2
+    from picamera2 import Picamera2
+
+    from ultralytics import YOLO
+
+    picam2 = Picamera2()
+    picam2.preview_configuration.main.size = (1280, 720)
+    picam2.preview_configuration.main.format = "RGB888"
+    picam2.preview_configuration.align()
+    picam2.configure("preview")
+    picam2.start()
+
+    model = YOLO("yolov8n.pt")
+
+    while True:
+        frame = picam2.capture_array()
+        results = model(frame)
+        annotated_frame = results[0].plot()
+        cv2.imshow("Camera", annotated_frame)
+
+        if cv2.waitKey(1) == ord("q"):
+            break
+
+    cv2.destroyAllWindows() 
     ```
 
 1.  **使用 TCP 流**：
 
     ```py
-    `rpicam-vid  -n  -t  0  --inline  --listen  -o  tcp://127.0.0.1:8888` 
+    rpicam-vid  -n  -t  0  --inline  --listen  -o  tcp://127.0.0.1:8888 
     ```
 
     ```py
-    `from ultralytics import YOLO  model = YOLO("yolov8n.pt") results = model("tcp://127.0.0.1:8888")` 
+    from ultralytics import YOLO
+
+    model = YOLO("yolov8n.pt")
+    results = model("tcp://127.0.0.1:8888") 
     ```
 
 有关详细设置说明，请访问使用摄像头推断部分。

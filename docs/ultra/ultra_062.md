@@ -13,7 +13,61 @@
 以 CIFAR-10 数据集为例。文件夹结构应如下所示：
 
 ```py
-`cifar-10-/ | |-- train/ |   |-- airplane/ |   |   |-- 10008_airplane.png |   |   |-- 10009_airplane.png |   |   |-- ... |   | |   |-- automobile/ |   |   |-- 1000_automobile.png |   |   |-- 1001_automobile.png |   |   |-- ... |   | |   |-- bird/ |   |   |-- 10014_bird.png |   |   |-- 10015_bird.png |   |   |-- ... |   | |   |-- ... | |-- test/ |   |-- airplane/ |   |   |-- 10_airplane.png |   |   |-- 11_airplane.png |   |   |-- ... |   | |   |-- automobile/ |   |   |-- 100_automobile.png |   |   |-- 101_automobile.png |   |   |-- ... |   | |   |-- bird/ |   |   |-- 1000_bird.png |   |   |-- 1001_bird.png |   |   |-- ... |   | |   |-- ... | |-- val/ (optional) |   |-- airplane/ |   |   |-- 105_airplane.png |   |   |-- 106_airplane.png |   |   |-- ... |   | |   |-- automobile/ |   |   |-- 102_automobile.png |   |   |-- 103_automobile.png |   |   |-- ... |   | |   |-- bird/ |   |   |-- 1045_bird.png |   |   |-- 1046_bird.png |   |   |-- ... |   | |   |-- ...` 
+cifar-10-/
+|
+|-- train/
+|   |-- airplane/
+|   |   |-- 10008_airplane.png
+|   |   |-- 10009_airplane.png
+|   |   |-- ...
+|   |
+|   |-- automobile/
+|   |   |-- 1000_automobile.png
+|   |   |-- 1001_automobile.png
+|   |   |-- ...
+|   |
+|   |-- bird/
+|   |   |-- 10014_bird.png
+|   |   |-- 10015_bird.png
+|   |   |-- ...
+|   |
+|   |-- ...
+|
+|-- test/
+|   |-- airplane/
+|   |   |-- 10_airplane.png
+|   |   |-- 11_airplane.png
+|   |   |-- ...
+|   |
+|   |-- automobile/
+|   |   |-- 100_automobile.png
+|   |   |-- 101_automobile.png
+|   |   |-- ...
+|   |
+|   |-- bird/
+|   |   |-- 1000_bird.png
+|   |   |-- 1001_bird.png
+|   |   |-- ...
+|   |
+|   |-- ...
+|
+|-- val/ (optional)
+|   |-- airplane/
+|   |   |-- 105_airplane.png
+|   |   |-- 106_airplane.png
+|   |   |-- ...
+|   |
+|   |-- automobile/
+|   |   |-- 102_automobile.png
+|   |   |-- 103_automobile.png
+|   |   |-- ...
+|   |
+|   |-- bird/
+|   |   |-- 1045_bird.png
+|   |   |-- 1046_bird.png
+|   |   |-- ...
+|   |
+|   |-- ... 
 ```
 
 这种结构化方法确保模型在训练阶段能够有效地从组织良好的课程中学习，并在测试和验证阶段准确评估性能。
@@ -23,11 +77,18 @@
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="path/to/dataset", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="path/to/dataset", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=path/to/data  model=yolov8n-cls.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=path/to/data  model=yolov8n-cls.pt  epochs=100  imgsz=640 
 ```
 
 ## 支持的数据集
@@ -65,7 +126,22 @@ Ultralytics 支持以下数据集的自动下载：
 欲为 Ultralytics YOLO 分类任务结构化您的数据集，应遵循特定的分割目录格式。将您的数据集组织成单独的`train`、`test`和可选的`val`目录。每个目录应包含以各类别命名的子目录，其中包含相应的图像。这有助于流畅的训练和评估过程。例如，考虑 CIFAR-10 数据集的格式：
 
 ```py
-`cifar-10-/ |-- train/ |   |-- airplane/ |   |-- automobile/ |   |-- bird/ |   ... |-- test/ |   |-- airplane/ |   |-- automobile/ |   |-- bird/ |   ... |-- val/ (optional) |   |-- airplane/ |   |-- automobile/ |   |-- bird/ |   ...` 
+cifar-10-/
+|-- train/
+|   |-- airplane/
+|   |-- automobile/
+|   |-- bird/
+|   ...
+|-- test/
+|   |-- airplane/
+|   |-- automobile/
+|   |-- bird/
+|   ...
+|-- val/ (optional)
+|   |-- airplane/
+|   |-- automobile/
+|   |-- bird/
+|   ... 
 ```
 
 欲了解更多详细信息，请访问 YOLO 分类任务的数据集结构。
@@ -101,7 +177,13 @@ Ultralytics YOLO 支持自动下载多个用于图像分类的数据集，包括
 欲将您自己的数据集用于 Ultralytics YOLO，请确保其遵循分类任务所需的指定目录格式，其中包括单独的`train`、`test`和可选的`val`目录，以及每个类别包含相应图像的子目录。一旦您的数据集正确结构化，请在初始化训练脚本时将`data`参数指向您的数据集根目录。以下是 Python 示例：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="path/to/your/dataset", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="path/to/your/dataset", epochs=100, imgsz=640) 
 ```
 
 欲了解更多详细信息，请参阅添加自己的数据集部分。
@@ -129,11 +211,18 @@ Ultralytics YOLO 为图像分类提供多种好处，包括：
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model  # Train the model results = model.train(data="path/to/dataset", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model
+
+# Train the model
+results = model.train(data="path/to/dataset", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=path/to/data  model=yolov8n-cls.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=path/to/data  model=yolov8n-cls.pt  epochs=100  imgsz=640 
 ```
 
 这些示例展示了使用任一方法训练 YOLO 模型的简单过程。欲了解更多信息，请访问使用部分。

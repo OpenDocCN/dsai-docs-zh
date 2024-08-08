@@ -28,11 +28,15 @@ Ultralytics 安装
 Streamlit 应用程序
 
 ```py
-`` from ultralytics import solutions  solutions.inference()  ### Make sure to run the file using command `streamlit run <file-name.py>` `` 
+from ultralytics import solutions
+
+solutions.inference()
+
+### Make sure to run the file using command `streamlit run <file-name.py>` 
 ```
 
 ```py
-`yolo  streamlit-predict` 
+yolo  streamlit-predict 
 ```
 
 这将在您的默认网络浏览器中启动 Streamlit 应用程序。您将看到主标题、副标题和侧边栏配置选项。选择您期望的 YOLOv8 模型，设置置信度和 NMS 阈值，然后点击“开始”按钮开始实时目标检测。
@@ -42,7 +46,12 @@ Streamlit 应用程序
 使用自定义模型的 Streamlit 应用程序
 
 ```py
-`` from ultralytics import solutions  # Pass a model as an argument solutions.inference(model="path/to/model.pt")  ### Make sure to run the file using command `streamlit run <file-name.py>` `` 
+from ultralytics import solutions
+
+# Pass a model as an argument
+solutions.inference(model="path/to/model.pt")
+
+### Make sure to run the file using command `streamlit run <file-name.py>` 
 ```
 
 ## 结论
@@ -72,7 +81,7 @@ Streamlit 应用程序
 使用 Streamlit 和 Ultralytics YOLOv8 设置实时物体检测应用程序非常简单。首先，确保您已安装 Ultralytics Python 包：
 
 ```py
-`pip  install  ultralytics` 
+pip  install  ultralytics 
 ```
 
 然后，您可以创建一个基本的 Streamlit 应用程序来进行实时推理：
@@ -80,11 +89,15 @@ Streamlit 应用程序
 Streamlit 应用程序
 
 ```py
-`` from ultralytics import solutions  solutions.inference()  ### Make sure to run the file using command `streamlit run <file-name.py>` `` 
+from ultralytics import solutions
+
+solutions.inference()
+
+### Make sure to run the file using command `streamlit run <file-name.py>` 
 ```
 
 ```py
-`yolo  streamlit-predict` 
+yolo  streamlit-predict 
 ```
 
 获取有关实际设置的更多详细信息，请参阅文档的 Streamlit 应用代码部分。
@@ -106,7 +119,7 @@ Streamlit 应用程序
 编码完毕后，将您的 Streamlit 应用程序与 Ultralytics YOLOv8 集成，可以通过运行来部署：
 
 ```py
-`streamlit  run  <file-name.py>` 
+streamlit  run  <file-name.py> 
 ```
 
 此命令将在您的默认网络浏览器中启动应用程序，使您能够选择 YOLOv8 模型，设置置信度和 NMS 阈值，并通过简单点击开始实时物体检测。详细指南，请参阅 Streamlit 应用代码部分。

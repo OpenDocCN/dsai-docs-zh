@@ -23,7 +23,7 @@ YOLOv9 的进步深深植根于解决深度神经网络中信息损失所带来�
 信息瓶颈原理揭示了深度学习中的一个基本挑战：随着数据通过网络的连续层，信息损失的潜力增加。这个现象在数学上表示为：
 
 ```py
-`I(X, X) >= I(X, f_theta(X)) >= I(X, g_phi(f_theta(X)))` 
+I(X, X) >= I(X, f_theta(X)) >= I(X, g_phi(f_theta(X))) 
 ```
 
 其中`I`表示互信息，`f`和`g`分别表示具有参数`theta`和`phi`的变换函数。YOLOv9 通过实施可编程梯度信息（**PGI**）来应对这一挑战，帮助在网络深度中保留重要数据，确保更可靠的梯度生成，从而实现更好的模型收敛和性能。
@@ -33,7 +33,7 @@ YOLOv9 的进步深深植根于解决深度神经网络中信息损失所带来�
 可逆函数的概念是 YOLOv9 设计的另一个基石。如果一个函数可以在不损失任何信息的情况下被反转，则该函数被视为可逆的，如下所示：
 
 ```py
-`X = v_zeta(r_psi(X))` 
+X = v_zeta(r_psi(X)) 
 ```
 
 使用`psi`和`zeta`作为可逆函数及其逆函数的参数。这一特性对深度学习架构至关重要，因为它允许网络保持完整的信息流，从而实现对模型参数更精确的更新。YOLOv9 在其架构中引入可逆函数，以减少信息降解的风险，特别是在深层中，确保保留用于目标检测任务的关键数据。
@@ -113,13 +113,32 @@ YOLOv9 代表了实时目标检测中的重要发展，显著改善了效率、�
 可以将 PyTorch 预训练的 `*.pt` 模型以及配置 `*.yaml` 文件传递给 `YOLO()` 类以在 Python 中创建模型实例：
 
 ```py
-`from ultralytics import YOLO  # Build a YOLOv9c model from scratch model = YOLO("yolov9c.yaml")  # Build a YOLOv9c model from pretrained weight model = YOLO("yolov9c.pt")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the YOLOv9c model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import YOLO
+
+# Build a YOLOv9c model from scratch
+model = YOLO("yolov9c.yaml")
+
+# Build a YOLOv9c model from pretrained weight
+model = YOLO("yolov9c.pt")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the YOLOv9c model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 可以使用 CLI 命令直接运行模型：
 
 ```py
-`# Build a YOLOv9c model from scratch and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov9c.yaml  data=coco8.yaml  epochs=100  imgsz=640  # Build a YOLOv9c model from scratch and run inference on the 'bus.jpg' image yolo  predict  model=yolov9c.yaml  source=path/to/bus.jpg` 
+# Build a YOLOv9c model from scratch and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov9c.yaml  data=coco8.yaml  epochs=100  imgsz=640
+
+# Build a YOLOv9c model from scratch and run inference on the 'bus.jpg' image
+yolo  predict  model=yolov9c.yaml  source=path/to/bus.jpg 
 ```
 
 ## 支持的任务和模式
@@ -142,7 +161,12 @@ YOLOv9 系列提供了一系列模型，每个模型都针对高性能目标检�
 我们要感谢 YOLOv9 的作者在实时目标检测领域做出的重要贡献：
 
 ```py
-`@article{wang2024yolov9,   title={{YOLOv9}: Learning What You Want to Learn Using Programmable Gradient Information},   author={Wang, Chien-Yao  and Liao, Hong-Yuan Mark},   booktitle={arXiv preprint arXiv:2402.13616},   year={2024} }` 
+@article{wang2024yolov9,
+  title={{YOLOv9}: Learning What You Want to Learn Using Programmable Gradient Information},
+  author={Wang, Chien-Yao  and Liao, Hong-Yuan Mark},
+  booktitle={arXiv preprint arXiv:2402.13616},
+  year={2024}
+} 
 ```
 
 原始的 YOLOv9 论文可以在 [arXiv](https://arxiv.org/pdf/2402.13616.pdf) 上找到。作者已经公开了他们的工作，并且代码库可以在 [GitHub](https://github.com/WongKinYiu/yolov9) 上访问。我们感谢他们在推动领域进展并使他们的工作对更广泛的社区可用所做的努力。
@@ -162,13 +186,17 @@ YOLOv9 通过实现更高的准确性和效率，优于最先进的实时物体�
 您可以使用 Python 和 CLI 命令来训练 YOLOv9 模型。对于 Python，可以使用`YOLO`类实例化模型并调用`train`方法：
 
 ```py
-`from ultralytics import YOLO  # Build a YOLOv9c model from pretrained weights and train model = YOLO("yolov9c.pt") results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Build a YOLOv9c model from pretrained weights and train
+model = YOLO("yolov9c.pt")
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 对于 CLI 训练，执行：
 
 ```py
-`yolo  train  model=yolov9c.yaml  data=coco8.yaml  epochs=100  imgsz=640` 
+yolo  train  model=yolov9c.yaml  data=coco8.yaml  epochs=100  imgsz=640 
 ```
 
 了解有关训练和推断用例的更多使用示例。

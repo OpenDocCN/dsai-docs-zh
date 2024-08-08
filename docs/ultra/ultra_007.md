@@ -47,11 +47,19 @@
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom trained model  # Export the model model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom trained model
+
+# Export the model
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n.pt  format=onnx  # export official model yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model` 
+yolo  export  model=yolov8n.pt  format=onnx  # export official model
+yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model 
 ```
 
 ## 参数
@@ -104,11 +112,19 @@
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom trained model  # Export the model model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom trained model
+
+# Export the model
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n.pt  format=onnx  # export official model yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model` 
+yolo  export  model=yolov8n.pt  format=onnx  # export official model
+yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model 
 ```
 
 关于包括处理不同输入尺寸在内的高级选项，更多详细流程请参考 ONNX 部分。
@@ -132,11 +148,14 @@ INT8 量化是压缩模型并加速推理的优秀方式，尤其适用于边缘
 示例
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n.pt")  # Load a model model.export(format="onnx", int8=True)` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")  # Load a model
+model.export(format="onnx", int8=True) 
 ```
 
 ```py
-`yolo  export  model=yolov8n.pt  format=onnx  int8=True  # export model with INT8 quantization` 
+yolo  export  model=yolov8n.pt  format=onnx  int8=True  # export model with INT8 quantization 
 ```
 
 INT8 量化可以应用于多种格式，如 TensorRT 和 CoreML。更多详细信息请参考导出部分。
@@ -150,11 +169,14 @@ INT8 量化可以应用于多种格式，如 TensorRT 和 CoreML。更多详细�
 示例
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n.pt") model.export(format="onnx", dynamic=True)` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")
+model.export(format="onnx", dynamic=True) 
 ```
 
 ```py
-`yolo  export  model=yolov8n.pt  format=onnx  dynamic=True` 
+yolo  export  model=yolov8n.pt  format=onnx  dynamic=True 
 ```
 
 关于动态输入尺寸配置的更多上下文，请参考。

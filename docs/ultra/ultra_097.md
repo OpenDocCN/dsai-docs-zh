@@ -335,11 +335,13 @@ Ultralytics YOLOv8 支持各种部署格式，每种都针对特定的环境和�
 示例
 
 ```py
-`# Export command for TFLite format model.export(format="tflite")` 
+# Export command for TFLite format
+model.export(format="tflite") 
 ```
 
 ```py
-`# CLI command for TFLite export yolo  export  --format  tflite` 
+# CLI command for TFLite export
+yolo  export  --format  tflite 
 ```
 
 有关在移动设备上部署模型的详细信息，请参阅我们的 TF Lite 集成指南。

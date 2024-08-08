@@ -43,13 +43,18 @@ Azure 机器学习，通常称为 AzureML，是一种完全托管的云服务，
 创建您的 conda 虚拟环境并在其中安装 pip：
 
 ```py
-`conda  create  --name  yolov8env  -y conda  activate  yolov8env conda  install  pip  -y` 
+conda  create  --name  yolov8env  -y
+conda  activate  yolov8env
+conda  install  pip  -y 
 ```
 
 安装所需的依赖项：
 
 ```py
-`cd  ultralytics pip  install  -r  requirements.txt pip  install  ultralytics pip  install  onnx>=1.12.0` 
+cd  ultralytics
+pip  install  -r  requirements.txt
+pip  install  ultralytics
+pip  install  onnx>=1.12.0 
 ```
 
 ### 执行 YOLOv8 任务
@@ -57,13 +62,13 @@ Azure 机器学习，通常称为 AzureML，是一种完全托管的云服务，
 预测：
 
 ```py
-`yolo  predict  model=yolov8n.pt  source='https://ultralytics.com/images/bus.jpg'` 
+yolo  predict  model=yolov8n.pt  source='https://ultralytics.com/images/bus.jpg' 
 ```
 
 使用初始学习率为 0.01 训练一个检测模型，进行 10 个 epochs：
 
 ```py
-`yolo  train  data=coco8.yaml  model=yolov8n.pt  epochs=10  lr0=0.01` 
+yolo  train  data=coco8.yaml  model=yolov8n.pt  epochs=10  lr0=0.01 
 ```
 
 您可以在这里找到更多使用 Ultralytics CLI 的指令。
@@ -79,7 +84,11 @@ Azure 机器学习，通常称为 AzureML，是一种完全托管的云服务，
 从计算终端开始，您需要创建一个新的 ipykernel，该内核将由您的笔记本用于管理依赖项：
 
 ```py
-`conda  create  --name  yolov8env  -y conda  activate  yolov8env conda  install  pip  -y conda  install  ipykernel  -y python  -m  ipykernel  install  --user  --name  yolov8env  --display-name  "yolov8env"` 
+conda  create  --name  yolov8env  -y
+conda  activate  yolov8env
+conda  install  pip  -y
+conda  install  ipykernel  -y
+python  -m  ipykernel  install  --user  --name  yolov8env  --display-name  "yolov8env" 
 ```
 
 关闭您的终端并创建一个新的笔记本。从您的笔记本中，您可以选择新的内核。
@@ -87,7 +96,12 @@ Azure 机器学习，通常称为 AzureML，是一种完全托管的云服务，
 然后，您可以打开一个笔记本单元格并安装所需的依赖项：
 
 ```py
-`%%bash source  activate  yolov8env cd  ultralytics pip  install  -r  requirements.txt pip  install  ultralytics pip  install  onnx>=1.12.0` 
+%%bash
+source  activate  yolov8env
+cd  ultralytics
+pip  install  -r  requirements.txt
+pip  install  ultralytics
+pip  install  onnx>=1.12.0 
 ```
 
 请注意，我们需要对所有 %%bash 单元格使用 `source activate yolov8env`，以确保 %%bash 单元格使用我们想要的环境。
@@ -95,13 +109,24 @@ Azure 机器学习，通常称为 AzureML，是一种完全托管的云服务，
 使用 Ultralytics CLI 运行一些预测：
 
 ```py
-`%%bash source  activate  yolov8env yolo  predict  model=yolov8n.pt  source='https://ultralytics.com/images/bus.jpg'` 
+%%bash
+source  activate  yolov8env
+yolo  predict  model=yolov8n.pt  source='https://ultralytics.com/images/bus.jpg' 
 ```
 
 或者使用 Ultralytics Python 接口，例如训练模型：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official YOLOv8n model  # Use the model model.train(data="coco8.yaml", epochs=3)  # train the model metrics = model.val()  # evaluate model performance on the validation set results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image path = model.export(format="onnx")  # export the model to ONNX format` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load an official YOLOv8n model
+
+# Use the model
+model.train(data="coco8.yaml", epochs=3)  # train the model
+metrics = model.val()  # evaluate model performance on the validation set
+results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image
+path = model.export(format="onnx")  # export the model to ONNX format 
 ```
 
 您可以使用 Ultralytics CLI 或 Python 接口来运行 YOLOv8 任务，如上面终端部分所述。
@@ -133,13 +158,16 @@ Azure 机器学习，通常称为 AzureML，是一种完全托管的云服务，
 1.  **设置环境**: 启动您的计算实例，打开终端，并创建一个 conda 环境：
 
     ```py
-    `conda  create  --name  yolov8env  -y conda  activate  yolov8env conda  install  pip  -y pip  install  ultralytics  onnx>=1.12.0` 
+    conda  create  --name  yolov8env  -y
+    conda  activate  yolov8env
+    conda  install  pip  -y
+    pip  install  ultralytics  onnx>=1.12.0 
     ```
 
 1.  **运行 YOLOv8 任务**：使用 Ultralytics CLI 训练您的模型：
 
     ```py
-    `yolo  train  data=coco8.yaml  model=yolov8n.pt  epochs=10  lr0=0.01` 
+    yolo  train  data=coco8.yaml  model=yolov8n.pt  epochs=10  lr0=0.01 
     ```
 
 欲了解更多详细信息，请参阅使用 Ultralytics CLI 的说明。
@@ -175,13 +203,16 @@ AzureML 提供了一个强大而高效的生态系统，用于训练 YOLOv8 模�
 +   **CLI**：适用于快速任务和直接从终端运行标准脚本。
 
     ```py
-    `yolo  predict  model=yolov8n.pt  source='https://ultralytics.com/images/bus.jpg'` 
+    yolo  predict  model=yolov8n.pt  source='https://ultralytics.com/images/bus.jpg' 
     ```
 
 +   **Python 接口**：用于需要自定义编码和在笔记本内部集成的更复杂任务。
 
     ```py
-    `from ultralytics import YOLO  model = YOLO("yolov8n.pt") model.train(data="coco8.yaml", epochs=3)` 
+    from ultralytics import YOLO
+
+    model = YOLO("yolov8n.pt")
+    model.train(data="coco8.yaml", epochs=3) 
     ```
 
 请参阅这里和这里以获取更详细的快速入门指南。

@@ -150,13 +150,29 @@ YOLOv8 系列的每个变体均针对其各自的任务进行了优化，确保�
 可以将 PyTorch 预训练的`*.pt`模型以及配置`*.yaml`文件传递给`YOLO()`类，以在 Python 中创建模型实例：
 
 ```py
-`from ultralytics import YOLO  # Load a COCO-pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the YOLOv8n model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import YOLO
+
+# Load a COCO-pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the YOLOv8n model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 CLI 命令可直接运行模型：
 
 ```py
-`# Load a COCO-pretrained YOLOv8n model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov8n.pt  data=coco8.yaml  epochs=100  imgsz=640  # Load a COCO-pretrained YOLOv8n model and run inference on the 'bus.jpg' image yolo  predict  model=yolov8n.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained YOLOv8n model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov8n.pt  data=coco8.yaml  epochs=100  imgsz=640
+
+# Load a COCO-pretrained YOLOv8n model and run inference on the 'bus.jpg' image
+yolo  predict  model=yolov8n.pt  source=path/to/bus.jpg 
 ```
 
 ## 引用和致谢
@@ -164,7 +180,15 @@ CLI 命令可直接运行模型：
 如果您在工作中使用 YOLOv8 模型或此存储库中的任何其他软件，请使用以下格式进行引用：
 
 ```py
-`@software{yolov8_ultralytics,   author  =  {Glenn Jocher and Ayush Chaurasia and Jing Qiu},   title  =  {Ultralytics YOLOv8},   version  =  {8.0.0},   year  =  {2023},   url  =  {https://github.com/ultralytics/ultralytics},   orcid  =  {0000-0001-5950-6979, 0000-0002-7603-6750, 0000-0003-3783-7069},   license  =  {AGPL-3.0} }` 
+@software{yolov8_ultralytics,
+  author  =  {Glenn Jocher and Ayush Chaurasia and Jing Qiu},
+  title  =  {Ultralytics YOLOv8},
+  version  =  {8.0.0},
+  year  =  {2023},
+  url  =  {https://github.com/ultralytics/ultralytics},
+  orcid  =  {0000-0001-5950-6979, 0000-0002-7603-6750, 0000-0003-3783-7069},
+  license  =  {AGPL-3.0}
+} 
 ```
 
 请注意 DOI 正在等待，一旦可用将添加到引用中。YOLOv8 模型根据[AGPL-3.0](https://github.com/ultralytics/ultralytics/blob/main/LICENSE)和[企业](https://ultralytics.com/license)许可证提供。
@@ -190,11 +214,17 @@ YOLOv8 模型在各种基准数据集上实现了最先进的性能。例如，Y
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a COCO-pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a COCO-pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  train  model=yolov8n.pt  data=coco8.yaml  epochs=100  imgsz=640` 
+yolo  train  model=yolov8n.pt  data=coco8.yaml  epochs=100  imgsz=640 
 ```
 
 欲了解更多详细信息，请访问培训文档。
@@ -206,11 +236,14 @@ YOLOv8 模型在各种基准数据集上实现了最先进的性能。例如，Y
 示例
 
 ```py
-`from ultralytics.utils.benchmarks import benchmark  # Benchmark on GPU benchmark(model="yolov8n.pt", data="coco8.yaml", imgsz=640, half=False, device=0)` 
+from ultralytics.utils.benchmarks import benchmark
+
+# Benchmark on GPU
+benchmark(model="yolov8n.pt", data="coco8.yaml", imgsz=640, half=False, device=0) 
 ```
 
 ```py
-`yolo  benchmark  model=yolov8n.pt  data='coco8.yaml'  imgsz=640  half=False  device=0` 
+yolo  benchmark  model=yolov8n.pt  data='coco8.yaml'  imgsz=640  half=False  device=0 
 ```
 
 如需更多信息，请查看性能指标部分。

@@ -15,7 +15,13 @@
 1.  加载模型并在源上运行 `predict()` 方法。
 
     ```py
-    `from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # Run inference results = model.predict()` 
+    from ultralytics import YOLO
+
+    # Load a model
+    model = YOLO("yolov8n-seg.pt")
+
+    # Run inference
+    results = model.predict() 
     ```
 
     没有预测参数？
@@ -23,7 +29,8 @@
     如果没有指定来源，将使用库中的示例图像：
 
     ```py
-    `'ultralytics/assets/bus.jpg' 'ultralytics/assets/zidane.jpg'` 
+    'ultralytics/assets/bus.jpg'
+    'ultralytics/assets/zidane.jpg' 
     ```
 
     这对于使用 `predict()` 方法进行快速测试非常有帮助。
@@ -35,7 +42,19 @@
 1.  现在迭代结果和轮廓。对于希望将图像保存到文件的工作流程，会提取源图像 `base-name` 和检测到的 `class-label` 以供后续使用（可选）。
 
     ```py
-    `from pathlib import Path  import numpy as np  # (2) Iterate detection results (helpful for multiple images) for r in res:     img = np.copy(r.orig_img)     img_name = Path(r.path).stem  # source image base-name      # Iterate each object contour (multiple detections)     for ci, c in enumerate(r):         # (1) Get detection class name         label = c.names[c.boxes.cls.tolist().pop()]` 
+    from pathlib import Path
+
+    import numpy as np
+
+    # (2) Iterate detection results (helpful for multiple images)
+    for r in res:
+        img = np.copy(r.orig_img)
+        img_name = Path(r.path).stem  # source image base-name
+
+        # Iterate each object contour (multiple detections)
+        for ci, c in enumerate(r):
+            # (1) Get detection class name
+            label = c.names[c.boxes.cls.tolist().pop()] 
     ```
 
     1.  要了解更多关于处理检测结果的信息，请参阅预测模式中的框部分。
@@ -51,7 +70,20 @@
     ![二进制掩码图像](img/cd674d9ab21dae76040bce159e0ed0e5.png)
 
     ```py
-    `import cv2  # Create binary mask b_mask = np.zeros(img.shape[:2], np.uint8)  # (1) Extract contour result contour = c.masks.xy.pop() # (2) Changing the type contour = contour.astype(np.int32) # (3) Reshaping contour = contour.reshape(-1, 1, 2)   # Draw contour onto mask _ = cv2.drawContours(b_mask, [contour], -1, (255, 255, 255), cv2.FILLED)` 
+    import cv2
+
+    # Create binary mask
+    b_mask = np.zeros(img.shape[:2], np.uint8)
+
+    # (1) Extract contour result
+    contour = c.masks.xy.pop()
+    # (2) Changing the type
+    contour = contour.astype(np.int32)
+    # (3) Reshaping
+    contour = contour.reshape(-1, 1, 2)
+
+    # Draw contour onto mask
+    _ = cv2.drawContours(b_mask, [contour], -1, (255, 255, 255), cv2.FILLED) 
     ```
 
     1.  要了解有关 `c.masks.xy` 的更多信息，请参阅预测模式中的掩码部分。
@@ -87,7 +119,11 @@
     ### 对象隔离选项
 
     ```py
-    `# Create 3-channel mask mask3ch = cv2.cvtColor(b_mask, cv2.COLOR_GRAY2BGR)  # Isolate object with binary mask isolated = cv2.bitwise_and(mask3ch, img)` 
+    # Create 3-channel mask
+    mask3ch = cv2.cvtColor(b_mask, cv2.COLOR_GRAY2BGR)
+
+    # Isolate object with binary mask
+    isolated = cv2.bitwise_and(mask3ch, img) 
     ```
 
     <details class="question"><summary>这是如何工作的？</summary>
@@ -111,7 +147,10 @@
     ![示例裁剪隔离对象图像黑色背景](img/037903d450d625af4d096d02c4102e2d.png)
 
     ```py
-    `# (1) Bounding box coordinates x1, y1, x2, y2 = c.boxes.xyxy.cpu().numpy().squeeze().astype(np.int32) # Crop image to object region iso_crop = isolated[y1:y2, x1:x2]` 
+    # (1) Bounding box coordinates
+    x1, y1, x2, y2 = c.boxes.xyxy.cpu().numpy().squeeze().astype(np.int32)
+    # Crop image to object region
+    iso_crop = isolated[y1:y2, x1:x2] 
     ```
 
     1.  有关边界框结果的更多信息，请参见预测模式中的框部分。
@@ -127,7 +166,8 @@
     +   最后，使用索引切片从图像中裁剪边界框区域。边界由检测边界框的`[ymin:ymax, xmin:xmax]`坐标定义。</details></details>
 
     ```py
-    `# Isolate object with transparent background (when saved as PNG) isolated = np.dstack([img, b_mask])` 
+    # Isolate object with transparent background (when saved as PNG)
+    isolated = np.dstack([img, b_mask]) 
     ```
 
     <details class="question"><summary>这是如何工作的？</summary>
@@ -149,7 +189,10 @@
     ![示例裁剪孤立对象图像无背景](img/c69db48d3eabebdbe86fd35307c762f8.png)
 
     ```py
-    `# (1) Bounding box coordinates x1, y1, x2, y2 = c.boxes.xyxy.cpu().numpy().squeeze().astype(np.int32) # Crop image to object region iso_crop = isolated[y1:y2, x1:x2]` 
+    # (1) Bounding box coordinates
+    x1, y1, x2, y2 = c.boxes.xyxy.cpu().numpy().squeeze().astype(np.int32)
+    # Crop image to object region
+    iso_crop = isolated[y1:y2, x1:x2] 
     ```
 
     1.  若要了解边界框结果的更多信息，请参见预测模式下的框部分
@@ -173,7 +216,8 @@
     +   **注意：** 如果对您的具体用例不需要，则可以选择跳过此步骤。<details class="example"><summary>最终示例步骤</summary>
 
     ```py
-    `# Save isolated object to file _ = cv2.imwrite(f"{img_name}_{label}-{ci}.png", iso_crop)` 
+    # Save isolated object to file
+    _ = cv2.imwrite(f"{img_name}_{label}-{ci}.png", iso_crop) 
     ```
 
     +   在这个示例中，`img_name` 是源图像文件的基本名称，`label` 是检测到的类名，`ci` 是对象检测的索引（如果有多个具有相同类名的实例）。</details>
@@ -183,7 +227,45 @@
 在这里，将前一节的所有步骤合并为一个代码块。对于重复使用，最好定义一个函数来执行`for`循环中的某些或所有命令，但这是留给读者的练习。
 
 ```py
-`from pathlib import Path  import cv2 import numpy as np  from ultralytics import YOLO  m = YOLO("yolov8n-seg.pt")  # (4)! res = m.predict()  # (3)!  # Iterate detection results (5) for r in res:     img = np.copy(r.orig_img)     img_name = Path(r.path).stem      # Iterate each object contour (6)     for ci, c in enumerate(r):         label = c.names[c.boxes.cls.tolist().pop()]          b_mask = np.zeros(img.shape[:2], np.uint8)          # Create contour mask (1)         contour = c.masks.xy.pop().astype(np.int32).reshape(-1, 1, 2)         _ = cv2.drawContours(b_mask, [contour], -1, (255, 255, 255), cv2.FILLED)          # Choose one:          # OPTION-1: Isolate object with black background         mask3ch = cv2.cvtColor(b_mask, cv2.COLOR_GRAY2BGR)         isolated = cv2.bitwise_and(mask3ch, img)          # OPTION-2: Isolate object with transparent background (when saved as PNG)         isolated = np.dstack([img, b_mask])          # OPTIONAL: detection crop (from either OPT1 or OPT2)         x1, y1, x2, y2 = c.boxes.xyxy.cpu().numpy().squeeze().astype(np.int32)         iso_crop = isolated[y1:y2, x1:x2]          # TODO your actions go here (2)` 
+from pathlib import Path
+
+import cv2
+import numpy as np
+
+from ultralytics import YOLO
+
+m = YOLO("yolov8n-seg.pt")  # (4)!
+res = m.predict()  # (3)!
+
+# Iterate detection results (5)
+for r in res:
+    img = np.copy(r.orig_img)
+    img_name = Path(r.path).stem
+
+    # Iterate each object contour (6)
+    for ci, c in enumerate(r):
+        label = c.names[c.boxes.cls.tolist().pop()]
+
+        b_mask = np.zeros(img.shape[:2], np.uint8)
+
+        # Create contour mask (1)
+        contour = c.masks.xy.pop().astype(np.int32).reshape(-1, 1, 2)
+        _ = cv2.drawContours(b_mask, [contour], -1, (255, 255, 255), cv2.FILLED)
+
+        # Choose one:
+
+        # OPTION-1: Isolate object with black background
+        mask3ch = cv2.cvtColor(b_mask, cv2.COLOR_GRAY2BGR)
+        isolated = cv2.bitwise_and(mask3ch, img)
+
+        # OPTION-2: Isolate object with transparent background (when saved as PNG)
+        isolated = np.dstack([img, b_mask])
+
+        # OPTIONAL: detection crop (from either OPT1 or OPT2)
+        x1, y1, x2, y2 = c.boxes.xyxy.cpu().numpy().squeeze().astype(np.int32)
+        iso_crop = isolated[y1:y2, x1:x2]
+
+        # TODO your actions go here (2) 
 ```
 
 1.  在此处将填充 `contour` 的行合并为单行，而不是像上面那样拆分为多行。
@@ -207,19 +289,29 @@
 1.  **加载模型并运行推理：**
 
     ```py
-    `from ultralytics import YOLO  model = YOLO("yolov8n-seg.pt") results = model.predict(source="path/to/your/image.jpg")` 
+    from ultralytics import YOLO
+
+    model = YOLO("yolov8n-seg.pt")
+    results = model.predict(source="path/to/your/image.jpg") 
     ```
 
 1.  **生成二进制掩模并绘制轮廓：**
 
     ```py
-    `import cv2 import numpy as np  img = np.copy(results[0].orig_img) b_mask = np.zeros(img.shape[:2], np.uint8) contour = results[0].masks.xy[0].astype(np.int32).reshape(-1, 1, 2) cv2.drawContours(b_mask, [contour], -1, (255, 255, 255), cv2.FILLED)` 
+    import cv2
+    import numpy as np
+
+    img = np.copy(results[0].orig_img)
+    b_mask = np.zeros(img.shape[:2], np.uint8)
+    contour = results[0].masks.xy[0].astype(np.int32).reshape(-1, 1, 2)
+    cv2.drawContours(b_mask, [contour], -1, (255, 255, 255), cv2.FILLED) 
     ```
 
 1.  **使用二进制掩模孤立对象：**
 
     ```py
-    `mask3ch = cv2.cvtColor(b_mask, cv2.COLOR_GRAY2BGR) isolated = cv2.bitwise_and(mask3ch, img)` 
+    mask3ch = cv2.cvtColor(b_mask, cv2.COLOR_GRAY2BGR)
+    isolated = cv2.bitwise_and(mask3ch, img) 
     ```
 
 参考 Predict Mode 和 Segment Task 的指南获取更多信息。
@@ -231,13 +323,14 @@ Ultralytics YOLOv8 提供了两个主要选项来保存孤立对象：
 1.  **具有黑色背景：**
 
     ```py
-    `mask3ch = cv2.cvtColor(b_mask, cv2.COLOR_GRAY2BGR) isolated = cv2.bitwise_and(mask3ch, img)` 
+    mask3ch = cv2.cvtColor(b_mask, cv2.COLOR_GRAY2BGR)
+    isolated = cv2.bitwise_and(mask3ch, img) 
     ```
 
 1.  **具有透明背景：**
 
     ```py
-    `isolated = np.dstack([img, b_mask])` 
+    isolated = np.dstack([img, b_mask]) 
     ```
 
 欲了解详细信息，请访问 Predict Mode 部分。
@@ -249,13 +342,13 @@ Ultralytics YOLOv8 提供了两个主要选项来保存孤立对象：
 1.  **检索边界框坐标：**
 
     ```py
-    `x1, y1, x2, y2 = results[0].boxes.xyxy[0].cpu().numpy().astype(np.int32)` 
+    x1, y1, x2, y2 = results[0].boxes.xyxy[0].cpu().numpy().astype(np.int32) 
     ```
 
 1.  **裁剪孤立图像：**
 
     ```py
-    `iso_crop = isolated[y1:y2, x1:x2]` 
+    iso_crop = isolated[y1:y2, x1:x2] 
     ```
 
 详细了解 Predict Mode 文档中的边界框结果。
@@ -277,7 +370,7 @@ Ultralytics YOLOv8 提供：
 是的，这是 Ultralytics YOLOv8 中的内置功能。在 `predict()` 方法中使用 `save_crop` 参数。例如：
 
 ```py
-`results = model.predict(source="path/to/your/image.jpg", save_crop=True)` 
+results = model.predict(source="path/to/your/image.jpg", save_crop=True) 
 ```
 
 阅读 Predict Mode 推理参数部分中关于 `save_crop` 参数的更多信息。

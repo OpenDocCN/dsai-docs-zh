@@ -23,7 +23,26 @@ YAML（Yet Another Markup Language）文件定义了数据集配置，包括路�
 ultralytics/cfg/datasets/signature.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # Signature dataset by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/detect/signature/ # Example usage: yolo train data=signature.yaml # parent # ├── ultralytics # └── datasets #     └── signature  ← downloads here (11.2 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/signature  # dataset root dir train:  train/images  # train images (relative to 'path') 143 images val:  valid/images  # val images (relative to 'path') 35 images  # Classes names:   0:  signature  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/signature.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Signature dataset by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/detect/signature/
+# Example usage: yolo train data=signature.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── signature  ← downloads here (11.2 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/signature  # dataset root dir
+train:  train/images  # train images (relative to 'path') 143 images
+val:  valid/images  # val images (relative to 'path') 35 images
+
+# Classes
+names:
+  0:  signature
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/signature.zip 
 ```
 
 ## 使用方法
@@ -33,21 +52,35 @@ ultralytics/cfg/datasets/signature.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="signature.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="signature.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=signature.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=signature.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 推理示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/best.pt")  # load a signature-detection fine-tuned model  # Inference using the model results = model.predict("https://ultralytics.com/assets/signature-s.mp4", conf=0.75)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/best.pt")  # load a signature-detection fine-tuned model
+
+# Inference using the model
+results = model.predict("https://ultralytics.com/assets/signature-s.mp4", conf=0.75) 
 ```
 
 ```py
-`# Start prediction with a finetuned *.pt model yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/signature-s.mp4"  conf=0.75` 
+# Start prediction with a finetuned *.pt model
+yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/signature-s.mp4"  conf=0.75 
 ```
 
 ## 样本图像和注释
@@ -81,11 +114,17 @@ ultralytics/cfg/datasets/signature.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained model model = YOLO("yolov8n.pt")  # Train the model results = model.train(data="signature.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a pretrained model
+model = YOLO("yolov8n.pt")
+
+# Train the model
+results = model.train(data="signature.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  detect  train  data=signature.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+yolo  detect  train  data=signature.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 欲了解更多详细信息，请参阅训练页面。
@@ -113,11 +152,17 @@ ultralytics/cfg/datasets/signature.yaml
 推断示例
 
 ```py
-`from ultralytics import YOLO  # Load the fine-tuned model model = YOLO("path/to/best.pt")  # Perform inference results = model.predict("https://ultralytics.com/assets/signature-s.mp4", conf=0.75)` 
+from ultralytics import YOLO
+
+# Load the fine-tuned model
+model = YOLO("path/to/best.pt")
+
+# Perform inference
+results = model.predict("https://ultralytics.com/assets/signature-s.mp4", conf=0.75) 
 ```
 
 ```py
-`yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/signature-s.mp4"  conf=0.75` 
+yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/signature-s.mp4"  conf=0.75 
 ```
 
 ### **签名检测数据集**的结构是什么，如何获取更多信息？

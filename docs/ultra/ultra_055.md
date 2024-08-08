@@ -27,7 +27,27 @@
 ultralytics/cfg/datasets/crack-seg.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # Crack-seg dataset by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/segment/crack-seg/ # Example usage: yolo train data=crack-seg.yaml # parent # ├── ultralytics # └── datasets #     └── crack-seg  ← downloads here (91.2 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/crack-seg  # dataset root dir train:  train/images  # train images (relative to 'path') 3717 images val:  valid/images  # val images (relative to 'path') 112 images test:  test/images  # test images (relative to 'path') 200 images  # Classes names:   0:  crack  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/crack-seg.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Crack-seg dataset by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/segment/crack-seg/
+# Example usage: yolo train data=crack-seg.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── crack-seg  ← downloads here (91.2 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/crack-seg  # dataset root dir
+train:  train/images  # train images (relative to 'path') 3717 images
+val:  valid/images  # val images (relative to 'path') 112 images
+test:  test/images  # test images (relative to 'path') 200 images
+
+# Classes
+names:
+  0:  crack
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/crack-seg.zip 
 ```
 
 ## 用途
@@ -37,11 +57,18 @@ ultralytics/cfg/datasets/crack-seg.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="crack-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="crack-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=crack-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=crack-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 ## 示例数据和注释
@@ -59,7 +86,18 @@ ultralytics/cfg/datasets/crack-seg.yaml
 如果您将裂缝分割数据集纳入您的研究或开发工作中，请引用以下论文：
 
 ```py
-`@misc{  crack-bphdr_dataset,   title  =  { crack Dataset },   type  =  { Open Source Dataset },   author  =  { University },   howpublished  =  { \url{ https://universe.roboflow.com/university-bswxt/crack-bphdr } },   url  =  { https://universe.roboflow.com/university-bswxt/crack-bphdr },   journal  =  { Roboflow Universe },   publisher  =  { Roboflow },   year  =  { 2022 },   month  =  { dec },   note  =  { visited on 2024-01-23 }, }` 
+@misc{  crack-bphdr_dataset,
+  title  =  { crack Dataset },
+  type  =  { Open Source Dataset },
+  author  =  { University },
+  howpublished  =  { \url{ https://universe.roboflow.com/university-bswxt/crack-bphdr } },
+  url  =  { https://universe.roboflow.com/university-bswxt/crack-bphdr },
+  journal  =  { Roboflow Universe },
+  publisher  =  { Roboflow },
+  year  =  { 2022 },
+  month  =  { dec },
+  note  =  { visited on 2024-01-23 },
+} 
 ```
 
 我们要感谢 Roboflow 团队创建和维护裂缝分割数据集，作为道路安全和研究项目的宝贵资源。有关裂缝分割数据集及其创建者的更多信息，请访问[裂缝分割数据集页面](https://universe.roboflow.com/university-bswxt/crack-bphdr)。
@@ -77,11 +115,18 @@ ultralytics/cfg/datasets/crack-seg.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="crack-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="crack-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=crack-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=crack-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 ### 我为什么要在我的自动驾驶汽车项目中使用裂缝分割数据集？
@@ -97,7 +142,18 @@ Ultralytics YOLO 提供了哪些先进的实时目标检测、分割和分类功
 如果您在研究中使用了裂缝分割数据集，请使用以下 BibTeX 引用：
 
 ```py
-`@misc{  crack-bphdr_dataset,   title  =  { crack Dataset },   type  =  { Open Source Dataset },   author  =  { University },   howpublished  =  { \url{ https://universe.roboflow.com/university-bswxt/crack-bphdr } },   url  =  { https://universe.roboflow.com/university-bswxt/crack-bphdr },   journal  =  { Roboflow Universe },   publisher  =  { Roboflow },   year  =  { 2022 },   month  =  { dec },   note  =  { visited on 2024-01-23 }, }` 
+@misc{  crack-bphdr_dataset,
+  title  =  { crack Dataset },
+  type  =  { Open Source Dataset },
+  author  =  { University },
+  howpublished  =  { \url{ https://universe.roboflow.com/university-bswxt/crack-bphdr } },
+  url  =  { https://universe.roboflow.com/university-bswxt/crack-bphdr },
+  journal  =  { Roboflow Universe },
+  publisher  =  { Roboflow },
+  year  =  { 2022 },
+  month  =  { dec },
+  note  =  { visited on 2024-01-23 },
+} 
 ```
 
 此引用格式确保了对数据集创建者的适当认可，并确认了其在您的研究中的使用。

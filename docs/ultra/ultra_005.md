@@ -47,11 +47,23 @@
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Validate the model metrics = model.val()  # no arguments needed, dataset and settings remembered metrics.box.map  # map50-95 metrics.box.map50  # map50 metrics.box.map75  # map75 metrics.box.maps  # a list contains map50-95 of each category` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Validate the model
+metrics = model.val()  # no arguments needed, dataset and settings remembered
+metrics.box.map  # map50-95
+metrics.box.map50  # map50
+metrics.box.map75  # map75
+metrics.box.maps  # a list contains map50-95 of each category 
 ```
 
 ```py
-`yolo  detect  val  model=yolov8n.pt  # val official model yolo  detect  val  model=path/to/best.pt  # val custom model` 
+yolo  detect  val  model=yolov8n.pt  # val official model
+yolo  detect  val  model=path/to/best.pt  # val custom model 
 ```
 
 ## YOLO 模型验证参数
@@ -84,11 +96,17 @@
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # Customize validation settings validation_results = model.val(data="coco8.yaml", imgsz=640, batch=16, conf=0.25, iou=0.6, device="0")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")
+
+# Customize validation settings
+validation_results = model.val(data="coco8.yaml", imgsz=640, batch=16, conf=0.25, iou=0.6, device="0") 
 ```
 
 ```py
-`yolo  val  model=yolov8n.pt  data=coco8.yaml  imgsz=640  batch=16  conf=0.25  iou=0.6  device=0` 
+yolo  val  model=yolov8n.pt  data=coco8.yaml  imgsz=640  batch=16  conf=0.25  iou=0.6  device=0 
 ```
 
 ## 常见问题解答
@@ -98,13 +116,20 @@
 要验证您的 YOLOv8 模型，可以使用 Ultralytics 提供的 Val 模式。例如，使用 Python API，您可以加载模型并运行验证：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # Validate the model metrics = model.val() print(metrics.box.map)  # map50-95` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")
+
+# Validate the model
+metrics = model.val()
+print(metrics.box.map)  # map50-95 
 ```
 
 或者，您可以使用命令行界面（CLI）：
 
 ```py
-`yolo  val  model=yolov8n.pt` 
+yolo  val  model=yolov8n.pt 
 ```
 
 若要进行进一步定制，可以在 Python 和 CLI 模式下调整诸如 `imgsz`、`batch` 和 `conf` 等各种参数。请查看 YOLO 模型验证参数部分以获取完整的参数列表。
@@ -122,7 +147,11 @@ YOLOv8 模型验证提供了几个关键指标，用于评估模型性能。这�
 使用 Python API，您可以按以下方式访问这些指标：
 
 ```py
-``metrics = model.val()  # assumes `model` has been loaded print(metrics.box.map)  # mAP50-95 print(metrics.box.map50)  # mAP50 print(metrics.box.map75)  # mAP75 print(metrics.box.maps)  # list of mAP50-95 for each category`` 
+metrics = model.val()  # assumes `model` has been loaded
+print(metrics.box.map)  # mAP50-95
+print(metrics.box.map50)  # mAP50
+print(metrics.box.map75)  # mAP75
+print(metrics.box.maps)  # list of mAP50-95 for each category 
 ```
 
 对于完整的性能评估，审查所有这些指标至关重要。有关更多详细信息，请参阅 Val Mode 的关键功能。
@@ -148,13 +177,20 @@ YOLOv8 模型验证提供了几个关键指标，用于评估模型性能。这�
 Python 示例：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # Validate with a custom dataset metrics = model.val(data="path/to/your/custom_dataset.yaml") print(metrics.box.map)  # map50-95` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")
+
+# Validate with a custom dataset
+metrics = model.val(data="path/to/your/custom_dataset.yaml")
+print(metrics.box.map)  # map50-95 
 ```
 
 CLI 示例：
 
 ```py
-`yolo  val  model=yolov8n.pt  data=path/to/your/custom_dataset.yaml` 
+yolo  val  model=yolov8n.pt  data=path/to/your/custom_dataset.yaml 
 ```
 
 对于在验证过程中更可定制的选项，请参阅示例验证参数部分。
@@ -166,13 +202,19 @@ CLI 示例：
 Python 示例：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # Save validation results to JSON metrics = model.val(save_json=True)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")
+
+# Save validation results to JSON
+metrics = model.val(save_json=True) 
 ```
 
 CLI 示例：
 
 ```py
-`yolo  val  model=yolov8n.pt  save_json=True` 
+yolo  val  model=yolov8n.pt  save_json=True 
 ```
 
 此功能特别适用于进一步分析或与其他工具集成。有关更多详细信息，请查看 YOLO 模型验证参数部分。

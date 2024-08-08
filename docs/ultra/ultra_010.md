@@ -73,11 +73,15 @@ Ultralytics YOLOv8 是一个多才多艺的 AI 框架，能够以高精度和速
 示例
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n.pt")  # Load pre-trained model results = model.predict(source="image.jpg")  # Perform object detection results[0].show()` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")  # Load pre-trained model
+results = model.predict(source="image.jpg")  # Perform object detection
+results[0].show() 
 ```
 
 ```py
-`yolo  detect  model=yolov8n.pt  source='image.jpg'` 
+yolo  detect  model=yolov8n.pt  source='image.jpg' 
 ```
 
 获取更详细的说明，请查看我们的检测示例。

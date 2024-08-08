@@ -45,13 +45,29 @@ YOLOv3 系列，包括 YOLOv3、YOLOv3-Ultralytics 和 YOLOv3u，专为目标检
 可以将 PyTorch 预训练的 `*.pt` 模型及配置 `*.yaml` 文件传递给 `YOLO()` 类，在 Python 中创建模型实例：
 
 ```py
-`from ultralytics import YOLO  # Load a COCO-pretrained YOLOv3n model model = YOLO("yolov3n.pt")  # Display model information (optional) model.info()  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)  # Run inference with the YOLOv3n model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import YOLO
+
+# Load a COCO-pretrained YOLOv3n model
+model = YOLO("yolov3n.pt")
+
+# Display model information (optional)
+model.info()
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640)
+
+# Run inference with the YOLOv3n model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 可通过 CLI 命令直接运行模型：
 
 ```py
-`# Load a COCO-pretrained YOLOv3n model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov3n.pt  data=coco8.yaml  epochs=100  imgsz=640  # Load a COCO-pretrained YOLOv3n model and run inference on the 'bus.jpg' image yolo  predict  model=yolov3n.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained YOLOv3n model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov3n.pt  data=coco8.yaml  epochs=100  imgsz=640
+
+# Load a COCO-pretrained YOLOv3n model and run inference on the 'bus.jpg' image
+yolo  predict  model=yolov3n.pt  source=path/to/bus.jpg 
 ```
 
 ## 引用和致谢
@@ -59,7 +75,12 @@ YOLOv3 系列，包括 YOLOv3、YOLOv3-Ultralytics 和 YOLOv3u，专为目标检
 如果您在研究中使用 YOLOv3，请引用原始 YOLO 论文和 Ultralytics YOLOv3 仓库：
 
 ```py
-`@article{redmon2018yolov3,   title={YOLOv3: An Incremental Improvement},   author={Redmon, Joseph and Farhadi, Ali},   journal={arXiv preprint arXiv:1804.02767},   year={2018} }` 
+@article{redmon2018yolov3,
+  title={YOLOv3: An Incremental Improvement},
+  author={Redmon, Joseph and Farhadi, Ali},
+  journal={arXiv preprint arXiv:1804.02767},
+  year={2018}
+} 
 ```
 
 感谢 Joseph Redmon 和 Ali Farhadi 开发原始 YOLOv3。
@@ -77,11 +98,18 @@ YOLOv3 是由 Joseph Redmon 开发的 YOLO（You Only Look Once）目标检测�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a COCO-pretrained YOLOv3n model model = YOLO("yolov3n.pt")  # Train the model on the COCO8 example dataset for 100 epochs results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a COCO-pretrained YOLOv3n model
+model = YOLO("yolov3n.pt")
+
+# Train the model on the COCO8 example dataset for 100 epochs
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Load a COCO-pretrained YOLOv3n model and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov3n.pt  data=coco8.yaml  epochs=100  imgsz=640` 
+# Load a COCO-pretrained YOLOv3n model and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov3n.pt  data=coco8.yaml  epochs=100  imgsz=640 
 ```
 
 若要了解更全面的训练选项和指南，请访问我们的训练模式文档。
@@ -97,11 +125,18 @@ YOLOv3u 改进了 YOLOv3 和 YOLOv3-Ultralytics，引入了 YOLOv8 模型中使�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a COCO-pretrained YOLOv3n model model = YOLO("yolov3n.pt")  # Run inference with the YOLOv3n model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import YOLO
+
+# Load a COCO-pretrained YOLOv3n model
+model = YOLO("yolov3n.pt")
+
+# Run inference with the YOLOv3n model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 ```py
-`# Load a COCO-pretrained YOLOv3n model and run inference on the 'bus.jpg' image yolo  predict  model=yolov3n.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained YOLOv3n model and run inference on the 'bus.jpg' image
+yolo  predict  model=yolov3n.pt  source=path/to/bus.jpg 
 ```
 
 若要了解有关运行 YOLO 模型的详细信息，请参阅推断模式文档。
@@ -115,7 +150,12 @@ YOLOv3、YOLOv3-Ultralytics 和 YOLOv3u 主要支持目标检测任务。这些�
 如果您在研究中使用了 YOLOv3，请引用原始的 YOLO 论文和 Ultralytics YOLOv3 代码库。示例 BibTeX 引用：
 
 ```py
-`@article{redmon2018yolov3,   title={YOLOv3: An Incremental Improvement},   author={Redmon, Joseph and Farhadi, Ali},   journal={arXiv preprint arXiv:1804.02767},   year={2018} }` 
+@article{redmon2018yolov3,
+  title={YOLOv3: An Incremental Improvement},
+  author={Redmon, Joseph and Farhadi, Ali},
+  journal={arXiv preprint arXiv:1804.02767},
+  year={2018}
+} 
 ```
 
 有关更多引用详细信息，请参阅引文和致谢部分。

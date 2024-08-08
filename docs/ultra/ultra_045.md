@@ -31,7 +31,77 @@ YAML（Yet Another Markup Language）文件用于定义数据集配置。它包�
 ultralytics/cfg/datasets/VisDrone.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # VisDrone2019-DET dataset https://github.com/VisDrone/VisDrone-Dataset by Tianjin University # Documentation: https://docs.ultralytics.com/datasets/detect/visdrone/ # Example usage: yolo train data=VisDrone.yaml # parent # ├── ultralytics # └── datasets #     └── VisDrone  ← downloads here (2.3 GB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/VisDrone  # dataset root dir train:  VisDrone2019-DET-train/images  # train images (relative to 'path')  6471 images val:  VisDrone2019-DET-val/images  # val images (relative to 'path')  548 images test:  VisDrone2019-DET-test-dev/images  # test images (optional)  1610 images  # Classes names:   0:  pedestrian   1:  people   2:  bicycle   3:  car   4:  van   5:  truck   6:  tricycle   7:  awning-tricycle   8:  bus   9:  motor  # Download script/URL (optional) --------------------------------------------------------------------------------------- download:  |   import os   from pathlib import Path    from ultralytics.utils.downloads import download    def visdrone2yolo(dir):   from PIL import Image   from tqdm import tqdm    def convert_box(size, box):   # Convert VisDrone box to YOLO xywh box   dw = 1\. / size[0]   dh = 1\. / size[1]   return (box[0] + box[2] / 2) * dw, (box[1] + box[3] / 2) * dh, box[2] * dw, box[3] * dh    (dir / 'labels').mkdir(parents=True, exist_ok=True)  # make labels directory   pbar = tqdm((dir / 'annotations').glob('*.txt'), desc=f'Converting {dir}')   for f in pbar:   img_size = Image.open((dir / 'images' / f.name).with_suffix('.jpg')).size   lines = []   with open(f, 'r') as file:  # read annotation.txt   for row in [x.split(',') for x in file.read().strip().splitlines()]:   if row[4] == '0':  # VisDrone 'ignored regions' class 0   continue   cls = int(row[5]) - 1   box = convert_box(img_size, tuple(map(int, row[:4])))   lines.append(f"{cls} {' '.join(f'{x:.6f}' for x in box)}\n")   with open(str(f).replace(f'{os.sep}annotations{os.sep}', f'{os.sep}labels{os.sep}'), 'w') as fl:   fl.writelines(lines)  # write label.txt     # Download   dir = Path(yaml['path'])  # dataset root dir   urls = ['https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-train.zip',   'https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-val.zip',   'https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-test-dev.zip',   'https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-test-challenge.zip']   download(urls, dir=dir, curl=True, threads=4)    # Convert   for d in 'VisDrone2019-DET-train', 'VisDrone2019-DET-val', 'VisDrone2019-DET-test-dev':   visdrone2yolo(dir / d)  # convert VisDrone annotations to YOLO labels` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# VisDrone2019-DET dataset https://github.com/VisDrone/VisDrone-Dataset by Tianjin University
+# Documentation: https://docs.ultralytics.com/datasets/detect/visdrone/
+# Example usage: yolo train data=VisDrone.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── VisDrone  ← downloads here (2.3 GB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/VisDrone  # dataset root dir
+train:  VisDrone2019-DET-train/images  # train images (relative to 'path')  6471 images
+val:  VisDrone2019-DET-val/images  # val images (relative to 'path')  548 images
+test:  VisDrone2019-DET-test-dev/images  # test images (optional)  1610 images
+
+# Classes
+names:
+  0:  pedestrian
+  1:  people
+  2:  bicycle
+  3:  car
+  4:  van
+  5:  truck
+  6:  tricycle
+  7:  awning-tricycle
+  8:  bus
+  9:  motor
+
+# Download script/URL (optional) ---------------------------------------------------------------------------------------
+download:  |
+  import os
+  from pathlib import Path
+
+  from ultralytics.utils.downloads import download
+
+  def visdrone2yolo(dir):
+  from PIL import Image
+  from tqdm import tqdm
+
+  def convert_box(size, box):
+  # Convert VisDrone box to YOLO xywh box
+  dw = 1\. / size[0]
+  dh = 1\. / size[1]
+  return (box[0] + box[2] / 2) * dw, (box[1] + box[3] / 2) * dh, box[2] * dw, box[3] * dh
+
+  (dir / 'labels').mkdir(parents=True, exist_ok=True)  # make labels directory
+  pbar = tqdm((dir / 'annotations').glob('*.txt'), desc=f'Converting {dir}')
+  for f in pbar:
+  img_size = Image.open((dir / 'images' / f.name).with_suffix('.jpg')).size
+  lines = []
+  with open(f, 'r') as file:  # read annotation.txt
+  for row in [x.split(',') for x in file.read().strip().splitlines()]:
+  if row[4] == '0':  # VisDrone 'ignored regions' class 0
+  continue
+  cls = int(row[5]) - 1
+  box = convert_box(img_size, tuple(map(int, row[:4])))
+  lines.append(f"{cls} {' '.join(f'{x:.6f}' for x in box)}\n")
+  with open(str(f).replace(f'{os.sep}annotations{os.sep}', f'{os.sep}labels{os.sep}'), 'w') as fl:
+  fl.writelines(lines)  # write label.txt
+
+  # Download
+  dir = Path(yaml['path'])  # dataset root dir
+  urls = ['https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-train.zip',
+  'https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-val.zip',
+  'https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-test-dev.zip',
+  'https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-test-challenge.zip']
+  download(urls, dir=dir, curl=True, threads=4)
+
+  # Convert
+  for d in 'VisDrone2019-DET-train', 'VisDrone2019-DET-val', 'VisDrone2019-DET-test-dev':
+  visdrone2yolo(dir / d)  # convert VisDrone annotations to YOLO labels 
 ```
 
 ## 用法
@@ -41,11 +111,18 @@ ultralytics/cfg/datasets/VisDrone.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="VisDrone.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="VisDrone.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=VisDrone.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=VisDrone.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 ## 示例数据和注释
@@ -63,7 +140,15 @@ VisDrone 数据集包含由无人机搭载的相机捕获的多样化图像和�
 如果您在研究或开发工作中使用 VisDrone 数据集，请引用以下论文：
 
 ```py
-`@ARTICLE{9573394,   author={Zhu, Pengfei and Wen, Longyin and Du, Dawei and Bian, Xiao and Fan, Heng and Hu, Qinghua and Ling, Haibin},   journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},   title={Detection and Tracking Meet Drones Challenge},   year={2021},   volume={},   number={},   pages={1-1},   doi={10.1109/TPAMI.2021.3119563}}` 
+@ARTICLE{9573394,
+  author={Zhu, Pengfei and Wen, Longyin and Du, Dawei and Bian, Xiao and Fan, Heng and Hu, Qinghua and Ling, Haibin},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  title={Detection and Tracking Meet Drones Challenge},
+  year={2021},
+  volume={},
+  number={},
+  pages={1-1},
+  doi={10.1109/TPAMI.2021.3119563}} 
 ```
 
 我们要感谢中国天津大学机器学习与数据挖掘实验室的 AISKYEYE 团队创建和维护 VisDrone 数据集，作为无人机计算机视觉研究社区的宝贵资源。有关 VisDrone 数据集及其创建者的更多信息，请访问[VisDrone 数据集 GitHub 仓库](https://github.com/VisDrone/VisDrone-Dataset)。
@@ -81,11 +166,18 @@ VisDrone 数据集包含由无人机搭载的相机捕获的多样化图像和�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained model model = YOLO("yolov8n.pt")  # Train the model results = model.train(data="VisDrone.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a pretrained model
+model = YOLO("yolov8n.pt")
+
+# Train the model
+results = model.train(data="VisDrone.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=VisDrone.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=VisDrone.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 对于额外的配置选项，请参考模型训练页面。
@@ -107,5 +199,13 @@ VisDrone 数据集的配置文件，`VisDrone.yaml`，可以在 Ultralytics 仓�
 BibTeX
 
 ```py
-`@ARTICLE{9573394,   author={Zhu, Pengfei and Wen, Longyin and Du, Dawei and Bian, Xiao and Fan, Heng and Hu, Qinghua and Ling, Haibin},   journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},   title={Detection and Tracking Meet Drones Challenge},   year={2021},   volume={},   number={},   pages={1-1},   doi={10.1109/TPAMI.2021.3119563}}` 
+@ARTICLE{9573394,
+  author={Zhu, Pengfei and Wen, Longyin and Du, Dawei and Bian, Xiao and Fan, Heng and Hu, Qinghua and Ling, Haibin},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  title={Detection and Tracking Meet Drones Challenge},
+  year={2021},
+  volume={},
+  number={},
+  pages={1-1},
+  doi={10.1109/TPAMI.2021.3119563}} 
 ```

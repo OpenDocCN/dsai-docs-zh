@@ -55,13 +55,25 @@ Amazon EC2 竞价实例为运行应用程序提供了一种成本效益的方式
 登录到你的实例后，现在可以在 Python 3.8 或更高版本的环境中克隆 YOLOv5 仓库并安装依赖项。YOLOv5 的模型和数据集将自动从最新的 [发布](https://github.com/ultralytics/yolov5/releases) 下载。
 
 ```py
-`git  clone  https://github.com/ultralytics/yolov5  # clone repository cd  yolov5 pip  install  -r  requirements.txt  # install dependencies` 
+git  clone  https://github.com/ultralytics/yolov5  # clone repository
+cd  yolov5
+pip  install  -r  requirements.txt  # install dependencies 
 ```
 
 环境设置完成后，你可以开始训练、验证、执行推理并导出你的 YOLOv5 模型：
 
 ```py
-`# Train a model on your data python  train.py  # Validate the trained model for Precision, Recall, and mAP python  val.py  --weights  yolov5s.pt  # Run inference using the trained model on your images or videos python  detect.py  --weights  yolov5s.pt  --source  path/to/images  # Export the trained model to other formats for deployment python  export.py  --weights  yolov5s.pt  --include  onnx  coreml  tflite` 
+# Train a model on your data
+python  train.py
+
+# Validate the trained model for Precision, Recall, and mAP
+python  val.py  --weights  yolov5s.pt
+
+# Run inference using the trained model on your images or videos
+python  detect.py  --weights  yolov5s.pt  --source  path/to/images
+
+# Export the trained model to other formats for deployment
+python  export.py  --weights  yolov5s.pt  --include  onnx  coreml  tflite 
 ```
 
 ## 可选附加项
@@ -69,7 +81,11 @@ Amazon EC2 竞价实例为运行应用程序提供了一种成本效益的方式
 要增加更多交换内存，对于大型数据集来说可能是个救星，请运行：
 
 ```py
-`sudo  fallocate  -l  64G  /swapfile  # allocate 64GB swap file sudo  chmod  600  /swapfile  # modify permissions sudo  mkswap  /swapfile  # set up a Linux swap area sudo  swapon  /swapfile  # activate swap file free  -h  # verify swap memory` 
+sudo  fallocate  -l  64G  /swapfile  # allocate 64GB swap file
+sudo  chmod  600  /swapfile  # modify permissions
+sudo  mkswap  /swapfile  # set up a Linux swap area
+sudo  swapon  /swapfile  # activate swap file
+free  -h  # verify swap memory 
 ```
 
 至此！ 🎉 你已成功创建了一个 AWS 深度学习实例并运行了 YOLOv5\. 无论你是刚开始进行目标检测，还是为生产环境扩展，这个设置都能帮助你实现机器学习的目标。祝你训练、验证和部署愉快！如果在过程中遇到任何问题，强大的 AWS 文档和活跃的 Ultralytics 社区都会为你提供支持。

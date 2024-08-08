@@ -35,7 +35,7 @@
 首先通过运行以下命令验证 NVIDIA 驱动程序是否正确安装：
 
 ```py
-`nvidia-smi` 
+nvidia-smi 
 ```
 
 ### 安装 NVIDIA Docker 运行时
@@ -43,7 +43,17 @@
 现在，让我们安装 NVIDIA Docker 运行时，以在 Docker 容器中启用 GPU 支持：
 
 ```py
-`# Add NVIDIA package repositories curl  -s  -L  https://nvidia.github.io/nvidia-docker/gpgkey  |  sudo  apt-key  add  - distribution=$(lsb_release  -cs) curl  -s  -L  https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list  |  sudo  tee  /etc/apt/sources.list.d/nvidia-docker.list  # Install NVIDIA Docker runtime sudo  apt-get  update sudo  apt-get  install  -y  nvidia-docker2  # Restart Docker service to apply changes sudo  systemctl  restart  docker` 
+# Add NVIDIA package repositories
+curl  -s  -L  https://nvidia.github.io/nvidia-docker/gpgkey  |  sudo  apt-key  add  -
+distribution=$(lsb_release  -cs)
+curl  -s  -L  https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list  |  sudo  tee  /etc/apt/sources.list.d/nvidia-docker.list
+
+# Install NVIDIA Docker runtime
+sudo  apt-get  update
+sudo  apt-get  install  -y  nvidia-docker2
+
+# Restart Docker service to apply changes
+sudo  systemctl  restart  docker 
 ```
 
 ### 使用 Docker 验证 NVIDIA 运行时
@@ -51,7 +61,7 @@
 运行 `docker info | grep -i runtime` 来确保 `nvidia` 出现在运行时列表中：
 
 ```py
-`docker  info  |  grep  -i  runtime` 
+docker  info  |  grep  -i  runtime 
 ```
 
 * * *
@@ -75,7 +85,11 @@ Ultralytics 提供了多个针对各种平台和用例优化的 Docker 映像：
 要拉取最新的映像：
 
 ```py
-`# Set image name as a variable t=ultralytics/ultralytics:latest  # Pull the latest Ultralytics image from Docker Hub sudo  docker  pull  $t` 
+# Set image name as a variable
+t=ultralytics/ultralytics:latest
+
+# Pull the latest Ultralytics image from Docker Hub
+sudo  docker  pull  $t 
 ```
 
 * * *
@@ -87,13 +101,18 @@ Ultralytics 提供了多个针对各种平台和用例优化的 Docker 映像：
 ### 仅使用 CPU
 
 ```py
-`# Run with all GPUs sudo  docker  run  -it  --ipc=host  $t` 
+# Run with all GPUs
+sudo  docker  run  -it  --ipc=host  $t 
 ```
 
 ### 使用 GPU
 
 ```py
-`# Run with all GPUs sudo  docker  run  -it  --ipc=host  --gpus  all  $t  # Run specifying which GPUs to use sudo  docker  run  -it  --ipc=host  --gpus  '"device=2,3"'  $t` 
+# Run with all GPUs
+sudo  docker  run  -it  --ipc=host  --gpus  all  $t
+
+# Run specifying which GPUs to use
+sudo  docker  run  -it  --ipc=host  --gpus  '"device=2,3"'  $t 
 ```
 
 `-it`标志分配一个伪 TTY 并保持 stdin 打开，允许您与容器交互。`--ipc=host`标志启用共享主机的 IPC 命名空间，对于进程间共享内存是必需的。`--gpus`标志允许容器访问主机的 GPU。
@@ -105,13 +124,18 @@ Ultralytics 提供了多个针对各种平台和用例优化的 Docker 映像：
 ### 仅使用 CPU
 
 ```py
-`# Run with all GPUs sudo  docker  run  -it  --ipc=host  $t` 
+# Run with all GPUs
+sudo  docker  run  -it  --ipc=host  $t 
 ```
 
 ### 使用 GPU
 
 ```py
-`# Run with all GPUs sudo  docker  run  -it  --ipc=host  --gpus  all  $t  # Run specifying which GPUs to use sudo  docker  run  -it  --ipc=host  --gpus  '"device=2,3"'  $t` 
+# Run with all GPUs
+sudo  docker  run  -it  --ipc=host  --gpus  all  $t
+
+# Run specifying which GPUs to use
+sudo  docker  run  -it  --ipc=host  --gpus  '"device=2,3"'  $t 
 ```
 
 `-it` 标志分配一个伪 TTY 并保持 stdin 打开，允许你与容器交互。`--ipc=host` 标志启用主机 IPC 命名空间的共享，这对于进程之间的内存共享至关重要。`--gpus` 标志允许容器访问主机的 GPU。
@@ -121,7 +145,8 @@ Ultralytics 提供了多个针对各种平台和用例优化的 Docker 映像：
 要在容器内处理本地计算机上的文件，你可以使用 Docker 卷：
 
 ```py
-`# Mount a local directory into the container sudo  docker  run  -it  --ipc=host  --gpus  all  -v  /path/on/host:/path/in/container  $t` 
+# Mount a local directory into the container
+sudo  docker  run  -it  --ipc=host  --gpus  all  -v  /path/on/host:/path/in/container  $t 
 ```
 
 将 `/path/on/host` 替换为你本地计算机上的目录路径，将 `/path/in/container` 替换为 Docker 容器内的所需路径。
@@ -135,7 +160,7 @@ Ultralytics 提供了多个针对各种平台和用例优化的 Docker 映像：
 Docker 主要用于将后台应用程序和 CLI 程序容器化，但它也可以运行图形程序。在 Linux 世界中，有两个主要的图形服务器处理图形显示：[X11](https://www.x.org/wiki/)（也称为 X 窗口系统）和 [Wayland](https://wayland.freedesktop.org/)。在开始之前，确定你当前使用的图形服务器是至关重要的。运行此命令以找出：
 
 ```py
-`env  |  grep  -E  -i  'x11|xorg|wayland'` 
+env  |  grep  -E  -i  'x11|xorg|wayland' 
 ```
 
 X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。如果上述命令没有返回任何内容，那么你需要先确保你的系统上有一个可用的服务器，然后再继续。
@@ -147,13 +172,16 @@ X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。�
 <details class="info"><summary>使用 GPU</summary>
 
 ```py
-``If you're using GPUs, you can add the `--gpus all` flag to the command.`` 
+If you're using [GPUs](#using-gpus), you can add the `--gpus all` flag to the command. 
 ```</details>
 
 如果你使用的是 X11，你可以运行以下命令以允许 Docker 容器访问 X11 套接字：
 
 ```py
-`xhost  +local:docker  &&  docker  run  -e  DISPLAY=$DISPLAY  \ -v  /tmp/.X11-unix:/tmp/.X11-unix  \ -v  ~/.Xauthority:/root/.Xauthority  \ -it  --ipc=host  $t` 
+xhost  +local:docker  &&  docker  run  -e  DISPLAY=$DISPLAY  \
+-v  /tmp/.X11-unix:/tmp/.X11-unix  \
+-v  ~/.Xauthority:/root/.Xauthority  \
+-it  --ipc=host  $t 
 ```
 
 此命令将 `DISPLAY` 环境变量设置为主机的显示，挂载 X11 套接字，并将 `.Xauthority` 文件映射到容器。`xhost +local:docker` 命令允许 Docker 容器访问 X11 服务器。
@@ -161,7 +189,9 @@ X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。�
 对于 Wayland，使用以下命令：
 
 ```py
-`xhost  +local:docker  &&  docker  run  -e  DISPLAY=$DISPLAY  \ -v  $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY  \ --net=host  -it  --ipc=host  $t` 
+xhost  +local:docker  &&  docker  run  -e  DISPLAY=$DISPLAY  \
+-v  $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY  \
+--net=host  -it  --ipc=host  $t 
 ```
 
 此命令将 `DISPLAY` 环境变量设置为主机的显示，挂载 Wayland 套接字，并允许 Docker 容器访问 Wayland 服务器。
@@ -171,7 +201,7 @@ X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。�
 现在你可以在 Docker 容器内显示图形应用程序。例如，你可以运行以下 CLI 命令来可视化 YOLOv8 模型的预测：
 
 ```py
-`yolo  predict  model=yolov8n.pt  show=True` 
+yolo  predict  model=yolov8n.pt  show=True 
 ```
 
 <details class="info"><summary>测试</summary>
@@ -185,7 +215,7 @@ X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。�
 在两种情况下，完成后不要忘记从 Docker 组中撤销访问权限。
 
 ```py
-`xhost  -local:docker` 
+xhost  -local:docker 
 ```
 
 <details class="question"><summary>想直接在终端中查看图像结果吗？</summary>
@@ -203,7 +233,7 @@ X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。�
 要在 Docker 中设置 Ultralytics，请确保系统已安装 Docker。如果您有 NVIDIA GPU，请安装 NVIDIA Docker 运行时以启用 GPU 支持。然后，使用以下命令从 Docker Hub 拉取最新的 Ultralytics Docker 镜像：
 
 ```py
-`sudo  docker  pull  ultralytics/ultralytics:latest` 
+sudo  docker  pull  ultralytics/ultralytics:latest 
 ```
 
 有关详细步骤，请参阅我们的 Docker 快速入门指南。
@@ -217,7 +247,7 @@ X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。�
 首先确保安装和配置 NVIDIA Docker 运行时。然后，使用以下命令以 GPU 支持运行 Ultralytics YOLO：
 
 ```py
-`sudo  docker  run  -it  --ipc=host  --gpus  all  ultralytics/ultralytics:latest` 
+sudo  docker  run  -it  --ipc=host  --gpus  all  ultralytics/ultralytics:latest 
 ```
 
 此命令设置具有 GPU 访问权限的 Docker 容器。有关更多详细信息，请参阅 Docker 快速入门指南。
@@ -227,13 +257,18 @@ X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。�
 要在 Docker 容器中使用 GUI 可视化 YOLO 预测结果，您需要允许 Docker 访问您的显示服务器。对于运行 X11 的系统，命令如下：
 
 ```py
-`xhost  +local:docker  &&  docker  run  -e  DISPLAY=$DISPLAY  \ -v  /tmp/.X11-unix:/tmp/.X11-unix  \ -v  ~/.Xauthority:/root/.Xauthority  \ -it  --ipc=host  ultralytics/ultralytics:latest` 
+xhost  +local:docker  &&  docker  run  -e  DISPLAY=$DISPLAY  \
+-v  /tmp/.X11-unix:/tmp/.X11-unix  \
+-v  ~/.Xauthority:/root/.Xauthority  \
+-it  --ipc=host  ultralytics/ultralytics:latest 
 ```
 
 对于运行 Wayland 的系统，请使用：
 
 ```py
-`xhost  +local:docker  &&  docker  run  -e  DISPLAY=$DISPLAY  \ -v  $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY  \ --net=host  -it  --ipc=host  ultralytics/ultralytics:latest` 
+xhost  +local:docker  &&  docker  run  -e  DISPLAY=$DISPLAY  \
+-v  $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY  \
+--net=host  -it  --ipc=host  ultralytics/ultralytics:latest 
 ```
 
 更多信息请参阅在 Docker 容器中运行图形用户界面（GUI）应用程序部分。
@@ -243,7 +278,7 @@ X11 或 Wayland 显示服务器的设置和配置超出了本指南的范围。�
 是的，你可以使用 `-v` 标志将本地目录挂载到 Ultralytics Docker 容器中：
 
 ```py
-`sudo  docker  run  -it  --ipc=host  --gpus  all  -v  /path/on/host:/path/in/container  ultralytics/ultralytics:latest` 
+sudo  docker  run  -it  --ipc=host  --gpus  all  -v  /path/on/host:/path/in/container  ultralytics/ultralytics:latest 
 ```
 
 将 `/path/on/host` 替换为本地机器上的目录，将 `/path/in/container` 替换为容器内的所需路径。这样设置可以让你在容器内处理本地文件。有关挂载本地目录的更多信息，请参阅相关章节。

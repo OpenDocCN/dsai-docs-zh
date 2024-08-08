@@ -15,7 +15,106 @@ YAML（另一种标记语言）文件用于定义数据集配置。它包含关�
 ultralytics/cfg/datasets/coco8-seg.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # COCO8-seg dataset (first 8 images from COCO train2017) by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/segment/coco8-seg/ # Example usage: yolo train data=coco8-seg.yaml # parent # ├── ultralytics # └── datasets #     └── coco8-seg  ← downloads here (1 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/coco8-seg  # dataset root dir train:  images/train  # train images (relative to 'path') 4 images val:  images/val  # val images (relative to 'path') 4 images test:  # test images (optional)  # Classes names:   0:  person   1:  bicycle   2:  car   3:  motorcycle   4:  airplane   5:  bus   6:  train   7:  truck   8:  boat   9:  traffic light   10:  fire hydrant   11:  stop sign   12:  parking meter   13:  bench   14:  bird   15:  cat   16:  dog   17:  horse   18:  sheep   19:  cow   20:  elephant   21:  bear   22:  zebra   23:  giraffe   24:  backpack   25:  umbrella   26:  handbag   27:  tie   28:  suitcase   29:  frisbee   30:  skis   31:  snowboard   32:  sports ball   33:  kite   34:  baseball bat   35:  baseball glove   36:  skateboard   37:  surfboard   38:  tennis racket   39:  bottle   40:  wine glass   41:  cup   42:  fork   43:  knife   44:  spoon   45:  bowl   46:  banana   47:  apple   48:  sandwich   49:  orange   50:  broccoli   51:  carrot   52:  hot dog   53:  pizza   54:  donut   55:  cake   56:  chair   57:  couch   58:  potted plant   59:  bed   60:  dining table   61:  toilet   62:  tv   63:  laptop   64:  mouse   65:  remote   66:  keyboard   67:  cell phone   68:  microwave   69:  oven   70:  toaster   71:  sink   72:  refrigerator   73:  book   74:  clock   75:  vase   76:  scissors   77:  teddy bear   78:  hair drier   79:  toothbrush  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/coco8-seg.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# COCO8-seg dataset (first 8 images from COCO train2017) by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/segment/coco8-seg/
+# Example usage: yolo train data=coco8-seg.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── coco8-seg  ← downloads here (1 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/coco8-seg  # dataset root dir
+train:  images/train  # train images (relative to 'path') 4 images
+val:  images/val  # val images (relative to 'path') 4 images
+test:  # test images (optional)
+
+# Classes
+names:
+  0:  person
+  1:  bicycle
+  2:  car
+  3:  motorcycle
+  4:  airplane
+  5:  bus
+  6:  train
+  7:  truck
+  8:  boat
+  9:  traffic light
+  10:  fire hydrant
+  11:  stop sign
+  12:  parking meter
+  13:  bench
+  14:  bird
+  15:  cat
+  16:  dog
+  17:  horse
+  18:  sheep
+  19:  cow
+  20:  elephant
+  21:  bear
+  22:  zebra
+  23:  giraffe
+  24:  backpack
+  25:  umbrella
+  26:  handbag
+  27:  tie
+  28:  suitcase
+  29:  frisbee
+  30:  skis
+  31:  snowboard
+  32:  sports ball
+  33:  kite
+  34:  baseball bat
+  35:  baseball glove
+  36:  skateboard
+  37:  surfboard
+  38:  tennis racket
+  39:  bottle
+  40:  wine glass
+  41:  cup
+  42:  fork
+  43:  knife
+  44:  spoon
+  45:  bowl
+  46:  banana
+  47:  apple
+  48:  sandwich
+  49:  orange
+  50:  broccoli
+  51:  carrot
+  52:  hot dog
+  53:  pizza
+  54:  donut
+  55:  cake
+  56:  chair
+  57:  couch
+  58:  potted plant
+  59:  bed
+  60:  dining table
+  61:  toilet
+  62:  tv
+  63:  laptop
+  64:  mouse
+  65:  remote
+  66:  keyboard
+  67:  cell phone
+  68:  microwave
+  69:  oven
+  70:  toaster
+  71:  sink
+  72:  refrigerator
+  73:  book
+  74:  clock
+  75:  vase
+  76:  scissors
+  77:  teddy bear
+  78:  hair drier
+  79:  toothbrush
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/coco8-seg.zip 
 ```
 
 ## 使用方法
@@ -25,11 +124,18 @@ ultralytics/cfg/datasets/coco8-seg.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="coco8-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="coco8-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 ## 示例图像和标注
@@ -47,7 +153,14 @@ ultralytics/cfg/datasets/coco8-seg.yaml
 如果您在研究或开发工作中使用 COCO 数据集，请引用以下论文：
 
 ```py
-`@misc{lin2015microsoft,   title={Microsoft COCO: Common Objects in Context},   author={Tsung-Yi Lin and Michael Maire and Serge Belongie and Lubomir Bourdev and Ross Girshick and James Hays and Pietro Perona and Deva Ramanan and C. Lawrence Zitnick and Piotr Dollár},   year={2015},   eprint={1405.0312},   archivePrefix={arXiv},   primaryClass={cs.CV} }` 
+@misc{lin2015microsoft,
+  title={Microsoft COCO: Common Objects in Context},
+  author={Tsung-Yi Lin and Michael Maire and Serge Belongie and Lubomir Bourdev and Ross Girshick and James Hays and Pietro Perona and Deva Ramanan and C. Lawrence Zitnick and Piotr Dollár},
+  year={2015},
+  eprint={1405.0312},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+} 
 ```
 
 我们要感谢 COCO 联盟为计算机视觉社区创建和维护这一宝贵资源。有关 COCO 数据集及其创建者的更多信息，请访问 [COCO 数据集网站](https://cocodataset.org/#home)。
@@ -65,11 +178,18 @@ ultralytics/cfg/datasets/coco8-seg.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # Load a pretrained model (recommended for training)  # Train the model results = model.train(data="coco8-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # Load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="coco8-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=coco8-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 要详细了解可用参数和配置选项，请查看训练文档。

@@ -33,7 +33,59 @@
 ultralytics/cfg/datasets/GlobalWheat2020.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # Global Wheat 2020 dataset https://www.global-wheat.com/ by University of Saskatchewan # Documentation: https://docs.ultralytics.com/datasets/detect/globalwheat2020/ # Example usage: yolo train data=GlobalWheat2020.yaml # parent # ├── ultralytics # └── datasets #     └── GlobalWheat2020  ← downloads here (7.0 GB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/GlobalWheat2020  # dataset root dir train:  # train images (relative to 'path') 3422 images   -  images/arvalis_1   -  images/arvalis_2   -  images/arvalis_3   -  images/ethz_1   -  images/rres_1   -  images/inrae_1   -  images/usask_1 val:  # val images (relative to 'path') 748 images (WARNING: train set contains ethz_1)   -  images/ethz_1 test:  # test images (optional) 1276 images   -  images/utokyo_1   -  images/utokyo_2   -  images/nau_1   -  images/uq_1  # Classes names:   0:  wheat_head  # Download script/URL (optional) --------------------------------------------------------------------------------------- download:  |   from ultralytics.utils.downloads import download   from pathlib import Path    # Download   dir = Path(yaml['path'])  # dataset root dir   urls = ['https://zenodo.org/record/4298502/files/global-wheat-codalab-official.zip',   'https://github.com/ultralytics/assets/releases/download/v0.0.0/GlobalWheat2020_labels.zip']   download(urls, dir=dir)    # Make Directories   for p in 'annotations', 'images', 'labels':   (dir / p).mkdir(parents=True, exist_ok=True)    # Move   for p in 'arvalis_1', 'arvalis_2', 'arvalis_3', 'ethz_1', 'rres_1', 'inrae_1', 'usask_1', \   'utokyo_1', 'utokyo_2', 'nau_1', 'uq_1':   (dir / 'global-wheat-codalab-official' / p).rename(dir / 'images' / p)  # move to /images   f = (dir / 'global-wheat-codalab-official' / p).with_suffix('.json')  # json file   if f.exists():   f.rename((dir / 'annotations' / p).with_suffix('.json'))  # move to /annotations` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Global Wheat 2020 dataset https://www.global-wheat.com/ by University of Saskatchewan
+# Documentation: https://docs.ultralytics.com/datasets/detect/globalwheat2020/
+# Example usage: yolo train data=GlobalWheat2020.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── GlobalWheat2020  ← downloads here (7.0 GB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/GlobalWheat2020  # dataset root dir
+train:  # train images (relative to 'path') 3422 images
+  -  images/arvalis_1
+  -  images/arvalis_2
+  -  images/arvalis_3
+  -  images/ethz_1
+  -  images/rres_1
+  -  images/inrae_1
+  -  images/usask_1
+val:  # val images (relative to 'path') 748 images (WARNING: train set contains ethz_1)
+  -  images/ethz_1
+test:  # test images (optional) 1276 images
+  -  images/utokyo_1
+  -  images/utokyo_2
+  -  images/nau_1
+  -  images/uq_1
+
+# Classes
+names:
+  0:  wheat_head
+
+# Download script/URL (optional) ---------------------------------------------------------------------------------------
+download:  |
+  from ultralytics.utils.downloads import download
+  from pathlib import Path
+
+  # Download
+  dir = Path(yaml['path'])  # dataset root dir
+  urls = ['https://zenodo.org/record/4298502/files/global-wheat-codalab-official.zip',
+  'https://github.com/ultralytics/assets/releases/download/v0.0.0/GlobalWheat2020_labels.zip']
+  download(urls, dir=dir)
+
+  # Make Directories
+  for p in 'annotations', 'images', 'labels':
+  (dir / p).mkdir(parents=True, exist_ok=True)
+
+  # Move
+  for p in 'arvalis_1', 'arvalis_2', 'arvalis_3', 'ethz_1', 'rres_1', 'inrae_1', 'usask_1', \
+  'utokyo_1', 'utokyo_2', 'nau_1', 'uq_1':
+  (dir / 'global-wheat-codalab-official' / p).rename(dir / 'images' / p)  # move to /images
+  f = (dir / 'global-wheat-codalab-official' / p).with_suffix('.json')  # json file
+  if f.exists():
+  f.rename((dir / 'annotations' / p).with_suffix('.json'))  # move to /annotations 
 ```
 
 ## 使用方法
@@ -43,11 +95,18 @@ ultralytics/cfg/datasets/GlobalWheat2020.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="GlobalWheat2020.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="GlobalWheat2020.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=GlobalWheat2020.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=GlobalWheat2020.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 ## 样本数据和注释
@@ -65,7 +124,12 @@ ultralytics/cfg/datasets/GlobalWheat2020.yaml
 如果您在研究或开发工作中使用全球小麦穗数据集，请引用以下论文：
 
 ```py
-`@article{david2020global,   title={Global Wheat Head Detection (GWHD) Dataset: A Large and Diverse Dataset of High-Resolution RGB-Labelled Images to Develop and Benchmark Wheat Head Detection Methods},   author={David, Etienne and Madec, Simon and Sadeghi-Tehran, Pouria and Aasen, Helge and Zheng, Bangyou and Liu, Shouyang and Kirchgessner, Norbert and Ishikawa, Goro and Nagasawa, Koichi and Badhon, Minhajul and others},   journal={arXiv preprint arXiv:2005.02162},   year={2020} }` 
+@article{david2020global,
+  title={Global Wheat Head Detection (GWHD) Dataset: A Large and Diverse Dataset of High-Resolution RGB-Labelled Images to Develop and Benchmark Wheat Head Detection Methods},
+  author={David, Etienne and Madec, Simon and Sadeghi-Tehran, Pouria and Aasen, Helge and Zheng, Bangyou and Liu, Shouyang and Kirchgessner, Norbert and Ishikawa, Goro and Nagasawa, Koichi and Badhon, Minhajul and others},
+  journal={arXiv preprint arXiv:2005.02162},
+  year={2020}
+} 
 ```
 
 我们要感谢那些为全球小麦穗数据集的创建和维护做出贡献的研究人员和机构，这是植物表型和作物管理研究社区的宝贵资源。有关数据集及其创建者的更多信息，请访问[全球小麦穗数据集网站](https://www.global-wheat.com/)。
@@ -83,11 +147,18 @@ ultralytics/cfg/datasets/GlobalWheat2020.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a pre-trained model (recommended for training) model = YOLO("yolov8n.pt")  # Train the model results = model.train(data="GlobalWheat2020.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a pre-trained model (recommended for training)
+model = YOLO("yolov8n.pt")
+
+# Train the model
+results = model.train(data="GlobalWheat2020.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=GlobalWheat2020.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=GlobalWheat2020.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 要获取所有可用参数的详细列表，请参阅模型训练页面。

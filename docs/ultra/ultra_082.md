@@ -30,11 +30,65 @@
 训练监控示例
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n-pose.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  gym_object = solutions.AIGym(     line_thickness=2,     view_img=True,     pose_type="pushup",     kpts_to_check=[6, 8, 10], )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break     results = model.track(im0, verbose=False)  # Tracking recommended     # results = model.predict(im0)  # Prediction also supported     im0 = gym_object.start_counting(im0, results)  cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n-pose.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+gym_object = solutions.AIGym(
+    line_thickness=2,
+    view_img=True,
+    pose_type="pushup",
+    kpts_to_check=[6, 8, 10],
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+    results = model.track(im0, verbose=False)  # Tracking recommended
+    # results = model.predict(im0)  # Prediction also supported
+    im0 = gym_object.start_counting(im0, results)
+
+cv2.destroyAllWindows() 
 ```
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n-pose.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  video_writer = cv2.VideoWriter("workouts.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  gym_object = solutions.AIGym(     line_thickness=2,     view_img=True,     pose_type="pushup",     kpts_to_check=[6, 8, 10], )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break     results = model.track(im0, verbose=False)  # Tracking recommended     # results = model.predict(im0)  # Prediction also supported     im0 = gym_object.start_counting(im0, results)     video_writer.write(im0)  cv2.destroyAllWindows() video_writer.release()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n-pose.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+video_writer = cv2.VideoWriter("workouts.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+gym_object = solutions.AIGym(
+    line_thickness=2,
+    view_img=True,
+    pose_type="pushup",
+    kpts_to_check=[6, 8, 10],
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+    results = model.track(im0, verbose=False)  # Tracking recommended
+    # results = model.predict(im0)  # Prediction also supported
+    im0 = gym_object.start_counting(im0, results)
+    video_writer.write(im0)
+
+cv2.destroyAllWindows()
+video_writer.release() 
 ```
 
 <details class="tip" open="open"><summary>支持</summary>
@@ -95,7 +149,31 @@
 要使用 Ultralytics YOLOv8 监控您的锻炼，您可以利用姿势估计能力实时跟踪和分析关键身体标志物和关节。这使您可以即时获得有关您的锻炼形式、计数重复次数和测量性能指标的反馈。您可以从提供的示例代码开始进行俯卧撑、引体向上或腹部训练，如下所示：
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n-pose.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  gym_object = solutions.AIGym(     line_thickness=2,     view_img=True,     pose_type="pushup",     kpts_to_check=[6, 8, 10], )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break     results = model.track(im0, verbose=False)     im0 = gym_object.start_counting(im0, results)  cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n-pose.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+gym_object = solutions.AIGym(
+    line_thickness=2,
+    view_img=True,
+    pose_type="pushup",
+    kpts_to_check=[6, 8, 10],
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+    results = model.track(im0, verbose=False)
+    im0 = gym_object.start_counting(im0, results)
+
+cv2.destroyAllWindows() 
 ```
 
 欲了解更多定制和设置，请参阅文档中的 AIGym 部分。
@@ -125,7 +203,14 @@
 是的，Ultralytics YOLOv8 可以适应自定义的锻炼例程。`AIGym`类支持不同的姿势类型，如“俯卧撑”、“引体向上”和“腹部锻炼”。您可以指定关键点和角度以检测特定的锻炼动作。以下是一个示例设置：
 
 ```py
-`from ultralytics import solutions  gym_object = solutions.AIGym(     line_thickness=2,     view_img=True,     pose_type="squat",     kpts_to_check=[6, 8, 10], )` 
+from ultralytics import solutions
+
+gym_object = solutions.AIGym(
+    line_thickness=2,
+    view_img=True,
+    pose_type="squat",
+    kpts_to_check=[6, 8, 10],
+) 
 ```
 
 关于设置参数的详细信息，请参阅参数`AIGym`部分。这种灵活性使您能够监控各种锻炼并根据需要定制例程。
@@ -135,7 +220,35 @@
 要保存训练监控输出，您可以修改代码以包含保存处理帧的视频写入器。以下是一个示例：
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n-pose.pt") cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  video_writer = cv2.VideoWriter("workouts.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  gym_object = solutions.AIGym(     line_thickness=2,     view_img=True,     pose_type="pushup",     kpts_to_check=[6, 8, 10], )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break     results = model.track(im0, verbose=False)     im0 = gym_object.start_counting(im0, results)     video_writer.write(im0)  cv2.destroyAllWindows() video_writer.release()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n-pose.pt")
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+video_writer = cv2.VideoWriter("workouts.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+gym_object = solutions.AIGym(
+    line_thickness=2,
+    view_img=True,
+    pose_type="pushup",
+    kpts_to_check=[6, 8, 10],
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+    results = model.track(im0, verbose=False)
+    im0 = gym_object.start_counting(im0, results)
+    video_writer.write(im0)
+
+cv2.destroyAllWindows()
+video_writer.release() 
 ```
 
 这个设置将监控视频写入输出文件。有关详细信息，请参阅保存输出的训练监控部分。

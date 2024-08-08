@@ -49,7 +49,14 @@ YOLOv4 是一种强大且高效的目标检测模型，它在速度和准确性�
 我们要感谢 YOLOv4 的作者在实时目标检测领域做出的重要贡献：
 
 ```py
-`@misc{bochkovskiy2020yolov4,   title={YOLOv4: Optimal Speed and Accuracy of Object Detection},   author={Alexey Bochkovskiy and Chien-Yao Wang and Hong-Yuan Mark Liao},   year={2020},   eprint={2004.10934},   archivePrefix={arXiv},   primaryClass={cs.CV} }` 
+@misc{bochkovskiy2020yolov4,
+  title={YOLOv4: Optimal Speed and Accuracy of Object Detection},
+  author={Alexey Bochkovskiy and Chien-Yao Wang and Hong-Yuan Mark Liao},
+  year={2020},
+  eprint={2004.10934},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+} 
 ```
 
 原始的 YOLOv4 论文可以在 [arXiv](https://arxiv.org/abs/2004.10934) 上找到。作者已经公开了他们的工作，并且代码库可以在 [GitHub](https://github.com/AlexeyAB/darknet) 上获取。我们感谢他们在推动领域发展和使他们的工作对更广泛的社区可用方面所作的努力。

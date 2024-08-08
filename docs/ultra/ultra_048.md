@@ -47,7 +47,41 @@ Roboflow 100 数据集分为七个类别，每个类别包含一组独特的数�
 基准测试示例
 
 ```py
-`import os import shutil from pathlib import Path  from ultralytics.utils.benchmarks import RF100Benchmark  # Initialize RF100Benchmark and set API key benchmark = RF100Benchmark() benchmark.set_key(api_key="YOUR_ROBOFLOW_API_KEY")  # Parse dataset and define file paths names, cfg_yamls = benchmark.parse_dataset() val_log_file = Path("ultralytics-benchmarks") / "validation.txt" eval_log_file = Path("ultralytics-benchmarks") / "evaluation.txt"  # Run benchmarks on each dataset in RF100 for ind, path in enumerate(cfg_yamls):     path = Path(path)     if path.exists():         # Fix YAML file and run training         benchmark.fix_yaml(str(path))         os.system(f"yolo detect train data={path} model=yolov8s.pt epochs=1 batch=16")          # Run validation and evaluate         os.system(f"yolo detect val data={path} model=runs/detect/train/weights/best.pt > {val_log_file} 2>&1")         benchmark.evaluate(str(path), str(val_log_file), str(eval_log_file), ind)          # Remove the 'runs' directory         runs_dir = Path.cwd() / "runs"         shutil.rmtree(runs_dir)     else:         print("YAML file path does not exist")         continue  print("RF100 Benchmarking completed!")` 
+import os
+import shutil
+from pathlib import Path
+
+from ultralytics.utils.benchmarks import RF100Benchmark
+
+# Initialize RF100Benchmark and set API key
+benchmark = RF100Benchmark()
+benchmark.set_key(api_key="YOUR_ROBOFLOW_API_KEY")
+
+# Parse dataset and define file paths
+names, cfg_yamls = benchmark.parse_dataset()
+val_log_file = Path("ultralytics-benchmarks") / "validation.txt"
+eval_log_file = Path("ultralytics-benchmarks") / "evaluation.txt"
+
+# Run benchmarks on each dataset in RF100
+for ind, path in enumerate(cfg_yamls):
+    path = Path(path)
+    if path.exists():
+        # Fix YAML file and run training
+        benchmark.fix_yaml(str(path))
+        os.system(f"yolo detect train data={path} model=yolov8s.pt epochs=1 batch=16")
+
+        # Run validation and evaluate
+        os.system(f"yolo detect val data={path} model=runs/detect/train/weights/best.pt > {val_log_file} 2>&1")
+        benchmark.evaluate(str(path), str(val_log_file), str(eval_log_file), ind)
+
+        # Remove the 'runs' directory
+        runs_dir = Path.cwd() / "runs"
+        shutil.rmtree(runs_dir)
+    else:
+        print("YAML file path does not exist")
+        continue
+
+print("RF100 Benchmarking completed!") 
 ```
 
 ## 应用场景
@@ -81,7 +115,11 @@ Roboflow 100 包含了来自各个角度和领域的多样化图像和视频数�
 如果您在研究或开发工作中使用 Roboflow 100 数据集，请引用以下论文：
 
 ```py
-`@misc{2211.13523,   Author  =  {Floriana Ciaglia and Francesco Saverio Zuppichini and Paul Guerrie and Mark McQuade and Jacob Solawetz},   Title  =  {Roboflow 100: A Rich, Multi-Domain Object Detection Benchmark},   Eprint  =  {arXiv:2211.13523}, }` 
+@misc{2211.13523,
+  Author  =  {Floriana Ciaglia and Francesco Saverio Zuppichini and Paul Guerrie and Mark McQuade and Jacob Solawetz},
+  Title  =  {Roboflow 100: A Rich, Multi-Domain Object Detection Benchmark},
+  Eprint  =  {arXiv:2211.13523},
+} 
 ```
 
 我们衷心感谢 Roboflow 团队和所有贡献者在创建和维护 Roboflow 100 数据集中所作的努力。
@@ -101,7 +139,41 @@ Roboflow 100 包含了来自各个角度和领域的多样化图像和视频数�
 基准测试示例
 
 ```py
-`import os import shutil from pathlib import Path  from ultralytics.utils.benchmarks import RF100Benchmark  # Initialize RF100Benchmark and set API key benchmark = RF100Benchmark() benchmark.set_key(api_key="YOUR_ROBOFLOW_API_KEY")  # Parse dataset and define file paths names, cfg_yamls = benchmark.parse_dataset() val_log_file = Path("ultralytics-benchmarks") / "validation.txt" eval_log_file = Path("ultralytics-benchmarks") / "evaluation.txt"  # Run benchmarks on each dataset in RF100 for ind, path in enumerate(cfg_yamls):     path = Path(path)     if path.exists():         # Fix YAML file and run training         benchmark.fix_yaml(str(path))         os.system(f"yolo detect train data={path} model=yolov8s.pt epochs=1 batch=16")          # Run validation and evaluate         os.system(f"yolo detect val data={path} model=runs/detect/train/weights/best.pt > {val_log_file} 2>&1")         benchmark.evaluate(str(path), str(val_log_file), str(eval_log_file), ind)          # Remove 'runs' directory         runs_dir = Path.cwd() / "runs"         shutil.rmtree(runs_dir)     else:         print("YAML file path does not exist")         continue  print("RF100 Benchmarking completed!")` 
+import os
+import shutil
+from pathlib import Path
+
+from ultralytics.utils.benchmarks import RF100Benchmark
+
+# Initialize RF100Benchmark and set API key
+benchmark = RF100Benchmark()
+benchmark.set_key(api_key="YOUR_ROBOFLOW_API_KEY")
+
+# Parse dataset and define file paths
+names, cfg_yamls = benchmark.parse_dataset()
+val_log_file = Path("ultralytics-benchmarks") / "validation.txt"
+eval_log_file = Path("ultralytics-benchmarks") / "evaluation.txt"
+
+# Run benchmarks on each dataset in RF100
+for ind, path in enumerate(cfg_yamls):
+    path = Path(path)
+    if path.exists():
+        # Fix YAML file and run training
+        benchmark.fix_yaml(str(path))
+        os.system(f"yolo detect train data={path} model=yolov8s.pt epochs=1 batch=16")
+
+        # Run validation and evaluate
+        os.system(f"yolo detect val data={path} model=runs/detect/train/weights/best.pt > {val_log_file} 2>&1")
+        benchmark.evaluate(str(path), str(val_log_file), str(eval_log_file), ind)
+
+        # Remove 'runs' directory
+        runs_dir = Path.cwd() / "runs"
+        shutil.rmtree(runs_dir)
+    else:
+        print("YAML file path does not exist")
+        continue
+
+print("RF100 Benchmarking completed!") 
 ```
 
 ### Roboflow 100 数据集涵盖了哪些领域？
@@ -135,7 +207,11 @@ Roboflow 100 包含了来自各个角度和领域的多样化图像和视频数�
 引用
 
 ```py
-`@misc{2211.13523,   Author  =  {Floriana Ciaglia and Francesco Saverio Zuppichini and Paul Guerrie and Mark McQuade and Jacob Solawetz},   Title  =  {Roboflow 100: A Rich, Multi-Domain Object Detection Benchmark},   Eprint  =  {arXiv:2211.13523}, }` 
+@misc{2211.13523,
+  Author  =  {Floriana Ciaglia and Francesco Saverio Zuppichini and Paul Guerrie and Mark McQuade and Jacob Solawetz},
+  Title  =  {Roboflow 100: A Rich, Multi-Domain Object Detection Benchmark},
+  Eprint  =  {arXiv:2211.13523},
+} 
 ```
 
 欲了解更多详情，请参阅我们的全面数据集收藏。

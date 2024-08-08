@@ -52,11 +52,33 @@ FastSAM 模型易于集成到您的 Python 应用程序中。Ultralytics 提供�
 示例
 
 ```py
-`from ultralytics import FastSAM  # Define an inference source source = "path/to/bus.jpg"  # Create a FastSAM model model = FastSAM("FastSAM-s.pt")  # or FastSAM-x.pt  # Run inference on an image everything_results = model(source, device="cpu", retina_masks=True, imgsz=1024, conf=0.4, iou=0.9)  # Run inference with bboxes prompt results = model(source, bboxes=[439, 437, 524, 709])  # Run inference with points prompt results = model(source, points=[[200, 200]], labels=[1])  # Run inference with texts prompt results = model(source, texts="a photo of a dog")  # Run inference with bboxes and points and texts prompt at the same time results = model(source, bboxes=[439, 437, 524, 709], points=[[200, 200]], labels=[1], texts="a photo of a dog")` 
+from ultralytics import FastSAM
+
+# Define an inference source
+source = "path/to/bus.jpg"
+
+# Create a FastSAM model
+model = FastSAM("FastSAM-s.pt")  # or FastSAM-x.pt
+
+# Run inference on an image
+everything_results = model(source, device="cpu", retina_masks=True, imgsz=1024, conf=0.4, iou=0.9)
+
+# Run inference with bboxes prompt
+results = model(source, bboxes=[439, 437, 524, 709])
+
+# Run inference with points prompt
+results = model(source, points=[[200, 200]], labels=[1])
+
+# Run inference with texts prompt
+results = model(source, texts="a photo of a dog")
+
+# Run inference with bboxes and points and texts prompt at the same time
+results = model(source, bboxes=[439, 437, 524, 709], points=[[200, 200]], labels=[1], texts="a photo of a dog") 
 ```
 
 ```py
-`# Load a FastSAM model and segment everything with it yolo  segment  predict  model=FastSAM-s.pt  source=path/to/bus.jpg  imgsz=640` 
+# Load a FastSAM model and segment everything with it
+yolo  segment  predict  model=FastSAM-s.pt  source=path/to/bus.jpg  imgsz=640 
 ```
 
 此代码段演示了加载预训练模型并在图像上运行预测的简易性。
@@ -66,7 +88,19 @@ FastSAMPredictor 示例
 通过这种方式，您可以在图像上运行推断并一次性获取所有段`results`，而无需多次运行推断。
 
 ```py
-`from ultralytics.models.fastsam import FastSAMPredictor  # Create FastSAMPredictor overrides = dict(conf=0.25, task="segment", mode="predict", model="FastSAM-s.pt", save=False, imgsz=1024) predictor = FastSAMPredictor(overrides=overrides)  # Segment everything everything_results = predictor("ultralytics/assets/bus.jpg")  # Prompt inference bbox_results = predictor.prompt(everything_results, bboxes=[[200, 200, 300, 300]]) point_results = predictor.prompt(everything_results, points=[200, 200]) text_results = predictor.prompt(everything_results, texts="a photo of a dog")` 
+from ultralytics.models.fastsam import FastSAMPredictor
+
+# Create FastSAMPredictor
+overrides = dict(conf=0.25, task="segment", mode="predict", model="FastSAM-s.pt", save=False, imgsz=1024)
+predictor = FastSAMPredictor(overrides=overrides)
+
+# Segment everything
+everything_results = predictor("ultralytics/assets/bus.jpg")
+
+# Prompt inference
+bbox_results = predictor.prompt(everything_results, bboxes=[[200, 200, 300, 300]])
+point_results = predictor.prompt(everything_results, points=[200, 200])
+text_results = predictor.prompt(everything_results, texts="a photo of a dog") 
 ```
 
 注意
@@ -80,11 +114,18 @@ FastSAMPredictor 示例
 示例
 
 ```py
-`from ultralytics import FastSAM  # Create a FastSAM model model = FastSAM("FastSAM-s.pt")  # or FastSAM-x.pt  # Validate the model results = model.val(data="coco8-seg.yaml")` 
+from ultralytics import FastSAM
+
+# Create a FastSAM model
+model = FastSAM("FastSAM-s.pt")  # or FastSAM-x.pt
+
+# Validate the model
+results = model.val(data="coco8-seg.yaml") 
 ```
 
 ```py
-`# Load a FastSAM model and validate it on the COCO8 example dataset at image size 640 yolo  segment  val  model=FastSAM-s.pt  data=coco8.yaml  imgsz=640` 
+# Load a FastSAM model and validate it on the COCO8 example dataset at image size 640
+yolo  segment  val  model=FastSAM-s.pt  data=coco8.yaml  imgsz=640 
 ```
 
 请注意，FastSAM 仅支持单类对象的检测和分割。这意味着它将所有对象识别并分割为相同的类别。因此，在准备数据集时，需要将所有对象的类别 ID 转换为 0。
@@ -96,11 +137,17 @@ FastSAMPredictor 示例
 示例
 
 ```py
-`from ultralytics import FastSAM  # Create a FastSAM model model = FastSAM("FastSAM-s.pt")  # or FastSAM-x.pt  # Track with a FastSAM model on a video results = model.track(source="path/to/video.mp4", imgsz=640)` 
+from ultralytics import FastSAM
+
+# Create a FastSAM model
+model = FastSAM("FastSAM-s.pt")  # or FastSAM-x.pt
+
+# Track with a FastSAM model on a video
+results = model.track(source="path/to/video.mp4", imgsz=640) 
 ```
 
 ```py
-`yolo  segment  track  model=FastSAM-s.pt  source="path/to/video/file.mp4"  imgsz=640` 
+yolo  segment  track  model=FastSAM-s.pt  source="path/to/video/file.mp4"  imgsz=640 
 ```
 
 ## FastSAM 官方用法
@@ -112,25 +159,27 @@ FastSAM 还可以直接从[`github.com/CASIA-IVA-Lab/FastSAM`](https://github.co
 1.  克隆 FastSAM 存储库：
 
     ```py
-    `git  clone  https://github.com/CASIA-IVA-Lab/FastSAM.git` 
+    git  clone  https://github.com/CASIA-IVA-Lab/FastSAM.git 
     ```
 
 1.  创建并激活一个带有 Python 3.9 的 Conda 环境：
 
     ```py
-    `conda  create  -n  FastSAM  python=3.9 conda  activate  FastSAM` 
+    conda  create  -n  FastSAM  python=3.9
+    conda  activate  FastSAM 
     ```
 
 1.  导航至克隆的存储库并安装所需的包：
 
     ```py
-    `cd  FastSAM pip  install  -r  requirements.txt` 
+    cd  FastSAM
+    pip  install  -r  requirements.txt 
     ```
 
 1.  安装 CLIP 模型：
 
     ```py
-    `pip  install  git+https://github.com/ultralytics/CLIP.git` 
+    pip  install  git+https://github.com/ultralytics/CLIP.git 
     ```
 
 ### 用法示例
@@ -142,25 +191,25 @@ FastSAM 还可以直接从[`github.com/CASIA-IVA-Lab/FastSAM`](https://github.co
     +   在图像中分割所有内容：
 
         ```py
-        `python  Inference.py  --model_path  ./weights/FastSAM.pt  --img_path  ./images/dogs.jpg` 
+        python  Inference.py  --model_path  ./weights/FastSAM.pt  --img_path  ./images/dogs.jpg 
         ```
 
     +   使用文本提示分割特定对象：
 
         ```py
-        `python  Inference.py  --model_path  ./weights/FastSAM.pt  --img_path  ./images/dogs.jpg  --text_prompt  "the yellow dog"` 
+        python  Inference.py  --model_path  ./weights/FastSAM.pt  --img_path  ./images/dogs.jpg  --text_prompt  "the yellow dog" 
         ```
 
     +   在边界框内分割对象（以 xywh 格式提供框坐标）：
 
         ```py
-        `python  Inference.py  --model_path  ./weights/FastSAM.pt  --img_path  ./images/dogs.jpg  --box_prompt  "[570,200,230,400]"` 
+        python  Inference.py  --model_path  ./weights/FastSAM.pt  --img_path  ./images/dogs.jpg  --box_prompt  "[570,200,230,400]" 
         ```
 
     +   在特定点附近分割对象：
 
         ```py
-        `python  Inference.py  --model_path  ./weights/FastSAM.pt  --img_path  ./images/dogs.jpg  --point_prompt  "[[520,360],[620,300]]"  --point_label  "[1,0]"` 
+        python  Inference.py  --model_path  ./weights/FastSAM.pt  --img_path  ./images/dogs.jpg  --point_prompt  "[[520,360],[620,300]]"  --point_label  "[1,0]" 
         ```
 
 此外，您可以通过[Colab 演示](https://colab.research.google.com/drive/1oX14f6IneGGw612WgVlAiy91UHwFAvr9?usp=sharing)或[HuggingFace 网络演示](https://huggingface.co/spaces/An-619/FastSAM)来尝试 FastSAM，获得视觉体验。
@@ -170,7 +219,14 @@ FastSAM 还可以直接从[`github.com/CASIA-IVA-Lab/FastSAM`](https://github.co
 我们要感谢 FastSAM 的作者在实时实例分割领域做出的重要贡献：
 
 ```py
-`@misc{zhao2023fast,   title={Fast Segment Anything},   author={Xu Zhao and Wenchao Ding and Yongqi An and Yinglong Du and Tao Yu and Min Li and Ming Tang and Jinqiao Wang},   year={2023},   eprint={2306.12156},   archivePrefix={arXiv},   primaryClass={cs.CV} }` 
+@misc{zhao2023fast,
+  title={Fast Segment Anything},
+  author={Xu Zhao and Wenchao Ding and Yongqi An and Yinglong Du and Tao Yu and Min Li and Ming Tang and Jinqiao Wang},
+  year={2023},
+  eprint={2306.12156},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+} 
 ```
 
 最初的 FastSAM 论文可以在[arXiv](https://arxiv.org/abs/2306.12156)上找到。作者已经公开了他们的工作，并且代码库可以在[GitHub](https://github.com/CASIA-IVA-Lab/FastSAM)上访问。我们感谢他们在推动该领域发展并使其工作对更广泛的社区可用的努力。
@@ -204,7 +260,28 @@ FastSAM 非常适用于需要实时分割性能的各种计算机视觉任务。
 要在 Python 中使用 FastSAM 进行推理，可以参考以下示例：
 
 ```py
-`from ultralytics import FastSAM  # Define an inference source source = "path/to/bus.jpg"  # Create a FastSAM model model = FastSAM("FastSAM-s.pt")  # or FastSAM-x.pt  # Run inference on an image everything_results = model(source, device="cpu", retina_masks=True, imgsz=1024, conf=0.4, iou=0.9)  # Run inference with bboxes prompt results = model(source, bboxes=[439, 437, 524, 709])  # Run inference with points prompt results = model(source, points=[[200, 200]], labels=[1])  # Run inference with texts prompt results = model(source, texts="a photo of a dog")  # Run inference with bboxes and points and texts prompt at the same time results = model(source, bboxes=[439, 437, 524, 709], points=[[200, 200]], labels=[1], texts="a photo of a dog")` 
+from ultralytics import FastSAM
+
+# Define an inference source
+source = "path/to/bus.jpg"
+
+# Create a FastSAM model
+model = FastSAM("FastSAM-s.pt")  # or FastSAM-x.pt
+
+# Run inference on an image
+everything_results = model(source, device="cpu", retina_masks=True, imgsz=1024, conf=0.4, iou=0.9)
+
+# Run inference with bboxes prompt
+results = model(source, bboxes=[439, 437, 524, 709])
+
+# Run inference with points prompt
+results = model(source, points=[[200, 200]], labels=[1])
+
+# Run inference with texts prompt
+results = model(source, texts="a photo of a dog")
+
+# Run inference with bboxes and points and texts prompt at the same time
+results = model(source, bboxes=[439, 437, 524, 709], points=[[200, 200]], labels=[1], texts="a photo of a dog") 
 ```
 
 有关推理方法的详细信息，请查看文档的预测使用部分。

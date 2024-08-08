@@ -11,7 +11,7 @@
 YOLO OBB 格式通过其在 0 到 1 之间标准化的四个角点坐标指定边界框。它遵循以下格式：
 
 ```py
-`class_index  x1  y1  x2  y2  x3  y3  x4  y4` 
+class_index  x1  y1  x2  y2  x3  y3  x4  y4 
 ```
 
 在内部，YOLO 使用 `xywhr` 格式处理损失和输出，表示边界框的中心点（xy）、宽度、高度和旋转。
@@ -21,7 +21,7 @@ YOLO OBB 格式通过其在 0 到 1 之间标准化的四个角点坐标指定�
 上述图像的 `*.txt` 标签文件示例，其中包含了类别 `0` 的 OBB 格式对象，可能如下所示：
 
 ```py
-`0  0.780811  0.743961  0.782371  0.74686  0.777691  0.752174  0.776131  0.749758` 
+0  0.780811  0.743961  0.782371  0.74686  0.777691  0.752174  0.776131  0.749758 
 ```
 
 ## 使用方法
@@ -31,11 +31,18 @@ YOLO OBB 格式通过其在 0 到 1 之间标准化的四个角点坐标指定�
 示例
 
 ```py
-`from ultralytics import YOLO  # Create a new YOLOv8n-OBB model from scratch model = YOLO("yolov8n-obb.yaml")  # Train the model on the DOTAv2 dataset results = model.train(data="DOTAv1.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Create a new YOLOv8n-OBB model from scratch
+model = YOLO("yolov8n-obb.yaml")
+
+# Train the model on the DOTAv2 dataset
+results = model.train(data="DOTAv1.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Train a new YOLOv8n-OBB model on the DOTAv2 dataset yolo  obb  train  data=DOTAv1.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640` 
+# Train a new YOLOv8n-OBB model on the DOTAv2 dataset
+yolo  obb  train  data=DOTAv1.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640 
 ```
 
 ## 支持的数据集
@@ -59,7 +66,9 @@ YOLO OBB 格式通过其在 0 到 1 之间标准化的四个角点坐标指定�
 示例
 
 ```py
-`from ultralytics.data.converter import convert_dota_to_yolo_obb  convert_dota_to_yolo_obb("path/to/DOTA")` 
+from ultralytics.data.converter import convert_dota_to_yolo_obb
+
+convert_dota_to_yolo_obb("path/to/DOTA") 
 ```
 
 这种转换机制对于 DOTA 格式的数据集至关重要，确保与 Ultralytics YOLO OBB 格式的对齐。
@@ -77,7 +86,9 @@ YOLO OBB 格式通过其在 0 到 1 之间标准化的四个角点坐标指定�
 您可以使用 Ultralytics 的 `convert_dota_to_yolo_obb` 函数将 DOTA 数据集标签转换为 YOLO OBB 格式。此转换确保与 Ultralytics YOLO 模型兼容，使您能够利用 OBB 功能来增强对象检测。以下是一个快速示例：
 
 ```py
-`from ultralytics.data.converter import convert_dota_to_yolo_obb  convert_dota_to_yolo_obb("path/to/DOTA")` 
+from ultralytics.data.converter import convert_dota_to_yolo_obb
+
+convert_dota_to_yolo_obb("path/to/DOTA") 
 ```
 
 此脚本将重新格式化您的 DOTA 注释以符合 YOLO 兼容格式。
@@ -89,11 +100,18 @@ YOLO OBB 格式通过其在 0 到 1 之间标准化的四个角点坐标指定�
 示例
 
 ```py
-`from ultralytics import YOLO  # Create a new YOLOv8n-OBB model from scratch model = YOLO("yolov8n-obb.yaml")  # Train the model on the custom dataset results = model.train(data="your_dataset.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Create a new YOLOv8n-OBB model from scratch
+model = YOLO("yolov8n-obb.yaml")
+
+# Train the model on the custom dataset
+results = model.train(data="your_dataset.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Train a new YOLOv8n-OBB model on the custom dataset yolo  obb  train  data=your_dataset.yaml  model=yolov8n-obb.yaml  epochs=100  imgsz=640` 
+# Train a new YOLOv8n-OBB model on the custom dataset
+yolo  obb  train  data=your_dataset.yaml  model=yolov8n-obb.yaml  epochs=100  imgsz=640 
 ```
 
 这确保您的模型利用详细的 OBB 注释以提高检测精度。

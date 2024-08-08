@@ -32,7 +32,11 @@
 首先克隆 Ultralytics 存储库，安装依赖项，并使用步骤 2 中提供的命令导航到本地目录。
 
 ```py
-`# Clone Ultralytics repo git  clone  https://github.com/ultralytics/ultralytics  # Navigate to the local directory cd  ultralytics/examples/YOLOv8-Region-Counter` 
+# Clone Ultralytics repo
+git  clone  https://github.com/ultralytics/ultralytics
+
+# Navigate to the local directory
+cd  ultralytics/examples/YOLOv8-Region-Counter 
 ```
 
 ### 步骤 2：使用 Ultralytics YOLOv8 运行区域计数
@@ -44,7 +48,20 @@
 在视频播放期间，您可以通过单击并拖动左键来交互地移动视频中的区域。</details>
 
 ```py
-`# Save results python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --save-img  # Run model on CPU python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --device  cpu  # Change model file python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --weights  "path/to/model.pt"  # Detect specific classes (e.g., first and third classes) python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --classes  0  2  # View results without saving python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --view-img` 
+# Save results
+python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --save-img
+
+# Run model on CPU
+python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --device  cpu
+
+# Change model file
+python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --weights  "path/to/model.pt"
+
+# Detect specific classes (e.g., first and third classes)
+python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --classes  0  2
+
+# View results without saving
+python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --view-img 
 ```
 
 ### 可选参数
@@ -72,13 +89,14 @@
 1.  克隆 Ultralytics 存储库并导航至目录：
 
     ```py
-    `git  clone  https://github.com/ultralytics/ultralytics cd  ultralytics/examples/YOLOv8-Region-Counter` 
+    git  clone  https://github.com/ultralytics/ultralytics
+    cd  ultralytics/examples/YOLOv8-Region-Counter 
     ```
 
 1.  执行区域计数脚本：
 
     ```py
-    `python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --save-img` 
+    python  yolov8_region_counter.py  --source  "path/to/video.mp4"  --save-img 
     ```
 
 欲了解更多选项，请访问运行区域计数部分。

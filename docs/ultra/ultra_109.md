@@ -50,7 +50,7 @@ Coral 关于如何在树莓派上使用 Edge TPU 的[现有指南](https://coral
 下载文件后，您可以使用以下命令进行安装：
 
 ```py
-`sudo  dpkg  -i  path/to/package.deb` 
+sudo  dpkg  -i  path/to/package.deb 
 ```
 
 安装完运行时后，您需要将 Coral Edge TPU 插入到树莓派的 USB 3.0 端口中。这是因为根据官方指南，安装后需要让新的`udev`规则生效。
@@ -60,7 +60,11 @@ Coral 关于如何在树莓派上使用 Edge TPU 的[现有指南](https://coral
 如果您已经安装了 Coral Edge TPU 运行时，请使用以下命令卸载它。
 
 ```py
-`# If you installed the standard version sudo  apt  remove  libedgetpu1-std  # If you installed the high frequency version sudo  apt  remove  libedgetpu1-max` 
+# If you installed the standard version
+sudo  apt  remove  libedgetpu1-std
+
+# If you installed the high frequency version
+sudo  apt  remove  libedgetpu1-max 
 ```</details>
 
 ## 将您的模型导出为 Edge TPU 兼容模型
@@ -70,11 +74,17 @@ Coral 关于如何在树莓派上使用 Edge TPU 的[现有指南](https://coral
 导出
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/model.pt")  # Load an official model or custom model  # Export the model model.export(format="edgetpu")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/model.pt")  # Load an official model or custom model
+
+# Export the model
+model.export(format="edgetpu") 
 ```
 
 ```py
-`yolo  export  model=path/to/model.pt  format=edgetpu  # Export an official model or custom model` 
+yolo  export  model=path/to/model.pt  format=edgetpu  # Export an official model or custom model 
 ```
 
 导出的模型将保存在`<model_name>_saved_model/`文件夹中，命名为`<model_name>_full_integer_quant_edgetpu.tflite`。
@@ -86,11 +96,17 @@ Coral 关于如何在树莓派上使用 Edge TPU 的[现有指南](https://coral
 运行中
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/edgetpu_model.tflite")  # Load an official model or custom model  # Run Prediction model.predict("path/to/source.png")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/edgetpu_model.tflite")  # Load an official model or custom model
+
+# Run Prediction
+model.predict("path/to/source.png") 
 ```
 
 ```py
-`yolo  predict  model=path/to/edgetpu_model.tflite  source=path/to/source.png  # Load an official model or custom model` 
+yolo  predict  model=path/to/edgetpu_model.tflite  source=path/to/source.png  # Load an official model or custom model 
 ```
 
 在预测页面上查找关于完整预测模式详细信息的综合信息。
@@ -100,13 +116,13 @@ Coral 关于如何在树莓派上使用 Edge TPU 的[现有指南](https://coral
 您应该使用`tflite-runtime`而不是`tensorflow`来运行模型。如果安装了`tensorflow`，请使用以下命令卸载 tensorflow：
 
 ```py
-`pip  uninstall  tensorflow  tensorflow-aarch64` 
+pip  uninstall  tensorflow  tensorflow-aarch64 
 ```
 
 然后安装/更新`tflite-runtime`：
 
 ```py
-`pip install -U tflite-runtime` 
+pip install -U tflite-runtime 
 ```
 
 如果您需要`tensorflow` 2.15.0 的`tflite-runtime` wheel，请从[这里](https://github.com/feranick/TFlite-builds/releases)下载，并使用`pip`或您选择的软件包管理器进行安装。</details>
@@ -122,7 +138,7 @@ Coral Edge TPU 是一个紧凑设备，旨在为您的系统添加 Edge TPU 协�
 要在您的树莓派上安装 Coral Edge TPU 运行时，请从[此链接](https://github.com/feranick/libedgetpu/releases)下载适合您的树莓派 OS 版本的`.deb`包。下载后，请使用以下命令进行安装：
 
 ```py
-`sudo  dpkg  -i  path/to/package.deb` 
+sudo  dpkg  -i  path/to/package.deb 
 ```
 
 确保按照安装步骤中概述的步骤卸载任何先前的 Coral Edge TPU 运行时版本。
@@ -134,11 +150,17 @@ Coral Edge TPU 是一个紧凑设备，旨在为您的系统添加 Edge TPU 协�
 导出中
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/model.pt")  # Load an official model or custom model  # Export the model model.export(format="edgetpu")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/model.pt")  # Load an official model or custom model
+
+# Export the model
+model.export(format="edgetpu") 
 ```
 
 ```py
-`yolo  export  model=path/to/model.pt  format=edgetpu  # Export an official model or custom model` 
+yolo  export  model=path/to/model.pt  format=edgetpu  # Export an official model or custom model 
 ```
 
 关于导出模式的详细信息，请参阅导出模式文档。
@@ -148,13 +170,13 @@ Coral Edge TPU 是一个紧凑设备，旨在为您的系统添加 Edge TPU 协�
 如果您的树莓派上安装了 TensorFlow，并且需要切换到`tflite-runtime`，您首先需要卸载 TensorFlow，命令如下：
 
 ```py
-`pip  uninstall  tensorflow  tensorflow-aarch64` 
+pip  uninstall  tensorflow  tensorflow-aarch64 
 ```
 
 然后，使用以下命令安装或更新`tflite-runtime`：
 
 ```py
-`pip  install  -U  tflite-runtime` 
+pip  install  -U  tflite-runtime 
 ```
 
 对于特定的 wheel，例如 TensorFlow 2.15.0 `tflite-runtime`，您可以从[此链接](https://github.com/feranick/TFlite-builds/releases)下载并使用`pip`安装。详细的操作指南可以在运行模型的部分找到。
@@ -166,11 +188,17 @@ Coral Edge TPU 是一个紧凑设备，旨在为您的系统添加 Edge TPU 协�
 运行中
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/edgetpu_model.tflite")  # Load an official model or custom model  # Run Prediction model.predict("path/to/source.png")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/edgetpu_model.tflite")  # Load an official model or custom model
+
+# Run Prediction
+model.predict("path/to/source.png") 
 ```
 
 ```py
-`yolo  predict  model=path/to/edgetpu_model.tflite  source=path/to/source.png  # Load an official model or custom model` 
+yolo  predict  model=path/to/edgetpu_model.tflite  source=path/to/source.png  # Load an official model or custom model 
 ```
 
 关于完整预测模式功能的详细信息可在预测页面上找到。

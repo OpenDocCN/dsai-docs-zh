@@ -44,7 +44,19 @@ Segment Anything 模型可用于多种超出其训练数据范围的下游任务
 使用给定提示分割图像。
 
 ```py
-`from ultralytics import SAM  # Load a model model = SAM("sam_b.pt")  # Display model information (optional) model.info()  # Run inference with bboxes prompt results = model("ultralytics/assets/zidane.jpg", bboxes=[439, 437, 524, 709])  # Run inference with points prompt results = model("ultralytics/assets/zidane.jpg", points=[900, 370], labels=[1])` 
+from ultralytics import SAM
+
+# Load a model
+model = SAM("sam_b.pt")
+
+# Display model information (optional)
+model.info()
+
+# Run inference with bboxes prompt
+results = model("ultralytics/assets/zidane.jpg", bboxes=[439, 437, 524, 709])
+
+# Run inference with points prompt
+results = model("ultralytics/assets/zidane.jpg", points=[900, 370], labels=[1]) 
 ```
 
 分割所有内容
@@ -52,11 +64,21 @@ Segment Anything 模型可用于多种超出其训练数据范围的下游任务
 分割整个图像。
 
 ```py
-`from ultralytics import SAM  # Load a model model = SAM("sam_b.pt")  # Display model information (optional) model.info()  # Run inference model("path/to/image.jpg")` 
+from ultralytics import SAM
+
+# Load a model
+model = SAM("sam_b.pt")
+
+# Display model information (optional)
+model.info()
+
+# Run inference
+model("path/to/image.jpg") 
 ```
 
 ```py
-`# Run inference with a SAM model yolo  predict  model=sam_b.pt  source=path/to/image.jpg` 
+# Run inference with a SAM model
+yolo  predict  model=sam_b.pt  source=path/to/image.jpg 
 ```
 
 +   此处的逻辑是，如果您没有传递任何提示（边界框/点/遮罩），则对整个图像进行分割。
@@ -66,13 +88,33 @@ SAMPredictor 示例
 通过此方法，您可以一次设置图像，并多次运行提示推断，而无需多次运行图像编码器。
 
 ```py
-`from ultralytics.models.sam import Predictor as SAMPredictor  # Create SAMPredictor overrides = dict(conf=0.25, task="segment", mode="predict", imgsz=1024, model="mobile_sam.pt") predictor = SAMPredictor(overrides=overrides)  # Set image predictor.set_image("ultralytics/assets/zidane.jpg")  # set with image file predictor.set_image(cv2.imread("ultralytics/assets/zidane.jpg"))  # set with np.ndarray results = predictor(bboxes=[439, 437, 524, 709]) results = predictor(points=[900, 370], labels=[1])  # Reset image predictor.reset_image()` 
+from ultralytics.models.sam import Predictor as SAMPredictor
+
+# Create SAMPredictor
+overrides = dict(conf=0.25, task="segment", mode="predict", imgsz=1024, model="mobile_sam.pt")
+predictor = SAMPredictor(overrides=overrides)
+
+# Set image
+predictor.set_image("ultralytics/assets/zidane.jpg")  # set with image file
+predictor.set_image(cv2.imread("ultralytics/assets/zidane.jpg"))  # set with np.ndarray
+results = predictor(bboxes=[439, 437, 524, 709])
+results = predictor(points=[900, 370], labels=[1])
+
+# Reset image
+predictor.reset_image() 
 ```
 
 使用附加参数分割所有内容。
 
 ```py
-`from ultralytics.models.sam import Predictor as SAMPredictor  # Create SAMPredictor overrides = dict(conf=0.25, task="segment", mode="predict", imgsz=1024, model="mobile_sam.pt") predictor = SAMPredictor(overrides=overrides)  # Segment with additional args results = predictor(source="ultralytics/assets/zidane.jpg", crop_n_layers=1, points_stride=64)` 
+from ultralytics.models.sam import Predictor as SAMPredictor
+
+# Create SAMPredictor
+overrides = dict(conf=0.25, task="segment", mode="predict", imgsz=1024, model="mobile_sam.pt")
+predictor = SAMPredictor(overrides=overrides)
+
+# Segment with additional args
+results = predictor(source="ultralytics/assets/zidane.jpg", crop_n_layers=1, points_stride=64) 
 ```
 
 注意
@@ -99,7 +141,27 @@ SAMPredictor 示例
 示例
 
 ```py
-`from ultralytics import SAM, YOLO, FastSAM  # Profile SAM-b model = SAM("sam_b.pt") model.info() model("ultralytics/assets")  # Profile MobileSAM model = SAM("mobile_sam.pt") model.info() model("ultralytics/assets")  # Profile FastSAM-s model = FastSAM("FastSAM-s.pt") model.info() model("ultralytics/assets")  # Profile YOLOv8n-seg model = YOLO("yolov8n-seg.pt") model.info() model("ultralytics/assets")` 
+from ultralytics import SAM, YOLO, FastSAM
+
+# Profile SAM-b
+model = SAM("sam_b.pt")
+model.info()
+model("ultralytics/assets")
+
+# Profile MobileSAM
+model = SAM("mobile_sam.pt")
+model.info()
+model("ultralytics/assets")
+
+# Profile FastSAM-s
+model = FastSAM("FastSAM-s.pt")
+model.info()
+model("ultralytics/assets")
+
+# Profile YOLOv8n-seg
+model = YOLO("yolov8n-seg.pt")
+model.info()
+model("ultralytics/assets") 
 ```
 
 ## 自动标注：快速路径到分割数据集
@@ -113,7 +175,9 @@ SAMPredictor 示例
 示例
 
 ```py
-`from ultralytics.data.annotator import auto_annotate  auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam_b.pt")` 
+from ultralytics.data.annotator import auto_annotate
+
+auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam_b.pt") 
 ```
 
 | 参数 | 类型 | 描述 | 默认值 |
@@ -133,7 +197,14 @@ SAMPredictor 示例
 如果您在研究或开发工作中发现 SAM 有用，请考虑引用我们的论文：
 
 ```py
-`@misc{kirillov2023segment,   title={Segment Anything},   author={Alexander Kirillov and Eric Mintun and Nikhila Ravi and Hanzi Mao and Chloe Rolland and Laura Gustafson and Tete Xiao and Spencer Whitehead and Alexander C. Berg and Wan-Yen Lo and Piotr Dollár and Ross Girshick},   year={2023},   eprint={2304.02643},   archivePrefix={arXiv},   primaryClass={cs.CV} }` 
+@misc{kirillov2023segment,
+  title={Segment Anything},
+  author={Alexander Kirillov and Eric Mintun and Nikhila Ravi and Hanzi Mao and Chloe Rolland and Laura Gustafson and Tete Xiao and Spencer Whitehead and Alexander C. Berg and Wan-Yen Lo and Piotr Dollár and Ross Girshick},
+  year={2023},
+  eprint={2304.02643},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+} 
 ```
 
 我们要感谢 Meta AI 为计算机视觉社区创建和维护这一宝贵资源。
@@ -149,13 +220,22 @@ Ultralytics 的段落任意模型（SAM）是一种革命性的图像分割模�
 你可以通过使用段落任意模型（SAM）进行图像分割，通过运行推理，使用各种提示，如边界框或点。以下是一个使用 Python 的示例：
 
 ```py
-`from ultralytics import SAM  # Load a model model = SAM("sam_b.pt")  # Segment with bounding box prompt model("ultralytics/assets/zidane.jpg", bboxes=[439, 437, 524, 709])  # Segment with points prompt model("ultralytics/assets/zidane.jpg", points=[900, 370], labels=[1])` 
+from ultralytics import SAM
+
+# Load a model
+model = SAM("sam_b.pt")
+
+# Segment with bounding box prompt
+model("ultralytics/assets/zidane.jpg", bboxes=[439, 437, 524, 709])
+
+# Segment with points prompt
+model("ultralytics/assets/zidane.jpg", points=[900, 370], labels=[1]) 
 ```
 
 或者，您可以在命令行界面（CLI）中使用 SAM 进行推理：
 
 ```py
-`yolo  predict  model=sam_b.pt  source=path/to/image.jpg` 
+yolo  predict  model=sam_b.pt  source=path/to/image.jpg 
 ```
 
 获取更详细的使用说明，请访问分割部分。
@@ -169,7 +249,9 @@ Ultralytics 的段落任意模型（SAM）是一种革命性的图像分割模�
 Ultralytics 的 SAM 提供了一个自动注释功能，允许使用预训练检测模型生成分割数据集。以下是 Python 的一个示例：
 
 ```py
-`from ultralytics.data.annotator import auto_annotate  auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam_b.pt")` 
+from ultralytics.data.annotator import auto_annotate
+
+auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam_b.pt") 
 ```
 
 此功能接受图像路径和预训练检测以及 SAM 分割模型的可选参数，以及设备和输出目录的规格说明。有关完整指南，请参阅自动注释。

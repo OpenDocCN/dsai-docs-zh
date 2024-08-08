@@ -32,7 +32,43 @@
 使用 YOLOv8 进行速度估算示例
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") names = model.model.names  cap = cv2.VideoCapture("path/to/video/file.mp4") assert cap.isOpened(), "Error reading video file" w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))  # Video writer video_writer = cv2.VideoWriter("speed_estimation.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  line_pts = [(0, 360), (1280, 360)]  # Init speed-estimation obj speed_obj = solutions.SpeedEstimator(     reg_pts=line_pts,     names=names,     view_img=True, )  while cap.isOpened():     success, im0 = cap.read()     if not success:         print("Video frame is empty or video processing has been successfully completed.")         break      tracks = model.track(im0, persist=True, show=False)      im0 = speed_obj.estimate_speed(im0, tracks)     video_writer.write(im0)  cap.release() video_writer.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+names = model.model.names
+
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+assert cap.isOpened(), "Error reading video file"
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+
+# Video writer
+video_writer = cv2.VideoWriter("speed_estimation.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+line_pts = [(0, 360), (1280, 360)]
+
+# Init speed-estimation obj
+speed_obj = solutions.SpeedEstimator(
+    reg_pts=line_pts,
+    names=names,
+    view_img=True,
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        print("Video frame is empty or video processing has been successfully completed.")
+        break
+
+    tracks = model.track(im0, persist=True, show=False)
+
+    im0 = speed_obj.estimate_speed(im0, tracks)
+    video_writer.write(im0)
+
+cap.release()
+video_writer.release()
+cv2.destroyAllWindows() 
 ```
 
 <details class="warning" open="open"><summary>速度是估算值</summary>
@@ -71,7 +107,35 @@
 **示例**：
 
 ```py
-`import cv2  from ultralytics import YOLO, solutions  model = YOLO("yolov8n.pt") names = model.model.names  cap = cv2.VideoCapture("path/to/video/file.mp4") w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS)) video_writer = cv2.VideoWriter("speed_estimation.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))  # Initialize SpeedEstimator speed_obj = solutions.SpeedEstimator(     reg_pts=[(0, 360), (1280, 360)],     names=names,     view_img=True, )  while cap.isOpened():     success, im0 = cap.read()     if not success:         break     tracks = model.track(im0, persist=True, show=False)     im0 = speed_obj.estimate_speed(im0, tracks)     video_writer.write(im0)  cap.release() video_writer.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO, solutions
+
+model = YOLO("yolov8n.pt")
+names = model.model.names
+
+cap = cv2.VideoCapture("path/to/video/file.mp4")
+w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+video_writer = cv2.VideoWriter("speed_estimation.avi", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+
+# Initialize SpeedEstimator
+speed_obj = solutions.SpeedEstimator(
+    reg_pts=[(0, 360), (1280, 360)],
+    names=names,
+    view_img=True,
+)
+
+while cap.isOpened():
+    success, im0 = cap.read()
+    if not success:
+        break
+    tracks = model.track(im0, persist=True, show=False)
+    im0 = speed_obj.estimate_speed(im0, tracks)
+    video_writer.write(im0)
+
+cap.release()
+video_writer.release()
+cv2.destroyAllWindows() 
 ```
 
 欲了解更多详细信息，请参阅我们的[官方博客文章](https://www.ultralytics.com/blog/ultralytics-yolov8-for-speed-estimation-in-computer-vision-projects)。
@@ -95,7 +159,7 @@
 将 YOLOv8 模型导出为 ONNX 格式：
 
 ```py
-`yolo  export  --weights  yolov8n.pt  --include  onnx` 
+yolo  export  --weights  yolov8n.pt  --include  onnx 
 ```
 
 在我们的导出指南中了解更多关于导出模型的信息。

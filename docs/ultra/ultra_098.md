@@ -62,31 +62,65 @@
 1.  继续检索数据集的所有标签文件。
 
     ```py
-    `from pathlib import Path  dataset_path = Path("./Fruit-detection")  # replace with 'path/to/dataset' for your custom data labels = sorted(dataset_path.rglob("*labels/*.txt"))  # all data in 'labels'` 
+    from pathlib import Path
+
+    dataset_path = Path("./Fruit-detection")  # replace with 'path/to/dataset' for your custom data
+    labels = sorted(dataset_path.rglob("*labels/*.txt"))  # all data in 'labels' 
     ```
 
 1.  现在，读取数据集的 YAML 文件内容，并提取类别标签的索引。
 
     ```py
-    `yaml_file = "path/to/data.yaml"  # your data YAML with data directories and names dictionary with open(yaml_file, "r", encoding="utf8") as y:     classes = yaml.safe_load(y)["names"] cls_idx = sorted(classes.keys())` 
+    yaml_file = "path/to/data.yaml"  # your data YAML with data directories and names dictionary
+    with open(yaml_file, "r", encoding="utf8") as y:
+        classes = yaml.safe_load(y)["names"]
+    cls_idx = sorted(classes.keys()) 
     ```
 
 1.  初始化一个空的`pandas` DataFrame。
 
     ```py
-    `import pandas as pd  indx = [l.stem for l in labels]  # uses base filename as ID (no extension) labels_df = pd.DataFrame([], columns=cls_idx, index=indx)` 
+    import pandas as pd
+
+    indx = [l.stem for l in labels]  # uses base filename as ID (no extension)
+    labels_df = pd.DataFrame([], columns=cls_idx, index=indx) 
     ```
 
 1.  统计每个类别标签在标注文件中的实例数。
 
     ```py
-    `` from collections import Counter  for label in labels:     lbl_counter = Counter()      with open(label, "r") as lf:         lines = lf.readlines()      for l in lines:         # classes for YOLO label uses integer at first position of each line         lbl_counter[int(l.split(" ")[0])] += 1      labels_df.loc[label.stem] = lbl_counter  labels_df = labels_df.fillna(0.0)  # replace `nan` values with `0.0` `` 
+    from collections import Counter
+
+    for label in labels:
+        lbl_counter = Counter()
+
+        with open(label, "r") as lf:
+            lines = lf.readlines()
+
+        for l in lines:
+            # classes for YOLO label uses integer at first position of each line
+            lbl_counter[int(l.split(" ")[0])] += 1
+
+        labels_df.loc[label.stem] = lbl_counter
+
+    labels_df = labels_df.fillna(0.0)  # replace `nan` values with `0.0` 
     ```
 
 1.  下面是填充的 DataFrame 的示例视图：
 
     ```py
-     `0    1    2    3    4    5 '0000a16e4b057580_jpg.rf.00ab48988370f64f5ca8ea4...'  0.0  0.0  0.0  0.0  0.0  7.0 '0000a16e4b057580_jpg.rf.7e6dce029fb67f01eb19aa7...'  0.0  0.0  0.0  0.0  0.0  7.0 '0000a16e4b057580_jpg.rf.bc4d31cdcbe229dd022957a...'  0.0  0.0  0.0  0.0  0.0  7.0 '00020ebf74c4881c_jpg.rf.508192a0a97aa6c4a3b6882...'  0.0  0.0  0.0  1.0  0.0  0.0 '00020ebf74c4881c_jpg.rf.5af192a2254c8ecc4188a25...'  0.0  0.0  0.0  1.0  0.0  0.0  ...                                                  ...  ...  ...  ...  ...  ... 'ff4cd45896de38be_jpg.rf.c4b5e967ca10c7ced3b9e97...'  0.0  0.0  0.0  0.0  0.0  2.0 'ff4cd45896de38be_jpg.rf.ea4c1d37d2884b3e3cbce08...'  0.0  0.0  0.0  0.0  0.0  2.0 'ff5fd9c3c624b7dc_jpg.rf.bb519feaa36fc4bf630a033...'  1.0  0.0  0.0  0.0  0.0  0.0 'ff5fd9c3c624b7dc_jpg.rf.f0751c9c3aa4519ea3c9d6a...'  1.0  0.0  0.0  0.0  0.0  0.0 'fffe28b31f2a70d4_jpg.rf.7ea16bd637ba0711c53b540...'  0.0  6.0  0.0  0.0  0.0  0.0` 
+     0    1    2    3    4    5
+    '0000a16e4b057580_jpg.rf.00ab48988370f64f5ca8ea4...'  0.0  0.0  0.0  0.0  0.0  7.0
+    '0000a16e4b057580_jpg.rf.7e6dce029fb67f01eb19aa7...'  0.0  0.0  0.0  0.0  0.0  7.0
+    '0000a16e4b057580_jpg.rf.bc4d31cdcbe229dd022957a...'  0.0  0.0  0.0  0.0  0.0  7.0
+    '00020ebf74c4881c_jpg.rf.508192a0a97aa6c4a3b6882...'  0.0  0.0  0.0  1.0  0.0  0.0
+    '00020ebf74c4881c_jpg.rf.5af192a2254c8ecc4188a25...'  0.0  0.0  0.0  1.0  0.0  0.0
+     ...                                                  ...  ...  ...  ...  ...  ...
+    'ff4cd45896de38be_jpg.rf.c4b5e967ca10c7ced3b9e97...'  0.0  0.0  0.0  0.0  0.0  2.0
+    'ff4cd45896de38be_jpg.rf.ea4c1d37d2884b3e3cbce08...'  0.0  0.0  0.0  0.0  0.0  2.0
+    'ff5fd9c3c624b7dc_jpg.rf.bb519feaa36fc4bf630a033...'  1.0  0.0  0.0  0.0  0.0  0.0
+    'ff5fd9c3c624b7dc_jpg.rf.f0751c9c3aa4519ea3c9d6a...'  1.0  0.0  0.0  0.0  0.0  0.0
+    'fffe28b31f2a70d4_jpg.rf.7ea16bd637ba0711c53b540...'  0.0  6.0  0.0  0.0  0.0  0.0 
     ```
 
 行索引标签文件，每个文件对应数据集中的一个图像，列对应类别标签索引。每行代表一个伪特征向量，其中包含数据集中每个类别标签的计数。这种数据结构使得可以将 K 折交叉验证应用于目标检测数据集。
@@ -102,19 +136,37 @@
         +   通过设置`random_state=M`，其中`M`是选择的整数，可以获得可重复的结果。
 
     ```py
-    `from sklearn.model_selection import KFold  ksplit = 5 kf = KFold(n_splits=ksplit, shuffle=True, random_state=20)  # setting random_state for repeatable results  kfolds = list(kf.split(labels_df))` 
+    from sklearn.model_selection import KFold
+
+    ksplit = 5
+    kf = KFold(n_splits=ksplit, shuffle=True, random_state=20)  # setting random_state for repeatable results
+
+    kfolds = list(kf.split(labels_df)) 
     ```
 
 1.  数据集现已分为`k`折，每折都有一个`train`和`val`索引列表。我们将构建一个数据框架来更清楚地显示这些结果。
 
     ```py
-    `folds = [f"split_{n}" for n in range(1, ksplit + 1)] folds_df = pd.DataFrame(index=indx, columns=folds)  for idx, (train, val) in enumerate(kfolds, start=1):     folds_df[f"split_{idx}"].loc[labels_df.iloc[train].index] = "train"     folds_df[f"split_{idx}"].loc[labels_df.iloc[val].index] = "val"` 
+    folds = [f"split_{n}" for n in range(1, ksplit + 1)]
+    folds_df = pd.DataFrame(index=indx, columns=folds)
+
+    for idx, (train, val) in enumerate(kfolds, start=1):
+        folds_df[f"split_{idx}"].loc[labels_df.iloc[train].index] = "train"
+        folds_df[f"split_{idx}"].loc[labels_df.iloc[val].index] = "val" 
     ```
 
 1.  现在，我们将计算每个折中`val`中类别标签与`train`中类别标签的分布比率。
 
     ```py
-    `fold_lbl_distrb = pd.DataFrame(index=folds, columns=cls_idx)  for n, (train_indices, val_indices) in enumerate(kfolds, start=1):     train_totals = labels_df.iloc[train_indices].sum()     val_totals = labels_df.iloc[val_indices].sum()      # To avoid division by zero, we add a small value (1E-7) to the denominator     ratio = val_totals / (train_totals + 1e-7)     fold_lbl_distrb.loc[f"split_{n}"] = ratio` 
+    fold_lbl_distrb = pd.DataFrame(index=folds, columns=cls_idx)
+
+    for n, (train_indices, val_indices) in enumerate(kfolds, start=1):
+        train_totals = labels_df.iloc[train_indices].sum()
+        val_totals = labels_df.iloc[val_indices].sum()
+
+        # To avoid division by zero, we add a small value (1E-7) to the denominator
+        ratio = val_totals / (train_totals + 1e-7)
+        fold_lbl_distrb.loc[f"split_{n}"] = ratio 
     ```
 
     理想情况是每个分割中所有类别的比例都相对均衡，并且跨类别也相似。然而，这将取决于您数据集的具体情况。
@@ -122,7 +174,45 @@
 1.  接下来，我们为每个分割创建目录和数据集 YAML 文件。
 
     ```py
-    `import datetime  supported_extensions = [".jpg", ".jpeg", ".png"]  # Initialize an empty list to store image file paths images = []  # Loop through supported extensions and gather image files for ext in supported_extensions:     images.extend(sorted((dataset_path / "images").rglob(f"*{ext}")))  # Create the necessary directories and dataset YAML files (unchanged) save_path = Path(dataset_path / f"{datetime.date.today().isoformat()}_{ksplit}-Fold_Cross-val") save_path.mkdir(parents=True, exist_ok=True) ds_yamls = []  for split in folds_df.columns:     # Create directories     split_dir = save_path / split     split_dir.mkdir(parents=True, exist_ok=True)     (split_dir / "train" / "images").mkdir(parents=True, exist_ok=True)     (split_dir / "train" / "labels").mkdir(parents=True, exist_ok=True)     (split_dir / "val" / "images").mkdir(parents=True, exist_ok=True)     (split_dir / "val" / "labels").mkdir(parents=True, exist_ok=True)      # Create dataset YAML files     dataset_yaml = split_dir / f"{split}_dataset.yaml"     ds_yamls.append(dataset_yaml)      with open(dataset_yaml, "w") as ds_y:         yaml.safe_dump(             {                 "path": split_dir.as_posix(),                 "train": "train",                 "val": "val",                 "names": classes,             },             ds_y,         )` 
+    import datetime
+
+    supported_extensions = [".jpg", ".jpeg", ".png"]
+
+    # Initialize an empty list to store image file paths
+    images = []
+
+    # Loop through supported extensions and gather image files
+    for ext in supported_extensions:
+        images.extend(sorted((dataset_path / "images").rglob(f"*{ext}")))
+
+    # Create the necessary directories and dataset YAML files (unchanged)
+    save_path = Path(dataset_path / f"{datetime.date.today().isoformat()}_{ksplit}-Fold_Cross-val")
+    save_path.mkdir(parents=True, exist_ok=True)
+    ds_yamls = []
+
+    for split in folds_df.columns:
+        # Create directories
+        split_dir = save_path / split
+        split_dir.mkdir(parents=True, exist_ok=True)
+        (split_dir / "train" / "images").mkdir(parents=True, exist_ok=True)
+        (split_dir / "train" / "labels").mkdir(parents=True, exist_ok=True)
+        (split_dir / "val" / "images").mkdir(parents=True, exist_ok=True)
+        (split_dir / "val" / "labels").mkdir(parents=True, exist_ok=True)
+
+        # Create dataset YAML files
+        dataset_yaml = split_dir / f"{split}_dataset.yaml"
+        ds_yamls.append(dataset_yaml)
+
+        with open(dataset_yaml, "w") as ds_y:
+            yaml.safe_dump(
+                {
+                    "path": split_dir.as_posix(),
+                    "train": "train",
+                    "val": "val",
+                    "names": classes,
+                },
+                ds_y,
+            ) 
     ```
 
 1.  最后，将图像和标签复制到相应的目录（'train'或'val'）中的每个分割。
@@ -130,7 +220,17 @@
     +   **注意：** 此部分代码所需的时间取决于数据集的大小和系统硬件。
 
     ```py
-    `import shutil  for image, label in zip(images, labels):     for split, k_split in folds_df.loc[image.stem].items():         # Destination directory         img_to_path = save_path / split / k_split / "images"         lbl_to_path = save_path / split / k_split / "labels"          # Copy image and label files to new directory (SamefileError if file already exists)         shutil.copy(image, img_to_path / image.name)         shutil.copy(label, lbl_to_path / label.name)` 
+    import shutil
+
+    for image, label in zip(images, labels):
+        for split, k_split in folds_df.loc[image.stem].items():
+            # Destination directory
+            img_to_path = save_path / split / k_split / "images"
+            lbl_to_path = save_path / split / k_split / "labels"
+
+            # Copy image and label files to new directory (SamefileError if file already exists)
+            shutil.copy(image, img_to_path / image.name)
+            shutil.copy(label, lbl_to_path / label.name) 
     ```
 
 ## 保存记录（可选）
@@ -138,7 +238,8 @@
 可选地，您可以将 K 折分割和标签分布数据框架的记录保存为 CSV 文件以供将来参考。
 
 ```py
-`folds_df.to_csv(save_path / "kfold_datasplit.csv") fold_lbl_distrb.to_csv(save_path / "kfold_label_distribution.csv")` 
+folds_df.to_csv(save_path / "kfold_datasplit.csv")
+fold_lbl_distrb.to_csv(save_path / "kfold_label_distribution.csv") 
 ```
 
 ## 使用 K 折数据分割训练 YOLO
@@ -146,13 +247,26 @@
 1.  首先，加载 YOLO 模型。
 
     ```py
-    `from ultralytics import YOLO  weights_path = "path/to/weights.pt" model = YOLO(weights_path, task="detect")` 
+    from ultralytics import YOLO
+
+    weights_path = "path/to/weights.pt"
+    model = YOLO(weights_path, task="detect") 
     ```
 
 1.  接下来，迭代数据集 YAML 文件以运行训练。结果将保存到由`project`和`name`参数指定的目录中。默认情况下，该目录为 'exp/runs#'，其中#是整数索引。
 
     ```py
-    `results = {}  # Define your additional arguments here batch = 16 project = "kfold_demo" epochs = 100  for k in range(ksplit):     dataset_yaml = ds_yamls[k]     model.train(data=dataset_yaml, epochs=epochs, batch=batch, project=project)  # include any train arguments     results[k] = model.metrics  # save output metrics for further analysis` 
+    results = {}
+
+    # Define your additional arguments here
+    batch = 16
+    project = "kfold_demo"
+    epochs = 100
+
+    for k in range(ksplit):
+        dataset_yaml = ds_yamls[k]
+        model.train(data=dataset_yaml, epochs=epochs, batch=batch, project=project)  # include any train arguments
+        results[k] = model.metrics  # save output metrics for further analysis 
     ```
 
 ## 结论

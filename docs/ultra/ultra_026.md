@@ -97,7 +97,7 @@ SAM 2 在主要视频分割基准测试中展示了优越的性能：
 要安装 SAM 2，请使用以下命令。首次使用时，所有 SAM 2 模型将自动下载。
 
 ```py
-`pip  install  ultralytics` 
+pip  install  ultralytics 
 ```
 
 ## 如何使用 SAM 2：在图像和视频分割中的多功能性
@@ -122,7 +122,19 @@ SAM 2 可在广泛的任务范围内使用，包括实时视频编辑、医学�
 使用提示来分割图像或视频中的特定对象。
 
 ```py
-`from ultralytics import SAM  # Load a model model = SAM("sam2_b.pt")  # Display model information (optional) model.info()  # Segment with bounding box prompt results = model("path/to/image.jpg", bboxes=[100, 100, 200, 200])  # Segment with point prompt results = model("path/to/image.jpg", points=[150, 150], labels=[1])` 
+from ultralytics import SAM
+
+# Load a model
+model = SAM("sam2_b.pt")
+
+# Display model information (optional)
+model.info()
+
+# Segment with bounding box prompt
+results = model("path/to/image.jpg", bboxes=[100, 100, 200, 200])
+
+# Segment with point prompt
+results = model("path/to/image.jpg", points=[150, 150], labels=[1]) 
 ```
 
 #### 分割所有内容
@@ -132,11 +144,21 @@ SAM 2 可在广泛的任务范围内使用，包括实时视频编辑、医学�
 分割整个图像或视频内容，无需特定提示。
 
 ```py
-`from ultralytics import SAM  # Load a model model = SAM("sam2_b.pt")  # Display model information (optional) model.info()  # Run inference model("path/to/video.mp4")` 
+from ultralytics import SAM
+
+# Load a model
+model = SAM("sam2_b.pt")
+
+# Display model information (optional)
+model.info()
+
+# Run inference
+model("path/to/video.mp4") 
 ```
 
 ```py
-`# Run inference with a SAM 2 model yolo  predict  model=sam2_b.pt  source=path/to/video.mp4` 
+# Run inference with a SAM 2 model
+yolo  predict  model=sam2_b.pt  source=path/to/video.mp4 
 ```
 
 +   该示例演示了如果不提供提示（边界框/点/掩模），如何使用 SAM 2 分割图像或视频的整个内容。
@@ -159,7 +181,27 @@ SAM 2 可在广泛的任务范围内使用，包括实时视频编辑、医学�
 示例
 
 ```py
-`from ultralytics import SAM, YOLO, FastSAM  # Profile SAM-b model = SAM("sam_b.pt") model.info() model("ultralytics/assets")  # Profile MobileSAM model = SAM("mobile_sam.pt") model.info() model("ultralytics/assets")  # Profile FastSAM-s model = FastSAM("FastSAM-s.pt") model.info() model("ultralytics/assets")  # Profile YOLOv8n-seg model = YOLO("yolov8n-seg.pt") model.info() model("ultralytics/assets")` 
+from ultralytics import SAM, YOLO, FastSAM
+
+# Profile SAM-b
+model = SAM("sam_b.pt")
+model.info()
+model("ultralytics/assets")
+
+# Profile MobileSAM
+model = SAM("mobile_sam.pt")
+model.info()
+model("ultralytics/assets")
+
+# Profile FastSAM-s
+model = FastSAM("FastSAM-s.pt")
+model.info()
+model("ultralytics/assets")
+
+# Profile YOLOv8n-seg
+model = YOLO("yolov8n-seg.pt")
+model.info()
+model("ultralytics/assets") 
 ```
 
 ## 自动注释：高效数据集创建
@@ -173,7 +215,9 @@ SAM 2 可在广泛的任务范围内使用，包括实时视频编辑、医学�
 自动注释示例
 
 ```py
-`from ultralytics.data.annotator import auto_annotate  auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam2_b.pt")` 
+from ultralytics.data.annotator import auto_annotate
+
+auto_annotate(data="path/to/images", det_model="yolov8x.pt", sam_model="sam2_b.pt") 
 ```
 
 | 参数 | 类型 | 描述 | 默认值 |
@@ -203,7 +247,12 @@ SAM 2 可在广泛的任务范围内使用，包括实时视频编辑、医学�
 如果 SAM 2 对你的研究或开发工作至关重要，请引用以下参考文献：
 
 ```py
-`@article{ravi2024sam2,   title={SAM 2: Segment Anything in Images and Videos},   author={Ravi, Nikhila and Gabeur, Valentin and Hu, Yuan-Ting and Hu, Ronghang and Ryali, Chaitanya and Ma, Tengyu and Khedr, Haitham and R{\"a}dle, Roman and Rolland, Chloe and Gustafson, Laura and Mintun, Eric and Pan, Junting and Alwala, Kalyan Vasudev and Carion, Nicolas and Wu, Chao-Yuan and Girshick, Ross and Doll{\'a}r, Piotr and Feichtenhofer, Christoph},   journal={arXiv preprint},   year={2024} }` 
+@article{ravi2024sam2,
+  title={SAM 2: Segment Anything in Images and Videos},
+  author={Ravi, Nikhila and Gabeur, Valentin and Hu, Yuan-Ting and Hu, Ronghang and Ryali, Chaitanya and Ma, Tengyu and Khedr, Haitham and R{\"a}dle, Roman and Rolland, Chloe and Gustafson, Laura and Mintun, Eric and Pan, Junting and Alwala, Kalyan Vasudev and Carion, Nicolas and Wu, Chao-Yuan and Girshick, Ross and Doll{\'a}r, Piotr and Feichtenhofer, Christoph},
+  journal={arXiv preprint},
+  year={2024}
+} 
 ```
 
 我们要感谢 Meta AI 为 AI 社区做出的贡献，使用这一开创性的模型和数据集。
@@ -235,7 +284,19 @@ SAM 2 是 Meta 的 Segment Anything Model（SAM）的继任者，是一种专为
 使用提示来分割图像或视频中的特定对象。
 
 ```py
-`from ultralytics import SAM  # Load a model model = SAM("sam2_b.pt")  # Display model information (optional) model.info()  # Segment with bounding box prompt results = model("path/to/image.jpg", bboxes=[100, 100, 200, 200])  # Segment with point prompt results = model("path/to/image.jpg", points=[150, 150], labels=[1])` 
+from ultralytics import SAM
+
+# Load a model
+model = SAM("sam2_b.pt")
+
+# Display model information (optional)
+model.info()
+
+# Segment with bounding box prompt
+results = model("path/to/image.jpg", bboxes=[100, 100, 200, 200])
+
+# Segment with point prompt
+results = model("path/to/image.jpg", points=[150, 150], labels=[1]) 
 ```
 
 欲了解更详细的使用方法，请参阅如何使用 SAM 2 部分。

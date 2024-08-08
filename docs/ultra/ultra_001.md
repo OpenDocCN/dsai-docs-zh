@@ -73,7 +73,7 @@ Ultralytics YOLO 是备受赞誉的 YOLO（You Only Look Once）系列的最新�
 快速开始 YOLO 非常简单直接。您可以使用 pip 安装 Ultralytics 包，并在几分钟内运行起来。以下是一个基本的安装命令：
 
 ```py
-`pip  install  ultralytics` 
+pip  install  ultralytics 
 ```
 
 对于全面的逐步指南，请访问我们的快速入门指南。这个资源将帮助您完成安装指导、初始设置和运行您的第一个模型。
@@ -91,7 +91,7 @@ Ultralytics YOLO 是备受赞誉的 YOLO（You Only Look Once）系列的最新�
 这里是一个示例命令：
 
 ```py
-`yolo  train  model=yolov8n.pt  data=coco128.yaml  epochs=100  imgsz=640` 
+yolo  train  model=yolov8n.pt  data=coco128.yaml  epochs=100  imgsz=640 
 ```
 
 欲了解详细步骤，请查看我们的模型训练指南，其中包括示例和优化训练过程的技巧。
@@ -111,7 +111,7 @@ Ultralytics 为 YOLO 提供了两种许可选项：
 Ultralytics YOLO 支持高效且可定制的多目标跟踪。要利用跟踪功能，可以使用`yolo track`命令，如下所示：
 
 ```py
-`yolo  track  model=yolov8n.pt  source=video.mp4` 
+yolo  track  model=yolov8n.pt  source=video.mp4 
 ```
 
 有关设置和运行目标跟踪的详细指南，请查看我们的跟踪模式文档，其中解释了配置和在实时场景中的实际应用。

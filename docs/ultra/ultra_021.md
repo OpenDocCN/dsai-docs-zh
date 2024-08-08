@@ -89,7 +89,12 @@ YOLOv7 引入了几个关键特性：
 我们要感谢 YOLOv7 的作者在实时目标检测领域所做的重要贡献：
 
 ```py
-`@article{wang2022yolov7,   title={{YOLOv7}: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors},   author={Wang, Chien-Yao and Bochkovskiy, Alexey and Liao, Hong-Yuan Mark},   journal={arXiv preprint arXiv:2207.02696},   year={2022} }` 
+@article{wang2022yolov7,
+  title={{YOLOv7}: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors},
+  author={Wang, Chien-Yao and Bochkovskiy, Alexey and Liao, Hong-Yuan Mark},
+  journal={arXiv preprint arXiv:2207.02696},
+  year={2022}
+} 
 ```
 
 YOLOv7 的原始论文可在 [arXiv](https://arxiv.org/pdf/2207.02696.pdf) 上找到。作者已将他们的工作公开，并且代码库可以在 [GitHub](https://github.com/WongKinYiu/yolov7) 上访问。我们感谢他们在推动领域发展和使他们的工作对更广泛的社区可用方面所做的努力。
@@ -115,13 +120,14 @@ YOLOv7 引入了几项创新，包括模型重新参数化和动态标签分配�
 1.  克隆 YOLOv7 仓库：
 
     ```py
-    `git  clone  https://github.com/WongKinYiu/yolov7` 
+    git  clone  https://github.com/WongKinYiu/yolov7 
     ```
 
 1.  导航至克隆的目录并安装依赖项：
 
     ```py
-    `cd  yolov7 pip  install  -r  requirements.txt` 
+    cd  yolov7
+    pip  install  -r  requirements.txt 
     ```
 
 1.  根据存储库中提供的[使用说明](https://github.com/WongKinYiu/yolov7)准备您的数据集并配置模型参数。有关更多指导，请访问 YOLOv7 GitHub 存储库以获取最新信息和更新。

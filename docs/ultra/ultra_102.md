@@ -31,13 +31,13 @@
 首先，让我们创建一个新的 Conda 环境。打开终端并运行以下命令：
 
 ```py
-`conda  create  --name  ultralytics-env  python=3.8  -y` 
+conda  create  --name  ultralytics-env  python=3.8  -y 
 ```
 
 激活新环境：
 
 ```py
-`conda  activate  ultralytics-env` 
+conda  activate  ultralytics-env 
 ```
 
 * * *
@@ -47,7 +47,7 @@
 您可以从 conda-forge 频道安装 Ultralytics 软件包。执行以下命令：
 
 ```py
-`conda  install  -c  conda-forge  ultralytics` 
+conda  install  -c  conda-forge  ultralytics 
 ```
 
 ### CUDA 环境注意事项
@@ -55,7 +55,7 @@
 如果您在支持 CUDA 的环境中工作，建议一起安装 `ultralytics`、`pytorch` 和 `pytorch-cuda` 以解决任何冲突：
 
 ```py
-`conda  install  -c  pytorch  -c  nvidia  -c  conda-forge  pytorch  torchvision  pytorch-cuda=11.8  ultralytics` 
+conda  install  -c  pytorch  -c  nvidia  -c  conda-forge  pytorch  torchvision  pytorch-cuda=11.8  ultralytics 
 ```
 
 * * *
@@ -65,7 +65,11 @@
 安装了 Ultralytics 后，您现在可以开始使用其强大的功能进行对象检测、实例分割等。例如，要预测一张图像，您可以运行：
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n.pt")  # initialize model results = model("path/to/image.jpg")  # perform inference results[0].show()  # display results for the first image` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")  # initialize model
+results = model("path/to/image.jpg")  # perform inference
+results[0].show()  # display results for the first image 
 ```
 
 * * *
@@ -77,13 +81,19 @@
 拉取最新的 Ultralytics 镜像：
 
 ```py
-`# Set image name as a variable t=ultralytics/ultralytics:latest-conda  # Pull the latest Ultralytics image from Docker Hub sudo  docker  pull  $t` 
+# Set image name as a variable
+t=ultralytics/ultralytics:latest-conda
+
+# Pull the latest Ultralytics image from Docker Hub
+sudo  docker  pull  $t 
 ```
 
 运行镜像：
 
 ```py
-`# Run the Ultralytics image in a container with GPU support sudo  docker  run  -it  --ipc=host  --gpus  all  $t  # all GPUs sudo  docker  run  -it  --ipc=host  --gpus  '"device=2,3"'  $t  # specify GPUs` 
+# Run the Ultralytics image in a container with GPU support
+sudo  docker  run  -it  --ipc=host  --gpus  all  $t  # all GPUs
+sudo  docker  run  -it  --ipc=host  --gpus  '"device=2,3"'  $t  # specify GPUs 
 ```
 
 ## 使用 Libmamba 加速安装
@@ -97,13 +107,13 @@
 1.  首先，安装`conda-libmamba-solver`包。如果您的 Conda 版本为 4.11 或更高，则可以跳过此步骤，因为`libmamba`已默认包含。
 
     ```py
-    `conda  install  conda-libmamba-solver` 
+    conda  install  conda-libmamba-solver 
     ```
 
 1.  接下来，配置 Conda 使用`libmamba`作为求解器：
 
     ```py
-    `conda  config  --set  solver  libmamba` 
+    conda  config  --set  solver  libmamba 
     ```
 
 就是这样！现在您的 Conda 安装将使用`libmamba`作为求解器，这应该会使包安装过程更快。
@@ -119,19 +129,19 @@
 为 Ultralytics 项目设置 Conda 环境非常简单，并确保平稳的包管理。首先，使用以下命令创建一个新的 Conda 环境：
 
 ```py
-`conda  create  --name  ultralytics-env  python=3.8  -y` 
+conda  create  --name  ultralytics-env  python=3.8  -y 
 ```
 
 然后，使用以下命令激活新环境：
 
 ```py
-`conda  activate  ultralytics-env` 
+conda  activate  ultralytics-env 
 ```
 
 最后，从 conda-forge 渠道安装 Ultralytics：
 
 ```py
-`conda  install  -c  conda-forge  ultralytics` 
+conda  install  -c  conda-forge  ultralytics 
 ```
 
 ### 为什么在 Ultralytics 项目中管理依赖项时应该使用 Conda 而不是 pip？
@@ -143,7 +153,7 @@ Conda 是一个强大的包和环境管理系统，相比于 pip 有几个优点
 是的，您可以通过使用支持 CUDA 的环境来增强性能。确保同时安装`ultralytics`，`pytorch`和`pytorch-cuda`以避免冲突：
 
 ```py
-`conda  install  -c  pytorch  -c  nvidia  -c  conda-forge  pytorch  torchvision  pytorch-cuda=11.8  ultralytics` 
+conda  install  -c  pytorch  -c  nvidia  -c  conda-forge  pytorch  torchvision  pytorch-cuda=11.8  ultralytics 
 ```
 
 此设置使 GPU 加速成为可能，对于深度学习模型训练和推断等密集任务至关重要。更多信息，请访问 Ultralytics 安装指南。
@@ -153,7 +163,8 @@ Conda 是一个强大的包和环境管理系统，相比于 pip 有几个优点
 使用 Ultralytics Docker 镜像可以确保一个一致和可重现的环境，消除了“在我的机器上可以运行”的问题。这些镜像包括预配置的 Conda 环境，简化了设置过程。您可以使用以下命令拉取并运行最新的 Ultralytics Docker 镜像：
 
 ```py
-`sudo  docker  pull  ultralytics/ultralytics:latest-conda sudo  docker  run  -it  --ipc=host  --gpus  all  ultralytics/ultralytics:latest-conda` 
+sudo  docker  pull  ultralytics/ultralytics:latest-conda
+sudo  docker  run  -it  --ipc=host  --gpus  all  ultralytics/ultralytics:latest-conda 
 ```
 
 这种方法非常适合在生产中部署应用程序或运行复杂的工作流程而无需手动配置。了解更多关于 Ultralytics Conda Docker 镜像的信息。
@@ -163,13 +174,13 @@ Conda 是一个强大的包和环境管理系统，相比于 pip 有几个优点
 您可以通过使用`libmamba`，Conda 的快速依赖求解器来加速包安装过程。首先，安装`conda-libmamba-solver`包：
 
 ```py
-`conda  install  conda-libmamba-solver` 
+conda  install  conda-libmamba-solver 
 ```
 
 然后配置 Conda 使用`libmamba`作为求解器：
 
 ```py
-`conda  config  --set  solver  libmamba` 
+conda  config  --set  solver  libmamba 
 ```
 
 这种设置提供了更快和更高效的包管理。有关优化您的环境的更多提示，请阅读关于 libmamba 安装的内容。

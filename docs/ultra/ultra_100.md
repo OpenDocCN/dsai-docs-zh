@@ -45,7 +45,7 @@ SAHI（切片辅助超推理）是一个创新的库，旨在优化大规模和�
 要开始，请安装 SAHI 和 Ultralytics 的最新版本：
 
 ```py
-`pip  install  -U  ultralytics  sahi` 
+pip  install  -U  ultralytics  sahi 
 ```
 
 ### 导入模块并下载资源
@@ -53,7 +53,22 @@ SAHI（切片辅助超推理）是一个创新的库，旨在优化大规模和�
 这是如何导入必要模块、下载 YOLOv8 模型和一些测试图像的方法：
 
 ```py
-`from sahi.utils.file import download_from_url from sahi.utils.yolov8 import download_yolov8s_model  # Download YOLOv8 model yolov8_model_path = "models/yolov8s.pt" download_yolov8s_model(yolov8_model_path)  # Download test images download_from_url(     "https://raw.githubusercontent.com/obss/sahi/main/demo/demo_data/small-vehicles1.jpeg",     "demo_data/small-vehicles1.jpeg", ) download_from_url(     "https://raw.githubusercontent.com/obss/sahi/main/demo/demo_data/terrain2.png",     "demo_data/terrain2.png", )` 
+from sahi.utils.file import download_from_url
+from sahi.utils.yolov8 import download_yolov8s_model
+
+# Download YOLOv8 model
+yolov8_model_path = "models/yolov8s.pt"
+download_yolov8s_model(yolov8_model_path)
+
+# Download test images
+download_from_url(
+    "https://raw.githubusercontent.com/obss/sahi/main/demo/demo_data/small-vehicles1.jpeg",
+    "demo_data/small-vehicles1.jpeg",
+)
+download_from_url(
+    "https://raw.githubusercontent.com/obss/sahi/main/demo/demo_data/terrain2.png",
+    "demo_data/terrain2.png",
+) 
 ```
 
 ## 使用 YOLOv8 进行标准推断
@@ -63,7 +78,14 @@ SAHI（切片辅助超推理）是一个创新的库，旨在优化大规模和�
 您可以像这样实例化 YOLOv8 模型进行目标检测：
 
 ```py
-`from sahi import AutoDetectionModel  detection_model = AutoDetectionModel.from_pretrained(     model_type="yolov8",     model_path=yolov8_model_path,     confidence_threshold=0.3,     device="cpu",  # or 'cuda:0' )` 
+from sahi import AutoDetectionModel
+
+detection_model = AutoDetectionModel.from_pretrained(
+    model_type="yolov8",
+    model_path=yolov8_model_path,
+    confidence_threshold=0.3,
+    device="cpu",  # or 'cuda:0'
+) 
 ```
 
 ### 执行标准预测
@@ -71,7 +93,13 @@ SAHI（切片辅助超推理）是一个创新的库，旨在优化大规模和�
 使用图像路径或 numpy 图像执行标准推断。
 
 ```py
-`from sahi.predict import get_prediction  # With an image path result = get_prediction("demo_data/small-vehicles1.jpeg", detection_model)  # With a numpy image result = get_prediction(read_image("demo_data/small-vehicles1.jpeg"), detection_model)` 
+from sahi.predict import get_prediction
+
+# With an image path
+result = get_prediction("demo_data/small-vehicles1.jpeg", detection_model)
+
+# With a numpy image
+result = get_prediction(read_image("demo_data/small-vehicles1.jpeg"), detection_model) 
 ```
 
 ### 可视化结果
@@ -79,7 +107,8 @@ SAHI（切片辅助超推理）是一个创新的库，旨在优化大规模和�
 导出并可视化预测的边界框和掩模：
 
 ```py
-`result.export_visuals(export_dir="demo_data/") Image("demo_data/prediction_visual.png")` 
+result.export_visuals(export_dir="demo_data/")
+Image("demo_data/prediction_visual.png") 
 ```
 
 ## 使用 YOLOv8 进行切片推断
@@ -87,7 +116,16 @@ SAHI（切片辅助超推理）是一个创新的库，旨在优化大规模和�
 指定切片尺寸和重叠比率执行切片推断：
 
 ```py
-`from sahi.predict import get_sliced_prediction  result = get_sliced_prediction(     "demo_data/small-vehicles1.jpeg",     detection_model,     slice_height=256,     slice_width=256,     overlap_height_ratio=0.2,     overlap_width_ratio=0.2, )` 
+from sahi.predict import get_sliced_prediction
+
+result = get_sliced_prediction(
+    "demo_data/small-vehicles1.jpeg",
+    detection_model,
+    slice_height=256,
+    slice_width=256,
+    overlap_height_ratio=0.2,
+    overlap_width_ratio=0.2,
+) 
 ```
 
 ## 处理预测结果
@@ -95,7 +133,14 @@ SAHI（切片辅助超推理）是一个创新的库，旨在优化大规模和�
 SAHI 提供 `PredictionResult` 对象，可转换为各种注释格式：
 
 ```py
-`# Access the object prediction list object_prediction_list = result.object_prediction_list  # Convert to COCO annotation, COCO prediction, imantics, and fiftyone formats result.to_coco_annotations()[:3] result.to_coco_predictions(image_id=1)[:3] result.to_imantics_annotations()[:3] result.to_fiftyone_detections()[:3]` 
+# Access the object prediction list
+object_prediction_list = result.object_prediction_list
+
+# Convert to COCO annotation, COCO prediction, imantics, and fiftyone formats
+result.to_coco_annotations()[:3]
+result.to_coco_predictions(image_id=1)[:3]
+result.to_imantics_annotations()[:3]
+result.to_fiftyone_detections()[:3] 
 ```
 
 ## 批量预测
@@ -103,7 +148,19 @@ SAHI 提供 `PredictionResult` 对象，可转换为各种注释格式：
 对目录中的图像进行批量预测：
 
 ```py
-`from sahi.predict import predict  predict(     model_type="yolov8",     model_path="path/to/yolov8n.pt",     model_device="cpu",  # or 'cuda:0'     model_confidence_threshold=0.4,     source="path/to/dir",     slice_height=256,     slice_width=256,     overlap_height_ratio=0.2,     overlap_width_ratio=0.2, )` 
+from sahi.predict import predict
+
+predict(
+    model_type="yolov8",
+    model_path="path/to/yolov8n.pt",
+    model_device="cpu",  # or 'cuda:0'
+    model_confidence_threshold=0.4,
+    source="path/to/dir",
+    slice_height=256,
+    slice_width=256,
+    overlap_height_ratio=0.2,
+    overlap_width_ratio=0.2,
+) 
 ```
 
 就这样！现在您已准备好使用 YOLOv8 和 SAHI 进行标准和切片推断了。
@@ -113,7 +170,14 @@ SAHI 提供 `PredictionResult` 对象，可转换为各种注释格式：
 如果您在研究或开发工作中使用 SAHI，请引用原始的 SAHI 论文并致谢作者：
 
 ```py
-`@article{akyon2022sahi,   title={Slicing Aided Hyper Inference and Fine-tuning for Small Object Detection},   author={Akyon, Fatih Cagatay and Altinuc, Sinan Onur and Temizel, Alptekin},   journal={2022 IEEE International Conference on Image Processing (ICIP)},   doi={10.1109/ICIP46576.2022.9897990},   pages={966-970},   year={2022} }` 
+@article{akyon2022sahi,
+  title={Slicing Aided Hyper Inference and Fine-tuning for Small Object Detection},
+  author={Akyon, Fatih Cagatay and Altinuc, Sinan Onur and Temizel, Alptekin},
+  journal={2022 IEEE International Conference on Image Processing (ICIP)},
+  doi={10.1109/ICIP46576.2022.9897990},
+  pages={966-970},
+  year={2022}
+} 
 ```
 
 我们衷心感谢 SAHI 研究组为计算机视觉社区创建和维护这一宝贵资源。有关 SAHI 及其作者的更多信息，请访问 [SAHI GitHub 仓库](https://github.com/obss/sahi)。
@@ -125,13 +189,24 @@ SAHI 提供 `PredictionResult` 对象，可转换为各种注释格式：
 将 Ultralytics YOLOv8 与 SAHI 集成（切片辅助超推断）用于在高分辨率图像上优化切片推断，通过将图像分割成可管理的切片来改善内存使用和确保高检测精度。要开始使用，您需要安装 ultralytics 和 sahi 库：
 
 ```py
-`pip  install  -U  ultralytics  sahi` 
+pip  install  -U  ultralytics  sahi 
 ```
 
 然后，下载 YOLOv8 模型和测试图像：
 
 ```py
-`from sahi.utils.file import download_from_url from sahi.utils.yolov8 import download_yolov8s_model  # Download YOLOv8 model yolov8_model_path = "models/yolov8s.pt" download_yolov8s_model(yolov8_model_path)  # Download test images download_from_url(     "https://raw.githubusercontent.com/obss/sahi/main/demo/demo_data/small-vehicles1.jpeg",     "demo_data/small-vehicles1.jpeg", )` 
+from sahi.utils.file import download_from_url
+from sahi.utils.yolov8 import download_yolov8s_model
+
+# Download YOLOv8 model
+yolov8_model_path = "models/yolov8s.pt"
+download_yolov8s_model(yolov8_model_path)
+
+# Download test images
+download_from_url(
+    "https://raw.githubusercontent.com/obss/sahi/main/demo/demo_data/small-vehicles1.jpeg",
+    "demo_data/small-vehicles1.jpeg",
+) 
 ```
 
 欲了解更详细的说明，请参阅我们的切片推断指南。
@@ -153,7 +228,10 @@ SAHI 提供 `PredictionResult` 对象，可转换为各种注释格式：
 是的，当使用 YOLOv8 和 SAHI 时，您可以可视化预测结果。以下是导出和可视化结果的方法：
 
 ```py
-`result.export_visuals(export_dir="demo_data/") from IPython.display import Image  Image("demo_data/prediction_visual.png")` 
+result.export_visuals(export_dir="demo_data/")
+from IPython.display import Image
+
+Image("demo_data/prediction_visual.png") 
 ```
 
 此命令将预测结果保存到指定目录，并且您可以加载图像在您的笔记本或应用程序中查看它。查看标准推理部分以获取详细指南。
@@ -183,7 +261,19 @@ SAHI（切片辅助超推理）提供了几个功能，可以补充 Ultralytics 
 批量预测示例：
 
 ```py
-`from sahi.predict import predict  predict(     model_type="yolov8",     model_path="path/to/yolov8n.pt",     model_device="cpu",  # or 'cuda:0'     model_confidence_threshold=0.4,     source="path/to/dir",     slice_height=256,     slice_width=256,     overlap_height_ratio=0.2,     overlap_width_ratio=0.2, )` 
+from sahi.predict import predict
+
+predict(
+    model_type="yolov8",
+    model_path="path/to/yolov8n.pt",
+    model_device="cpu",  # or 'cuda:0'
+    model_confidence_threshold=0.4,
+    source="path/to/dir",
+    slice_height=256,
+    slice_width=256,
+    overlap_height_ratio=0.2,
+    overlap_width_ratio=0.2,
+) 
 ```
 
 要获取更详细的步骤，请访问我们的批量预测部分。

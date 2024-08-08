@@ -31,11 +31,18 @@ ImageNette 数据集在图像分类任务中广泛用于训练和评估深度学
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="imagenette", epochs=100, imgsz=224)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="imagenette", epochs=100, imgsz=224) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=imagenette  model=yolov8n-cls.pt  epochs=100  imgsz=224` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=imagenette  model=yolov8n-cls.pt  epochs=100  imgsz=224 
 ```
 
 ## 样本图像和注释
@@ -55,21 +62,35 @@ ImageNette 数据集包含各种对象和场景的彩色图像，为图像分类
 使用 ImageNette160 的训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model with ImageNette160 results = model.train(data="imagenette160", epochs=100, imgsz=160)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model with ImageNette160
+results = model.train(data="imagenette160", epochs=100, imgsz=160) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model with ImageNette160 yolo  classify  train  data=imagenette160  model=yolov8n-cls.pt  epochs=100  imgsz=160` 
+# Start training from a pretrained *.pt model with ImageNette160
+yolo  classify  train  data=imagenette160  model=yolov8n-cls.pt  epochs=100  imgsz=160 
 ```
 
 使用 ImageNette320 进行训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model with ImageNette320 results = model.train(data="imagenette320", epochs=100, imgsz=320)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model with ImageNette320
+results = model.train(data="imagenette320", epochs=100, imgsz=320) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model with ImageNette320 yolo  classify  train  data=imagenette320  model=yolov8n-cls.pt  epochs=100  imgsz=320` 
+# Start training from a pretrained *.pt model with ImageNette320
+yolo  classify  train  data=imagenette320  model=yolov8n-cls.pt  epochs=100  imgsz=320 
 ```
 
 这些数据集的较小版本允许在开发过程中快速迭代，同时仍提供有价值和现实的图像分类任务。
@@ -91,11 +112,18 @@ ImageNette 数据集包含各种对象和场景的彩色图像，为图像分类
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="imagenette", epochs=100, imgsz=224)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="imagenette", epochs=100, imgsz=224) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=imagenette  model=yolov8n-cls.pt  epochs=100  imgsz=224` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=imagenette  model=yolov8n-cls.pt  epochs=100  imgsz=224 
 ```
 
 欲了解更多详细信息，请参阅训练文档页面。
@@ -119,11 +147,18 @@ ImageNette 数据集有几个优点：
 使用 ImageNette160 进行训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # Train the model with ImageNette160 results = model.train(data="imagenette160", epochs=100, imgsz=160)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")
+
+# Train the model with ImageNette160
+results = model.train(data="imagenette160", epochs=100, imgsz=160) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model with ImageNette160 yolo  detect  train  data=imagenette160  model=yolov8n-cls.pt  epochs=100  imgsz=160` 
+# Start training from a pretrained *.pt model with ImageNette160
+yolo  detect  train  data=imagenette160  model=yolov8n-cls.pt  epochs=100  imgsz=160 
 ```
 
 欲了解更多信息，请参阅使用 ImageNette160 和 ImageNette320 进行训练。

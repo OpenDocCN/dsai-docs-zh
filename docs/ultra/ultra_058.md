@@ -27,13 +27,13 @@
 使用 Dim = 2 进行格式化
 
 ```py
-`<class-index> <x> <y> <width> <height> <px1> <py1> <px2> <py2> ... <pxn> <pyn>` 
+<class-index> <x> <y> <width> <height> <px1> <py1> <px2> <py2> ... <pxn> <pyn> 
 ```
 
 使用 Dim = 3 进行格式化
 
 ```py
-`<class-index> <x> <y> <width> <height> <px1> <py1> <p1-visibility> <px2> <py2> <p2-visibility> <pxn> <pyn> <p2-visibility>` 
+<class-index> <x> <y> <width> <height> <px1> <py1> <p1-visibility> <px2> <py2> <p2-visibility> <pxn> <pyn> <p2-visibility> 
 ```
 
 在此格式中，`<class-index>` 是对象类的索引，`<x> <y> <width> <height>` 是边界框的坐标，`<px1> <py1> <px2> <py2> ... <pxn> <pyn>` 是关键点的像素坐标。坐标之间用空格分隔。
@@ -43,7 +43,19 @@
 Ultralytics 框架使用 YAML 文件格式定义用于训练检测模型的数据集和模型配置。以下是用于定义检测数据集的 YAML 格式示例：
 
 ```py
-`# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/coco8-pose  # dataset root dir train:  images/train  # train images (relative to 'path') 4 images val:  images/val  # val images (relative to 'path') 4 images test:  # test images (optional)  # Keypoints kpt_shape:  [17,  3]  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible) flip_idx:  [0,  2,  1,  4,  3,  6,  5,  8,  7,  10,  9,  12,  11,  14,  13,  16,  15]  # Classes dictionary names:   0:  person` 
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/coco8-pose  # dataset root dir
+train:  images/train  # train images (relative to 'path') 4 images
+val:  images/val  # val images (relative to 'path') 4 images
+test:  # test images (optional)
+
+# Keypoints
+kpt_shape:  [17,  3]  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
+flip_idx:  [0,  2,  1,  4,  3,  6,  5,  8,  7,  10,  9,  12,  11,  14,  13,  16,  15]
+
+# Classes dictionary
+names:
+  0:  person 
 ```
 
 `train` 和 `val` 字段指定了包含训练和验证图像的目录路径。
@@ -57,11 +69,18 @@ Ultralytics 框架使用 YAML 文件格式定义用于训练检测模型的数�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640 
 ```
 
 ## 支持的数据集
@@ -125,7 +144,9 @@ Ultralytics 提供了一个方便的转换工具，可以将流行的 COCO 数�
 示例
 
 ```py
-`from ultralytics.data.converter import convert_coco  convert_coco(labels_dir="path/to/coco/annotations/", use_keypoints=True)` 
+from ultralytics.data.converter import convert_coco
+
+convert_coco(labels_dir="path/to/coco/annotations/", use_keypoints=True) 
 ```
 
 该转换工具可用于将 COCO 数据集或任何 COCO 格式的数据集转换为 Ultralytics YOLO 格式。`use_keypoints` 参数指定是否在转换的标签中包含关键点（用于姿态估计）。
@@ -151,7 +172,10 @@ Ultralytics YOLO 格式的姿态估计数据集涉及为每张图像标注一个
 要在 Ultralytics YOLO 中使用 COCO-Pose 数据集：1\. 下载数据集并准备 YOLO 格式的标签文件。2\. 创建一个 YAML 配置文件，指定训练和验证图像的路径，关键点形状和类名。3\. 使用配置文件进行训练：
 
 ```py
-```` ```pypython from ultralytics import YOLO  model = YOLO("yolov8n-pose.pt")  # load pretrained model results = model.train(data="coco-pose.yaml", epochs=100, imgsz=640) ```  欲了解更多信息，请访问 COCO-Pose 和训练部分。 ```py` 
+```` ```py
+
+For more information, visit [COCO-Pose](coco.md) and [train](../../modes/train.md) sections. 
+```  欲了解更多信息，请访问 COCO-Pose 和训练部分。 ```py
 ```
 
 ### 如何在 Ultralytics YOLO 中添加自己的姿势估计数据集？
@@ -159,16 +183,25 @@ Ultralytics YOLO 格式的姿态估计数据集涉及为每张图像标注一个
 要添加你的数据集：1\. 将你的标注转换为 Ultralytics YOLO 格式。2\. 创建一个 YAML 配置文件，指定数据集路径、类别数量和类名。3\. 使用配置文件训练你的模型：
 
 ```py
-```` ```pypython from ultralytics import YOLO  model = YOLO("yolov8n-pose.pt") results = model.train(data="your-dataset.yaml", epochs=100, imgsz=640) ```  完整步骤，请查看添加自己数据集部分。 ```py` 
+
+For complete steps, check the [Adding your own dataset](#adding-your-own-dataset) section. 
+```` ```py
+path:  ../datasets/coco8-pose
+train:  images/train
+val:  images/val
+names:
+  0:  person 
+```  完整步骤，请查看添加自己数据集部分。 ```py
+from ultralytics.data.converter import convert_coco
+
+convert_coco(labels_dir="path/to/coco/annotations/", use_keypoints=True) 
 ```
 
 ### Ultralytics YOLO 中的数据集 YAML 文件的目的是什么？
 
 Ultralytics YOLO 中的数据集 YAML 文件定义了训练的数据集和模型配置。它指定了训练、验证和测试图像的路径，关键点形状，类名以及其他配置选项。这种结构化格式有助于简化数据集管理和模型训练。以下是一个 YAML 格式的示例：
 
-```py
-`path:  ../datasets/coco8-pose train:  images/train val:  images/val names:   0:  person` 
-```
+[PRE12]
 
 更多关于创建数据集 YAML 配置文件的信息，请阅读 Dataset YAML 格式。
 
@@ -176,8 +209,6 @@ Ultralytics YOLO 中的数据集 YAML 文件定义了训练的数据集和模型
 
 Ultralytics 提供一个转换工具，将 COCO 数据集标签转换为 YOLO 格式，包括关键点信息：
 
-```py
-`from ultralytics.data.converter import convert_coco  convert_coco(labels_dir="path/to/coco/annotations/", use_keypoints=True)` 
-```
+[PRE13]
 
 此工具帮助无缝集成 COCO 数据集到 YOLO 项目中。详情请参考 Conversion Tool 部分。

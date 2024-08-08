@@ -59,7 +59,37 @@ IoU（Intersection over Union）是物体检测中的一个指标，用于衡量
 使用方法
 
 ```py
-`from ultralytics import YOLO  # Load the model model = YOLO("yolov8n.pt")  # Run the evaluation results = model.val(data="coco8.yaml")  # Print specific metrics print("Class indices with average precision:", results.ap_class_index) print("Average precision for all classes:", results.box.all_ap) print("Average precision:", results.box.ap) print("Average precision at IoU=0.50:", results.box.ap50) print("Class indices for average precision:", results.box.ap_class_index) print("Class-specific results:", results.box.class_result) print("F1 score:", results.box.f1) print("F1 score curve:", results.box.f1_curve) print("Overall fitness score:", results.box.fitness) print("Mean average precision:", results.box.map) print("Mean average precision at IoU=0.50:", results.box.map50) print("Mean average precision at IoU=0.75:", results.box.map75) print("Mean average precision for different IoU thresholds:", results.box.maps) print("Mean results for different metrics:", results.box.mean_results) print("Mean precision:", results.box.mp) print("Mean recall:", results.box.mr) print("Precision:", results.box.p) print("Precision curve:", results.box.p_curve) print("Precision values:", results.box.prec_values) print("Specific precision metrics:", results.box.px) print("Recall:", results.box.r) print("Recall curve:", results.box.r_curve)` 
+from ultralytics import YOLO
+
+# Load the model
+model = YOLO("yolov8n.pt")
+
+# Run the evaluation
+results = model.val(data="coco8.yaml")
+
+# Print specific metrics
+print("Class indices with average precision:", results.ap_class_index)
+print("Average precision for all classes:", results.box.all_ap)
+print("Average precision:", results.box.ap)
+print("Average precision at IoU=0.50:", results.box.ap50)
+print("Class indices for average precision:", results.box.ap_class_index)
+print("Class-specific results:", results.box.class_result)
+print("F1 score:", results.box.f1)
+print("F1 score curve:", results.box.f1_curve)
+print("Overall fitness score:", results.box.fitness)
+print("Mean average precision:", results.box.map)
+print("Mean average precision at IoU=0.50:", results.box.map50)
+print("Mean average precision at IoU=0.75:", results.box.map75)
+print("Mean average precision for different IoU thresholds:", results.box.maps)
+print("Mean results for different metrics:", results.box.mean_results)
+print("Mean precision:", results.box.mp)
+print("Mean recall:", results.box.mr)
+print("Precision:", results.box.p)
+print("Precision curve:", results.box.p_curve)
+print("Precision values:", results.box.prec_values)
+print("Specific precision metrics:", results.box.px)
+print("Recall:", results.box.r)
+print("Recall curve:", results.box.r_curve) 
 ```
 
 结果对象还包括预处理时间、推理时间、损失和后处理时间等速度指标。通过分析这些指标，您可以微调和优化 YOLOv8 模型，提升其在特定用例中的效果。
@@ -131,7 +161,19 @@ IoU（Intersection over Union）是物体检测中的一个指标，用于衡量
 使用方法
 
 ```py
-`from ultralytics import YOLO  # Load the model model = YOLO("yolov8n.pt")  # Run the evaluation results = model.val(data="coco8.yaml")  # Print specific metrics print("Class indices with average precision:", results.ap_class_index) print("Average precision for all classes:", results.box.all_ap) print("Mean average precision at IoU=0.50:", results.box.map50) print("Mean recall:", results.box.mr)` 
+from ultralytics import YOLO
+
+# Load the model
+model = YOLO("yolov8n.pt")
+
+# Run the evaluation
+results = model.val(data="coco8.yaml")
+
+# Print specific metrics
+print("Class indices with average precision:", results.ap_class_index)
+print("Average precision for all classes:", results.box.all_ap)
+print("Mean average precision at IoU=0.50:", results.box.map50)
+print("Mean recall:", results.box.mr) 
 ```
 
 分析这些指标有助于微调和优化您的 YOLOv8 模型。深入了解，请查看我们关于 YOLOv8 指标的指南。

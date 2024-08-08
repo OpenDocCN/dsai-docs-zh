@@ -21,7 +21,30 @@ YAML（另一种标记语言）文件用作指定数据集配置细节的手段�
 ultralytics/cfg/datasets/tiger-pose.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # Tiger Pose dataset by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/pose/tiger-pose/ # Example usage: yolo train data=tiger-pose.yaml # parent # ├── ultralytics # └── datasets #     └── tiger-pose  ← downloads here (75.3 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/tiger-pose  # dataset root dir train:  train  # train images (relative to 'path') 210 images val:  val  # val images (relative to 'path') 53 images  # Keypoints kpt_shape:  [12,  2]  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible) flip_idx:  [0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11]  # Classes names:   0:  tiger  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/tiger-pose.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Tiger Pose dataset by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/pose/tiger-pose/
+# Example usage: yolo train data=tiger-pose.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── tiger-pose  ← downloads here (75.3 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/tiger-pose  # dataset root dir
+train:  train  # train images (relative to 'path') 210 images
+val:  val  # val images (relative to 'path') 53 images
+
+# Keypoints
+kpt_shape:  [12,  2]  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
+flip_idx:  [0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11]
+
+# Classes
+names:
+  0:  tiger
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/tiger-pose.zip 
 ```
 
 ## 用法
@@ -31,11 +54,18 @@ ultralytics/cfg/datasets/tiger-pose.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="tiger-pose.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="tiger-pose.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  task=pose  mode=train  data=tiger-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  task=pose  mode=train  data=tiger-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640 
 ```
 
 ## 样本图像和注释
@@ -53,11 +83,18 @@ ultralytics/cfg/datasets/tiger-pose.yaml
 推理示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/best.pt")  # load a tiger-pose trained model  # Run inference results = model.predict(source="https://youtu.be/MIBAT6BGE6U", show=True)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/best.pt")  # load a tiger-pose trained model
+
+# Run inference
+results = model.predict(source="https://youtu.be/MIBAT6BGE6U", show=True) 
 ```
 
 ```py
-`# Run inference using a tiger-pose trained model yolo  task=pose  mode=predict  source="https://youtu.be/MIBAT6BGE6U"  show=True  model="path/to/best.pt"` 
+# Run inference using a tiger-pose trained model
+yolo  task=pose  mode=predict  source="https://youtu.be/MIBAT6BGE6U"  show=True  model="path/to/best.pt" 
 ```
 
 ## 引用和致谢
@@ -77,11 +114,18 @@ Ultralytics Tiger-Pose 数据集专为姿势估计任务设计，包括来自[Yo
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="tiger-pose.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="tiger-pose.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  task=pose  mode=train  data=tiger-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  task=pose  mode=train  data=tiger-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640 
 ```
 
 ### `tiger-pose.yaml`文件包含哪些配置？
@@ -95,11 +139,18 @@ Ultralytics Tiger-Pose 数据集专为姿势估计任务设计，包括来自[Yo
 推断示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/best.pt")  # load a tiger-pose trained model  # Run inference results = model.predict(source="https://youtu.be/MIBAT6BGE6U", show=True)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/best.pt")  # load a tiger-pose trained model
+
+# Run inference
+results = model.predict(source="https://youtu.be/MIBAT6BGE6U", show=True) 
 ```
 
 ```py
-`# Run inference using a tiger-pose trained model yolo  task=pose  mode=predict  source="https://youtu.be/MIBAT6BGE6U"  show=True  model="path/to/best.pt"` 
+# Run inference using a tiger-pose trained model
+yolo  task=pose  mode=predict  source="https://youtu.be/MIBAT6BGE6U"  show=True  model="path/to/best.pt" 
 ```
 
 ### 使用 Tiger-Pose 数据集进行姿势估计的好处是什么？

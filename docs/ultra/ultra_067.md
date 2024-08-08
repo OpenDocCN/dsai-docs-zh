@@ -61,11 +61,18 @@ Fashion-MNIST 数据集广泛用于训练和评估深度学习模型在图像分
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="fashion-mnist", epochs=100, imgsz=28)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="fashion-mnist", epochs=100, imgsz=28) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=fashion-mnist  model=yolov8n-cls.pt  epochs=100  imgsz=28` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=fashion-mnist  model=yolov8n-cls.pt  epochs=100  imgsz=28 
 ```
 
 ## 样本图像和注释
@@ -93,11 +100,17 @@ Fashion-MNIST 数据集包含 Zalando 服装图片的灰度图像，为图像分
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained model model = YOLO("yolov8n-cls.pt")  # Train the model on Fashion-MNIST results = model.train(data="fashion-mnist", epochs=100, imgsz=28)` 
+from ultralytics import YOLO
+
+# Load a pretrained model
+model = YOLO("yolov8n-cls.pt")
+
+# Train the model on Fashion-MNIST
+results = model.train(data="fashion-mnist", epochs=100, imgsz=28) 
 ```
 
 ```py
-`yolo  classify  train  data=fashion-mnist  model=yolov8n-cls.pt  epochs=100  imgsz=28` 
+yolo  classify  train  data=fashion-mnist  model=yolov8n-cls.pt  epochs=100  imgsz=28 
 ```
 
 要了解更详细的训练参数，请参考训练页面。

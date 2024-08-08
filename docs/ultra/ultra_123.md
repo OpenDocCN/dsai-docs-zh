@@ -15,13 +15,25 @@
 Explorer 依赖于某些功能的外部库。这些会在使用时自动安装。要手动安装这些依赖项，请使用以下命令：
 
 ```py
-`pip  install  ultralytics[explorer]` 
+pip  install  ultralytics[explorer] 
 ```
 
 ## 用法
 
 ```py
-`from ultralytics import Explorer  # Create an Explorer object explorer = Explorer(data="coco128.yaml", model="yolov8n.pt")  # Create embeddings for your dataset explorer.create_embeddings_table()  # Search for similar images to a given image/images dataframe = explorer.get_similar(img="path/to/image.jpg")  # Or search for similar images to a given index/indices dataframe = explorer.get_similar(idx=0)` 
+from ultralytics import Explorer
+
+# Create an Explorer object
+explorer = Explorer(data="coco128.yaml", model="yolov8n.pt")
+
+# Create embeddings for your dataset
+explorer.create_embeddings_table()
+
+# Search for similar images to a given image/images
+dataframe = explorer.get_similar(img="path/to/image.jpg")
+
+# Or search for similar images to a given index/indices
+dataframe = explorer.get_similar(idx=0) 
 ```
 
 注意
@@ -47,11 +59,36 @@ Explorer 依赖于某些功能的外部库。这些会在使用时自动安装�
 语义搜索
 
 ```py
-`from ultralytics import Explorer  # create an Explorer object exp = Explorer(data="coco128.yaml", model="yolov8n.pt") exp.create_embeddings_table()  similar = exp.get_similar(img="https://ultralytics.com/images/bus.jpg", limit=10) print(similar.head())  # Search using multiple indices similar = exp.get_similar(     img=["https://ultralytics.com/images/bus.jpg", "https://ultralytics.com/images/bus.jpg"],     limit=10, ) print(similar.head())` 
+from ultralytics import Explorer
+
+# create an Explorer object
+exp = Explorer(data="coco128.yaml", model="yolov8n.pt")
+exp.create_embeddings_table()
+
+similar = exp.get_similar(img="https://ultralytics.com/images/bus.jpg", limit=10)
+print(similar.head())
+
+# Search using multiple indices
+similar = exp.get_similar(
+    img=["https://ultralytics.com/images/bus.jpg", "https://ultralytics.com/images/bus.jpg"],
+    limit=10,
+)
+print(similar.head()) 
 ```
 
 ```py
-`from ultralytics import Explorer  # create an Explorer object exp = Explorer(data="coco128.yaml", model="yolov8n.pt") exp.create_embeddings_table()  similar = exp.get_similar(idx=1, limit=10) print(similar.head())  # Search using multiple indices similar = exp.get_similar(idx=[1, 10], limit=10) print(similar.head())` 
+from ultralytics import Explorer
+
+# create an Explorer object
+exp = Explorer(data="coco128.yaml", model="yolov8n.pt")
+exp.create_embeddings_table()
+
+similar = exp.get_similar(idx=1, limit=10)
+print(similar.head())
+
+# Search using multiple indices
+similar = exp.get_similar(idx=[1, 10], limit=10)
+print(similar.head()) 
 ```
 
 ### 绘制相似图像
@@ -61,11 +98,25 @@ Explorer 依赖于某些功能的外部库。这些会在使用时自动安装�
 绘制相似图像
 
 ```py
-`from ultralytics import Explorer  # create an Explorer object exp = Explorer(data="coco128.yaml", model="yolov8n.pt") exp.create_embeddings_table()  plt = exp.plot_similar(img="https://ultralytics.com/images/bus.jpg", limit=10) plt.show()` 
+from ultralytics import Explorer
+
+# create an Explorer object
+exp = Explorer(data="coco128.yaml", model="yolov8n.pt")
+exp.create_embeddings_table()
+
+plt = exp.plot_similar(img="https://ultralytics.com/images/bus.jpg", limit=10)
+plt.show() 
 ```
 
 ```py
-`from ultralytics import Explorer  # create an Explorer object exp = Explorer(data="coco128.yaml", model="yolov8n.pt") exp.create_embeddings_table()  plt = exp.plot_similar(idx=1, limit=10) plt.show()` 
+from ultralytics import Explorer
+
+# create an Explorer object
+exp = Explorer(data="coco128.yaml", model="yolov8n.pt")
+exp.create_embeddings_table()
+
+plt = exp.plot_similar(idx=1, limit=10)
+plt.show() 
 ```
 
 ## 2\. 问答 AI（自然语言查询）
@@ -75,7 +126,19 @@ Explorer 依赖于某些功能的外部库。这些会在使用时自动安装�
 问答 AI
 
 ```py
-`from ultralytics import Explorer from ultralytics.data.explorer import plot_query_result  # create an Explorer object exp = Explorer(data="coco128.yaml", model="yolov8n.pt") exp.create_embeddings_table()  df = exp.ask_ai("show me 100 images with exactly one person and 2 dogs. There can be other objects too") print(df.head())  # plot the results plt = plot_query_result(df) plt.show()` 
+from ultralytics import Explorer
+from ultralytics.data.explorer import plot_query_result
+
+# create an Explorer object
+exp = Explorer(data="coco128.yaml", model="yolov8n.pt")
+exp.create_embeddings_table()
+
+df = exp.ask_ai("show me 100 images with exactly one person and 2 dogs. There can be other objects too")
+print(df.head())
+
+# plot the results
+plt = plot_query_result(df)
+plt.show() 
 ```
 
 ## 3\. SQL 查询
@@ -85,7 +148,14 @@ Explorer 依赖于某些功能的外部库。这些会在使用时自动安装�
 SQL 查询
 
 ```py
-`from ultralytics import Explorer  # create an Explorer object exp = Explorer(data="coco128.yaml", model="yolov8n.pt") exp.create_embeddings_table()  df = exp.sql_query("WHERE labels LIKE '%person%' AND labels LIKE '%dog%'") print(df.head())` 
+from ultralytics import Explorer
+
+# create an Explorer object
+exp = Explorer(data="coco128.yaml", model="yolov8n.pt")
+exp.create_embeddings_table()
+
+df = exp.sql_query("WHERE labels LIKE '%person%' AND labels LIKE '%dog%'")
+print(df.head()) 
 ```
 
 ### 绘制 SQL 查询结果
@@ -95,7 +165,14 @@ SQL 查询
 绘制 SQL 查询结果
 
 ```py
-`from ultralytics import Explorer  # create an Explorer object exp = Explorer(data="coco128.yaml", model="yolov8n.pt") exp.create_embeddings_table()  # plot the SQL Query exp.plot_sql_query("WHERE labels LIKE '%person%' AND labels LIKE '%dog%' LIMIT 10")` 
+from ultralytics import Explorer
+
+# create an Explorer object
+exp = Explorer(data="coco128.yaml", model="yolov8n.pt")
+exp.create_embeddings_table()
+
+# plot the SQL Query
+exp.plot_sql_query("WHERE labels LIKE '%person%' AND labels LIKE '%dog%' LIMIT 10") 
 ```
 
 ## 4\. 使用嵌入表
@@ -105,7 +182,11 @@ SQL 查询
 Explorer 内部使用 [LanceDB](https://lancedb.github.io/lancedb/) 表。您可以直接访问此表，使用 `Explorer.table` 对象运行原始查询，推送预过滤器和后过滤器等。
 
 ```py
-`from ultralytics import Explorer  exp = Explorer() exp.create_embeddings_table() table = exp.table` 
+from ultralytics import Explorer
+
+exp = Explorer()
+exp.create_embeddings_table()
+table = exp.table 
 ```
 
 以下是您可以使用该表执行的一些示例操作：
@@ -115,7 +196,14 @@ Explorer 内部使用 [LanceDB](https://lancedb.github.io/lancedb/) 表。您可
 示例
 
 ```py
-`from ultralytics import Explorer  exp = Explorer() exp.create_embeddings_table() table = exp.table  embeddings = table.to_pandas()["vector"] print(embeddings)` 
+from ultralytics import Explorer
+
+exp = Explorer()
+exp.create_embeddings_table()
+table = exp.table
+
+embeddings = table.to_pandas()["vector"]
+print(embeddings) 
 ```
 
 ### 使用预过滤器和后过滤器进行高级查询
@@ -123,7 +211,15 @@ Explorer 内部使用 [LanceDB](https://lancedb.github.io/lancedb/) 表。您可
 示例
 
 ```py
-`from ultralytics import Explorer  exp = Explorer(model="yolov8n.pt") exp.create_embeddings_table() table = exp.table  # Dummy embedding embedding = [i for i in range(256)] rs = table.search(embedding).metric("cosine").where("").limit(10)` 
+from ultralytics import Explorer
+
+exp = Explorer(model="yolov8n.pt")
+exp.create_embeddings_table()
+table = exp.table
+
+# Dummy embedding
+embedding = [i for i in range(256)]
+rs = table.search(embedding).metric("cosine").where("").limit(10) 
 ```
 
 ### 创建向量索引
@@ -131,7 +227,7 @@ Explorer 内部使用 [LanceDB](https://lancedb.github.io/lancedb/) 表。您可
 当使用大型数据集时，您还可以为更快的查询创建专用的向量索引。这可以通过在 LanceDB 表上使用 `create_index` 方法完成。
 
 ```py
-`table.create_index(num_partitions=..., num_sub_vectors=...)` 
+table.create_index(num_partitions=..., num_sub_vectors=...) 
 ```
 
 在此处查找有关可用类型向量索引和参数的更多详细信息 [here](https://lancedb.github.io/lancedb/ann_indexes/#types-of-index)。未来，我们将支持直接从 Explorer API 创建向量索引。
@@ -165,13 +261,21 @@ Explorer 提供了一个 `similarity_index` 操作：
 相似性索引
 
 ```py
-`from ultralytics import Explorer  exp = Explorer() exp.create_embeddings_table()  sim_idx = exp.similarity_index()` 
+from ultralytics import Explorer
+
+exp = Explorer()
+exp.create_embeddings_table()
+
+sim_idx = exp.similarity_index() 
 ```
 
 您可以使用相似性索引来构建自定义条件，以过滤数据集。例如，您可以使用以下代码过滤掉与数据集中任何其他图像不相似的图像：
 
 ```py
-`import numpy as np  sim_count = np.array(sim_idx["count"]) sim_idx["im_file"][sim_count > 30]` 
+import numpy as np
+
+sim_count = np.array(sim_idx["count"])
+sim_idx["im_file"][sim_count > 30] 
 ```
 
 ### 可视化嵌入空间
@@ -179,7 +283,25 @@ Explorer 提供了一个 `similarity_index` 操作：
 您还可以使用所选的绘图工具可视化嵌入空间。例如，这里是使用 matplotlib 的简单示例：
 
 ```py
-`import matplotlib.pyplot as plt from sklearn.decomposition import PCA  # Reduce dimensions using PCA to 3 components for visualization in 3D pca = PCA(n_components=3) reduced_data = pca.fit_transform(embeddings)  # Create a 3D scatter plot using Matplotlib Axes3D fig = plt.figure(figsize=(8, 6)) ax = fig.add_subplot(111, projection="3d")  # Scatter plot ax.scatter(reduced_data[:, 0], reduced_data[:, 1], reduced_data[:, 2], alpha=0.5) ax.set_title("3D Scatter Plot of Reduced 256-Dimensional Data (PCA)") ax.set_xlabel("Component 1") ax.set_ylabel("Component 2") ax.set_zlabel("Component 3")  plt.show()` 
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
+# Reduce dimensions using PCA to 3 components for visualization in 3D
+pca = PCA(n_components=3)
+reduced_data = pca.fit_transform(embeddings)
+
+# Create a 3D scatter plot using Matplotlib Axes3D
+fig = plt.figure(figsize=(8, 6))
+ax = fig.add_subplot(111, projection="3d")
+
+# Scatter plot
+ax.scatter(reduced_data[:, 0], reduced_data[:, 1], reduced_data[:, 2], alpha=0.5)
+ax.set_title("3D Scatter Plot of Reduced 256-Dimensional Data (PCA)")
+ax.set_xlabel("Component 1")
+ax.set_ylabel("Component 2")
+ax.set_zlabel("Component 3")
+
+plt.show() 
 ```
 
 开始使用 Explorer API 创建自己的 CV 数据集探索报告。作为灵感，查看
@@ -209,7 +331,7 @@ Ultralytics Explorer API 旨在进行全面的数据集探索。它允许用户�
 要安装 Ultralytics Explorer API 及其依赖项，请使用以下命令：
 
 ```py
-`pip  install  ultralytics[explorer]` 
+pip  install  ultralytics[explorer] 
 ```
 
 这将自动安装 Explorer API 功能所需的所有外部库。有关其他设置细节，请参阅我们文档的安装部分。
@@ -219,7 +341,15 @@ Ultralytics Explorer API 旨在进行全面的数据集探索。它允许用户�
 你可以使用 Ultralytics Explorer API 通过创建嵌入表并查询相似图像来执行相似性搜索。以下是一个基本示例：
 
 ```py
-`from ultralytics import Explorer  # Create an Explorer object explorer = Explorer(data="coco128.yaml", model="yolov8n.pt") explorer.create_embeddings_table()  # Search for similar images to a given image similar_images_df = explorer.get_similar(img="path/to/image.jpg") print(similar_images_df.head())` 
+from ultralytics import Explorer
+
+# Create an Explorer object
+explorer = Explorer(data="coco128.yaml", model="yolov8n.pt")
+explorer.create_embeddings_table()
+
+# Search for similar images to a given image
+similar_images_df = explorer.get_similar(img="path/to/image.jpg")
+print(similar_images_df.head()) 
 ```
 
 欲了解更多详情，请访问相似性搜索部分。
@@ -233,7 +363,15 @@ LanceDB 在 Ultralytics Explorer 的底层使用，提供可扩展的磁盘嵌�
 问 AI 功能允许用户使用自然语言查询来过滤数据集。此功能利用 LLMs 将这些查询转换为后台的 SQL 查询。以下是一个示例：
 
 ```py
-`from ultralytics import Explorer  # Create an Explorer object explorer = Explorer(data="coco128.yaml", model="yolov8n.pt") explorer.create_embeddings_table()  # Query with natural language query_result = explorer.ask_ai("show me 100 images with exactly one person and 2 dogs. There can be other objects too") print(query_result.head())` 
+from ultralytics import Explorer
+
+# Create an Explorer object
+explorer = Explorer(data="coco128.yaml", model="yolov8n.pt")
+explorer.create_embeddings_table()
+
+# Query with natural language
+query_result = explorer.ask_ai("show me 100 images with exactly one person and 2 dogs. There can be other objects too")
+print(query_result.head()) 
 ```
 
 欲了解更多示例，请查看问 AI 部分。

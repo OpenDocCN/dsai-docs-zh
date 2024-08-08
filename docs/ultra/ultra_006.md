@@ -48,11 +48,43 @@ Ultralytics YOLO 模型返回的结果可以是 Python 列表的`Results`对象�
 预测
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # pretrained YOLOv8n model  # Run batched inference on a list of images results = model(["im1.jpg", "im2.jpg"])  # return a list of Results objects  # Process results list for result in results:     boxes = result.boxes  # Boxes object for bounding box outputs     masks = result.masks  # Masks object for segmentation masks outputs     keypoints = result.keypoints  # Keypoints object for pose outputs     probs = result.probs  # Probs object for classification outputs     obb = result.obb  # Oriented boxes object for OBB outputs     result.show()  # display to screen     result.save(filename="result.jpg")  # save to disk` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # pretrained YOLOv8n model
+
+# Run batched inference on a list of images
+results = model(["im1.jpg", "im2.jpg"])  # return a list of Results objects
+
+# Process results list
+for result in results:
+    boxes = result.boxes  # Boxes object for bounding box outputs
+    masks = result.masks  # Masks object for segmentation masks outputs
+    keypoints = result.keypoints  # Keypoints object for pose outputs
+    probs = result.probs  # Probs object for classification outputs
+    obb = result.obb  # Oriented boxes object for OBB outputs
+    result.show()  # display to screen
+    result.save(filename="result.jpg")  # save to disk 
 ```
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # pretrained YOLOv8n model  # Run batched inference on a list of images results = model(["im1.jpg", "im2.jpg"], stream=True)  # return a generator of Results objects  # Process results generator for result in results:     boxes = result.boxes  # Boxes object for bounding box outputs     masks = result.masks  # Masks object for segmentation masks outputs     keypoints = result.keypoints  # Keypoints object for pose outputs     probs = result.probs  # Probs object for classification outputs     obb = result.obb  # Oriented boxes object for OBB outputs     result.show()  # display to screen     result.save(filename="result.jpg")  # save to disk` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # pretrained YOLOv8n model
+
+# Run batched inference on a list of images
+results = model(["im1.jpg", "im2.jpg"], stream=True)  # return a generator of Results objects
+
+# Process results generator
+for result in results:
+    boxes = result.boxes  # Boxes object for bounding box outputs
+    masks = result.masks  # Masks object for segmentation masks outputs
+    keypoints = result.keypoints  # Keypoints object for pose outputs
+    probs = result.probs  # Probs object for classification outputs
+    obb = result.obb  # Oriented boxes object for OBB outputs
+    result.show()  # display to screen
+    result.save(filename="result.jpg")  # save to disk 
 ```
 
 ## 推理来源
@@ -87,79 +119,210 @@ YOLOv8 可以处理不同类型的输入源进行推理，如下表所示。这�
 在图像文件上进行推理。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Define path to the image file source = "path/to/image.jpg"  # Run inference on the source results = model(source)  # list of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Define path to the image file
+source = "path/to/image.jpg"
+
+# Run inference on the source
+results = model(source)  # list of Results objects 
 ```
 
 对当前屏幕内容（截图）进行推理。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Define current screenshot as source source = "screen"  # Run inference on the source results = model(source)  # list of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Define current screenshot as source
+source = "screen"
+
+# Run inference on the source
+results = model(source)  # list of Results objects 
 ```
 
 在远程托管的图像或视频上进行推理。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Define remote image or video URL source = "https://ultralytics.com/images/bus.jpg"  # Run inference on the source results = model(source)  # list of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Define remote image or video URL
+source = "https://ultralytics.com/images/bus.jpg"
+
+# Run inference on the source
+results = model(source)  # list of Results objects 
 ```
 
 对使用 Python Imaging Library（PIL）打开的图像进行推理。
 
 ```py
-`from PIL import Image  from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Open an image using PIL source = Image.open("path/to/image.jpg")  # Run inference on the source results = model(source)  # list of Results objects` 
+from PIL import Image
+
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Open an image using PIL
+source = Image.open("path/to/image.jpg")
+
+# Run inference on the source
+results = model(source)  # list of Results objects 
 ```
 
 在使用 OpenCV 读取的图像上运行推理。
 
 ```py
-`import cv2  from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Read an image using OpenCV source = cv2.imread("path/to/image.jpg")  # Run inference on the source results = model(source)  # list of Results objects` 
+import cv2
+
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Read an image using OpenCV
+source = cv2.imread("path/to/image.jpg")
+
+# Run inference on the source
+results = model(source)  # list of Results objects 
 ```
 
 在表示为 numpy 数组的图像上运行推理。
 
 ```py
-`import numpy as np  from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Create a random numpy array of HWC shape (640, 640, 3) with values in range [0, 255] and type uint8 source = np.random.randint(low=0, high=255, size=(640, 640, 3), dtype="uint8")  # Run inference on the source results = model(source)  # list of Results objects` 
+import numpy as np
+
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Create a random numpy array of HWC shape (640, 640, 3) with values in range [0, 255] and type uint8
+source = np.random.randint(low=0, high=255, size=(640, 640, 3), dtype="uint8")
+
+# Run inference on the source
+results = model(source)  # list of Results objects 
 ```
 
 在表示为 PyTorch 张量的图像上运行推理。
 
 ```py
-`import torch  from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Create a random torch tensor of BCHW shape (1, 3, 640, 640) with values in range [0, 1] and type float32 source = torch.rand(1, 3, 640, 640, dtype=torch.float32)  # Run inference on the source results = model(source)  # list of Results objects` 
+import torch
+
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Create a random torch tensor of BCHW shape (1, 3, 640, 640) with values in range [0, 1] and type float32
+source = torch.rand(1, 3, 640, 640, dtype=torch.float32)
+
+# Run inference on the source
+results = model(source)  # list of Results objects 
 ```
 
 在 CSV 文件中列出的图像、URL、视频和目录集合上进行推理。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Define a path to a CSV file with images, URLs, videos and directories source = "path/to/file.csv"  # Run inference on the source results = model(source)  # list of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Define a path to a CSV file with images, URLs, videos and directories
+source = "path/to/file.csv"
+
+# Run inference on the source
+results = model(source)  # list of Results objects 
 ```
 
 在视频文件上进行推理。通过使用`stream=True`，您可以创建一个 Results 对象的生成器来减少内存使用。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Define path to video file source = "path/to/video.mp4"  # Run inference on the source results = model(source, stream=True)  # generator of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Define path to video file
+source = "path/to/video.mp4"
+
+# Run inference on the source
+results = model(source, stream=True)  # generator of Results objects 
 ```
 
 在目录中的所有图像和视频上运行推断。要还包括子目录中的图像和视频，请使用 glob 模式，例如 `path/to/dir/**/*`。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Define path to directory containing images and videos for inference source = "path/to/dir"  # Run inference on the source results = model(source, stream=True)  # generator of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Define path to directory containing images and videos for inference
+source = "path/to/dir"
+
+# Run inference on the source
+results = model(source, stream=True)  # generator of Results objects 
 ```
 
 对匹配带有 `*` 字符的 glob 表达式的所有图像和视频运行推断。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Define a glob search for all JPG files in a directory source = "path/to/dir/*.jpg"  # OR define a recursive glob search for all JPG files including subdirectories source = "path/to/dir/**/*.jpg"  # Run inference on the source results = model(source, stream=True)  # generator of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Define a glob search for all JPG files in a directory
+source = "path/to/dir/*.jpg"
+
+# OR define a recursive glob search for all JPG files including subdirectories
+source = "path/to/dir/**/*.jpg"
+
+# Run inference on the source
+results = model(source, stream=True)  # generator of Results objects 
 ```
 
 在 YouTube 视频上运行推断。通过使用 `stream=True`，可以创建 Results 对象的生成器，以减少长视频的内存使用。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Define source as YouTube video URL source = "https://youtu.be/LNwODJXcvt4"  # Run inference on the source results = model(source, stream=True)  # generator of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Define source as YouTube video URL
+source = "https://youtu.be/LNwODJXcvt4"
+
+# Run inference on the source
+results = model(source, stream=True)  # generator of Results objects 
 ```
 
 在远程流媒体源（使用 RTSP、RTMP、TCP 和 IP 地址协议）上运行推断。如果在 `*.streams` 文本文件中提供了多个流，则将运行批处理推断，即 8 个流将以批大小 8 运行，否则单个流将以批大小 1 运行。
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Single stream with batch-size 1 inference source = "rtsp://example.com/media.mp4"  # RTSP, RTMP, TCP or IP streaming address  # Multiple streams with batched inference (i.e. batch-size 8 for 8 streams) source = "path/to/list.streams"  # *.streams text file with one streaming address per row  # Run inference on the source results = model(source, stream=True)  # generator of Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Single stream with batch-size 1 inference
+source = "rtsp://example.com/media.mp4"  # RTSP, RTMP, TCP or IP streaming address
+
+# Multiple streams with batched inference (i.e. batch-size 8 for 8 streams)
+source = "path/to/list.streams"  # *.streams text file with one streaming address per row
+
+# Run inference on the source
+results = model(source, stream=True)  # generator of Results objects 
 ```
 
 ## 推断参数
@@ -169,7 +332,13 @@ YOLOv8 可以处理不同类型的输入源进行推理，如下表所示。这�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Run inference on 'bus.jpg' with arguments model.predict("bus.jpg", save=True, imgsz=320, conf=0.5)` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Run inference on 'bus.jpg' with arguments
+model.predict("bus.jpg", save=True, imgsz=320, conf=0.5) 
 ```
 
 推断参数：
@@ -254,7 +423,14 @@ YOLOv8 支持多种图像和视频格式，详见[ultralytics/data/utils.py](htt
 Results
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Run inference on an image results = model("bus.jpg")  # list of 1 Results object results = model(["bus.jpg", "zidane.jpg"])  # list of 2 Results objects` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Run inference on an image
+results = model("bus.jpg")  # list of 1 Results object
+results = model(["bus.jpg", "zidane.jpg"])  # list of 2 Results objects 
 ```
 
 `Results` 对象具有以下属性：
@@ -299,7 +475,17 @@ Results
 Boxes
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Run inference on an image results = model("bus.jpg")  # results list  # View results for r in results:     print(r.boxes)  # print the Boxes object containing the detection bounding boxes` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Run inference on an image
+results = model("bus.jpg")  # results list
+
+# View results
+for r in results:
+    print(r.boxes)  # print the Boxes object containing the detection bounding boxes 
 ```
 
 下面是 `Boxes` 类的方法和属性的表格，包括它们的名称、类型和描述：
@@ -327,7 +513,17 @@ Boxes
 掩码
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n-seg Segment model model = YOLO("yolov8n-seg.pt")  # Run inference on an image results = model("bus.jpg")  # results list  # View results for r in results:     print(r.masks)  # print the Masks object containing the detected instance masks` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n-seg Segment model
+model = YOLO("yolov8n-seg.pt")
+
+# Run inference on an image
+results = model("bus.jpg")  # results list
+
+# View results
+for r in results:
+    print(r.masks)  # print the Masks object containing the detected instance masks 
 ```
 
 下面是 `Masks` 类方法和属性的表格，包括它们的名称、类型和描述：
@@ -350,7 +546,17 @@ Boxes
 关键点
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n-pose Pose model model = YOLO("yolov8n-pose.pt")  # Run inference on an image results = model("bus.jpg")  # results list  # View results for r in results:     print(r.keypoints)  # print the Keypoints object containing the detected keypoints` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n-pose Pose model
+model = YOLO("yolov8n-pose.pt")
+
+# Run inference on an image
+results = model("bus.jpg")  # results list
+
+# View results
+for r in results:
+    print(r.keypoints)  # print the Keypoints object containing the detected keypoints 
 ```
 
 下面是总结 `Keypoints` 类方法和属性的表格，包括它们的名称、类型和描述：
@@ -374,7 +580,17 @@ Boxes
 Probs
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n-cls Classify model model = YOLO("yolov8n-cls.pt")  # Run inference on an image results = model("bus.jpg")  # results list  # View results for r in results:     print(r.probs)  # print the Probs object containing the detected class probabilities` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n-cls Classify model
+model = YOLO("yolov8n-cls.pt")
+
+# Run inference on an image
+results = model("bus.jpg")  # results list
+
+# View results
+for r in results:
+    print(r.probs)  # print the Probs object containing the detected class probabilities 
 ```
 
 下面是总结 `Probs` 类方法和属性的表格：
@@ -399,7 +615,17 @@ Probs
 `OBB`
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n-obb.pt")  # Run inference on an image results = model("bus.jpg")  # results list  # View results for r in results:     print(r.obb)  # print the OBB object containing the oriented detection bounding boxes` 
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n-obb.pt")
+
+# Run inference on an image
+results = model("bus.jpg")  # results list
+
+# View results
+for r in results:
+    print(r.obb)  # print the OBB object containing the oriented detection bounding boxes 
 ```
 
 这里是`OBB`类的方法和属性表，包括它们的名称、类型和描述：
@@ -427,7 +653,27 @@ Probs
 绘图
 
 ```py
-`from PIL import Image  from ultralytics import YOLO  # Load a pretrained YOLOv8n model model = YOLO("yolov8n.pt")  # Run inference on 'bus.jpg' results = model(["bus.jpg", "zidane.jpg"])  # results list  # Visualize the results for i, r in enumerate(results):     # Plot results image     im_bgr = r.plot()  # BGR-order numpy array     im_rgb = Image.fromarray(im_bgr[..., ::-1])  # RGB-order PIL image      # Show results to screen (in supported environments)     r.show()      # Save results to disk     r.save(filename=f"results{i}.jpg")` 
+from PIL import Image
+
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO("yolov8n.pt")
+
+# Run inference on 'bus.jpg'
+results = model(["bus.jpg", "zidane.jpg"])  # results list
+
+# Visualize the results
+for i, r in enumerate(results):
+    # Plot results image
+    im_bgr = r.plot()  # BGR-order numpy array
+    im_rgb = Image.fromarray(im_bgr[..., ::-1])  # RGB-order PIL image
+
+    # Show results to screen (in supported environments)
+    r.show()
+
+    # Save results to disk
+    r.save(filename=f"results{i}.jpg") 
 ```
 
 ### `plot()`方法参数
@@ -464,7 +710,19 @@ Probs
 在每个线程内部实例化单个模型以实现线程安全推理：
 
 ```py
-`from threading import Thread  from ultralytics import YOLO   def thread_safe_predict(image_path):   """Performs thread-safe prediction on an image using a locally instantiated YOLO model."""     local_model = YOLO("yolov8n.pt")     results = local_model.predict(image_path)     # Process results   # Starting threads that each have their own model instance Thread(target=thread_safe_predict, args=("image1.jpg",)).start() Thread(target=thread_safe_predict, args=("image2.jpg",)).start()` 
+from threading import Thread
+
+from ultralytics import YOLO
+
+def thread_safe_predict(image_path):
+  """Performs thread-safe prediction on an image using a locally instantiated YOLO model."""
+    local_model = YOLO("yolov8n.pt")
+    results = local_model.predict(image_path)
+    # Process results
+
+# Starting threads that each have their own model instance
+Thread(target=thread_safe_predict, args=("image1.jpg",)).start()
+Thread(target=thread_safe_predict, args=("image2.jpg",)).start() 
 ```
 
 深入了解 YOLO 模型的线程安全推理和逐步指南，请参阅我们的 YOLO 线程安全推理指南。该指南将为您提供避免常见问题并确保多线程推理顺利运行的所有必要信息。
@@ -476,7 +734,42 @@ Probs
 流式 for 循环
 
 ```py
-`import cv2  from ultralytics import YOLO  # Load the YOLOv8 model model = YOLO("yolov8n.pt")  # Open the video file video_path = "path/to/your/video/file.mp4" cap = cv2.VideoCapture(video_path)  # Loop through the video frames while cap.isOpened():     # Read a frame from the video     success, frame = cap.read()      if success:         # Run YOLOv8 inference on the frame         results = model(frame)          # Visualize the results on the frame         annotated_frame = results[0].plot()          # Display the annotated frame         cv2.imshow("YOLOv8 Inference", annotated_frame)          # Break the loop if 'q' is pressed         if cv2.waitKey(1) & 0xFF == ord("q"):             break     else:         # Break the loop if the end of the video is reached         break  # Release the video capture object and close the display window cap.release() cv2.destroyAllWindows()` 
+import cv2
+
+from ultralytics import YOLO
+
+# Load the YOLOv8 model
+model = YOLO("yolov8n.pt")
+
+# Open the video file
+video_path = "path/to/your/video/file.mp4"
+cap = cv2.VideoCapture(video_path)
+
+# Loop through the video frames
+while cap.isOpened():
+    # Read a frame from the video
+    success, frame = cap.read()
+
+    if success:
+        # Run YOLOv8 inference on the frame
+        results = model(frame)
+
+        # Visualize the results on the frame
+        annotated_frame = results[0].plot()
+
+        # Display the annotated frame
+        cv2.imshow("YOLOv8 Inference", annotated_frame)
+
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    else:
+        # Break the loop if the end of the video is reached
+        break
+
+# Release the video capture object and close the display window
+cap.release()
+cv2.destroyAllWindows() 
 ```
 
 该脚本将对视频的每一帧进行预测，可视化结果，并在窗口中显示。通过按下 'q' 键可以退出循环。

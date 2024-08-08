@@ -68,7 +68,13 @@ MobileSAM 和原始 SAM 的性能通过点和框提示进行演示。
 示例
 
 ```py
-`from ultralytics import SAM  # Load the model model = SAM("mobile_sam.pt")  # Predict a segment based on a point prompt model.predict("ultralytics/assets/zidane.jpg", points=[900, 370], labels=[1])` 
+from ultralytics import SAM
+
+# Load the model
+model = SAM("mobile_sam.pt")
+
+# Predict a segment based on a point prompt
+model.predict("ultralytics/assets/zidane.jpg", points=[900, 370], labels=[1]) 
 ```
 
 ### 框提示
@@ -76,7 +82,13 @@ MobileSAM 和原始 SAM 的性能通过点和框提示进行演示。
 示例
 
 ```py
-`from ultralytics import SAM  # Load the model model = SAM("mobile_sam.pt")  # Predict a segment based on a box prompt model.predict("ultralytics/assets/zidane.jpg", bboxes=[439, 437, 524, 709])` 
+from ultralytics import SAM
+
+# Load the model
+model = SAM("mobile_sam.pt")
+
+# Predict a segment based on a box prompt
+model.predict("ultralytics/assets/zidane.jpg", bboxes=[439, 437, 524, 709]) 
 ```
 
 我们使用相同的 API 实现了 `MobileSAM` 和 `SAM`。有关更多使用信息，请参阅 SAM 页面。
@@ -86,7 +98,12 @@ MobileSAM 和原始 SAM 的性能通过点和框提示进行演示。
 如果您在研究或开发工作中发现 MobileSAM 有用，请考虑引用我们的论文：
 
 ```py
-`@article{mobile_sam,   title={Faster Segment Anything: Towards Lightweight SAM for Mobile Applications},   author={Zhang, Chaoning and Han, Dongshen and Qiao, Yu and Kim, Jung Uk and Bae, Sung Ho and Lee, Seungkyu and Hong, Choong Seon},   journal={arXiv preprint arXiv:2306.14289},   year={2023} }` 
+@article{mobile_sam,
+  title={Faster Segment Anything: Towards Lightweight SAM for Mobile Applications},
+  author={Zhang, Chaoning and Han, Dongshen and Qiao, Yu and Kim, Jung Uk and Bae, Sung Ho and Lee, Seungkyu and Hong, Choong Seon},
+  journal={arXiv preprint arXiv:2306.14289},
+  year={2023}
+} 
 ```
 
 ## 常见问题
@@ -100,7 +117,13 @@ MobileSAM 是一种专为移动应用设计的轻量级快速图像分割模型�
 通过简单的方法即可完成在 Ultralytics 中测试 MobileSAM。您可以使用点和框提示来预测段。以下是使用点提示的示例：
 
 ```py
-`from ultralytics import SAM  # Load the model model = SAM("mobile_sam.pt")  # Predict a segment based on a point prompt model.predict("ultralytics/assets/zidane.jpg", points=[900, 370], labels=[1])` 
+from ultralytics import SAM
+
+# Load the model
+model = SAM("mobile_sam.pt")
+
+# Predict a segment based on a point prompt
+model.predict("ultralytics/assets/zidane.jpg", points=[900, 370], labels=[1]) 
 ```
 
 您还可以参考《测试 MobileSAM》部分获取更多详细信息。

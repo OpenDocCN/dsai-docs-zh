@@ -72,15 +72,18 @@ NVIDIA Jetson 是一系列嵌入式计算板，旨在将加速 AI（人工智能
 在 NVIDIA Jetson 上快速开始 Ultralytics YOLOv8 的最快方式是使用为 Jetson 预构建的 Docker 镜像。请根据上表选择适合您拥有的 Jetson 设备的 JetPack 版本。
 
 ```py
-`t=ultralytics/ultralytics:latest-jetson-jetpack4 sudo  docker  pull  $t  &&  sudo  docker  run  -it  --ipc=host  --runtime=nvidia  $t` 
+t=ultralytics/ultralytics:latest-jetson-jetpack4
+sudo  docker  pull  $t  &&  sudo  docker  run  -it  --ipc=host  --runtime=nvidia  $t 
 ```
 
 ```py
-`t=ultralytics/ultralytics:latest-jetson-jetpack5 sudo  docker  pull  $t  &&  sudo  docker  run  -it  --ipc=host  --runtime=nvidia  $t` 
+t=ultralytics/ultralytics:latest-jetson-jetpack5
+sudo  docker  pull  $t  &&  sudo  docker  run  -it  --ipc=host  --runtime=nvidia  $t 
 ```
 
 ```py
-`t=ultralytics/ultralytics:latest-jetson-jetpack6 sudo  docker  pull  $t  &&  sudo  docker  run  -it  --ipc=host  --runtime=nvidia  $t` 
+t=ultralytics/ultralytics:latest-jetson-jetpack6
+sudo  docker  pull  $t  &&  sudo  docker  run  -it  --ipc=host  --runtime=nvidia  $t 
 ```
 
 完成后，跳转到在 NVIDIA Jetson 上使用 TensorRT 部分。
@@ -98,19 +101,21 @@ NVIDIA Jetson 是一系列嵌入式计算板，旨在将加速 AI（人工智能
 1.  更新软件包列表，安装 pip 并升级到最新版本
 
     ```py
-    `sudo  apt  update sudo  apt  install  python3-pip  -y pip  install  -U  pip` 
+    sudo  apt  update
+    sudo  apt  install  python3-pip  -y
+    pip  install  -U  pip 
     ```
 
 1.  安装 `ultralytics` pip 包及其可选依赖项
 
     ```py
-    `pip  install  ultralytics[export]` 
+    pip  install  ultralytics[export] 
     ```
 
 1.  重启设备
 
     ```py
-    `sudo  reboot` 
+    sudo  reboot 
     ```
 
 #### 安装 PyTorch 和 Torchvision
@@ -120,7 +125,9 @@ NVIDIA Jetson 是一系列嵌入式计算板，旨在将加速 AI（人工智能
 根据 JP6.0 安装 `torch 2.3.0` 和 `torchvision 0.18`
 
 ```py
-`sudo  apt-get  install  libopenmpi-dev  libopenblas-base  libomp-dev  -y pip  install  https://github.com/ultralytics/assets/releases/download/v0.0.0/torch-2.3.0-cp310-cp310-linux_aarch64.whl pip  install  https://github.com/ultralytics/assets/releases/download/v0.0.0/torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl` 
+sudo  apt-get  install  libopenmpi-dev  libopenblas-base  libomp-dev  -y
+pip  install  https://github.com/ultralytics/assets/releases/download/v0.0.0/torch-2.3.0-cp310-cp310-linux_aarch64.whl
+pip  install  https://github.com/ultralytics/assets/releases/download/v0.0.0/torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl 
 ```
 
 访问 [PyTorch for Jetson 页面](https://forums.developer.nvidia.com/t/pytorch-for-jetson/72048) 获取不同 JetPack 版本的所有不同 PyTorch 版本。有关 PyTorch 和 Torchvision 的兼容性更详细的列表，请访问 [PyTorch 和 Torchvision 兼容性页面](https://github.com/pytorch/vision)。
@@ -132,7 +139,8 @@ NVIDIA Jetson 是一系列嵌入式计算板，旨在将加速 AI（人工智能
 所有不同 JetPack 和 Python 版本对应的 `onnxruntime-gpu` 包都列在 [这里](https://elinux.org/Jetson_Zoo#ONNX_Runtime)。然而，在这里我们将下载并安装支持 `Python3.10` 的 `onnxruntime-gpu 1.18.0`。
 
 ```py
-`wget  https://nvidia.box.com/shared/static/48dtuob7meiw6ebgfsfqakc9vse62sg4.whl  -O  onnxruntime_gpu-1.18.0-cp310-cp310-linux_aarch64.whl pip  install  onnxruntime_gpu-1.18.0-cp310-cp310-linux_aarch64.whl` 
+wget  https://nvidia.box.com/shared/static/48dtuob7meiw6ebgfsfqakc9vse62sg4.whl  -O  onnxruntime_gpu-1.18.0-cp310-cp310-linux_aarch64.whl
+pip  install  onnxruntime_gpu-1.18.0-cp310-cp310-linux_aarch64.whl 
 ```
 
 注意
@@ -150,19 +158,21 @@ NVIDIA Jetson 是一系列嵌入式计算板，旨在将加速 AI（人工智能
 1.  更新软件包列表，安装 pip 并升级到最新版本
 
     ```py
-    `sudo  apt  update sudo  apt  install  python3-pip  -y pip  install  -U  pip` 
+    sudo  apt  update
+    sudo  apt  install  python3-pip  -y
+    pip  install  -U  pip 
     ```
 
 1.  安装带有可选依赖项的 `ultralytics` pip 包
 
     ```py
-    `pip  install  ultralytics[export]` 
+    pip  install  ultralytics[export] 
     ```
 
 1.  重启设备
 
     ```py
-    `sudo  reboot` 
+    sudo  reboot 
     ```
 
 #### 安装 PyTorch 和 Torchvision
@@ -172,19 +182,25 @@ NVIDIA Jetson 是一系列嵌入式计算板，旨在将加速 AI（人工智能
 1.  卸载当前安装的 PyTorch 和 Torchvision
 
     ```py
-    `pip  uninstall  torch  torchvision` 
+    pip  uninstall  torch  torchvision 
     ```
 
 1.  根据 JP5.1.3 安装 PyTorch 2.1.0
 
     ```py
-    `sudo  apt-get  install  -y  libopenblas-base  libopenmpi-dev wget  https://developer.download.nvidia.com/compute/redist/jp/v512/pytorch/torch-2.1.0a0+41361538.nv23.06-cp38-cp38-linux_aarch64.whl  -O  torch-2.1.0a0+41361538.nv23.06-cp38-cp38-linux_aarch64.whl pip  install  torch-2.1.0a0+41361538.nv23.06-cp38-cp38-linux_aarch64.whl` 
+    sudo  apt-get  install  -y  libopenblas-base  libopenmpi-dev
+    wget  https://developer.download.nvidia.com/compute/redist/jp/v512/pytorch/torch-2.1.0a0+41361538.nv23.06-cp38-cp38-linux_aarch64.whl  -O  torch-2.1.0a0+41361538.nv23.06-cp38-cp38-linux_aarch64.whl
+    pip  install  torch-2.1.0a0+41361538.nv23.06-cp38-cp38-linux_aarch64.whl 
     ```
 
 1.  根据 PyTorch v2.1.0 安装 Torchvision v0.16.2
 
     ```py
-    `sudo  apt  install  -y  libjpeg-dev  zlib1g-dev git  clone  https://github.com/pytorch/vision  torchvision cd  torchvision git  checkout  v0.16.2 python3  setup.py  install  --user` 
+    sudo  apt  install  -y  libjpeg-dev  zlib1g-dev
+    git  clone  https://github.com/pytorch/vision  torchvision
+    cd  torchvision
+    git  checkout  v0.16.2
+    python3  setup.py  install  --user 
     ```
 
 访问 [Jetson 上的 PyTorch 页面](https://forums.developer.nvidia.com/t/pytorch-for-jetson/72048) 以访问不同 JetPack 版本的所有 PyTorch 不同版本。有关 PyTorch 和 Torchvision 兼容性的更详细列表，请访问 [PyTorch 和 Torchvision 兼容性页面](https://github.com/pytorch/vision)。
@@ -196,7 +212,8 @@ NVIDIA Jetson 是一系列嵌入式计算板，旨在将加速 AI（人工智能
 所有不同 JetPack 和 Python 版本对应的 `onnxruntime-gpu` 包都列在 [这里](https://elinux.org/Jetson_Zoo#ONNX_Runtime)。然而，在这里我们将下载并安装支持 `Python3.8` 的 `onnxruntime-gpu 1.17.0`。
 
 ```py
-`wget  https://nvidia.box.com/shared/static/zostg6agm00fb6t5uisw51qi6kpcuwzd.whl  -O  onnxruntime_gpu-1.17.0-cp38-cp38-linux_aarch64.whl pip  install  onnxruntime_gpu-1.17.0-cp38-cp38-linux_aarch64.whl` 
+wget  https://nvidia.box.com/shared/static/zostg6agm00fb6t5uisw51qi6kpcuwzd.whl  -O  onnxruntime_gpu-1.17.0-cp38-cp38-linux_aarch64.whl
+pip  install  onnxruntime_gpu-1.17.0-cp38-cp38-linux_aarch64.whl 
 ```
 
 注意
@@ -216,11 +233,27 @@ NVIDIA Jetson 是一系列嵌入式计算板，旨在将加速 AI（人工智能
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a YOLOv8n PyTorch model model = YOLO("yolov8n.pt")  # Export the model model.export(format="engine")  # creates 'yolov8n.engine'  # Load the exported TensorRT model trt_model = YOLO("yolov8n.engine")  # Run inference results = trt_model("https://ultralytics.com/images/bus.jpg")` 
+from ultralytics import YOLO
+
+# Load a YOLOv8n PyTorch model
+model = YOLO("yolov8n.pt")
+
+# Export the model
+model.export(format="engine")  # creates 'yolov8n.engine'
+
+# Load the exported TensorRT model
+trt_model = YOLO("yolov8n.engine")
+
+# Run inference
+results = trt_model("https://ultralytics.com/images/bus.jpg") 
 ```
 
 ```py
-`# Export a YOLOv8n PyTorch model to TensorRT format yolo  export  model=yolov8n.pt  format=engine  # creates 'yolov8n.engine'  # Run inference with the exported model yolo  predict  model=yolov8n.engine  source='https://ultralytics.com/images/bus.jpg'` 
+# Export a YOLOv8n PyTorch model to TensorRT format
+yolo  export  model=yolov8n.pt  format=engine  # creates 'yolov8n.engine'
+
+# Run inference with the exported model
+yolo  predict  model=yolov8n.engine  source='https://ultralytics.com/images/bus.jpg' 
 ```
 
 注意
@@ -313,11 +346,18 @@ Ultralytics 团队在由 Jetson Orin NX 16GB 设备提供动力的 Seeed Studio 
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a YOLOv8n PyTorch model model = YOLO("yolov8n.pt")  # Benchmark YOLOv8n speed and accuracy on the COCO8 dataset for all all export formats results = model.benchmarks(data="coco8.yaml", imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a YOLOv8n PyTorch model
+model = YOLO("yolov8n.pt")
+
+# Benchmark YOLOv8n speed and accuracy on the COCO8 dataset for all all export formats
+results = model.benchmarks(data="coco8.yaml", imgsz=640) 
 ```
 
 ```py
-`# Benchmark YOLOv8n speed and accuracy on the COCO8 dataset for all all export formats yolo  benchmark  model=yolov8n.pt  data=coco8.yaml  imgsz=640` 
+# Benchmark YOLOv8n speed and accuracy on the COCO8 dataset for all all export formats
+yolo  benchmark  model=yolov8n.pt  data=coco8.yaml  imgsz=640 
 ```
 
 请注意，基准测试结果可能会因系统的精确硬件和软件配置以及进行基准测试时系统当前工作负载的不同而有所变化。要获得最可靠的结果，请使用具有大量图像的数据集，例如`data='coco8.yaml'（4 个 val 图像）`或`data='coco.yaml'（5000 个 val 图像）`。
@@ -331,7 +371,7 @@ Ultralytics 团队在由 Jetson Orin NX 16GB 设备提供动力的 Seeed Studio 
     在 Jetson 上启用 MAX 功率模式将确保所有 CPU 和 GPU 核心都处于启动状态。
 
     ```py
-    `sudo  nvpmodel  -m  0` 
+    sudo  nvpmodel  -m  0 
     ```
 
 1.  启用 Jetson 时钟
@@ -339,7 +379,7 @@ Ultralytics 团队在由 Jetson Orin NX 16GB 设备提供动力的 Seeed Studio 
     启用 Jetson 时钟将确保所有 CPU 和 GPU 核心以其最大频率时钟运行。
 
     ```py
-    `sudo  jetson_clocks` 
+    sudo  jetson_clocks 
     ```
 
 1.  安装 Jetson Stats 应用程序
@@ -347,7 +387,10 @@ Ultralytics 团队在由 Jetson Orin NX 16GB 设备提供动力的 Seeed Studio 
     我们可以使用 Jetson Stats 应用程序监视系统组件的温度并检查其他系统详细信息，例如查看 CPU、GPU、RAM 利用率，更改功率模式，设置为最大时钟，检查 JetPack 信息。
 
     ```py
-    `sudo  apt  update sudo  pip  install  jetson-stats sudo  reboot jtop` 
+    sudo  apt  update
+    sudo  pip  install  jetson-stats
+    sudo  reboot
+    jtop 
     ```
 
 ![Jetson Stats](img/eca9687add440601967d5a07e832db7b.png)

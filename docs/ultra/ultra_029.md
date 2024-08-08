@@ -48,13 +48,29 @@ Ultralytics 已经通过我们的`ultralytics` Python 包，使 YOLO-NAS 模型�
 可以将 PyTorch 预训练的`*.pt`模型文件传递给`NAS()`类以在 Python 中创建一个模型实例：
 
 ```py
-`from ultralytics import NAS  # Load a COCO-pretrained YOLO-NAS-s model model = NAS("yolo_nas_s.pt")  # Display model information (optional) model.info()  # Validate the model on the COCO8 example dataset results = model.val(data="coco8.yaml")  # Run inference with the YOLO-NAS-s model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import NAS
+
+# Load a COCO-pretrained YOLO-NAS-s model
+model = NAS("yolo_nas_s.pt")
+
+# Display model information (optional)
+model.info()
+
+# Validate the model on the COCO8 example dataset
+results = model.val(data="coco8.yaml")
+
+# Run inference with the YOLO-NAS-s model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 可以直接运行模型的 CLI 命令：
 
 ```py
-`# Load a COCO-pretrained YOLO-NAS-s model and validate it's performance on the COCO8 example dataset yolo  val  model=yolo_nas_s.pt  data=coco8.yaml  # Load a COCO-pretrained YOLO-NAS-s model and run inference on the 'bus.jpg' image yolo  predict  model=yolo_nas_s.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained YOLO-NAS-s model and validate it's performance on the COCO8 example dataset
+yolo  val  model=yolo_nas_s.pt  data=coco8.yaml
+
+# Load a COCO-pretrained YOLO-NAS-s model and run inference on the 'bus.jpg' image
+yolo  predict  model=yolo_nas_s.pt  source=path/to/bus.jpg 
 ```
 
 ## 支持的任务和模式
@@ -80,7 +96,15 @@ Ultralytics 已经通过我们的`ultralytics` Python 包，使 YOLO-NAS 模型�
 如果您在研究或开发工作中使用 YOLO-NAS，请引用 SuperGradients：
 
 ```py
-`@misc{supergradients,   doi  =  {10.5281/ZENODO.7789328},   url  =  {https://zenodo.org/record/7789328},   author  =  {Aharon,  Shay and {Louis-Dupont} and {Ofri Masad} and Yurkova,  Kate and {Lotem Fridman} and {Lkdci} and Khvedchenya,  Eugene and Rubin,  Ran and Bagrov,  Natan and Tymchenko,  Borys and Keren,  Tomer and Zhilko,  Alexander and {Eran-Deci}},   title  =  {Super-Gradients},   publisher  =  {GitHub},   journal  =  {GitHub repository},   year  =  {2021}, }` 
+@misc{supergradients,
+  doi  =  {10.5281/ZENODO.7789328},
+  url  =  {https://zenodo.org/record/7789328},
+  author  =  {Aharon,  Shay and {Louis-Dupont} and {Ofri Masad} and Yurkova,  Kate and {Lotem Fridman} and {Lkdci} and Khvedchenya,  Eugene and Rubin,  Ran and Bagrov,  Natan and Tymchenko,  Borys and Keren,  Tomer and Zhilko,  Alexander and {Eran-Deci}},
+  title  =  {Super-Gradients},
+  publisher  =  {GitHub},
+  journal  =  {GitHub repository},
+  year  =  {2021},
+} 
 ```
 
 我们感谢 Deci AI 的[SuperGradients](https://github.com/Deci-AI/super-gradients/)团队为计算机视觉社区创造和维护这一宝贵资源所付出的努力。我们相信 YOLO-NAS 以其创新的架构和卓越的物体检测能力，将成为开发者和研究人员的重要工具。
@@ -96,7 +120,16 @@ YOLO-NAS 是由 Deci AI 开发的一种先进的物体检测模型，利用先�
 您可以使用`ultralytics`包轻松集成 YOLO-NAS 模型到您的 Python 应用程序中。这里是一个加载预训练 YOLO-NAS 模型并进行推断的简单示例：
 
 ```py
-`from ultralytics import NAS  # Load a COCO-pretrained YOLO-NAS-s model model = NAS("yolo_nas_s.pt")  # Validate the model on the COCO8 example dataset results = model.val(data="coco8.yaml")  # Run inference with the YOLO-NAS-s model on the 'bus.jpg' image results = model("path/to/bus.jpg")` 
+from ultralytics import NAS
+
+# Load a COCO-pretrained YOLO-NAS-s model
+model = NAS("yolo_nas_s.pt")
+
+# Validate the model on the COCO8 example dataset
+results = model.val(data="coco8.yaml")
+
+# Run inference with the YOLO-NAS-s model on the 'bus.jpg' image
+results = model("path/to/bus.jpg") 
 ```
 
 获取推理和验证示例的更多信息，请参考。

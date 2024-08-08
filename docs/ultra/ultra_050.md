@@ -29,7 +29,30 @@
 ultralytics/cfg/datasets/african-wildlife.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # African-wildlife dataset by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/detect/african-wildlife/ # Example usage: yolo train data=african-wildlife.yaml # parent # ├── ultralytics # └── datasets #     └── african-wildlife  ← downloads here (100 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/african-wildlife  # dataset root dir train:  train/images  # train images (relative to 'path') 1052 images val:  valid/images  # val images (relative to 'path') 225 images test:  test/images  # test images (relative to 'path') 227 images  # Classes names:   0:  buffalo   1:  elephant   2:  rhino   3:  zebra  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/african-wildlife.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# African-wildlife dataset by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/detect/african-wildlife/
+# Example usage: yolo train data=african-wildlife.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── african-wildlife  ← downloads here (100 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/african-wildlife  # dataset root dir
+train:  train/images  # train images (relative to 'path') 1052 images
+val:  valid/images  # val images (relative to 'path') 225 images
+test:  test/images  # test images (relative to 'path') 227 images
+
+# Classes
+names:
+  0:  buffalo
+  1:  elephant
+  2:  rhino
+  3:  zebra
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/african-wildlife.zip 
 ```
 
 ## 使用
@@ -39,21 +62,35 @@ ultralytics/cfg/datasets/african-wildlife.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="african-wildlife.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="african-wildlife.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=african-wildlife.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=african-wildlife.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 推理示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("path/to/best.pt")  # load a brain-tumor fine-tuned model  # Inference using the model results = model.predict("https://ultralytics.com/assets/african-wildlife-sample.jpg")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("path/to/best.pt")  # load a brain-tumor fine-tuned model
+
+# Inference using the model
+results = model.predict("https://ultralytics.com/assets/african-wildlife-sample.jpg") 
 ```
 
 ```py
-`# Start prediction with a finetuned *.pt model yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/african-wildlife-sample.jpg"` 
+# Start prediction with a finetuned *.pt model
+yolo  detect  predict  model='path/to/best.pt'  imgsz=640  source="https://ultralytics.com/assets/african-wildlife-sample.jpg" 
 ```
 
 ## 示例图像和标注
@@ -83,11 +120,18 @@ ultralytics/cfg/datasets/african-wildlife.yaml
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="african-wildlife.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="african-wildlife.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=african-wildlife.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=african-wildlife.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 若要获取更多的训练参数和选项，请参阅训练文档。

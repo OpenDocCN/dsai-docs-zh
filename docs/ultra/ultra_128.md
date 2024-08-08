@@ -9,7 +9,9 @@
 克隆存储库并在[**Python>=3.8.0**](https://www.python.org/)环境中安装[requirements.txt](https://github.com/ultralytics/yolov5/blob/master/requirements.txt)，包括[**PyTorch>=1.8**](https://pytorch.org/get-started/locally/)。从最新的 YOLOv5 [版本](https://github.com/ultralytics/yolov5/releases)自动下载[模型](https://github.com/ultralytics/yolov5/tree/master/models)和[数据集](https://github.com/ultralytics/yolov5/tree/master/data)。
 
 ```py
-`git  clone  https://github.com/ultralytics/yolov5  # clone cd  yolov5 pip  install  -r  requirements.txt  # install` 
+git  clone  https://github.com/ultralytics/yolov5  # clone
+cd  yolov5
+pip  install  -r  requirements.txt  # install 
 ```
 
 ## 自定义数据训练
@@ -75,7 +77,21 @@ YOLOv5 模型必须在标记数据上进行训练，以学习该数据中的对�
 [COCO128](https://www.kaggle.com/ultralytics/coco128)是一个小型教程数据集的示例，由[COCO](https://cocodataset.org/) train2017 的前 128 张图像组成。这些相同的 128 张图像用于训练和验证，以验证我们的训练流水线能够过拟合。下面显示的[data/coco128.yaml](https://github.com/ultralytics/yolov5/blob/master/data/coco128.yaml)是数据集配置文件，定义了 1）数据集根目录`path`和`train`/`val`/`test`图像目录（或带图像路径的`*.txt`文件）的相对路径，以及 2）类别`names`字典：
 
 ```py
-`# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/coco128  # dataset root dir train:  images/train2017  # train images (relative to 'path') 128 images val:  images/train2017  # val images (relative to 'path') 128 images test:  # test images (optional)  # Classes (80 COCO classes) names:   0:  person   1:  bicycle   2:  car   # ...   77:  teddy bear   78:  hair drier   79:  toothbrush` 
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/coco128  # dataset root dir
+train:  images/train2017  # train images (relative to 'path') 128 images
+val:  images/train2017  # val images (relative to 'path') 128 images
+test:  # test images (optional)
+
+# Classes (80 COCO classes)
+names:
+  0:  person
+  1:  bicycle
+  2:  car
+  # ...
+  77:  teddy bear
+  78:  hair drier
+  79:  toothbrush 
 ```
 
 ### 2.2 创建标签
@@ -101,7 +117,8 @@ YOLOv5 模型必须在标记数据上进行训练，以学习该数据中的对�
 根据以下示例组织您的训练和验证图像及标签。YOLOv5 假定`/coco128`目录在与`/yolov5`目录**相邻**的`/datasets`目录内。**YOLOv5 会自动定位每个图像路径中`/images/`的最后一个实例，以获取相应的标签**。例如：
 
 ```py
-`../datasets/coco128/images/im0.jpg  # image ../datasets/coco128/labels/im0.txt  # label` 
+../datasets/coco128/images/im0.jpg  # image
+../datasets/coco128/labels/im0.txt  # label 
 ```
 
 ![YOLOv5 数据集结构](img/af465e2a88df7a85a7bbf7dc4588995b.png)
@@ -117,7 +134,7 @@ YOLOv5 模型必须在标记数据上进行训练，以学习该数据中的对�
 通过指定数据集、批大小、图像大小以及预训练模型`--weights yolov5s.pt`（推荐）或随机初始化模型`--weights '' --cfg yolov5s.yaml`（不推荐），在 COCO128 数据集上训练 YOLOv5s 模型。预训练权重会自动从[最新的 YOLOv5 发布](https://github.com/ultralytics/yolov5/releases)中下载。
 
 ```py
-`python  train.py  --img  640  --epochs  3  --data  coco128.yaml  --weights  yolov5s.pt` 
+python  train.py  --img  640  --epochs  3  --data  coco128.yaml  --weights  yolov5s.pt 
 ```
 
 提示
@@ -139,7 +156,9 @@ YOLOv5 模型必须在标记数据上进行训练，以学习该数据中的对�
 开始很简单：
 
 ```py
-`pip  install  comet_ml  # 1\. install export  COMET_API_KEY=<Your  API  Key>  # 2\. paste API key python  train.py  --img  640  --epochs  3  --data  coco128.yaml  --weights  yolov5s.pt  # 3\. train` 
+pip  install  comet_ml  # 1\. install
+export  COMET_API_KEY=<Your  API  Key>  # 2\. paste API key
+python  train.py  --img  640  --epochs  3  --data  coco128.yaml  --weights  yolov5s.pt  # 3\. train 
 ```
 
 要了解有关此集成支持的所有 Comet 功能的更多信息，请查看 Comet 教程。如果您想了解更多关于 Comet 的信息，请访问我们的[文档](https://bit.ly/yolov5-colab-comet-docs)。通过尝试 Comet Colab 笔记本来开始吧：![在 Colab 中打开](https://colab.research.google.com/drive/1RG0WOQyxlDlo5Km8GogJpIEJlg_5lyYO?usp=sharing)
@@ -171,7 +190,9 @@ YOLOv5 模型必须在标记数据上进行训练，以学习该数据中的对�
 训练完成后，结果文件`results.csv`会在每个时期后更新，并在训练完成后绘制为`results.png`（下图）。您也可以手动绘制任何`results.csv`文件：
 
 ```py
-`from utils.plots import plot_results  plot_results("path/to/results.csv")  # plot 'results.csv' as 'results.png'` 
+from utils.plots import plot_results
+
+plot_results("path/to/results.csv")  # plot 'results.csv' as 'results.png' 
 ```
 
 ![results.png](img/35b4c06846d28420289c7aa59df324f8.png)
@@ -221,7 +242,9 @@ Ultralytics 提供一系列预安装了关键依赖项如[CUDA](https://develope
 1.  **设置环境**：克隆 YOLOv5 仓库并安装依赖项：
 
     ```py
-    `git  clone  https://github.com/ultralytics/yolov5 cd  yolov5 pip  install  -r  requirements.txt` 
+    git  clone  https://github.com/ultralytics/yolov5
+    cd  yolov5
+    pip  install  -r  requirements.txt 
     ```
 
 1.  **创建数据集配置**：编写 `dataset.yaml` 文件定义训练/验证路径和类名。
@@ -229,7 +252,7 @@ Ultralytics 提供一系列预安装了关键依赖项如[CUDA](https://develope
 1.  **训练模型**：
 
     ```py
-    `python  train.py  --img  640  --epochs  3  --data  dataset.yaml  --weights  yolov5s.pt` 
+    python  train.py  --img  640  --epochs  3  --data  dataset.yaml  --weights  yolov5s.pt 
     ```
 
 ### 我可以使用什么工具来注释我的 YOLOv5 数据集？

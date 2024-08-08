@@ -61,11 +61,26 @@ YOLOv8 预训练的 OBB 模型显示在此处，这些模型是在[DOTAv1](https
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-obb.yaml")  # build a new model from YAML model = YOLO("yolov8n-obb.pt")  # load a pretrained model (recommended for training) model = YOLO("yolov8n-obb.yaml").load("yolov8n.pt")  # build from YAML and transfer weights  # Train the model results = model.train(data="dota8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-obb.yaml")  # build a new model from YAML
+model = YOLO("yolov8n-obb.pt")  # load a pretrained model (recommended for training)
+model = YOLO("yolov8n-obb.yaml").load("yolov8n.pt")  # build from YAML and transfer weights
+
+# Train the model
+results = model.train(data="dota8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Build a new model from YAML and start training from scratch yolo  obb  train  data=dota8.yaml  model=yolov8n-obb.yaml  epochs=100  imgsz=640  # Start training from a pretrained *.pt model yolo  obb  train  data=dota8.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640  # Build a new model from YAML, transfer pretrained weights to it and start training yolo  obb  train  data=dota8.yaml  model=yolov8n-obb.yaml  pretrained=yolov8n-obb.pt  epochs=100  imgsz=640` 
+# Build a new model from YAML and start training from scratch
+yolo  obb  train  data=dota8.yaml  model=yolov8n-obb.yaml  epochs=100  imgsz=640
+
+# Start training from a pretrained *.pt model
+yolo  obb  train  data=dota8.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640
+
+# Build a new model from YAML, transfer pretrained weights to it and start training
+yolo  obb  train  data=dota8.yaml  model=yolov8n-obb.yaml  pretrained=yolov8n-obb.pt  epochs=100  imgsz=640 
 ```
 
 ### 数据集格式
@@ -79,11 +94,23 @@ OBB 数据集格式详细信息可在 Dataset Guide 中找到。
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-obb.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Validate the model metrics = model.val(data="dota8.yaml")  # no arguments needed, dataset and settings remembered metrics.box.map  # map50-95(B) metrics.box.map50  # map50(B) metrics.box.map75  # map75(B) metrics.box.maps  # a list contains map50-95(B) of each category` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-obb.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Validate the model
+metrics = model.val(data="dota8.yaml")  # no arguments needed, dataset and settings remembered
+metrics.box.map  # map50-95(B)
+metrics.box.map50  # map50(B)
+metrics.box.map75  # map75(B)
+metrics.box.maps  # a list contains map50-95(B) of each category 
 ```
 
 ```py
-`yolo  obb  val  model=yolov8n-obb.pt  data=dota8.yaml  # val official model yolo  obb  val  model=path/to/best.pt  data=path/to/data.yaml  # val custom model` 
+yolo  obb  val  model=yolov8n-obb.pt  data=dota8.yaml  # val official model
+yolo  obb  val  model=path/to/best.pt  data=path/to/data.yaml  # val custom model 
 ```
 
 ## 预测
@@ -93,11 +120,19 @@ OBB 数据集格式详细信息可在 Dataset Guide 中找到。
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-obb.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Predict with the model results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-obb.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Predict with the model
+results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image 
 ```
 
 ```py
-`yolo  obb  predict  model=yolov8n-obb.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with official model yolo  obb  predict  model=path/to/best.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with custom model` 
+yolo  obb  predict  model=yolov8n-obb.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with official model
+yolo  obb  predict  model=path/to/best.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with custom model 
 ```
 
 查看 Predict 页面中的完整`predict`模式详细信息。
@@ -109,11 +144,19 @@ OBB 数据集格式详细信息可在 Dataset Guide 中找到。
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-obb.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom trained model  # Export the model model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-obb.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom trained model
+
+# Export the model
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n-obb.pt  format=onnx  # export official model yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model` 
+yolo  export  model=yolov8n-obb.pt  format=onnx  # export official model
+yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model 
 ```
 
 可用的 YOLOv8-obb 导出格式列在下表中。您可以使用`format`参数导出任何格式，例如`format='onnx'`或`format='engine'`。您可以直接在导出的模型上进行预测或验证，例如`yolo predict model=yolov8n-obb.onnx`。导出完成后，模型的使用示例将显示在您的模型中。
@@ -149,11 +192,17 @@ OBB 数据集格式详细信息可在 Dataset Guide 中找到。
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained model model = YOLO("yolov8n-obb.pt")  # Train the model results = model.train(data="path/to/custom_dataset.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a pretrained model
+model = YOLO("yolov8n-obb.pt")
+
+# Train the model
+results = model.train(data="path/to/custom_dataset.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  obb  train  data=path/to/custom_dataset.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640` 
+yolo  obb  train  data=path/to/custom_dataset.yaml  model=yolov8n-obb.pt  epochs=100  imgsz=640 
 ```
 
 要了解更多训练参数，请检查配置部分。
@@ -169,11 +218,17 @@ YOLOv8-OBB 模型预先训练在像 [DOTAv1](https://github.com/ultralytics/ultr
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-obb.pt")  # Export the model model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-obb.pt")
+
+# Export the model
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n-obb.pt  format=onnx` 
+yolo  export  model=yolov8n-obb.pt  format=onnx 
 ```
 
 若要了解更多导出格式和详细信息，请参阅导出页面。
@@ -185,11 +240,17 @@ YOLOv8-OBB 模型预先训练在像 [DOTAv1](https://github.com/ultralytics/ultr
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-obb.pt")  # Validate the model metrics = model.val(data="dota8.yaml")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-obb.pt")
+
+# Validate the model
+metrics = model.val(data="dota8.yaml") 
 ```
 
 ```py
-`yolo  obb  val  model=yolov8n-obb.pt  data=dota8.yaml` 
+yolo  obb  val  model=yolov8n-obb.pt  data=dota8.yaml 
 ```
 
 在 Val 部分查看完整的验证细节。

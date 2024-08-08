@@ -140,11 +140,21 @@ YOLOv10 已在像 COCO 这样的标准基准测试中进行了广泛测试，展
 例子
 
 ```py
-`from ultralytics import YOLO  # Load a pre-trained YOLOv10n model model = YOLO("yolov10n.pt")  # Perform object detection on an image results = model("image.jpg")  # Display the results results[0].show()` 
+from ultralytics import YOLO
+
+# Load a pre-trained YOLOv10n model
+model = YOLO("yolov10n.pt")
+
+# Perform object detection on an image
+results = model("image.jpg")
+
+# Display the results
+results[0].show() 
 ```
 
 ```py
-`# Load a COCO-pretrained YOLOv10n model and run inference on the 'bus.jpg' image yolo  detect  predict  model=yolov10n.pt  source=path/to/bus.jpg` 
+# Load a COCO-pretrained YOLOv10n model and run inference on the 'bus.jpg' image
+yolo  detect  predict  model=yolov10n.pt  source=path/to/bus.jpg 
 ```
 
 用于在自定义数据集上训练 YOLOv10：
@@ -152,11 +162,21 @@ YOLOv10 已在像 COCO 这样的标准基准测试中进行了广泛测试，展
 例子
 
 ```py
-`from ultralytics import YOLO  # Load YOLOv10n model from scratch model = YOLO("yolov10n.yaml")  # Train the model model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load YOLOv10n model from scratch
+model = YOLO("yolov10n.yaml")
+
+# Train the model
+model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Build a YOLOv10n model from scratch and train it on the COCO8 example dataset for 100 epochs yolo  train  model=yolov10n.yaml  data=coco8.yaml  epochs=100  imgsz=640  # Build a YOLOv10n model from scratch and run inference on the 'bus.jpg' image yolo  predict  model=yolov10n.yaml  source=path/to/bus.jpg` 
+# Build a YOLOv10n model from scratch and train it on the COCO8 example dataset for 100 epochs
+yolo  train  model=yolov10n.yaml  data=coco8.yaml  epochs=100  imgsz=640
+
+# Build a YOLOv10n model from scratch and run inference on the 'bus.jpg' image
+yolo  predict  model=yolov10n.yaml  source=path/to/bus.jpg 
 ```
 
 ## 支持的任务和模式
@@ -195,7 +215,14 @@ YOLOv10 通过解决以往版本的不足之处并采用创新设计策略，为
 我们要感谢清华大学的 YOLOv10 作者们，他们在[Ultralytics](https://ultralytics.com)框架中进行了广泛的研究并作出了重大贡献：
 
 ```py
-`@article{THU-MIGyolov10,   title={YOLOv10: Real-Time End-to-End Object Detection},   author={Ao Wang, Hui Chen, Lihao Liu, et al.},   journal={arXiv preprint arXiv:2405.14458},   year={2024},   institution={Tsinghua University},   license  =  {AGPL-3.0} }` 
+@article{THU-MIGyolov10,
+  title={YOLOv10: Real-Time End-to-End Object Detection},
+  author={Ao Wang, Hui Chen, Lihao Liu, et al.},
+  journal={arXiv preprint arXiv:2405.14458},
+  year={2024},
+  institution={Tsinghua University},
+  license  =  {AGPL-3.0}
+} 
 ```
 
 有关详细的实施、架构创新和实验结果，请参阅清华大学团队的 YOLOv10 [研究论文](https://arxiv.org/pdf/2405.14458)和[GitHub 存储库](https://github.com/THU-MIG/yolov10)。
@@ -213,11 +240,16 @@ YOLOv10 是由[清华大学](https://www.tsinghua.edu.cn/en/)研究人员开发�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load the pre-trained YOLOv10-N model model = YOLO("yolov10n.pt") results = model("image.jpg") results[0].show()` 
+from ultralytics import YOLO
+
+# Load the pre-trained YOLOv10-N model
+model = YOLO("yolov10n.pt")
+results = model("image.jpg")
+results[0].show() 
 ```
 
 ```py
-`yolo  detect  predict  model=yolov10n.pt  source=path/to/image.jpg` 
+yolo  detect  predict  model=yolov10n.pt  source=path/to/image.jpg 
 ```
 
 欲了解更多使用示例，请访问我们的使用示例部分。

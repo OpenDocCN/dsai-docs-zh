@@ -49,11 +49,18 @@ ImageNet 数据集广泛用于训练和评估各种计算机视觉任务中的�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="imagenet", epochs=100, imgsz=224)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="imagenet", epochs=100, imgsz=224) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=imagenet  model=yolov8n-cls.pt  epochs=100  imgsz=224` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=imagenet  model=yolov8n-cls.pt  epochs=100  imgsz=224 
 ```
 
 ## 样例图像和注释
@@ -69,7 +76,15 @@ ImageNet 数据集包含数千种对象类别的高分辨率图像，为训练�
 如果您在研究或开发工作中使用 ImageNet 数据集，请引用以下论文：
 
 ```py
-`@article{ILSVRC15,   author  =  {Olga Russakovsky and Jia Deng and Hao Su and Jonathan Krause and Sanjeev Satheesh and Sean Ma and Zhiheng Huang and Andrej Karpathy and Aditya Khosla and Michael Bernstein and Alexander C. Berg and Li Fei-Fei},   title={ImageNet Large Scale Visual Recognition Challenge},   year={2015},   journal={International Journal of Computer Vision (IJCV)},   volume={115},   number={3},   pages={211-252} }` 
+@article{ILSVRC15,
+  author  =  {Olga Russakovsky and Jia Deng and Hao Su and Jonathan Krause and Sanjeev Satheesh and Sean Ma and Zhiheng Huang and Andrej Karpathy and Aditya Khosla and Michael Bernstein and Alexander C. Berg and Li Fei-Fei},
+  title={ImageNet Large Scale Visual Recognition Challenge},
+  year={2015},
+  journal={International Journal of Computer Vision (IJCV)},
+  volume={115},
+  number={3},
+  pages={211-252}
+} 
 ```
 
 我们要感谢由 Olga Russakovsky、Jia Deng 和 Li Fei-Fei 领导的 ImageNet 团队，他们创建并维护了 ImageNet 数据集，作为机器学习和计算机视觉研究社区的宝贵资源。有关 ImageNet 数据集及其创建者的更多信息，请访问 [ImageNet 网站](https://www.image-net.org/)。
@@ -87,11 +102,18 @@ ImageNet 数据集包含数千种对象类别的高分辨率图像，为训练�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="imagenet", epochs=100, imgsz=224)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="imagenet", epochs=100, imgsz=224) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=imagenet  model=yolov8n-cls.pt  epochs=100  imgsz=224` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=imagenet  model=yolov8n-cls.pt  epochs=100  imgsz=224 
 ```
 
 欲了解更详细的训练说明，请参阅我们的训练页面。

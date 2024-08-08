@@ -29,7 +29,7 @@ Triton 推理服务器旨在生产部署各种 AI 模型，支持 TensorFlow、P
 +   安装`tritonclient`：
 
     ```py
-    `pip  install  tritonclient[all]` 
+    pip  install  tritonclient[all] 
     ```
 
 ## 将 YOLOv8 导出为 ONNX 格式
@@ -37,7 +37,13 @@ Triton 推理服务器旨在生产部署各种 AI 模型，支持 TensorFlow、P
 在将模型部署到 Triton 之前，必须将其导出为 ONNX 格式。ONNX（开放神经网络交换）是一种允许在不同深度学习框架之间转移模型的格式。使用`YOLO`类的`export`功能：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official model  # Export the model onnx_file = model.export(format="onnx", dynamic=True)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load an official model
+
+# Export the model
+onnx_file = model.export(format="onnx", dynamic=True) 
 ```
 
 ## 设置 Triton 模型仓库
@@ -47,13 +53,27 @@ Triton 模型仓库是 Triton 可以访问和加载模型的存储位置。
 1.  创建必要的目录结构：
 
     ```py
-    `from pathlib import Path  # Define paths model_name = "yolo" triton_repo_path = Path("tmp") / "triton_repo" triton_model_path = triton_repo_path / model_name  # Create directories (triton_model_path / "1").mkdir(parents=True, exist_ok=True)` 
+    from pathlib import Path
+
+    # Define paths
+    model_name = "yolo"
+    triton_repo_path = Path("tmp") / "triton_repo"
+    triton_model_path = triton_repo_path / model_name
+
+    # Create directories
+    (triton_model_path / "1").mkdir(parents=True, exist_ok=True) 
     ```
 
 1.  将导出的 ONNX 模型移至 Triton 仓库：
 
     ```py
-    `from pathlib import Path  # Move ONNX model to Triton Model path Path(onnx_file).rename(triton_model_path / "1" / "model.onnx")  # Create config file (triton_model_path / "config.pbtxt").touch()` 
+    from pathlib import Path
+
+    # Move ONNX model to Triton Model path
+    Path(onnx_file).rename(triton_model_path / "1" / "model.onnx")
+
+    # Create config file
+    (triton_model_path / "config.pbtxt").touch() 
     ```
 
 ## 运行 Triton 推理服务器
@@ -61,19 +81,56 @@ Triton 模型仓库是 Triton 可以访问和加载模型的存储位置。
 使用 Docker 运行 Triton 推理服务器：
 
 ```py
-`import contextlib import subprocess import time  from tritonclient.http import InferenceServerClient  # Define image https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tritonserver tag = "nvcr.io/nvidia/tritonserver:23.09-py3"  # 6.4 GB  # Pull the image subprocess.call(f"docker pull {tag}", shell=True)  # Run the Triton server and capture the container ID container_id = (     subprocess.check_output(         f"docker run -d --rm -v {triton_repo_path}:/models -p 8000:8000 {tag} tritonserver --model-repository=/models",         shell=True,     )     .decode("utf-8")     .strip() )  # Wait for the Triton server to start triton_client = InferenceServerClient(url="localhost:8000", verbose=False, ssl=False)  # Wait until model is ready for _ in range(10):     with contextlib.suppress(Exception):         assert triton_client.is_model_ready(model_name)         break     time.sleep(1)` 
+import contextlib
+import subprocess
+import time
+
+from tritonclient.http import InferenceServerClient
+
+# Define image https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tritonserver
+tag = "nvcr.io/nvidia/tritonserver:23.09-py3"  # 6.4 GB
+
+# Pull the image
+subprocess.call(f"docker pull {tag}", shell=True)
+
+# Run the Triton server and capture the container ID
+container_id = (
+    subprocess.check_output(
+        f"docker run -d --rm -v {triton_repo_path}:/models -p 8000:8000 {tag} tritonserver --model-repository=/models",
+        shell=True,
+    )
+    .decode("utf-8")
+    .strip()
+)
+
+# Wait for the Triton server to start
+triton_client = InferenceServerClient(url="localhost:8000", verbose=False, ssl=False)
+
+# Wait until model is ready
+for _ in range(10):
+    with contextlib.suppress(Exception):
+        assert triton_client.is_model_ready(model_name)
+        break
+    time.sleep(1) 
 ```
 
 然后使用 Triton 服务器模型进行推理：
 
 ```py
-`from ultralytics import YOLO  # Load the Triton Server model model = YOLO("http://localhost:8000/yolo", task="detect")  # Run inference on the server results = model("path/to/image.jpg")` 
+from ultralytics import YOLO
+
+# Load the Triton Server model
+model = YOLO("http://localhost:8000/yolo", task="detect")
+
+# Run inference on the server
+results = model("path/to/image.jpg") 
 ```
 
 清理容器：
 
 ```py
-`# Kill and remove the container at the end of the test subprocess.call(f"docker kill {container_id}", shell=True)` 
+# Kill and remove the container at the end of the test
+subprocess.call(f"docker kill {container_id}", shell=True) 
 ```
 
 * * *
@@ -89,19 +146,61 @@ Triton 模型仓库是 Triton 可以访问和加载模型的存储位置。
 1.  **将 YOLOv8 导出为 ONNX 格式**：
 
     ```py
-    `from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official model  # Export the model to ONNX format onnx_file = model.export(format="onnx", dynamic=True)` 
+    from ultralytics import YOLO
+
+    # Load a model
+    model = YOLO("yolov8n.pt")  # load an official model
+
+    # Export the model to ONNX format
+    onnx_file = model.export(format="onnx", dynamic=True) 
     ```
 
 1.  **设置 Triton 模型仓库**：
 
     ```py
-    `from pathlib import Path  # Define paths model_name = "yolo" triton_repo_path = Path("tmp") / "triton_repo" triton_model_path = triton_repo_path / model_name  # Create directories (triton_model_path / "1").mkdir(parents=True, exist_ok=True) Path(onnx_file).rename(triton_model_path / "1" / "model.onnx") (triton_model_path / "config.pbtxt").touch()` 
+    from pathlib import Path
+
+    # Define paths
+    model_name = "yolo"
+    triton_repo_path = Path("tmp") / "triton_repo"
+    triton_model_path = triton_repo_path / model_name
+
+    # Create directories
+    (triton_model_path / "1").mkdir(parents=True, exist_ok=True)
+    Path(onnx_file).rename(triton_model_path / "1" / "model.onnx")
+    (triton_model_path / "config.pbtxt").touch() 
     ```
 
 1.  **运行 Triton 服务器**：
 
     ```py
-    `import contextlib import subprocess import time  from tritonclient.http import InferenceServerClient  # Define image https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tritonserver tag = "nvcr.io/nvidia/tritonserver:23.09-py3"  subprocess.call(f"docker pull {tag}", shell=True)  container_id = (     subprocess.check_output(         f"docker run -d --rm -v {triton_repo_path}/models -p 8000:8000 {tag} tritonserver --model-repository=/models",         shell=True,     )     .decode("utf-8")     .strip() )  triton_client = InferenceServerClient(url="localhost:8000", verbose=False, ssl=False)  for _ in range(10):     with contextlib.suppress(Exception):         assert triton_client.is_model_ready(model_name)         break     time.sleep(1)` 
+    import contextlib
+    import subprocess
+    import time
+
+    from tritonclient.http import InferenceServerClient
+
+    # Define image https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tritonserver
+    tag = "nvcr.io/nvidia/tritonserver:23.09-py3"
+
+    subprocess.call(f"docker pull {tag}", shell=True)
+
+    container_id = (
+        subprocess.check_output(
+            f"docker run -d --rm -v {triton_repo_path}/models -p 8000:8000 {tag} tritonserver --model-repository=/models",
+            shell=True,
+        )
+        .decode("utf-8")
+        .strip()
+    )
+
+    triton_client = InferenceServerClient(url="localhost:8000", verbose=False, ssl=False)
+
+    for _ in range(10):
+        with contextlib.suppress(Exception):
+            assert triton_client.is_model_ready(model_name)
+            break
+        time.sleep(1) 
     ```
 
 此设置可帮助您高效地在 Triton 推断服务器上部署 YOLOv8 模型，用于高性能 AI 模型推断。
@@ -131,7 +230,10 @@ Triton 模型仓库是 Triton 可以访问和加载模型的存储位置。
 要导出您的模型，请使用：
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n.pt") onnx_file = model.export(format="onnx", dynamic=True)` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")
+onnx_file = model.export(format="onnx", dynamic=True) 
 ```
 
 您可以按照导出指南中的步骤完成该过程。
@@ -141,7 +243,13 @@ Triton 模型仓库是 Triton 可以访问和加载模型的存储位置。
 是的，您可以在[NVIDIA Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server)上运行 Ultralytics YOLOv8 模型进行推断。一旦您的模型设置在 Triton 模型存储库中并且服务器正在运行，您可以加载并运行推断模型如下：
 
 ```py
-`from ultralytics import YOLO  # Load the Triton Server model model = YOLO("http://localhost:8000/yolo", task="detect")  # Run inference on the server results = model("path/to/image.jpg")` 
+from ultralytics import YOLO
+
+# Load the Triton Server model
+model = YOLO("http://localhost:8000/yolo", task="detect")
+
+# Run inference on the server
+results = model("path/to/image.jpg") 
 ```
 
 有关设置和运行 Triton 服务器与 YOLOv8 的深入指南，请参考运行 Triton 推断服务器部分。

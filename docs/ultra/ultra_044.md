@@ -39,7 +39,63 @@ SKU-110k 数据集被广泛用于训练和评估对象检测任务中的深度�
 ultralytics/cfg/datasets/SKU-110K.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # SKU-110K retail items dataset https://github.com/eg4000/SKU110K_CVPR19 by Trax Retail # Documentation: https://docs.ultralytics.com/datasets/detect/sku-110k/ # Example usage: yolo train data=SKU-110K.yaml # parent # ├── ultralytics # └── datasets #     └── SKU-110K  ← downloads here (13.6 GB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/SKU-110K  # dataset root dir train:  train.txt  # train images (relative to 'path')  8219 images val:  val.txt  # val images (relative to 'path')  588 images test:  test.txt  # test images (optional)  2936 images  # Classes names:   0:  object  # Download script/URL (optional) --------------------------------------------------------------------------------------- download:  |   import shutil   from pathlib import Path    import numpy as np   import pandas as pd   from tqdm import tqdm    from ultralytics.utils.downloads import download   from ultralytics.utils.ops import xyxy2xywh    # Download   dir = Path(yaml['path'])  # dataset root dir   parent = Path(dir.parent)  # download dir   urls = ['http://trax-geometry.s3.amazonaws.com/cvpr_challenge/SKU110K_fixed.tar.gz']   download(urls, dir=parent)    # Rename directories   if dir.exists():   shutil.rmtree(dir)   (parent / 'SKU110K_fixed').rename(dir)  # rename dir   (dir / 'labels').mkdir(parents=True, exist_ok=True)  # create labels dir    # Convert labels   names = 'image', 'x1', 'y1', 'x2', 'y2', 'class', 'image_width', 'image_height'  # column names   for d in 'annotations_train.csv', 'annotations_val.csv', 'annotations_test.csv':   x = pd.read_csv(dir / 'annotations' / d, names=names).values  # annotations   images, unique_images = x[:, 0], np.unique(x[:, 0])   with open((dir / d).with_suffix('.txt').__str__().replace('annotations_', ''), 'w') as f:   f.writelines(f'./images/{s}\n' for s in unique_images)   for im in tqdm(unique_images, desc=f'Converting {dir / d}'):   cls = 0  # single-class dataset   with open((dir / 'labels' / im).with_suffix('.txt'), 'a') as f:   for r in x[images == im]:   w, h = r[6], r[7]  # image width, height   xywh = xyxy2xywh(np.array([[r[1] / w, r[2] / h, r[3] / w, r[4] / h]]))[0]  # instance   f.write(f"{cls} {xywh[0]:.5f} {xywh[1]:.5f} {xywh[2]:.5f} {xywh[3]:.5f}\n")  # write label` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# SKU-110K retail items dataset https://github.com/eg4000/SKU110K_CVPR19 by Trax Retail
+# Documentation: https://docs.ultralytics.com/datasets/detect/sku-110k/
+# Example usage: yolo train data=SKU-110K.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── SKU-110K  ← downloads here (13.6 GB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/SKU-110K  # dataset root dir
+train:  train.txt  # train images (relative to 'path')  8219 images
+val:  val.txt  # val images (relative to 'path')  588 images
+test:  test.txt  # test images (optional)  2936 images
+
+# Classes
+names:
+  0:  object
+
+# Download script/URL (optional) ---------------------------------------------------------------------------------------
+download:  |
+  import shutil
+  from pathlib import Path
+
+  import numpy as np
+  import pandas as pd
+  from tqdm import tqdm
+
+  from ultralytics.utils.downloads import download
+  from ultralytics.utils.ops import xyxy2xywh
+
+  # Download
+  dir = Path(yaml['path'])  # dataset root dir
+  parent = Path(dir.parent)  # download dir
+  urls = ['http://trax-geometry.s3.amazonaws.com/cvpr_challenge/SKU110K_fixed.tar.gz']
+  download(urls, dir=parent)
+
+  # Rename directories
+  if dir.exists():
+  shutil.rmtree(dir)
+  (parent / 'SKU110K_fixed').rename(dir)  # rename dir
+  (dir / 'labels').mkdir(parents=True, exist_ok=True)  # create labels dir
+
+  # Convert labels
+  names = 'image', 'x1', 'y1', 'x2', 'y2', 'class', 'image_width', 'image_height'  # column names
+  for d in 'annotations_train.csv', 'annotations_val.csv', 'annotations_test.csv':
+  x = pd.read_csv(dir / 'annotations' / d, names=names).values  # annotations
+  images, unique_images = x[:, 0], np.unique(x[:, 0])
+  with open((dir / d).with_suffix('.txt').__str__().replace('annotations_', ''), 'w') as f:
+  f.writelines(f'./images/{s}\n' for s in unique_images)
+  for im in tqdm(unique_images, desc=f'Converting {dir / d}'):
+  cls = 0  # single-class dataset
+  with open((dir / 'labels' / im).with_suffix('.txt'), 'a') as f:
+  for r in x[images == im]:
+  w, h = r[6], r[7]  # image width, height
+  xywh = xyxy2xywh(np.array([[r[1] / w, r[2] / h, r[3] / w, r[4] / h]]))[0]  # instance
+  f.write(f"{cls} {xywh[0]:.5f} {xywh[1]:.5f} {xywh[2]:.5f} {xywh[3]:.5f}\n")  # write label 
 ```
 
 ## 使用
@@ -49,11 +105,18 @@ ultralytics/cfg/datasets/SKU-110K.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="SKU-110K.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="SKU-110K.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=SKU-110K.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=SKU-110K.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 ## 示例数据和注释
@@ -71,7 +134,12 @@ SKU-110k 数据集包含丰富的零售货架图像，其中物体密集包装�
 如果您在研究或开发工作中使用 SKU-110k 数据集，请引用以下论文：
 
 ```py
-`@inproceedings{goldman2019dense,   author  =  {Eran Goldman and Roei Herzig and Aviv Eisenschtat and Jacob Goldberger and Tal Hassner},   title  =  {Precise Detection in Densely Packed Scenes},   booktitle  =  {Proc. Conf. Comput. Vision Pattern Recognition (CVPR)},   year  =  {2019} }` 
+@inproceedings{goldman2019dense,
+  author  =  {Eran Goldman and Roei Herzig and Aviv Eisenschtat and Jacob Goldberger and Tal Hassner},
+  title  =  {Precise Detection in Densely Packed Scenes},
+  booktitle  =  {Proc. Conf. Comput. Vision Pattern Recognition (CVPR)},
+  year  =  {2019}
+} 
 ```
 
 我们要感谢 Eran Goldman 等人为创建和维护 SKU-110k 数据集作为计算机视觉研究社区的宝贵资源。有关 SKU-110k 数据集及其创建者的更多信息，请访问 [SKU-110k 数据集 GitHub 仓库](https://github.com/eg4000/SKU110K_CVPR19)。
@@ -89,11 +157,18 @@ SKU-110k 数据集由 Eran Goldman 等人开发，包括超过 110,000 个独特
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="SKU-110K.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="SKU-110K.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=SKU-110K.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=SKU-110K.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 欲获得可用参数的详细列表，请参阅模型训练页面。
@@ -131,7 +206,12 @@ SKU-110k 数据集包含来自世界各地的商店货架图像，展示了密�
 如果您在研究或开发工作中使用 SKU-110k 数据集，请引用以下论文：
 
 ```py
-`@inproceedings{goldman2019dense,   author  =  {Eran Goldman and Roei Herzig and Aviv Eisenschtat and Jacob Goldberger and Tal Hassner},   title  =  {Precise Detection in Densely Packed Scenes},   booktitle  =  {Proc. Conf. Comput. Vision Pattern Recognition (CVPR)},   year  =  {2019} }` 
+@inproceedings{goldman2019dense,
+  author  =  {Eran Goldman and Roei Herzig and Aviv Eisenschtat and Jacob Goldberger and Tal Hassner},
+  title  =  {Precise Detection in Densely Packed Scenes},
+  booktitle  =  {Proc. Conf. Comput. Vision Pattern Recognition (CVPR)},
+  year  =  {2019}
+} 
 ```
 
 数据集的更多信息可以在引用和致谢部分找到。

@@ -15,7 +15,31 @@
 ultralytics/cfg/datasets/coco8-pose.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # COCO8-pose dataset (first 8 images from COCO train2017) by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/pose/coco8-pose/ # Example usage: yolo train data=coco8-pose.yaml # parent # ├── ultralytics # └── datasets #     └── coco8-pose  ← downloads here (1 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/coco8-pose  # dataset root dir train:  images/train  # train images (relative to 'path') 4 images val:  images/val  # val images (relative to 'path') 4 images test:  # test images (optional)  # Keypoints kpt_shape:  [17,  3]  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible) flip_idx:  [0,  2,  1,  4,  3,  6,  5,  8,  7,  10,  9,  12,  11,  14,  13,  16,  15]  # Classes names:   0:  person  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/coco8-pose.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# COCO8-pose dataset (first 8 images from COCO train2017) by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/pose/coco8-pose/
+# Example usage: yolo train data=coco8-pose.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── coco8-pose  ← downloads here (1 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/coco8-pose  # dataset root dir
+train:  images/train  # train images (relative to 'path') 4 images
+val:  images/val  # val images (relative to 'path') 4 images
+test:  # test images (optional)
+
+# Keypoints
+kpt_shape:  [17,  3]  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
+flip_idx:  [0,  2,  1,  4,  3,  6,  5,  8,  7,  10,  9,  12,  11,  14,  13,  16,  15]
+
+# Classes
+names:
+  0:  person
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/coco8-pose.zip 
 ```
 
 ## 使用
@@ -25,11 +49,18 @@ ultralytics/cfg/datasets/coco8-pose.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640 
 ```
 
 ## 样本图像和注释
@@ -47,7 +78,14 @@ ultralytics/cfg/datasets/coco8-pose.yaml
 如果您在研究或开发工作中使用 COCO 数据集，请引用以下论文：
 
 ```py
-`@misc{lin2015microsoft,   title={Microsoft COCO: Common Objects in Context},   author={Tsung-Yi Lin and Michael Maire and Serge Belongie and Lubomir Bourdev and Ross Girshick and James Hays and Pietro Perona and Deva Ramanan and C. Lawrence Zitnick and Piotr Dollár},   year={2015},   eprint={1405.0312},   archivePrefix={arXiv},   primaryClass={cs.CV} }` 
+@misc{lin2015microsoft,
+  title={Microsoft COCO: Common Objects in Context},
+  author={Tsung-Yi Lin and Michael Maire and Serge Belongie and Lubomir Bourdev and Ross Girshick and James Hays and Pietro Perona and Deva Ramanan and C. Lawrence Zitnick and Piotr Dollár},
+  year={2015},
+  eprint={1405.0312},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+} 
 ```
 
 我们要感谢 COCO 联盟为计算机视觉社区创建和维护这一宝贵资源。有关 COCO 数据集及其创建者的更多信息，请访问[COCO 数据集网站](https://cocodataset.org/#home)。
@@ -65,11 +103,17 @@ COCO8-Pose 数据集是一个小型、多用途的姿势检测数据集，包括
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-pose.pt")  # Train the model results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-pose.pt")
+
+# Train the model
+results = model.train(data="coco8-pose.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640` 
+yolo  pose  train  data=coco8-pose.yaml  model=yolov8n-pose.pt  epochs=100  imgsz=640 
 ```
 
 欲了解更多训练参数的详细列表，请参阅模型训练页面。

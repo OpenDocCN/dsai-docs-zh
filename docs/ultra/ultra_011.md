@@ -51,11 +51,26 @@ YOLOv8 预训练 Detect 模型显示在此处。Detect、Segment 和 Pose 模型
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.yaml")  # build a new model from YAML model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training) model = YOLO("yolov8n.yaml").load("yolov8n.pt")  # build from YAML and transfer weights  # Train the model results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.yaml")  # build a new model from YAML
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+model = YOLO("yolov8n.yaml").load("yolov8n.pt")  # build from YAML and transfer weights
+
+# Train the model
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Build a new model from YAML and start training from scratch yolo  detect  train  data=coco8.yaml  model=yolov8n.yaml  epochs=100  imgsz=640  # Start training from a pretrained *.pt model yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640  # Build a new model from YAML, transfer pretrained weights to it and start training yolo  detect  train  data=coco8.yaml  model=yolov8n.yaml  pretrained=yolov8n.pt  epochs=100  imgsz=640` 
+# Build a new model from YAML and start training from scratch
+yolo  detect  train  data=coco8.yaml  model=yolov8n.yaml  epochs=100  imgsz=640
+
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640
+
+# Build a new model from YAML, transfer pretrained weights to it and start training
+yolo  detect  train  data=coco8.yaml  model=yolov8n.yaml  pretrained=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 ### 数据集格式
@@ -69,11 +84,23 @@ YOLO 检测数据集格式的详细信息可以在数据集指南中找到。要
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Validate the model metrics = model.val()  # no arguments needed, dataset and settings remembered metrics.box.map  # map50-95 metrics.box.map50  # map50 metrics.box.map75  # map75 metrics.box.maps  # a list contains map50-95 of each category` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Validate the model
+metrics = model.val()  # no arguments needed, dataset and settings remembered
+metrics.box.map  # map50-95
+metrics.box.map50  # map50
+metrics.box.map75  # map75
+metrics.box.maps  # a list contains map50-95 of each category 
 ```
 
 ```py
-`yolo  detect  val  model=yolov8n.pt  # val official model yolo  detect  val  model=path/to/best.pt  # val custom model` 
+yolo  detect  val  model=yolov8n.pt  # val official model
+yolo  detect  val  model=path/to/best.pt  # val custom model 
 ```
 
 ## 预测
@@ -83,11 +110,19 @@ YOLO 检测数据集格式的详细信息可以在数据集指南中找到。要
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom model  # Predict with the model results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom model
+
+# Predict with the model
+results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image 
 ```
 
 ```py
-`yolo  detect  predict  model=yolov8n.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with official model yolo  detect  predict  model=path/to/best.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with custom model` 
+yolo  detect  predict  model=yolov8n.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with official model
+yolo  detect  predict  model=path/to/best.pt  source='https://ultralytics.com/images/bus.jpg'  # predict with custom model 
 ```
 
 查看预测模式详细信息，请参阅预测页面。
@@ -99,11 +134,19 @@ YOLO 检测数据集格式的详细信息可以在数据集指南中找到。要
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load an official model model = YOLO("path/to/best.pt")  # load a custom trained model  # Export the model model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load an official model
+model = YOLO("path/to/best.pt")  # load a custom trained model
+
+# Export the model
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n.pt  format=onnx  # export official model yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model` 
+yolo  export  model=yolov8n.pt  format=onnx  # export official model
+yolo  export  model=path/to/best.pt  format=onnx  # export custom trained model 
 ```
 
 可用的 YOLOv8 导出格式在下表中列出。您可以使用`format`参数导出到任何格式，例如`format='onnx'`或`format='engine'`。您可以直接在导出的模型上进行预测或验证，例如`yolo predict model=yolov8n.onnx`。导出完成后，显示了您的模型的使用示例。
@@ -141,11 +184,17 @@ YOLO 检测数据集格式的详细信息可以在数据集指南中找到。要
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a pretrained model model = YOLO("yolov8n.pt")  # Train the model on your custom dataset model.train(data="my_custom_dataset.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a pretrained model
+model = YOLO("yolov8n.pt")
+
+# Train the model on your custom dataset
+model.train(data="my_custom_dataset.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  detect  train  data=my_custom_dataset.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+yolo  detect  train  data=my_custom_dataset.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 欲了解详细的配置选项，请访问配置页面。
@@ -173,11 +222,18 @@ Ultralytics YOLOv8 提供多个预训练模型，用于目标检测、分割和�
 示例
 
 ```py
-`from ultralytics import YOLO  # Load the model model = YOLO("path/to/best.pt")  # Validate the model metrics = model.val() print(metrics.box.map)  # mAP50-95` 
+from ultralytics import YOLO
+
+# Load the model
+model = YOLO("path/to/best.pt")
+
+# Validate the model
+metrics = model.val()
+print(metrics.box.map)  # mAP50-95 
 ```
 
 ```py
-`yolo  detect  val  model=path/to/best.pt` 
+yolo  detect  val  model=path/to/best.pt 
 ```
 
 更多验证细节，请访问 Val 页面。
@@ -189,11 +245,17 @@ Ultralytics YOLOv8 支持将模型导出到各种格式，如 ONNX、TensorRT、
 示例
 
 ```py
-`from ultralytics import YOLO  # Load the model model = YOLO("yolov8n.pt")  # Export the model to ONNX format model.export(format="onnx")` 
+from ultralytics import YOLO
+
+# Load the model
+model = YOLO("yolov8n.pt")
+
+# Export the model to ONNX format
+model.export(format="onnx") 
 ```
 
 ```py
-`yolo  export  model=yolov8n.pt  format=onnx` 
+yolo  export  model=yolov8n.pt  format=onnx 
 ```
 
 查看支持的格式列表和导出页面的说明。

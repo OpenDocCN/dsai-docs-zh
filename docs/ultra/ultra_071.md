@@ -27,11 +27,18 @@ ImageWoof 数据集广泛用于训练和评估图像分类任务中的深度学�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="imagewoof", epochs=100, imgsz=224)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="imagewoof", epochs=100, imgsz=224) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=imagewoof  model=yolov8n-cls.pt  epochs=100  imgsz=224` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=imagewoof  model=yolov8n-cls.pt  epochs=100  imgsz=224 
 ```
 
 ## 数据集变种
@@ -47,7 +54,16 @@ ImageWoof 数据集提供三种不同尺寸，以适应各种研究需求和计�
 要在训练中使用这些变体，只需将数据集参数中的 'imagewoof' 替换为 'imagewoof320' 或 'imagewoof160'。例如：
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # For medium-sized dataset model.train(data="imagewoof320", epochs=100, imgsz=224)  # For small-sized dataset model.train(data="imagewoof160", epochs=100, imgsz=224)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# For medium-sized dataset
+model.train(data="imagewoof320", epochs=100, imgsz=224)
+
+# For small-sized dataset
+model.train(data="imagewoof160", epochs=100, imgsz=224) 
 ```
 
 重要提示：使用较小的图像可能会降低分类准确性的性能。然而，在模型开发和原型设计的早期阶段，这是迭代快速的绝佳方式。
@@ -79,11 +95,14 @@ ImageWoof 数据集包含各种狗类的彩色图像，为图像分类任务提�
 训练示例
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n-cls.pt")  # Load a pretrained model results = model.train(data="imagewoof", epochs=100, imgsz=224)` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n-cls.pt")  # Load a pretrained model
+results = model.train(data="imagewoof", epochs=100, imgsz=224) 
 ```
 
 ```py
-`yolo  classify  train  data=imagewoof  model=yolov8n-cls.pt  epochs=100  imgsz=224` 
+yolo  classify  train  data=imagewoof  model=yolov8n-cls.pt  epochs=100  imgsz=224 
 ```
 
 要获取关于可用训练参数的更多详细信息，请参考训练页面。

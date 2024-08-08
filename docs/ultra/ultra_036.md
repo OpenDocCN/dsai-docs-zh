@@ -11,7 +11,21 @@
 Ultralytics YOLO 格式是一种数据集配置格式，允许您定义数据集根目录、与训练/验证/测试图像目录或包含图像路径的`*.txt`文件的相对路径，以及一个类名字典。以下是一个示例：
 
 ```py
-`# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/coco8  # dataset root dir train:  images/train  # train images (relative to 'path') 4 images val:  images/val  # val images (relative to 'path') 4 images test:  # test images (optional)  # Classes (80 COCO classes) names:   0:  person   1:  bicycle   2:  car   # ...   77:  teddy bear   78:  hair drier   79:  toothbrush` 
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/coco8  # dataset root dir
+train:  images/train  # train images (relative to 'path') 4 images
+val:  images/val  # val images (relative to 'path') 4 images
+test:  # test images (optional)
+
+# Classes (80 COCO classes)
+names:
+  0:  person
+  1:  bicycle
+  2:  car
+  # ...
+  77:  teddy bear
+  78:  hair drier
+  79:  toothbrush 
 ```
 
 此格式的标签应导出为 YOLO 格式，每个图像一个`*.txt`文件。如果图像中没有物体，则不需要`*.txt`文件。`*.txt`文件应按`class x_center y_center width height`格式进行格式化。框坐标必须采用**归一化 xywh**格式（从 0 到 1）。如果您的框以像素表示，应将`x_center`和`width`除以图像宽度，将`y_center`和`height`除以图像高度。类号应从零开始索引。
@@ -33,11 +47,18 @@ Ultralytics YOLO 格式是一种数据集配置格式，允许您定义数据集
 示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="coco8.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="coco8.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  detect  train  data=coco8.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 ## 支持的数据集
@@ -87,7 +108,9 @@ Ultralytics YOLO 格式是一种数据集配置格式，允许您定义数据集
 示例
 
 ```py
-`from ultralytics.data.converter import convert_coco  convert_coco(labels_dir="path/to/coco/annotations/")` 
+from ultralytics.data.converter import convert_coco
+
+convert_coco(labels_dir="path/to/coco/annotations/") 
 ```
 
 此转换工具可用于将 COCO 数据集或任何符合 COCO 格式的数据集转换为 Ultralytics YOLO 格式。
@@ -101,7 +124,15 @@ Ultralytics YOLO 格式是一种数据集配置格式，允许您定义数据集
 Ultralytics YOLO 格式是定义训练项目中数据集结构的结构化配置。它涉及设置训练、验证和测试图像及其相应标签的路径。例如：
 
 ```py
-`path:  ../datasets/coco8  # dataset root directory train:  images/train  # training images (relative to 'path') val:  images/val  # validation images (relative to 'path') test:  # optional test images names:   0:  person   1:  bicycle   2:  car   # ...` 
+path:  ../datasets/coco8  # dataset root directory
+train:  images/train  # training images (relative to 'path')
+val:  images/val  # validation images (relative to 'path')
+test:  # optional test images
+names:
+  0:  person
+  1:  bicycle
+  2:  car
+  # ... 
 ```
 
 标签保存在以 `*.txt` 格式保存的文件中，每个图像一个文件，格式为 `class x_center y_center width height`，使用标准化的坐标。如需详细指南，请参阅 COCO8 数据集示例。
@@ -111,7 +142,9 @@ Ultralytics YOLO 格式是定义训练项目中数据集结构的结构化配置
 您可以使用 Ultralytics 转换工具将 COCO 数据集转换为 YOLO 格式。以下是一个快速方法：
 
 ```py
-`from ultralytics.data.converter import convert_coco  convert_coco(labels_dir="path/to/coco/annotations/")` 
+from ultralytics.data.converter import convert_coco
+
+convert_coco(labels_dir="path/to/coco/annotations/") 
 ```
 
 这段代码将会把你的 COCO 标注转换成 YOLO 格式，从而实现与 Ultralytics YOLO 模型的无缝集成。有关详细信息，请访问 Port or Convert Label Formats 部分。
@@ -143,11 +176,14 @@ Ultralytics YOLO 支持广泛的数据集，包括：
 示例
 
 ```py
-`from ultralytics import YOLO  model = YOLO("yolov8n.pt")  # Load a pretrained model results = model.train(data="path/to/your_dataset.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")  # Load a pretrained model
+results = model.train(data="path/to/your_dataset.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`yolo  detect  train  data=path/to/your_dataset.yaml  model=yolov8n.pt  epochs=100  imgsz=640` 
+yolo  detect  train  data=path/to/your_dataset.yaml  model=yolov8n.pt  epochs=100  imgsz=640 
 ```
 
 参考使用部分，了解如何使用不同的模式，包括 CLI 命令的详细信息。

@@ -37,11 +37,18 @@ MNIST 数据集在深度学习模型，如卷积神经网络（CNNs），支持�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="mnist", epochs=100, imgsz=32)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="mnist", epochs=100, imgsz=32) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=mnist  model=yolov8n-cls.pt  epochs=100  imgsz=28` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=mnist  model=yolov8n-cls.pt  epochs=100  imgsz=28 
 ```
 
 ## 示例图像和注释
@@ -59,7 +66,13 @@ MNIST 数据集包含手写数字的灰度图像，为图像分类任务提供�
 研究或开发工作，请引用以下论文：
 
 ```py
-`@article{lecun2010mnist,   title={MNIST handwritten digit database},   author={LeCun, Yann and Cortes, Corinna and Burges, CJ},   journal={ATT Labs [Online]. Available: http://yann.lecun.com/exdb/mnist},   volume={2},   year={2010} }` 
+@article{lecun2010mnist,
+  title={MNIST handwritten digit database},
+  author={LeCun, Yann and Cortes, Corinna and Burges, CJ},
+  journal={ATT Labs [Online]. Available: http://yann.lecun.com/exdb/mnist},
+  volume={2},
+  year={2010}
+} 
 ```
 
 我们要感谢 Yann LeCun、Corinna Cortes 和 Christopher J.C. Burges 创建和维护 MNIST 数据集，作为机器学习和计算机视觉研究社区的宝贵资源。有关 MNIST 数据集及其创建者的更多信息，请访问[MNIST 数据集网站](http://yann.lecun.com/exdb/mnist/)。
@@ -77,11 +90,18 @@ MNIST 数据集包含手写数字的灰度图像，为图像分类任务提供�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="mnist", epochs=100, imgsz=32)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-cls.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="mnist", epochs=100, imgsz=32) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  classify  train  data=mnist  model=yolov8n-cls.pt  epochs=100  imgsz=28` 
+# Start training from a pretrained *.pt model
+yolo  classify  train  data=mnist  model=yolov8n-cls.pt  epochs=100  imgsz=28 
 ```
 
 对于可用训练参数的详细列表，请参阅训练页面。

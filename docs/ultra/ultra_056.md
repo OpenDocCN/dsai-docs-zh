@@ -31,7 +31,49 @@ YAML（另一种标记语言）文件用于定义数据集配置。它包含有�
 ultralytics/cfg/datasets/carparts-seg.yaml
 
 ```py
-`# Ultralytics YOLO 🚀, AGPL-3.0 license # Carparts-seg dataset by Ultralytics # Documentation: https://docs.ultralytics.com/datasets/segment/carparts-seg/ # Example usage: yolo train data=carparts-seg.yaml # parent # ├── ultralytics # └── datasets #     └── carparts-seg  ← downloads here (132 MB)  # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..] path:  ../datasets/carparts-seg  # dataset root dir train:  train/images  # train images (relative to 'path') 3516 images val:  valid/images  # val images (relative to 'path') 276 images test:  test/images  # test images (relative to 'path') 401 images  # Classes names:   0:  back_bumper   1:  back_door   2:  back_glass   3:  back_left_door   4:  back_left_light   5:  back_light   6:  back_right_door   7:  back_right_light   8:  front_bumper   9:  front_door   10:  front_glass   11:  front_left_door   12:  front_left_light   13:  front_light   14:  front_right_door   15:  front_right_light   16:  hood   17:  left_mirror   18:  object   19:  right_mirror   20:  tailgate   21:  trunk   22:  wheel  # Download script/URL (optional) download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/carparts-seg.zip` 
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Carparts-seg dataset by Ultralytics
+# Documentation: https://docs.ultralytics.com/datasets/segment/carparts-seg/
+# Example usage: yolo train data=carparts-seg.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── carparts-seg  ← downloads here (132 MB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path:  ../datasets/carparts-seg  # dataset root dir
+train:  train/images  # train images (relative to 'path') 3516 images
+val:  valid/images  # val images (relative to 'path') 276 images
+test:  test/images  # test images (relative to 'path') 401 images
+
+# Classes
+names:
+  0:  back_bumper
+  1:  back_door
+  2:  back_glass
+  3:  back_left_door
+  4:  back_left_light
+  5:  back_light
+  6:  back_right_door
+  7:  back_right_light
+  8:  front_bumper
+  9:  front_door
+  10:  front_glass
+  11:  front_left_door
+  12:  front_left_light
+  13:  front_light
+  14:  front_right_door
+  15:  front_right_light
+  16:  hood
+  17:  left_mirror
+  18:  object
+  19:  right_mirror
+  20:  tailgate
+  21:  trunk
+  22:  wheel
+
+# Download script/URL (optional)
+download:  https://github.com/ultralytics/assets/releases/download/v0.0.0/carparts-seg.zip 
 ```
 
 ## 用法
@@ -41,11 +83,18 @@ ultralytics/cfg/datasets/carparts-seg.yaml
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="carparts-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="carparts-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=carparts-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=carparts-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 ## 样本数据和注释
@@ -63,7 +112,18 @@ Carparts 分割数据集包括从多个视角拍摄的多样化图像和视频�
 如果您将 Carparts Segmentation 数据集集成到研究或开发项目中，请参考以下论文：
 
 ```py
- `@misc{  car-seg-un1pm_dataset,   title  =  { car-seg Dataset },   type  =  { Open Source Dataset },   author  =  { Gianmarco Russo },   howpublished  =  { \url{ https://universe.roboflow.com/gianmarco-russo-vt9xr/car-seg-un1pm } },   url  =  { https://universe.roboflow.com/gianmarco-russo-vt9xr/car-seg-un1pm },   journal  =  { Roboflow Universe },   publisher  =  { Roboflow },   year  =  { 2023 },   month  =  { nov },   note  =  { visited on 2024-01-24 },   }` 
+ @misc{  car-seg-un1pm_dataset,
+  title  =  { car-seg Dataset },
+  type  =  { Open Source Dataset },
+  author  =  { Gianmarco Russo },
+  howpublished  =  { \url{ https://universe.roboflow.com/gianmarco-russo-vt9xr/car-seg-un1pm } },
+  url  =  { https://universe.roboflow.com/gianmarco-russo-vt9xr/car-seg-un1pm },
+  journal  =  { Roboflow Universe },
+  publisher  =  { Roboflow },
+  year  =  { 2023 },
+  month  =  { nov },
+  note  =  { visited on 2024-01-24 },
+  } 
 ```
 
 我们衷心感谢 Roboflow 团队在开发和管理 Carparts Segmentation 数据集方面的奉献，这是车辆维护和研究项目的宝贵资源。关于 Carparts Segmentation 数据集及其创建者的更多详细信息，请访问[CarParts Segmentation Dataset Page](https://universe.roboflow.com/gianmarco-russo-vt9xr/car-seg-un1pm)。
@@ -81,11 +141,18 @@ Carparts 分割数据集包括从多个视角拍摄的多样化图像和视频�
 训练示例
 
 ```py
-`from ultralytics import YOLO  # Load a model model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)  # Train the model results = model.train(data="carparts-seg.yaml", epochs=100, imgsz=640)` 
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolov8n-seg.pt")  # load a pretrained model (recommended for training)
+
+# Train the model
+results = model.train(data="carparts-seg.yaml", epochs=100, imgsz=640) 
 ```
 
 ```py
-`# Start training from a pretrained *.pt model yolo  segment  train  data=carparts-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640` 
+# Start training from a pretrained *.pt model
+yolo  segment  train  data=carparts-seg.yaml  model=yolov8n-seg.pt  epochs=100  imgsz=640 
 ```
 
 欲了解更多详细信息，请参阅培训文档。
