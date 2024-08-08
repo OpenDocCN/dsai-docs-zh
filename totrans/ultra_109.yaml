@@ -1,0 +1,307 @@
+- en: Coral Edge TPU on a Raspberry Pi with Ultralytics YOLOv8 🚀
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[`docs.ultralytics.com/guides/coral-edge-tpu-on-raspberry-pi/`](https://docs.ultralytics.com/guides/coral-edge-tpu-on-raspberry-pi/)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '![Raspberry Pi single board computer with USB Edge TPU accelerator](img/b9394725106ed17ec6b0fec4036f7427.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: What is a Coral Edge TPU?
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Coral Edge TPU is a compact device that adds an Edge TPU coprocessor to
+    your system. It enables low-power, high-performance ML inference for TensorFlow
+    Lite models. Read more at the [Coral Edge TPU home page](https://coral.ai/products/accelerator).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Boost Raspberry Pi Model Performance with Coral Edge TPU
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Many people want to run their models on an embedded or mobile device such as
+    a Raspberry Pi, since they are very power efficient and can be used in many different
+    applications. However, the inference performance on these devices is usually poor
+    even when using formats like onnx or openvino. The Coral Edge TPU is a great solution
+    to this problem, since it can be used with a Raspberry Pi and accelerate inference
+    performance greatly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Edge TPU on Raspberry Pi with TensorFlow Lite (New)⭐
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The [existing guide](https://coral.ai/docs/accelerator/get-started/) by Coral
+    on how to use the Edge TPU with a Raspberry Pi is outdated, and the current Coral
+    Edge TPU runtime builds do not work with the current TensorFlow Lite runtime versions
+    anymore. In addition to that, Google seems to have completely abandoned the Coral
+    project, and there have not been any updates between 2021 and 2024\. This guide
+    will show you how to get the Edge TPU working with the latest versions of the
+    TensorFlow Lite runtime and an updated Coral Edge TPU runtime on a Raspberry Pi
+    single board computer (SBC).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Prerequisites
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Raspberry Pi 4B](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+    (2GB or more recommended) or [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)
+    (Recommended)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Raspberry Pi OS](https://www.raspberrypi.com/software/) Bullseye/Bookworm
+    (64-bit) with desktop (Recommended)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Coral USB Accelerator](https://coral.ai/products/accelerator/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A non-ARM based platform for exporting an Ultralytics PyTorch model
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Installation Walkthrough
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This guide assumes that you already have a working Raspberry Pi OS install and
+    have installed `ultralytics` and all dependencies. To get `ultralytics` installed,
+    visit the quickstart guide to get setup before continuing here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Installing the Edge TPU runtime
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: First, we need to install the Edge TPU runtime. There are many different versions
+    available, so you need to choose the right version for your operating system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Raspberry Pi OS | High frequency mode | Version to download |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bullseye 32bit | No | `libedgetpu1-std_ ... .bullseye_armhf.deb` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bullseye 64bit | No | `libedgetpu1-std_ ... .bullseye_arm64.deb` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bullseye 32bit | Yes | `libedgetpu1-max_ ... .bullseye_armhf.deb` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bullseye 64bit | Yes | `libedgetpu1-max_ ... .bullseye_arm64.deb` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bookworm 32bit | No | `libedgetpu1-std_ ... .bookworm_armhf.deb` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bookworm 64bit | No | `libedgetpu1-std_ ... .bookworm_arm64.deb` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bookworm 32bit | Yes | `libedgetpu1-max_ ... .bookworm_armhf.deb` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bookworm 64bit | Yes | `libedgetpu1-max_ ... .bookworm_arm64.deb` |'
+  prefs: []
+  type: TYPE_TB
+- en: '[Download the latest version from here](https://github.com/feranick/libedgetpu/releases).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After downloading the file, you can install it with the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: After installing the runtime, you need to plug in your Coral Edge TPU into a
+    USB 3.0 port on your Raspberry Pi. This is because, according to the official
+    guide, a new `udev` rule needs to take effect after installation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: <details class="warning" open="open"><summary>Important</summary>
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you already have the Coral Edge TPU runtime installed, uninstall it using
+    the following command.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]</details>'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Export your model to a Edge TPU compatible model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To use the Edge TPU, you need to convert your model into a compatible format.
+    It is recommended that you run export on Google Colab, x86_64 Linux machine, using
+    the official Ultralytics Docker container, or using Ultralytics HUB, since the
+    Edge TPU compiler is not available on ARM. See the Export Mode for the available
+    arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exporting
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The exported model will be saved in the `<model_name>_saved_model/` folder with
+    the name `<model_name>_full_integer_quant_edgetpu.tflite`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running the model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'After exporting your model, you can run inference with it using the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Find comprehensive information on the Predict page for full prediction mode
+    details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: <details class="warning" open="open"><summary>Important</summary>
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You should run the model using `tflite-runtime` and not `tensorflow`. If `tensorflow`
+    is installed, uninstall tensorflow with the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then install/update `tflite-runtime`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you want a `tflite-runtime` wheel for `tensorflow` 2.15.0 download it from
+    [here](https://github.com/feranick/TFlite-builds/releases) and install it using
+    `pip` or your package manager of choice.</details>
+  prefs: []
+  type: TYPE_NORMAL
+- en: FAQ
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: What is a Coral Edge TPU and how does it enhance Raspberry Pi's performance
+    with Ultralytics YOLOv8?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Coral Edge TPU is a compact device designed to add an Edge TPU coprocessor
+    to your system. This coprocessor enables low-power, high-performance machine learning
+    inference, particularly optimized for TensorFlow Lite models. When using a Raspberry
+    Pi, the Edge TPU accelerates ML model inference, significantly boosting performance,
+    especially for Ultralytics YOLOv8 models. You can read more about the Coral Edge
+    TPU on their [home page](https://coral.ai/products/accelerator).
+  prefs: []
+  type: TYPE_NORMAL
+- en: How do I install the Coral Edge TPU runtime on a Raspberry Pi?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To install the Coral Edge TPU runtime on your Raspberry Pi, download the appropriate
+    `.deb` package for your Raspberry Pi OS version from [this link](https://github.com/feranick/libedgetpu/releases).
+    Once downloaded, use the following command to install it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Make sure to uninstall any previous Coral Edge TPU runtime versions by following
+    the steps outlined in the Installation Walkthrough section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Can I export my Ultralytics YOLOv8 model to be compatible with Coral Edge TPU?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Yes, you can export your Ultralytics YOLOv8 model to be compatible with the
+    Coral Edge TPU. It is recommended to perform the export on Google Colab, an x86_64
+    Linux machine, or using the Ultralytics Docker container. You can also use Ultralytics
+    HUB for exporting. Here is how you can export your model using Python and CLI:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exporting
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: For more information, refer to the Export Mode documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What should I do if TensorFlow is already installed on my Raspberry Pi but I
+    want to use tflite-runtime instead?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you have TensorFlow installed on your Raspberry Pi and need to switch to
+    `tflite-runtime`, you''ll need to uninstall TensorFlow first using:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then, install or update `tflite-runtime` with the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: For a specific wheel, such as TensorFlow 2.15.0 `tflite-runtime`, you can download
+    it from [this link](https://github.com/feranick/TFlite-builds/releases) and install
+    it using `pip`. Detailed instructions are available in the section on running
+    the model Running the Model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How do I run inference with an exported YOLOv8 model on a Raspberry Pi using
+    the Coral Edge TPU?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'After exporting your YOLOv8 model to an Edge TPU-compatible format, you can
+    run inference using the following code snippets:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Comprehensive details on full prediction mode features can be found on the Predict
+    Page.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,586 @@
+- en: Isolating Segmentation Objects
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[`docs.ultralytics.com/guides/isolating-segmentation-objects/`](https://docs.ultralytics.com/guides/isolating-segmentation-objects/)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: After performing the Segment Task, it's sometimes desirable to extract the isolated
+    objects from the inference results. This guide provides a generic recipe on how
+    to accomplish this using the Ultralytics Predict Mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Example Isolated Object Segmentation](img/2454120ab43202ed0acedbbe0e266d60.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Recipe Walk Through
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: See the Ultralytics Quickstart Installation section for a quick walkthrough
+    on installing the required libraries.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '* * *'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Load a model and run `predict()` method on a source.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: No Prediction Arguments?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Without specifying a source, the example images from the library will be used:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: This is helpful for rapid testing with the `predict()` method.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: For additional information about Segmentation Models, visit the Segment Task
+    page. To learn more about `predict()` method, see Predict Mode section of the
+    Documentation.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '* * *'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Now iterate over the results and the contours. For workflows that want to save
+    an image to file, the source image `base-name` and the detection `class-label`
+    are retrieved for later use (optional).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: To learn more about working with detection results, see Boxes Section for Predict
+    Mode.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To learn more about `predict()` results see Working with Results for Predict
+    Mode<details class="info"><summary>For-Loop</summary>
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: A single image will only iterate the first loop once. A single image with only
+    a single detection will iterate each loop *only* once.</details>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '* * *'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Start with generating a binary mask from the source image and then draw a filled
+    contour onto the mask. This will allow the object to be isolated from the other
+    parts of the image. An example from `bus.jpg` for one of the detected `person`
+    class objects is shown on the right.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![Binary Mask Image](img/cd674d9ab21dae76040bce159e0ed0e5.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: '[PRE3]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: For more info on `c.masks.xy` see Masks Section from Predict Mode.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Here the values are cast into `np.int32` for compatibility with `drawContours()`
+    function from OpenCV.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The OpenCV `drawContours()` function expects contours to have a shape of `[N,
+    1, 2]` expand section below for more details.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: <details><summary>Expand to understand what is happening when defining the `contour`
+    variable.</summary>
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '`c.masks.xy` :: Provides the coordinates of the mask contour points in the
+    format `(x, y)`. For more details, refer to the Masks Section from Predict Mode.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.pop()` :: As `masks.xy` is a list containing a single element, this element
+    is extracted using the `pop()` method.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.astype(np.int32)` :: Using `masks.xy` will return with a data type of `float32`,
+    but this won''t be compatible with the OpenCV `drawContours()` function, so this
+    will change the data type to `int32` for compatibility.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.reshape(-1, 1, 2)` :: Reformats the data into the required shape of `[N,
+    1, 2]` where `N` is the number of contour points, with each point represented
+    by a single entry `1`, and the entry is composed of `2` values. The `-1` denotes
+    that the number of values along this dimension is flexible.</details> <details><summary>Expand
+    for an explanation of the `drawContours()` configuration.</summary>'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Encapsulating the `contour` variable within square brackets, `[contour]`, was
+    found to effectively generate the desired contour mask during testing.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The value `-1` specified for the `drawContours()` parameter instructs the function
+    to draw all contours present in the image.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `tuple` `(255, 255, 255)` represents the color white, which is the desired
+    color for drawing the contour in this binary mask.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The addition of `cv2.FILLED` will color all pixels enclosed by the contour boundary
+    the same, in this case, all enclosed pixels will be white.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See [OpenCV Documentation on `drawContours()`](https://docs.opencv.org/4.8.0/d6/d6e/group__imgproc__draw.html#ga746c0625f1781f1ffc9056259103edbc)
+    for more information.</details>
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '* * *'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Next there are 2 options for how to move forward with the image from this point
+    and a subsequent option for each.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Object Isolation Options
+  prefs:
+  - PREF_IND
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: <details class="question"><summary>How does this work?</summary>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: First, the binary mask is first converted from a single-channel image to a three-channel
+    image. This conversion is necessary for the subsequent step where the mask and
+    the original image are combined. Both images must have the same number of channels
+    to be compatible with the blending operation.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The original image and the three-channel binary mask are merged using the OpenCV
+    function `bitwise_and()`. This operation retains only pixel values that are greater
+    than zero `(> 0)` from both images. Since the mask pixels are greater than zero
+    `(> 0)` only within the contour region, the pixels remaining from the original
+    image are those that overlap with the contour.</details>
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Isolate with Black Pixels: Sub-options'
+  prefs:
+  - PREF_IND
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: <details class="info"><summary>Full-size Image</summary>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: There are no additional steps required if keeping full size image.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Example Full size Isolated Object Image Black Background](img/d073effde74bca9c724b3b7736223dc6.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: Example full-size output</details> <details class="info"><summary>Cropped object
+    Image</summary>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Additional steps required to crop image to only include object region.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Example Crop Isolated Object Image Black Background](img/037903d450d625af4d096d02c4102e2d.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: '[PRE5]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: For more information on bounding box results, see Boxes Section from Predict
+    Mode
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: <details class="question"><summary>What does this code do?</summary>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The `c.boxes.xyxy.cpu().numpy()` call retrieves the bounding boxes as a NumPy
+    array in the `xyxy` format, where `xmin`, `ymin`, `xmax`, and `ymax` represent
+    the coordinates of the bounding box rectangle. See Boxes Section from Predict
+    Mode for more details.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `squeeze()` operation removes any unnecessary dimensions from the NumPy
+    array, ensuring it has the expected shape.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Converting the coordinate values using `.astype(np.int32)` changes the box coordinates
+    data type from `float32` to `int32`, making them compatible for image cropping
+    using index slices.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, the bounding box region is cropped from the image using index slicing.
+    The bounds are defined by the `[ymin:ymax, xmin:xmax]` coordinates of the detection
+    bounding box.</details></details>
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: <details class="question"><summary>How does this work?</summary>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Using the NumPy `dstack()` function (array stacking along depth-axis) in conjunction
+    with the binary mask generated, will create an image with four channels. This
+    allows for all pixels outside of the object contour to be transparent when saving
+    as a `PNG` file.</details>
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Isolate with Transparent Pixels: Sub-options'
+  prefs:
+  - PREF_IND
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: <details class="info"><summary>Full-size Image</summary>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: There are no additional steps required if keeping full size image.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Example Full size Isolated Object Image No Background](img/db750014c472558ae7e4d0e0ef64b81a.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: Example full-size output + transparent background</details> <details class="info"><summary>Cropped
+    object Image</summary>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Additional steps required to crop image to only include object region.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Example Crop Isolated Object Image No Background](img/c69db48d3eabebdbe86fd35307c762f8.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: For more information on bounding box results, see Boxes Section from Predict
+    Mode
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: <details class="question"><summary>What does this code do?</summary>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: When using `c.boxes.xyxy.cpu().numpy()`, the bounding boxes are returned as
+    a NumPy array, using the `xyxy` box coordinates format, which correspond to the
+    points `xmin, ymin, xmax, ymax` for the bounding box (rectangle), see Boxes Section
+    from Predict Mode for more information.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adding `squeeze()` ensures that any extraneous dimensions are removed from the
+    NumPy array.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Converting the coordinate values using `.astype(np.int32)` changes the box coordinates
+    data type from `float32` to `int32` which will be compatible when cropping the
+    image using index slices.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally the image region for the bounding box is cropped using index slicing,
+    where the bounds are set using the `[ymin:ymax, xmin:xmax]` coordinates of the
+    detection bounding box.</details></details> <details class="question"><summary>What
+    if I want the cropped object **including** the background?</summary>
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This is a built in feature for the Ultralytics library. See the `save_crop`
+    argument for Predict Mode Inference Arguments for details.</details>
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '* * *'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: What to do next is entirely left to you as the developer. A basic example of
+    one possible next step (saving the image to file for future use) is shown.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**NOTE:** this step is optional and can be skipped if not required for your
+    specific use case.<details class="example"><summary>Example Final Step</summary>'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: In this example, the `img_name` is the base-name of the source image file, `label`
+    is the detected class-name, and `ci` is the index of the object detection (in
+    case of multiple instances with the same class name).</details>
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Full Example code
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here, all steps from the previous section are combined into a single block of
+    code. For repeated use, it would be optimal to define a function to do some or
+    all commands contained in the `for`-loops, but that is an exercise left to the
+    reader.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The line populating `contour` is combined into a single line here, where it
+    was split to multiple above.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: What goes here is up to you!
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: See Predict Mode for additional information.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: See Segment Task for more information.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Learn more about Working with Results
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Learn more about Segmentation Mask Results
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: FAQ
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: How do I isolate objects using Ultralytics YOLOv8 for segmentation tasks?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To isolate objects using Ultralytics YOLOv8, follow these steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Load the model and run inference:**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '**Generate a binary mask and draw contours:**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '**Isolate the object using the binary mask:**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Refer to the guide on Predict Mode and the Segment Task for more information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What options are available for saving the isolated objects after segmentation?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Ultralytics YOLOv8 offers two main options for saving isolated objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**With a Black Background:**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '**With a Transparent Background:**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: For further details, visit the Predict Mode section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How can I crop isolated objects to their bounding boxes using Ultralytics YOLOv8?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To crop isolated objects to their bounding boxes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Retrieve bounding box coordinates:**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '**Crop the isolated image:**'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Learn more about bounding box results in the Predict Mode documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why should I use Ultralytics YOLOv8 for object isolation in segmentation tasks?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Ultralytics YOLOv8 provides:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**High-speed** real-time object detection and segmentation.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Accurate bounding box and mask generation** for precise object isolation.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Comprehensive documentation** and easy-to-use API for efficient development.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Explore the benefits of using YOLO in the Segment Task documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Can I save isolated objects including the background using Ultralytics YOLOv8?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Yes, this is a built-in feature in Ultralytics YOLOv8\. Use the `save_crop`
+    argument in the `predict()` method. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Read more about the `save_crop` argument in the Predict Mode Inference Arguments
+    section.
+  prefs: []
+  type: TYPE_NORMAL

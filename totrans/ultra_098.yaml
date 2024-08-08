@@ -1,0 +1,424 @@
+- en: K-Fold Cross Validation with Ultralytics
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[`docs.ultralytics.com/guides/kfold-cross-validation/`](https://docs.ultralytics.com/guides/kfold-cross-validation/)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This comprehensive guide illustrates the implementation of K-Fold Cross Validation
+    for object detection datasets within the Ultralytics ecosystem. We'll leverage
+    the YOLO detection format and key Python libraries such as sklearn, pandas, and
+    PyYaml to guide you through the necessary setup, the process of generating feature
+    vectors, and the execution of a K-Fold dataset split.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![K-Fold Cross Validation Overview](img/9cd934ad6a5b729638c7783535ae81e1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Whether your project involves the Fruit Detection dataset or a custom data source,
+    this tutorial aims to help you comprehend and apply K-Fold Cross Validation to
+    bolster the reliability and robustness of your machine learning models. While
+    we're applying `k=5` folds for this tutorial, keep in mind that the optimal number
+    of folds can vary depending on your dataset and the specifics of your project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Without further ado, let's dive in!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Setup
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Your annotations should be in the YOLO detection format.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This guide assumes that annotation files are locally available.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For our demonstration, we use the [Fruit Detection](https://www.kaggle.com/datasets/lakshaytyagi01/fruit-detection/code)
+    dataset.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This dataset contains a total of 8479 images.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It includes 6 class labels, each with its total instance counts listed below.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '| Class Label | Instance Count |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Apple | 7049 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Grapes | 7202 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Pineapple | 1613 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Orange | 15549 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Banana | 3536 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Watermelon | 1976 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Necessary Python packages include:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`ultralytics`'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`sklearn`'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pandas`'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pyyaml`'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This tutorial operates with `k=5` folds. However, you should determine the best
+    number of folds for your specific dataset.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Initiate a new Python virtual environment (`venv`) for your project and activate
+    it. Use `pip` (or your preferred package manager) to install:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The Ultralytics library: `pip install -U ultralytics`. Alternatively, you can
+    clone the official [repo](https://github.com/ultralytics/ultralytics).'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Scikit-learn, pandas, and PyYAML: `pip install -U scikit-learn pandas pyyaml`.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Verify that your annotations are in the YOLO detection format.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For this tutorial, all annotation files are found in the `Fruit-Detection/labels`
+    directory.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Generating Feature Vectors for Object Detection Dataset
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Start by creating a new `example.py` Python file for the steps below.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Proceed to retrieve all label files for your dataset.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Now, read the contents of the dataset YAML file and extract the indices of the
+    class labels.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Initialize an empty `pandas` DataFrame.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Count the instances of each class-label present in the annotation files.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The following is a sample view of the populated DataFrame:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The rows index the label files, each corresponding to an image in your dataset,
+    and the columns correspond to your class-label indices. Each row represents a
+    pseudo feature-vector, with the count of each class-label present in your dataset.
+    This data structure enables the application of K-Fold Cross Validation to an object
+    detection dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: K-Fold Dataset Split
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Now we will use the `KFold` class from `sklearn.model_selection` to generate
+    `k` splits of the dataset.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Important:'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Setting `shuffle=True` ensures a randomized distribution of classes in your
+    splits.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: By setting `random_state=M` where `M` is a chosen integer, you can obtain repeatable
+    results.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The dataset has now been split into `k` folds, each having a list of `train`
+    and `val` indices. We will construct a DataFrame to display these results more
+    clearly.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Now we will calculate the distribution of class labels for each fold as a ratio
+    of the classes present in `val` to those present in `train`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The ideal scenario is for all class ratios to be reasonably similar for each
+    split and across classes. This, however, will be subject to the specifics of your
+    dataset.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Next, we create the directories and dataset YAML files for each split.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Lastly, copy images and labels into the respective directory ('train' or 'val')
+    for each split.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**NOTE:** The time required for this portion of the code will vary based on
+    the size of your dataset and your system hardware.'
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Save Records (Optional)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Optionally, you can save the records of the K-Fold split and label distribution
+    DataFrames as CSV files for future reference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Train YOLO using K-Fold Data Splits
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: First, load the YOLO model.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Next, iterate over the dataset YAML files to run training. The results will
+    be saved to a directory specified by the `project` and `name` arguments. By default,
+    this directory is ''exp/runs#'' where # is an integer index.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this guide, we have explored the process of using K-Fold cross-validation
+    for training the YOLO object detection model. We learned how to split our dataset
+    into K partitions, ensuring a balanced class distribution across the different
+    folds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also explored the procedure for creating report DataFrames to visualize the
+    data splits and label distributions across these splits, providing us a clear
+    insight into the structure of our training and validation sets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Optionally, we saved our records for future reference, which could be particularly
+    useful in large-scale projects or when troubleshooting model performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we implemented the actual model training using each split in a loop,
+    saving our training results for further analysis and comparison.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This technique of K-Fold cross-validation is a robust way of making the most
+    out of your available data, and it helps to ensure that your model performance
+    is reliable and consistent across different data subsets. This results in a more
+    generalizable and reliable model that is less likely to overfit to specific data
+    patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember that although we used YOLO in this guide, these steps are mostly transferable
+    to other machine learning models. Understanding these steps allows you to apply
+    cross-validation effectively in your own machine learning projects. Happy coding!
+  prefs: []
+  type: TYPE_NORMAL
+- en: FAQ
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: What is K-Fold Cross Validation and why is it useful in object detection?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: K-Fold Cross Validation is a technique where the dataset is divided into 'k'
+    subsets (folds) to evaluate model performance more reliably. Each fold serves
+    as both training and validation data. In the context of object detection, using
+    K-Fold Cross Validation helps to ensure your Ultralytics YOLO model's performance
+    is robust and generalizable across different data splits, enhancing its reliability.
+    For detailed instructions on setting up K-Fold Cross Validation with Ultralytics
+    YOLO, refer to K-Fold Cross Validation with Ultralytics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How do I implement K-Fold Cross Validation using Ultralytics YOLO?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To implement K-Fold Cross Validation with Ultralytics YOLO, you need to follow
+    these steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Verify annotations are in the YOLO detection format.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Use Python libraries like `sklearn`, `pandas`, and `pyyaml`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Create feature vectors from your dataset.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Split your dataset using `KFold` from `sklearn.model_selection`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Train the YOLO model on each split.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For a comprehensive guide, see the K-Fold Dataset Split section in our documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why should I use Ultralytics YOLO for object detection?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Ultralytics YOLO offers state-of-the-art, real-time object detection with high
+    accuracy and efficiency. It's versatile, supporting multiple computer vision tasks
+    such as detection, segmentation, and classification. Additionally, it integrates
+    seamlessly with tools like Ultralytics HUB for no-code model training and deployment.
+    For more details, explore the benefits and features on our [Ultralytics YOLO page](https://www.ultralytics.com/yolo).
+  prefs: []
+  type: TYPE_NORMAL
+- en: How can I ensure my annotations are in the correct format for Ultralytics YOLO?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Your annotations should follow the YOLO detection format. Each annotation file
+    must list the object class, alongside its bounding box coordinates in the image.
+    The YOLO format ensures streamlined and standardized data processing for training
+    object detection models. For more information on proper annotation formatting,
+    visit the YOLO detection format guide.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Can I use K-Fold Cross Validation with custom datasets other than Fruit Detection?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Yes, you can use K-Fold Cross Validation with any custom dataset as long as
+    the annotations are in the YOLO detection format. Replace the dataset paths and
+    class labels with those specific to your custom dataset. This flexibility ensures
+    that any object detection project can benefit from robust model evaluation using
+    K-Fold Cross Validation. For a practical example, review our Generating Feature
+    Vectors section.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,219 @@
+- en: Thread-Safe Inference with YOLO Models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[`docs.ultralytics.com/guides/yolo-thread-safe-inference/`](https://docs.ultralytics.com/guides/yolo-thread-safe-inference/)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Running YOLO models in a multi-threaded environment requires careful consideration
+    to ensure thread safety. Python's `threading` module allows you to run several
+    threads concurrently, but when it comes to using YOLO models across these threads,
+    there are important safety issues to be aware of. This page will guide you through
+    creating thread-safe YOLO model inference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Understanding Python Threading
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Python threads are a form of parallelism that allow your program to run multiple
+    operations at once. However, Python's Global Interpreter Lock (GIL) means that
+    only one thread can execute Python bytecode at a time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Single vs Multi-Thread Examples](img/1730a9e4d170bede53d0612310fc0941.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: While this sounds like a limitation, threads can still provide concurrency,
+    especially for I/O-bound operations or when using operations that release the
+    GIL, like those performed by YOLO's underlying C libraries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Danger of Shared Model Instances
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Instantiating a YOLO model outside your threads and sharing this instance across
+    multiple threads can lead to race conditions, where the internal state of the
+    model is inconsistently modified due to concurrent accesses. This is particularly
+    problematic when the model or its components hold state that is not designed to
+    be thread-safe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Non-Thread-Safe Example: Single Model Instance'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When using threads in Python, it''s important to recognize patterns that can
+    lead to concurrency issues. Here is what you should avoid: sharing a single YOLO
+    model instance across multiple threads.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the example above, the `shared_model` is used by multiple threads, which
+    can lead to unpredictable results because `predict` could be executed simultaneously
+    by multiple threads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Non-Thread-Safe Example: Multiple Model Instances'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Similarly, here is an unsafe pattern with multiple YOLO model instances:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Even though there are two separate model instances, the risk of concurrency
+    issues still exists. If the internal implementation of `YOLO` is not thread-safe,
+    using separate instances might not prevent race conditions, especially if these
+    instances share any underlying resources or states that are not thread-local.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thread-Safe Inference
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To perform thread-safe inference, you should instantiate a separate YOLO model
+    within each thread. This ensures that each thread has its own isolated model instance,
+    eliminating the risk of race conditions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thread-Safe Example
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Here''s how to instantiate a YOLO model inside each thread for safe parallel
+    inference:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, each thread creates its own `YOLO` instance. This prevents
+    any thread from interfering with the model state of another, thus ensuring that
+    each thread performs inference safely and without unexpected interactions with
+    the other threads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When using YOLO models with Python's `threading`, always instantiate your models
+    within the thread that will use them to ensure thread safety. This practice avoids
+    race conditions and makes sure that your inference tasks run reliably.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more advanced scenarios and to further optimize your multi-threaded inference
+    performance, consider using process-based parallelism with `multiprocessing` or
+    leveraging a task queue with dedicated worker processes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: FAQ
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: How can I avoid race conditions when using YOLO models in a multi-threaded Python
+    environment?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To prevent race conditions when using Ultralytics YOLO models in a multi-threaded
+    Python environment, instantiate a separate YOLO model within each thread. This
+    ensures that each thread has its own isolated model instance, avoiding concurrent
+    modification of the model state.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: For more information on ensuring thread safety, visit the Thread-Safe Inference
+    with YOLO Models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What are the best practices for running multi-threaded YOLO model inference
+    in Python?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To run multi-threaded YOLO model inference safely in Python, follow these best
+    practices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instantiate YOLO models within each thread rather than sharing a single model
+    instance across threads.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Use Python's `multiprocessing` module for parallel processing to avoid issues
+    related to Global Interpreter Lock (GIL).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Release the GIL by using operations performed by YOLO's underlying C libraries.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Example for thread-safe model instantiation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: For additional context, refer to the section on Thread-Safe Inference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why should each thread have its own YOLO model instance?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Each thread should have its own YOLO model instance to prevent race conditions.
+    When a single model instance is shared among multiple threads, concurrent accesses
+    can lead to unpredictable behavior and modifications of the model's internal state.
+    By using separate instances, you ensure thread isolation, making your multi-threaded
+    tasks reliable and safe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For detailed guidance, check the Non-Thread-Safe Example: Single Model Instance
+    and Thread-Safe Example sections.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How does Python's Global Interpreter Lock (GIL) affect YOLO model inference?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Python's Global Interpreter Lock (GIL) allows only one thread to execute Python
+    bytecode at a time, which can limit the performance of CPU-bound multi-threading
+    tasks. However, for I/O-bound operations or processes that use libraries releasing
+    the GIL, like YOLO's C libraries, you can still achieve concurrency. For enhanced
+    performance, consider using process-based parallelism with Python's `multiprocessing`
+    module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more about threading in Python, see the Understanding Python Threading section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Is it safer to use process-based parallelism instead of threading for YOLO model
+    inference?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Yes, using Python's `multiprocessing` module is safer and often more efficient
+    for running YOLO model inference in parallel. Process-based parallelism creates
+    separate memory spaces, avoiding the Global Interpreter Lock (GIL) and reducing
+    the risk of concurrency issues. Each process will operate independently with its
+    own YOLO model instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For further details on process-based parallelism with YOLO models, refer to
+    the page on Thread-Safe Inference.
+  prefs: []
+  type: TYPE_NORMAL
